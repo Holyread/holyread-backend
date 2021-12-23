@@ -1,0 +1,76 @@
+{
+  "name": "user-cred",
+  "version": "0.0.1",
+  "description": "user cred api",
+  "main": "app.js",
+  "scripts": {
+    "start": "node dist/src/app.js",
+    "clean": "rimraf \"dist/*\"",
+    "lint": "tslint --project ./",
+    "lint-fix": "npm run lint -- --fix",
+    "tsc": "tsc --project ./",
+    "build-files": "copyfiles -u 0 src/views/*.html dist/",
+    "build": "npm run tsc",
+    "watch": "./node_modules/nodemon/bin/nodemon.js -e ts  --exec \"tsc\"",
+    "start-dev": "nodemon dist/src/app.js",
+    "build-run": "tsc && npm start",
+    "test": "NODE_ENV=test jest"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run build"
+    }
+  },
+  "engines": {
+    "node": "12.0.0",
+    "npm": "6.0.0"
+  },
+  "config": {
+    "mongodbMemoryServer": {
+      "version": "latest",
+      "debug": "true"
+    }
+  },
+  "keywords": [],
+  "devDependencies": {
+    "@types/async": "^3.2.5",
+    "@types/compression": "^1.7.0",
+    "@types/cookie-parser": "^1.4.2",
+    "@types/cors": "^2.8.9",
+    "@types/dotenv": "^4.0.2",
+    "@types/express": "*",
+    "@types/node": "*",
+    "copyfiles": "^2.4.1",
+    "husky": "^4.3.8",
+    "jsonwebtoken": "^8.5.1",
+    "jwt-decode": "^3.1.2",
+    "mongodb-memory-server": "^7.2.0",
+    "nodemon": "^2.0.6"
+  },
+  "dependencies": {
+    "@hapi/boom": "^9.1.2",
+    "@types/boom": "^7.3.0",
+    "analytics-node": "^4.0.1",
+    "async": "^3.2.0",
+    "aws-sdk": "^2.817.0",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "4.17.1",
+    "express-jwt": "^6.1.0",
+    "image-to-base64": "^2.1.1",
+    "moment-timezone": "^0.5.33",
+    "mongoose": "^5.13.8",
+    "node-cron": "^3.0.0",
+    "path-to-regexp": "^6.2.0",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.0.0",
+    "tslint": "^6.1.3"
+  },
+  "author": "",
+  "bugs": {
+    "url": ""
+  },
+  "homepage": ""
+}

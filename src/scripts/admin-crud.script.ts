@@ -1,6 +1,6 @@
 import { UserModel } from '../models/index'
 import { getToken, encrypt } from '../lib/utils/utils'
-import { uploadImageToAwsS3, removeImageToAwsS3 } from '../lib/utils/utils'
+import { uploadImageToAwsS3 } from '../lib/utils/utils'
 import { awsBucket } from '../constants/app.constant'
 import config from '../../config'
 
@@ -10,6 +10,7 @@ const s3Bucket = {
       bucketName: awsBucket[NODE_ENV].bucketName,
       documentDirectory: `${awsBucket.usersDirectory}`,
 }
+
 /** Add Admin */
 const createAdmin = async (body: any) => {
       try {
@@ -32,36 +33,4 @@ const createAdmin = async (body: any) => {
       }
 }
 
-/** Modify Admin */
-const updateAdmin = async (body: any, id: string) => {
-      try {
-            if (body.password) {
-                  body.password = encrypt(body.password)
-            }
-            const userDetails = await UserModel.findOne({ _id: id })
-            if (body.image && userDetails && userDetails.image) {
-                  await removeImageToAwsS3(userDetails.image, s3Bucket)
-                  body.image = await uploadImageToAwsS3(body.image, userDetails.name, s3Bucket)
-            }
-            await UserModel.findOneAndUpdate({ _id: id }, body).lean()
-            return true
-      } catch (e) {
-            throw new Error(e)
-      }
-}
-
-/** Remove Admin */
-const deleteAdmin = async (id: string) => {
-      try {
-            const userDetails = await UserModel.findOne({ _id: id })
-            if (userDetails && userDetails.image) {
-                  await removeImageToAwsS3(userDetails.image, s3Bucket)
-            }
-            await UserModel.findOneAndDelete({ _id: id })
-            return true
-      } catch (e) {
-            throw new Error(e)
-      }
-}
-
-export default { createAdmin, updateAdmin, deleteAdmin }
+export default { createAdmin }

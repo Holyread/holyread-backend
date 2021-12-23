@@ -1,14 +1,14 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import userService from '../../services/users/user.service'
+import usersService from '../../services/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
 import { removeImageToAwsS3, uploadImageToAwsS3 } from '../../lib/utils/utils'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
 
-const adminControllerResponse = responseMessage.adminControllerResponse
 const authControllerResponse = responseMessage.authControllerResponse
+const adminControllerResponse = responseMessage.adminControllerResponse
 
 const NODE_ENV = config.NODE_ENV
 const s3Bucket = {
@@ -17,30 +17,47 @@ const s3Bucket = {
     documentDirectory: `${awsBucket.usersDirectory}`,
 }
 
-/**  Get one admin by id */
-const getOneAdmin = async (req: Request, res: Response, next: NextFunction) => {
+/** Add User */
+const addUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.params.id
+        const body = req.body
         /** Get user from db */
-        const userObj: any = await userService.getOneUserByFilter({ _id: id })
-        if (!userObj) {
-            next(Boom.notFound(adminControllerResponse.getAdminFailure))    
+        const user: any = await usersService.getOneUserByFilter({ email: req.body.email })
+        if (user) {
+            return next(Boom.badData(authControllerResponse.userAlreadyExistError))
         }
-        res.status(200).send({ message: adminControllerResponse.fetchAdminSuccess, data: userObj })
+        if (body.image) {
+            body.image = await uploadImageToAwsS3(body.image, body.name, s3Bucket)
+        }
+        const data = await usersService.createUser({
+            name: body.name,
+            email: body.email,
+            password: body.password,
+            image: body.image,
+            type: 'User',
+            status: 'InActive',
+            verified: false
+        })
+        res.status(200).send({
+            message: adminControllerResponse.createUserSuccess,
+            data: {
+                _id: data._id,
+                email: data.email
+            }
+        })
     } catch (e) {
         next(Boom.badData(e.message))
     }
 }
-
 
 /**  Get one user by id */
 const getOneUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.userId
         /** Get user from db */
-        const userObj: any = await userService.getOneUserByFilter({ _id: id })
+        const userObj: any = await usersService.getOneUserByFilter({ _id: id })
         if (!userObj) {
-            next(Boom.notFound(authControllerResponse.getUserError))    
+            next(Boom.notFound(authControllerResponse.getUserError))
         }
         res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
     } catch (e) {
@@ -53,7 +70,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.userId
         /** Get user from db */
-        const userObj: any = await userService.getOneUserByFilter({ _id: id })
+        const userObj: any = await usersService.getOneUserByFilter({ _id: id })
         if (!userObj) {
             throw new Error(authControllerResponse.getUserError)
         }
@@ -64,7 +81,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
             await removeImageToAwsS3(userObj.image, s3Bucket)
             req.body.image = await uploadImageToAwsS3(req.body.image, userObj.name, s3Bucket)
         }
-        await userService.updateUser(req.body, req.params.userId)
+        await usersService.updateUser(req.body, req.params.userId)
         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
     } catch (e) {
         return next(Boom.badData(e.message))
@@ -75,15 +92,15 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
 const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.userId
-        const userObj: any = await userService.getOneUserByFilter({ _id: id })
+        const userObj: any = await usersService.getOneUserByFilter({ _id: id })
         if (userObj && userObj.image) {
             await removeImageToAwsS3(userObj.image, s3Bucket)
         }
-        await userService.deleteUser(id)
+        await usersService.deleteUser(id)
         return res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
     } catch (e) {
         return next(Boom.badData(e.message))
     }
 }
 
-export { getOneAdmin, getOneUser, updateUser, deleteUser }
+export { addUser, getOneUser, updateUser, deleteUser }

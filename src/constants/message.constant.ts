@@ -19,6 +19,7 @@ export const responseMessage = {
         deleteUserSuccess: 'User deleted successfully',
     },
     adminControllerResponse: {
+        createUserSuccess: 'User added successfully',
         createAdminSuccess: 'Admin added successfully',
         updateAdminSuccess: 'Admin updated successfully',
         deleteAdminSuccess: 'Admin deleted successfully',

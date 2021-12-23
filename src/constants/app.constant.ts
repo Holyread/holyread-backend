@@ -16,7 +16,7 @@ export const baseUrls = {
 export const awsBucket = {
     local: { bucketName: 'holyreads-develop', s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com' },
     development: { bucketName: 'holyreads-develop', s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com' },
-    production: { bucketName: 'holyreads-production', s3BaseURL: 'https://alinea-production.s3.amazonaws.com' },
+    production: { bucketName: 'holyreads-production', s3BaseURL: 'https://holyreads-production.s3.amazonaws.com' },
     usersDirectory: 'users',
     region: 'us-east-1',
 }

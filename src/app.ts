@@ -6,9 +6,8 @@ import path from 'path'
 import cors from 'cors'
 import Boom from '@hapi/boom'
 
-import authRoutes from './routes/auth.route'
-import userRoutes from './routes/user.route'
-import adminRoutes from './routes/admin.route'
+import customersRoutes from './routes/customers.routes'
+import adminRoutes from './routes/admin.routes'
 
 import appConfig from './lib/appConfig'
 import './models/index'
@@ -35,8 +34,7 @@ const corsOptionsDelegate = async (req, callback) => {
       : callback(undefined, { origin: true })
 }
 
-app.use('/api/v1/auth', authRoutes)
-app.use('/api/v1/users', cors(corsOptionsDelegate), userRoutes)
+app.use('/api/v1/customers', cors(corsOptionsDelegate), customersRoutes)
 app.use('/api/v1/admin', cors(corsOptionsDelegate), adminRoutes)
 app.get('/', async (req: Request, res: Response) => res.sendFile(__dirname + '/views/index.html'))
 app.use(appConfig.handleError)

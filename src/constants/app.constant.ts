@@ -20,3 +20,8 @@ export const awsBucket = {
     usersDirectory: 'users',
     region: 'us-east-1',
 }
+
+export const dataTable = {
+    limit: 10,
+    skip: 0,
+}

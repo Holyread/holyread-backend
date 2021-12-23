@@ -11,6 +11,7 @@ export const responseMessage = {
         userUpdateSuccess: 'User updated successfully',
         userAlreadyExistError: 'User Already exist', 
         getUserSuccess: 'User fetched successfully',
+        getUsersSuccess: 'All user fetched successfully',
         getUserError: 'User does not exist',
         userNotAuthorizationError: 'User not authorized',
         parentIdMissingError: 'ParentId is missing',

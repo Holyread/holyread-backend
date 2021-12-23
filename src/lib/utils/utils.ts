@@ -1,6 +1,9 @@
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken';
-import aws from 'aws-sdk'
+import aws from 'aws-sdk';
+import nodemailer from 'nodemailer';
+import smtpTransport from 'nodemailer-smtp-transport';
+
 import config from '../../../config'
 
 const algorithm = 'aes-256-cbc';
@@ -119,4 +122,31 @@ export const removeImageToAwsS3 = async (
     } catch (e) {
         throw new Error(e.message)
     }
+}
+
+export const sentEmail = async (receiverEmail: string, subject: string, text: string) => {
+    const transporter = nodemailer.createTransport(smtpTransport({
+        service: 'gmail',
+        host: 'smtp.gmail.com',
+        auth: {
+            user: config.SMTP_EMAIL,
+            pass: config.SMTP_SECRET
+        }
+    }));
+
+    const mailOptions = {
+        from: config.SMTP_EMAIL,
+        to: receiverEmail,
+        subject,
+        text
+    };
+    return new Promise((resolve, reject) => {
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                reject(false)
+            } else {
+                resolve(true)
+            }
+        });
+    })
 }

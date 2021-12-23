@@ -11,6 +11,7 @@ export interface IUser extends mongoose.Document {
     status?: 'Active' | 'InActive',
     verified?: boolean,
     image?: string,
+    code?: number
 }
 
 export type createUserType = {
@@ -22,6 +23,7 @@ export type createUserType = {
     status?: 'Active' | 'InActive',
     verified?: boolean,
     image?: string,
+    code?: number
 }
 
 export type getUserType = {
@@ -33,6 +35,7 @@ export type getUserType = {
     status?: 'Active' | 'InActive',
     verified?: boolean,
     image?: string,
+    code?: number
 }
 
 export const UserSchema = new Schema({
@@ -44,6 +47,7 @@ export const UserSchema = new Schema({
     status: { type: String },
     verified: { type: Boolean },
     image: { type: String },
+    code: { type: String },
     createdAt: {
         type: Date, default: () => {
             return new Date()

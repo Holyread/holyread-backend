@@ -26,5 +26,8 @@ export const responseMessage = {
         fetchAdminSuccess: 'Admin details fetched successfully',
         createAdminFailure: 'Failed to add admin',
         getAdminFailure: 'Failed to fetch admin details',
+        sendCodeSuccess: 'Verification code successfully sent on your email',
+        forgotPassowrdFailure: 'Failed to proceed your request, try again',
+        forgotPassowrdSuccess: 'Password updated successfully'
     }
 }

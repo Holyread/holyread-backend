@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 interface IConfig {
-    PORT: number,
+    PORT: number | string,
     DBURL: string,
     NODE_ENV: string,
     AWS_SECRET: string,
@@ -12,7 +12,7 @@ interface IConfig {
 }
 
 const config: IConfig = {
-    PORT: 5000,
+    PORT: process.env.PORT || 5000,
     DBURL: process.env.DBURL,
     NODE_ENV: process.env.NODE_ENV,
     AWS_SECRET: process.env.AWS_SECRET,

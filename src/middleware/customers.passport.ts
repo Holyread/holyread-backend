@@ -27,7 +27,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             }
             req.user = userDetails
             next();
-        } catch (err) {
+        } catch (err: any) {
             next(Boom.badRequest('User not authorized'));
         }
     }

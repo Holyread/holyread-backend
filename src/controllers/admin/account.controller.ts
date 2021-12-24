@@ -25,7 +25,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
         res.status(200).send({
             message: adminControllerResponse.sendCodeSuccess
         })
-    } catch (e) {
+    } catch (e: any) {
         next(Boom.badData(e.message))
     }
 }
@@ -41,7 +41,7 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
         }
         await usersService.updateUser({ password: newPassword, $unset: { code: 1 } }, userObj._id)
         res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
-    } catch (e) {
+    } catch (e: any) {
         next(Boom.badData(e.message))
     }
 }

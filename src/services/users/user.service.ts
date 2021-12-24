@@ -8,7 +8,7 @@ const createUser = async (body: any) => {
         const result = await UserModel.create(body)
         const token: string = getToken({ email: result.email })
         return { _id: result._id, email: result.email, token }
-    } catch (e) {
+    } catch (e: any) {
         throw new Error(e)
     }
 }
@@ -21,7 +21,7 @@ const updateUser = async (body: any, id: string) => {
         }
         await UserModel.findOneAndUpdate({ _id: id }, { ...body, updatedAt: new Date() }).lean()
         return true
-    } catch (e) {
+    } catch (e: any) {
         throw new Error(e)
     }
 }
@@ -31,7 +31,7 @@ const getOneUserByFilter = async (query: any) => {
     try {
         const result = await UserModel.findOne(query).select('-password').lean()
         return result
-    } catch (e) {
+    } catch (e: any) {
         throw new Error(e)
     }
 }
@@ -42,7 +42,7 @@ const getAllUsers = async (skip: number, limit, search: object, sort) => {
         const users = await UserModel.find({ ...search, type: 'Admin' }).skip(skip).limit(limit).sort(sort)
         const count = await UserModel.find({ ...search, type: 'Admin' }).count()
         return { count, users }
-    } catch (e) {
+    } catch (e: any) {
         throw new Error(e)
     }
 }
@@ -52,7 +52,7 @@ const deleteUser = async (id: string) => {
     try {
         await UserModel.findOneAndDelete({ _id: id })
         return true
-    } catch (e) {
+    } catch (e: any) {
         throw new Error(e)
     }
 }

@@ -56,7 +56,7 @@ export const isBase64 = async (v: any, opts: any) => {
         if (opts.paddingRequired === false) { regex = '(?:[A-Za-z0-9+\\/]{4})*(?:[A-Za-z0-9+\\/]{2}(==)?|[A-Za-z0-9+\\/]{3}=?)?' }
 
         return (new RegExp('^' + regex + '$', 'gi')).test(v)
-    } catch (error) {
+    } catch (error: any) {
         throw new Error(error.message)
     }
 }
@@ -100,7 +100,7 @@ export const uploadImageToAwsS3 = async (
             resolve(fileName)
         })
 
-    } catch (e) {
+    } catch (e: any) {
         throw new Error(e.message)
     }
 }
@@ -119,7 +119,7 @@ export const removeImageToAwsS3 = async (
         const option = { Bucket: `${aWSBucket.bucketName}/${aWSBucket.documentDirectory}`, Key: documentName }
         await s3.deleteObject(option, (s3err, fileData) => { if (s3err) { return 'Error while image processing' } return true })
         return 'Image successfully remove from AWS'
-    } catch (e) {
+    } catch (e: any) {
         throw new Error(e.message)
     }
 }

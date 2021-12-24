@@ -20,7 +20,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
       message: authControllerResponse.loginSuccess,
       data: { _id: user._id, email: user.email, token, type: user.type }
     })
-  } catch (e) {
+  } catch (e: any) {
     next(Boom.badData(e.message))
   }
 }

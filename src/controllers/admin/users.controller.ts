@@ -45,7 +45,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
                 email: data.email
             }
         })
-    } catch (e) {
+    } catch (e: any) {
         next(Boom.badData(e.message))
     }
 }
@@ -60,7 +60,7 @@ const getOneUser = async (req: Request, res: Response, next: NextFunction) => {
             next(Boom.notFound(authControllerResponse.getUserError))
         }
         res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
-    } catch (e) {
+    } catch (e: any) {
         next(Boom.badData(e.message))
     }
 }
@@ -93,7 +93,7 @@ const getAllUsers = async (request: Request, response: Response, next: NextFunct
 
         const getUsersList = await usersService.getAllUsers(Number(skip), Number(limit), searchFilter, usersSorting)
         response.status(200).json({ message: authControllerResponse.getUserSuccess, data: getUsersList })
-    } catch (e) {
+    } catch (e: any) {
         next(Boom.badData(e.message))
     }
 }
@@ -116,7 +116,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
         }
         await usersService.updateUser(req.body, req.params.userId)
         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
-    } catch (e) {
+    } catch (e: any) {
         return next(Boom.badData(e.message))
     }
 }
@@ -131,7 +131,7 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
         }
         await usersService.deleteUser(id)
         return res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
-    } catch (e) {
+    } catch (e: any) {
         return next(Boom.badData(e.message))
     }
 }

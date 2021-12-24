@@ -11,6 +11,7 @@ export const responseMessage = {
         userUpdateSuccess: 'User updated successfully',
         userAlreadyExistError: 'User Already exist', 
         getUserSuccess: 'User fetched successfully',
+        getUsersSuccess: 'All user fetched successfully',
         getUserError: 'User does not exist',
         userNotAuthorizationError: 'User not authorized',
         parentIdMissingError: 'ParentId is missing',
@@ -26,5 +27,8 @@ export const responseMessage = {
         fetchAdminSuccess: 'Admin details fetched successfully',
         createAdminFailure: 'Failed to add admin',
         getAdminFailure: 'Failed to fetch admin details',
+        sendCodeSuccess: 'Verification code successfully sent on your email',
+        forgotPassowrdFailure: 'Failed to proceed your request, try again',
+        forgotPassowrdSuccess: 'Password updated successfully'
     }
 }

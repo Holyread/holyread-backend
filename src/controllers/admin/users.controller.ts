@@ -3,8 +3,8 @@ import Boom from '@hapi/boom';
 
 import usersService from '../../services/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3 } from '../../lib/utils/utils'
-import { awsBucket } from '../../constants/app.constant'
+import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../lib/utils/utils'
+import { awsBucket, dataTable } from '../../constants/app.constant'
 import config from '../../../config'
 
 const authControllerResponse = responseMessage.authControllerResponse
@@ -65,6 +65,39 @@ const getOneUser = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
+/** Get all Users */
+const getAllUsers = async (request: Request, response: Response, next: NextFunction) => {
+    try {
+        const params = request.query
+        const skip: any = params.skip ? params.skip : dataTable.skip
+        const limit: any = params.limit ? params.limit : dataTable.limit
+
+        let searchFilter = {}
+        if (params.search) { searchFilter = { 'name': await getSearchRegexp(params.search) } }
+
+        const usersSorting = [];
+        switch (Number(params.column)) {
+            case 0:
+                usersSorting.push(['name', params.order || 'ASC']);
+                break;
+            case 0:
+                usersSorting.push(['email', params.order || 'ASC']);
+                break;
+            case 1:
+                usersSorting.push(['createdAt', params.order || 'ASC']);
+                break;
+            default:
+                usersSorting.push(['name', 'DESC']);
+                break;
+        }
+
+        const getUsersList = await usersService.getAllUsers(Number(skip), Number(limit), searchFilter, usersSorting)
+        response.status(200).json({ message: authControllerResponse.getUserSuccess, data: getUsersList })
+    } catch (e) {
+        next(Boom.badData(e.message))
+    }
+}
+
 /** Update user */
 const updateUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -103,4 +136,4 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
-export { addUser, getOneUser, updateUser, deleteUser }
+export { addUser, getOneUser, getAllUsers, updateUser, deleteUser }

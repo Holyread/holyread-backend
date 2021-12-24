@@ -36,6 +36,17 @@ const getOneUserByFilter = async (query: any) => {
     }
 }
 
+/** Get all Users for table */
+const getAllUsers = async (skip: number, limit, search: object, sort) => {
+    try {
+        const users = await UserModel.find({ ...search, type: 'Admin' }).skip(skip).limit(limit).sort(sort)
+        const count = await UserModel.find({ ...search, type: 'Admin' }).count()
+        return { count, users }
+    } catch (e) {
+        throw new Error(e)
+    }
+}
+
 /** Remove User */
 const deleteUser = async (id: string) => {
     try {
@@ -46,4 +57,4 @@ const deleteUser = async (id: string) => {
     }
 }
 
-export default { createUser, updateUser, getOneUserByFilter, deleteUser }
+export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser }

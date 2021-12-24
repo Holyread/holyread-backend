@@ -30,5 +30,14 @@ export const responseMessage = {
         sendCodeSuccess: 'Verification code successfully sent on your email',
         forgotPassowrdFailure: 'Failed to proceed your request, try again',
         forgotPassowrdSuccess: 'Password updated successfully'
-    }
+    },
+    subscriptionsControllerResponse: {
+        createSubscriptionSuccess: 'Subscription added successfully',
+        updateSubscriptionSuccess: 'Subscription updated successfully',
+        deleteSubscriptionSuccess: 'Subscription deleted successfully',
+        fetchSubscriptionSuccess: 'Subscription details fetched successfully',
+        fetchSubscriptionsSuccess: 'Subscriptions details fetched successfully',
+        createSubscriptionFailure: 'Failed to add subscription',
+        getSubscriptionFailure: 'Failed to fetch subscription details',
+    },
 }

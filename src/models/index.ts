@@ -1,6 +1,7 @@
 import mongoose from 'mongoose'
 import config from '../../config'
 import { UserModel } from './user.model'
+import { SubscriptionsModel } from './subscription.model'
 
 const NODE_ENV = config.NODE_ENV
 const option = { useNewUrlParser: true, useUnifiedTopology: true }
@@ -17,5 +18,6 @@ if (NODE_ENV !== 'test') {
 
 export {
   mongoose,
-  UserModel
+  UserModel,
+  SubscriptionsModel
 }

@@ -80,10 +80,13 @@ const getAllUsers = async (request: Request, response: Response, next: NextFunct
             case 0:
                 usersSorting.push(['name', params.order || 'ASC']);
                 break;
-            case 0:
+            case 1:
                 usersSorting.push(['email', params.order || 'ASC']);
                 break;
-            case 1:
+            case 2:
+                usersSorting.push(['subscriptions', params.order || 'ASC']);
+                break;
+            case 3:
                 usersSorting.push(['createdAt', params.order || 'ASC']);
                 break;
             default:
@@ -105,7 +108,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
         /** Get user from db */
         const userObj: any = await usersService.getOneUserByFilter({ _id: id })
         if (!userObj) {
-            throw new Error(authControllerResponse.getUserError)
+            next(Boom.notFound(authControllerResponse.getUserError))
         }
         if (req.body.image === null) {
             await removeImageToAwsS3(userObj.image, s3Bucket)

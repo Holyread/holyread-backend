@@ -5,10 +5,6 @@ import Boom from '@hapi/boom'
 
 export default async (req: any, res: Response, next: NextFunction): Promise<any> => {
     const accessToken: string | null = req.headers['x-access-token'] as string;
-    const parentId: string | null = req.headers['parent-id'] as string;
-    if (!parentId) {
-        next(Boom.badRequest('Missing parent id'));
-    }
     if (!accessToken) {
         next(Boom.badRequest('Missing access token'));
     } else {
@@ -20,10 +16,6 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             }
             if (userDetails.type === 'Admin') {
                 next(Boom.badRequest('User does not permitted to update parent'));
-            }
-            const parentDetails = await userService.getOneUserByFilter({ _id: parentId, type: 'Admin' })
-            if (!parentDetails) {
-                next(Boom.badRequest('Parent details not found'));
             }
             req.user = userDetails
             next();

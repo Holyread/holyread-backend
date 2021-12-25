@@ -10,7 +10,6 @@ const authControllerResponse = responseMessage.authControllerResponse
 const signInUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const params: { email: string, password: string } = req.body
-    console.log({ email: params.email, password: encrypt(params.password) })
     const user = await usersService.getOneUserByFilter({ email: params.email, password: encrypt(params.password) })
     if (!user) {
       return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
@@ -29,6 +28,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
 const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = req.body
+    console.log(body)
     /** Get user from db */
     const user: any = await usersService.getOneUserByFilter({ email: req.body.email })
     if (user) {

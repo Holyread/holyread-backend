@@ -1,7 +1,7 @@
 export const allowedOrigins = {
     test: ['*'],
-    local: ['http://localhost:3000'],
-    development: ['http://localhost:3000'],
+    local: ['http://localhost:4200'],
+    development: ['http://localhost:4200', 'https://dev.holyreads.com'],
     staging: [''],
     production: [''],
 }

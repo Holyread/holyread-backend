@@ -14,6 +14,8 @@ export const responseMessage = {
         getUsersSuccess: 'All user fetched successfully',
         getUserError: 'User does not exist',
         userNotAuthorizationError: 'User not authorized',
+        userInvalidPasswordError: 'Password is incorrect',
+        passwordUpdateSuccess: 'Password changed successfully',
         parentIdMissingError: 'ParentId is missing',
         getParentDetailsError: 'Parent details not found',
         childDependencyError: 'User can not deleted due to have childs',

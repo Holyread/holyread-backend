@@ -57,7 +57,7 @@ const getOneUser = async (req: Request, res: Response, next: NextFunction) => {
         /** Get user from db */
         const userObj: any = await usersService.getOneUserByFilter({ _id: id })
         if (!userObj) {
-            next(Boom.notFound(authControllerResponse.getUserError))
+            return next(Boom.notFound(authControllerResponse.getUserError))
         }
         res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
     } catch (e: any) {
@@ -108,7 +108,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
         /** Get user from db */
         const userObj: any = await usersService.getOneUserByFilter({ _id: id })
         if (!userObj) {
-            next(Boom.notFound(authControllerResponse.getUserError))
+            return next(Boom.notFound(authControllerResponse.getUserError))
         }
         if (req.body.image === null) {
             await removeImageToAwsS3(userObj.image, s3Bucket)

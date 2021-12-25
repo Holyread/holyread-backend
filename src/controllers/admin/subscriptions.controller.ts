@@ -14,7 +14,7 @@ const addSubscription = async (req: Request, res: Response, next: NextFunction) 
         const body = req.body
         const subscriptionObj: any = await subscriptionsService.getOneSubscriptionByFilter({ title: body.title, price: body.price })
         if (subscriptionObj) {
-            next(Boom.conflict(subscriptionsControllerResponse.createSubscriptionFailure))
+            return next(Boom.conflict(subscriptionsControllerResponse.createSubscriptionFailure))
         }
         const data = await subscriptionsService.createSubscription(body)
         res.status(200).send({
@@ -33,7 +33,7 @@ const getOneSubscription = async (req: Request, res: Response, next: NextFunctio
         /** Get subscription from db */
         const subscriptionObj: any = await subscriptionsService.getOneSubscriptionByFilter({ _id: id })
         if (!subscriptionObj) {
-            next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
+            return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
         }
         res.status(200).send({
             message: subscriptionsControllerResponse.fetchSubscriptionSuccess,
@@ -90,7 +90,7 @@ const updateSubscription = async (req: Request, res: Response, next: NextFunctio
         /** Get subscription from db */
         const subscriptionObj: any = await subscriptionsService.getOneSubscriptionByFilter({ _id: id })
         if (!subscriptionObj) {
-            next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
+            return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
         }
         const data = await subscriptionsService.updateSubscription(req.body, id)
         return res.status(200).send({ message: subscriptionsControllerResponse.updateSubscriptionSuccess, data })

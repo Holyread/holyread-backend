@@ -6,36 +6,42 @@ export interface IUser extends mongoose.Document {
     name: string,
     email: string,
     password: string,
-    subscriptions?: 'Monthly' | 'Half-Yearly' | 'Yearly' | 'Expired',
+    subscriptions?: string,
     type: 'User' | 'Admin',
     status?: 'Active' | 'InActive',
     verified?: boolean,
     image?: string,
-    code?: number
+    code?: number,
+    emailNotification?: boolean,
+    notificationSetting?: boolean
 }
 
 export type createUserType = {
     name: string,
     email: string,
     password: string,
-    subscriptions?: 'Monthly' | 'Half-Yearly' | 'Yearly' | 'Expired',
+    subscriptions?: string,
     type: 'User' | 'Admin',
     status?: 'Active' | 'InActive',
     verified?: boolean,
     image?: string,
-    code?: number
+    code?: number,
+    emailNotification?: boolean,
+    notificationSetting?: boolean
 }
 
 export type getUserType = {
     _id?: string,
     name: string,
     email: string,
-    subscriptions?: 'Monthly' | 'Half-Yearly' | 'Yearly' | 'Expired',
+    subscriptions?: string,
     type: 'User' | 'Admin',
     status?: 'Active' | 'InActive',
     verified?: boolean,
     image?: string,
-    code?: number
+    code?: number,
+    emailNotification?: boolean,
+    notificationSetting?: boolean
 }
 
 export const UserSchema = new Schema({
@@ -48,6 +54,8 @@ export const UserSchema = new Schema({
     verified: { type: Boolean },
     image: { type: String },
     code: { type: String },
+    emailNotification: { type: Boolean },
+    notificationSetting: { type: Boolean },
     createdAt: {
         type: Date, default: () => {
             return new Date()

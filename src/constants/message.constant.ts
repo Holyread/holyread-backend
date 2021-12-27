@@ -42,4 +42,7 @@ export const responseMessage = {
         createSubscriptionFailure: 'Failed to add subscription',
         getSubscriptionFailure: 'Failed to fetch subscription details',
     },
+    dashboardControllerResponse: {
+        getDashboardSuccess: 'Dashboard details fetched successfully'
+    },   
 }

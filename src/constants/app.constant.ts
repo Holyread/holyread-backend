@@ -25,3 +25,9 @@ export const dataTable = {
     limit: 10,
     skip: 0,
 }
+
+export const awsSES = {
+    apiVersion: '2010-12-01',
+    source: 'Holyreads <no-reply@holyreads.com>',
+    region: 'us-east-1',
+}

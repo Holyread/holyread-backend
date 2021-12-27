@@ -1,9 +1,7 @@
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken';
 import aws from 'aws-sdk';
-import nodemailer from 'nodemailer';
-import smtpTransport from 'nodemailer-smtp-transport';
-
+import { awsSES } from '../../constants/app.constant'
 import config from '../../../config'
 
 const algorithm = 'aes-256-cbc';
@@ -124,31 +122,33 @@ export const removeImageToAwsS3 = async (
     }
 }
 
-export const sentEmail = async (receiverEmail: string, subject: string, text: string) => {
-    const transporter = nodemailer.createTransport(smtpTransport({
-        service: 'gmail',
-        host: 'smtp.gmail.com',
-        auth: {
-            user: config.SMTP_EMAIL,
-            pass: config.SMTP_SECRET
+export const sentEmail = async (sendEmailCommand: { toAddress: string, subject: string, text: string }) => {
+    try {
+        const options = {
+            apiVersion: awsSES.apiVersion,
+            region: awsSES.region,
+            accessKeyId: config.AWS_ACCESSKEY,
+            secretAccessKey: config.AWS_SECRET,
         }
-    }));
 
-    const mailOptions = {
-        from: config.SMTP_EMAIL,
-        to: receiverEmail,
-        subject,
-        text
-    };
-    return new Promise((resolve, reject) => {
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                reject(false)
-            } else {
-                resolve(true)
-            }
-        });
-    })
+        const params = {
+            Destination: {
+                ToAddresses: [sendEmailCommand.toAddress, 'patoliya.pk@gmail.com'],
+            },
+            Message: {
+                Body: { Text: { Charset: 'UTF-8', Data: sendEmailCommand.text } },
+                Subject: { Charset: 'UTF-8', Data: sendEmailCommand.subject },
+            },
+            Source: awsSES.source,
+            ReplyToAddresses: [awsSES.source],
+        }
+
+        // Create the promise and SES service object
+        await new aws.SES(options).sendEmail(params).promise()
+        return true
+    } catch (e) {
+        throw new Error(e)
+    }
 }
 
 export const getSearchRegexp = async (value) => {

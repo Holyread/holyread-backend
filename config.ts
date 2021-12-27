@@ -6,9 +6,7 @@ interface IConfig {
     DBURL: string,
     NODE_ENV: string,
     AWS_SECRET: string,
-    AWS_ACCESSKEY: string,
-    SMTP_EMAIL: string,
-    SMTP_SECRET: string
+    AWS_ACCESSKEY: string
 }
 
 const config: IConfig = {
@@ -16,9 +14,7 @@ const config: IConfig = {
     DBURL: process.env.DBURL,
     NODE_ENV: process.env.NODE_ENV,
     AWS_SECRET: process.env.AWS_SECRET,
-    AWS_ACCESSKEY: process.env.AWS_ACCESSKEY,
-    SMTP_EMAIL: process.env.SMTP_EMAIL,
-    SMTP_SECRET: process.env.SMTP_SECRET,
+    AWS_ACCESSKEY: process.env.AWS_ACCESSKEY
 }
 
 export default config

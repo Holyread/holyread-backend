@@ -17,7 +17,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
             return next(Boom.badData(adminControllerResponse.getAdminFailure))
         }
         const code = Math.floor(100000 + Math.random() * 900000)
-        const result = await sentEmail(email, 'Verification Code', `Your verification code is: ${code}`);
+        const result = await sentEmail({ toAddress: email, subject: 'Verification Code', text: `Your verification code is: ${code}` });
         if (!result) {
             return next(Boom.badData(adminControllerResponse.forgotPassowrdFailure))
         }

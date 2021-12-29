@@ -22,6 +22,6 @@ export const awsBucket = {
 }
 
 export const dataTable = {
-    limit: 10,
+    limit: 100,
     skip: 0,
 }

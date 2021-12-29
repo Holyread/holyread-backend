@@ -14,8 +14,8 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             if (!userDetails) {
                 next(Boom.badRequest('User not authorized'));
             }
-            if (userDetails.type === 'Admin') {
-                next(Boom.badRequest('User does not permitted to update parent'));
+            if (userDetails.status !== 'Active') {
+                next(Boom.badRequest('User not active'));
             }
             req.user = userDetails
             next();

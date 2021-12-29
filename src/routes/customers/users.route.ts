@@ -3,7 +3,7 @@ import {
   getUserAccount,
   changePassword,
   getUserSubscription
-} from '../../controllers/customers/account.controller'
+} from '../../controllers/customers/users.controller'
 
 import customerPassport from '../../middleware/customers.passport'
 

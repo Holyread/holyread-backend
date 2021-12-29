@@ -1,7 +1,10 @@
 import express, { Router } from 'express'
-import authService from '../../controllers/admin/auth.controller'
+import authController from '../../controllers/admin/auth.controller'
 const router: Router = express.Router()
 
-router.post('/login', authService.signInUser)
+router.post('/login', authController.signInUser)
+router.post('/login/verify', authController.verifySignInOtp)
+router.post('/forgot-password', authController.forgotPassoword)
+router.post('/change-password', authController.changePassword)
 
 export default router

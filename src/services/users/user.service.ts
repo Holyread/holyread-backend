@@ -1,5 +1,9 @@
 import { UserModel } from '../../models/index'
 import { getToken, encrypt } from '../../lib/utils/utils'
+import { awsBucket } from '../../constants/app.constant'
+import config from '../../../config'
+
+const NODE_ENV = config.NODE_ENV
 
 /** Add User */
 const createUser = async (body: any) => {
@@ -30,6 +34,7 @@ const updateUser = async (body: any, id: string) => {
 const getOneUserByFilter = async (query: any) => {
     try {
         const result = await UserModel.findOne(query).select('-password').lean()
+        result.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + result.image
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -41,6 +46,9 @@ const getAllUsers = async (skip: number, limit, search: object, sort) => {
     try {
         const users = await UserModel.find({ ...search, type: 'Admin' }).skip(skip).limit(limit).sort(sort)
         const count = await UserModel.find({ ...search, type: 'Admin' }).count()
+        users.map(oneUser => {
+            oneUser.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + oneUser.image
+        })
         return { count, users }
     } catch (e: any) {
         throw new Error(e)

@@ -6,13 +6,6 @@ export const allowedOrigins = {
     production: [''],
 }
 
-export const baseUrls = {
-    local: 'http://localhost:5000',
-    development: '',
-    staging: '',
-    production: '',
-};
-
 export const awsBucket = {
     local: { bucketName: 'holyreads-develop', s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com' },
     development: { bucketName: 'holyreads-develop', s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com' },

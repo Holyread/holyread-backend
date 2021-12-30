@@ -2,14 +2,18 @@ import { UserModel } from '../../models/index'
 import { getToken, encrypt } from '../../lib/utils/utils'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
+import { responseMessage } from '../../constants/message.constant'
 
 const NODE_ENV = config.NODE_ENV
-
+const authControllerResponse = responseMessage.authControllerResponse
 /** Add User */
 const createUser = async (body: any) => {
     try {
         body.password = encrypt(body.password)
         const result = await UserModel.create(body)
+        if (!result) {
+            throw new Error(authControllerResponse.createUserFailed)
+        }
         const token: string = getToken({ email: result.email })
         return { _id: result._id, email: result.email, token }
     } catch (e: any) {
@@ -34,7 +38,9 @@ const updateUser = async (body: any, id: string) => {
 const getOneUserByFilter = async (query: any) => {
     try {
         const result = await UserModel.findOne(query).select('-password').lean()
-        result.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + result.image
+        if (result && result.image) {
+            result.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + result.image
+        }
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -44,10 +50,12 @@ const getOneUserByFilter = async (query: any) => {
 /** Get all Users for table */
 const getAllUsers = async (skip: number, limit, search: object, sort) => {
     try {
-        const users = await UserModel.find({ ...search, type: 'Admin' }).skip(skip).limit(limit).sort(sort)
+        const users = await UserModel.find({ ...search, type: 'Admin' }).skip(skip).limit(limit).sort(sort).lean()
         const count = await UserModel.find({ ...search, type: 'Admin' }).count()
         users.map(oneUser => {
-            oneUser.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + oneUser.image
+            if (oneUser && oneUser.image) {
+                oneUser.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + oneUser.image
+            }
         })
         return { count, users }
     } catch (e: any) {

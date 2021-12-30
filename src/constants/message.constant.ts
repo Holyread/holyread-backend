@@ -20,6 +20,7 @@ export const responseMessage = {
         getParentDetailsError: 'Parent details not found',
         childDependencyError: 'User can not deleted due to have childs',
         deleteUserSuccess: 'User deleted successfully',
+        createUserFailed: 'Failed to create user'
     },
     adminControllerResponse: {
         createUserSuccess: 'User added successfully',

@@ -27,8 +27,8 @@ const updateUser = async (body: any, id: string) => {
         if (body.password) {
             body.password = encrypt(body.password)
         }
-        await UserModel.findOneAndUpdate({ _id: id }, { ...body, updatedAt: new Date() }).lean()
-        return true
+        const data = await UserModel.findOneAndUpdate({ _id: id }, { ...body, updatedAt: new Date() }, { new: true }).lean()
+        return data
     } catch (e: any) {
         throw new Error(e)
     }

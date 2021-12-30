@@ -12,7 +12,6 @@ const adminControllerResponse = responseMessage.adminControllerResponse
 const signInUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const params: { email: string, password: string } = req.body
-    console.log({ email: params.email, password: encrypt(params.password) })
     const user = await usersService.getOneUserByFilter({ email: params.email, password: encrypt(params.password) })
     if (!user) {
       return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
@@ -20,9 +19,12 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     const code = Math.floor(100000 + Math.random() * 900000)
     const result = await sentEmail(params.email, 'Verification Code', `Your verification code is: ${code}`);
     if (!result) {
+      return next(Boom.badData(adminControllerResponse.sentEmailFailure))
+    }
+    const updatedUserDetails = await usersService.updateUser({ code }, user._id)
+    if (!updatedUserDetails || updatedUserDetails.code !== code) {
       return next(Boom.badData(adminControllerResponse.forgotPassowrdFailure))
     }
-    await usersService.updateUser({ code }, user._id)
     res.status(200).send({
       message: adminControllerResponse.sendCodeSuccess
     })

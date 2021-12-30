@@ -39,7 +39,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             verified: false
         })
         res.status(200).send({
-            message: adminControllerResponse.createUserSuccess,
+            message: adminControllerResponse.createAdminSuccess,
             data: {
                 _id: data._id,
                 email: data.email

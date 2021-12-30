@@ -72,8 +72,8 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
   }
 }
 
-/**  change new password */
-const changePassword = async (req: Request, res: Response, next: NextFunction) => {
+/**  verify new password */
+const verifyPassword = async (req: Request, res: Response, next: NextFunction) => {
   try {
       const { email, newPassword, code }: any = req.body
       /** Get user from db */
@@ -88,4 +88,20 @@ const changePassword = async (req: Request, res: Response, next: NextFunction) =
   }
 }
 
-export default { signInUser, verifySignInOtp, forgotPassoword, changePassword }
+/**  change password */
+const changePassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+      const { email, password, newPassword }: any = req.body
+      /** Get user from db */
+      const userObj: any = await usersService.getOneUserByFilter({ email, password: encrypt(password), type: 'Admin' })
+      if (!userObj) {
+          return next(Boom.notFound(adminControllerResponse.forgotPassowrdFailure))
+      }
+      await usersService.updateUser({ password: newPassword }, userObj._id)
+      res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
+  } catch (e: any) {
+      next(Boom.badData(e.message))
+  }
+}
+
+export default { signInUser, verifySignInOtp, forgotPassoword, verifyPassword, changePassword }

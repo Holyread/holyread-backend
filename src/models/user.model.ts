@@ -13,7 +13,20 @@ export interface IUser extends mongoose.Document {
     image?: string,
     verificationCode?: number,
     emailNotification?: boolean,
-    notificationSetting?: boolean
+    notificationSetting?: boolean,
+    metaKeyword?: string,
+    metaDescription?: string,
+    Copyright?: string,
+    adminPaging?: string,
+    adminReceiveEmail?: string,
+    contactEmail?: string,
+    contactNumber?: string,
+    facebookLink?: string,
+    googlePlusLink?: string,
+    TwitterLink?: string,
+    iosAppLink?: string,
+    androidAppLink?: string,
+    maxDevicesLogin?: string
 }
 
 export type createUserType = {
@@ -27,7 +40,20 @@ export type createUserType = {
     image?: string,
     verificationCode?: number,
     emailNotification?: boolean,
-    notificationSetting?: boolean
+    notificationSetting?: boolean,
+    metaKeyword?: string,
+    metaDescription?: string,
+    Copyright?: string,
+    adminPaging?: string,
+    adminReceiveEmail?: string,
+    contactEmail?: string,
+    contactNumber?: string,
+    facebookLink?: string,
+    googlePlusLink?: string,
+    TwitterLink?: string,
+    iosAppLink?: string,
+    androidAppLink?: string,
+    maxDevicesLogin?: string
 }
 
 export type getUserType = {
@@ -41,7 +67,20 @@ export type getUserType = {
     image?: string,
     verificationCode?: number,
     emailNotification?: boolean,
-    notificationSetting?: boolean
+    notificationSetting?: boolean,
+    metaKeyword?: string,
+    metaDescription?: string,
+    Copyright?: string,
+    adminPaging?: string,
+    adminReceiveEmail?: string,
+    contactEmail?: string,
+    contactNumber?: string,
+    facebookLink?: string,
+    googlePlusLink?: string,
+    TwitterLink?: string,
+    iosAppLink?: string,
+    androidAppLink?: string,
+    maxDevicesLogin?: string
 }
 
 export const UserSchema = new Schema({
@@ -56,6 +95,19 @@ export const UserSchema = new Schema({
     verificationCode: { type: String },
     emailNotification: { type: Boolean },
     notificationSetting: { type: Boolean },
+    metaKeyword: { type: String },
+    metaDescription: { type: String },
+    Copyright: { type: String },
+    adminPaging: { type: String },
+    adminReceiveEmail: { type: String },
+    contactEmail: { type: String },
+    contactNumber: { type: String },
+    facebookLink: { type: String },
+    googlePlusLink: { type: String },
+    TwitterLink: { type: String },
+    iosAppLink: { type: String },
+    androidAppLink: { type: String },
+    maxDevicesLogin: { type: String },
     createdAt: {
         type: Date, default: () => {
             return new Date()

@@ -15,8 +15,7 @@ export const responseMessage = {
         getUserError: 'User does not exist',
         userNotAuthorizationError: 'User not authorized',
         userInvalidPasswordError: 'Password is incorrect',
-        passwordUpdateSuccess: 'Password changed successfully',
-        getParentDetailsError: 'Parent details not found',
+        passwordUpdateSuccess: 'Password has been changed successfully',
         deleteUserSuccess: 'User deleted successfully',
         createUserFailed: 'Failed to create user'
     },
@@ -28,7 +27,7 @@ export const responseMessage = {
         fetchAdminSuccess: 'Admin details fetched successfully',
         getAdminFailure: 'Admin does not exist',
         sendCodeSuccess: 'Verification code successfully sent on your email',
-        forgotPassowrdFailure: 'Failed to proceed your request, try again',
+        forgotPassowrdFailure: 'Failed to proceed your request, please try again',
         sentEmailFailure: 'Failed to send email, please try again',
         forgotPassowrdSuccess: 'Password updated successfully'
     },
@@ -37,7 +36,7 @@ export const responseMessage = {
         updateSubscriptionSuccess: 'Subscription updated successfully',
         deleteSubscriptionSuccess: 'Subscription deleted successfully',
         fetchSubscriptionSuccess: 'Subscription details fetched successfully',
-        fetchSubscriptionsSuccess: 'Subscriptions details fetched successfully',
+        fetchSubscriptionsSuccess: 'Subscriptions list fetched successfully',
         createSubscriptionFailure: 'Failed to add subscription',
         getSubscriptionFailure: 'Failed to fetch subscription details',
     },

@@ -11,7 +11,7 @@ export interface IUser extends mongoose.Document {
     status?: 'Active' | 'InActive',
     verified?: boolean,
     image?: string,
-    code?: number,
+    verificationCode?: number,
     emailNotification?: boolean,
     notificationSetting?: boolean
 }
@@ -25,7 +25,7 @@ export type createUserType = {
     status?: 'Active' | 'InActive',
     verified?: boolean,
     image?: string,
-    code?: number,
+    verificationCode?: number,
     emailNotification?: boolean,
     notificationSetting?: boolean
 }
@@ -39,7 +39,7 @@ export type getUserType = {
     status?: 'Active' | 'InActive',
     verified?: boolean,
     image?: string,
-    code?: number,
+    verificationCode?: number,
     emailNotification?: boolean,
     notificationSetting?: boolean
 }
@@ -53,7 +53,7 @@ export const UserSchema = new Schema({
     status: { type: String },
     verified: { type: Boolean },
     image: { type: String },
-    code: { type: String },
+    verificationCode: { type: String },
     emailNotification: { type: Boolean },
     notificationSetting: { type: Boolean },
     createdAt: {

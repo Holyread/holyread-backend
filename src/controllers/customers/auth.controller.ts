@@ -6,7 +6,7 @@ import { responseMessage } from '../../constants/message.constant'
 
 const authControllerResponse = responseMessage.authControllerResponse
 
-/** Confirm admin user signIn with verificationCode */
+/** user signIn */
 const signInUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const params: { email: string, password: string } = req.body

@@ -16,13 +16,13 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     if (!user) {
       return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
     }
-    const code = Math.floor(100000 + Math.random() * 900000)
-    const result = await sentEmail(params.email, 'Verification Code', `Your verification code is: ${code}`);
+    const verificationCode = Math.floor(100000 + Math.random() * 900000)
+    const result = await sentEmail(params.email, 'Verification Code', `Your verification code is: ${verificationCode}`);
     if (!result) {
       return next(Boom.badData(adminControllerResponse.sentEmailFailure))
     }
-    const updatedUserDetails = await usersService.updateUser({ code }, user._id)
-    if (!updatedUserDetails || updatedUserDetails.code !== code) {
+    const updatedUserDetails: any = await usersService.updateUser({ verificationCode }, user._id)
+    if (!updatedUserDetails || updatedUserDetails.verificationCode !== String(verificationCode)) {
       return next(Boom.badData(adminControllerResponse.forgotPassowrdFailure))
     }
     res.status(200).send({
@@ -37,7 +37,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
 const verifySignInOtp = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const params: { code: string } = req.body
-    const user = await usersService.getOneUserByFilter({ code: params.code, type: 'Admin' })
+    const user = await usersService.getOneUserByFilter({ verificationCode: params.code, type: 'Admin' })
     if (!user) {
       return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
     }
@@ -60,12 +60,12 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
       if (!user) {
           return next(Boom.badData(adminControllerResponse.getAdminFailure))
       }
-      const code = Math.floor(100000 + Math.random() * 900000)
-      const result = await sentEmail(email, 'Verification Code', `Your verification code is: ${code}`);
+      const verificationCode = Math.floor(100000 + Math.random() * 900000)
+      const result = await sentEmail(email, 'Verification Code', `Your verification code is: ${verificationCode}`);
       if (!result) {
           return next(Boom.badData(adminControllerResponse.forgotPassowrdFailure))
       }
-      await usersService.updateUser({ code }, user._id)
+      await usersService.updateUser({ verificationCode }, user._id)
       res.status(200).send({
           message: adminControllerResponse.sendCodeSuccess
       })
@@ -79,11 +79,11 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
   try {
       const { email, newPassword, code }: any = req.body
       /** Get user from db */
-      const userObj: any = await usersService.getOneUserByFilter({ email, code, type: 'Admin' })
+      const userObj: any = await usersService.getOneUserByFilter({ email, verificationCode: code, type: 'Admin' })
       if (!userObj) {
           return next(Boom.notFound(adminControllerResponse.forgotPassowrdFailure))
       }
-      await usersService.updateUser({ password: newPassword, $unset: { code: 1 } }, userObj._id)
+      await usersService.updateUser({ password: newPassword, $unset: { verificationCode: 1 } }, userObj._id)
       res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
   } catch (e: any) {
       next(Boom.badData(e.message))

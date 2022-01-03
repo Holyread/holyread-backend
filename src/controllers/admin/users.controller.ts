@@ -35,8 +35,8 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             password: body.password,
             image: body.image,
             type: 'User',
-            status: 'InActive',
-            verified: false
+            status: 'Active',
+            verified: true
         })
         res.status(200).send({
             message: adminControllerResponse.createAdminSuccess,

@@ -1,10 +1,11 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
-import { encrypt, getToken } from '../../lib/utils/utils'
+import { encrypt, getToken, sentEmail } from '../../lib/utils/utils'
 import usersService from '../../services/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
 
 const authControllerResponse = responseMessage.authControllerResponse
+const adminControllerResponse = responseMessage.adminControllerResponse
 
 /** user signIn */
 const signInUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -28,24 +29,97 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
 const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = req.body
-    console.log(body)
     /** Get user from db */
     const user: any = await usersService.getOneUserByFilter({ email: req.body.email })
-    if (user) {
-      return next(Boom.badData(authControllerResponse.userAlreadyExistError))
+    if (user && !user.verified) {
+      res.status(200).send({ message: adminControllerResponse.verifyCodeSuccess })
+    }
+    if (user && user.verified) {
+      return next(Boom.badData(adminControllerResponse.AdminExistError))
+    }
+    const verificationCode = Math.floor(100000 + Math.random() * 900000)
+    const result = await sentEmail(body.email, 'Verification Code', `Your verification code is: ${verificationCode}`);
+    if (!result) {
+      return next(Boom.badData(adminControllerResponse.forgotPassowrdFailure))
+    }
+    if (user && !user.verificationCode) {
+      await usersService.updateUser({
+        verificationCode
+      }, user._id)
+      res.status(200).send({ message: adminControllerResponse.sendCodeSuccess })
     }
     await usersService.createUser({
       name: body.name,
       email: body.email,
       password: body.password,
       type: 'User',
-      status: 'InActive',
-      verified: false
+      status: 'Active',
+      verified: false,
+      verificationCode
     })
+    res.status(200).send({ message: adminControllerResponse.sendCodeSuccess })
+  } catch (e: any) {
+    next(Boom.badData(e.message))
+  }
+}
+
+/** Verify User signup */
+const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const code = req.params.code
+    /** Get user from db */
+    const user: any = await usersService.getOneUserByFilter({ verificationCode: code })
+    if (!user) {
+      return next(Boom.badData(authControllerResponse.getUserError))
+    }
+    await usersService.updateUser({
+      verified: true,
+      status: 'Active',
+      $unset: { verificationCode: 1 }
+    }, user._id)
     res.status(200).send({ message: authControllerResponse.signUpSuccess })
   } catch (e: any) {
     next(Boom.badData(e.message))
   }
 }
 
-export default { signInUser, signUpUser }
+/** Process forgot password request */
+const forgotPassoword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const email = req.body.email
+    /** Get user from db */
+    const user: any = await usersService.getOneUserByFilter({ email, type: 'User' })
+    if (!user) {
+      return next(Boom.badData(authControllerResponse.getUserError))
+    }
+    const verificationCode = Math.floor(100000 + Math.random() * 900000)
+    const result = await sentEmail(email, 'Verification Code', `Your verification code is: ${verificationCode}`);
+    if (!result) {
+      return next(Boom.badData(adminControllerResponse.forgotPassowrdFailure))
+    }
+    await usersService.updateUser({ verificationCode }, user._id)
+    res.status(200).send({
+      message: adminControllerResponse.sendCodeSuccess
+    })
+  } catch (e: any) {
+    next(Boom.badData(e.message))
+  }
+}
+
+/**  verify new password */
+const verifyPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { newPassword, code }: any = req.body
+    /** Get user from db */
+    const userObj: any = await usersService.getOneUserByFilter({ verificationCode: code, type: 'User' })
+    if (!userObj) {
+      return next(Boom.notFound(adminControllerResponse.forgotPassowrdFailure))
+    }
+    await usersService.updateUser({ password: newPassword, $unset: { verificationCode: 1 } }, userObj._id)
+    res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
+  } catch (e: any) {
+    next(Boom.badData(e.message))
+  }
+}
+
+export default { signInUser, verifyUserSignUp, signUpUser, forgotPassoword, verifyPassword }

@@ -6,6 +6,5 @@ router.post('/login', authController.signInUser)
 router.post('/login/verify', authController.verifySignInOtp)
 router.post('/forgot-password', authController.forgotPassoword)
 router.post('/verify-password', authController.verifyPassword)
-router.post('/change-password', authController.changePassword)
 
 export default router

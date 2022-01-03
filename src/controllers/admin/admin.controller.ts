@@ -3,7 +3,7 @@ import Boom from '@hapi/boom';
 
 import usersService from '../../services/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3 } from '../../lib/utils/utils'
+import { removeImageToAwsS3, uploadImageToAwsS3, encrypt } from '../../lib/utils/utils'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
 
@@ -54,4 +54,21 @@ const updateAdmin = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
-export { getAdmin, updateAdmin }
+/**  change password */
+const changePassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { password, newPassword }: { password: string, newPassword: string } = req.body
+        const id = req.params.id as string
+        /** Get user from db */
+        const userObj: any = await usersService.getOneUserByFilter({ _id: id, password: encrypt(password), type: 'Admin' })
+        if (!userObj) {
+            return next(Boom.notFound(adminControllerResponse.forgotPassowrdFailure))
+        }
+        await usersService.updateUser({ password: newPassword }, userObj._id)
+        res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+  }
+
+export { getAdmin, updateAdmin, changePassword }

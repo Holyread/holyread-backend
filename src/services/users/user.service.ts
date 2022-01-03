@@ -41,7 +41,7 @@ const getOneUserByFilter = async (query: any) => {
         if (result && result.image) {
             result.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + result.image
         }
-        if (result.subscriptions) {
+        if (result && result.subscriptions) {
             const userSubscriptionDetails = await SubscriptionsModel.findById(result.subscriptions).lean()
             if (userSubscriptionDetails) {
                 result.subscriptions = userSubscriptionDetails.title

@@ -30,6 +30,7 @@ export const responseMessage = {
         sendCodeSuccess: 'Verification code successfully sent on your email',
         verifyCodeSuccess: 'Code already sended on your email on your signUp request, please verify with code',
         forgotPassowrdFailure: 'Failed to proceed your request, please try again',
+        failedToSendPassword: 'Failed to send password on email',
         sentEmailFailure: 'Failed to send email, please try again',
         forgotPassowrdSuccess: 'Password updated successfully'
     },

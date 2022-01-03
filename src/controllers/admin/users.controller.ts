@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
 import usersService from '../../services/users/user.service'
+import subscriptionService from '../../services/subscriptions/subscriptions.service'
 import { responseMessage } from '../../constants/message.constant'
 import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp, sentEmail } from '../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../constants/app.constant'
@@ -9,6 +10,7 @@ import config from '../../../config'
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
+const subscriptionsControllerResponse = responseMessage.subscriptionsControllerResponse
 
 const NODE_ENV = config.NODE_ENV
 const s3Bucket = {
@@ -33,6 +35,12 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         const result = await sentEmail(body.email, 'Temporary Password', `Your temporary password is: ${password}`);
         if (!result) {
             return next(Boom.badData(adminControllerResponse.forgotPassowrdFailure))
+        }
+        if (body.subscription) {
+            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscription })
+            if (!subscriptionDetails) {
+                return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
+            }
         }
         const data = await usersService.createUser({
             name: body.name,
@@ -119,6 +127,12 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
         if (req.body.image) {
             await removeImageToAwsS3(userObj.image, s3Bucket)
             req.body.image = await uploadImageToAwsS3(req.body.image, userObj.name, s3Bucket)
+        }
+        if (req.body.subscription) {
+            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: req.body.subscription })
+            if (!subscriptionDetails) {
+                return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
+            }
         }
         await usersService.updateUser(req.body, req.params.userId)
         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })

@@ -42,7 +42,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             type: 'User',
             status: 'Active',
             verified: true,
-            subscription: body.subscription
+            subscriptions: body.subscription
         })
         res.status(200).send({
             message: adminControllerResponse.createAdminSuccess,

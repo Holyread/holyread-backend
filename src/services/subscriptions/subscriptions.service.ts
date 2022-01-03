@@ -45,6 +45,16 @@ const getAllSubscriptions = async (skip: number, limit, search: object, sort) =>
       }
 }
 
+/** Get all Subscriptions name */
+const getAllSubscriptionsName = async () => {
+      try {
+            const subscriptionsList = await SubscriptionsModel.find({}).select('title')
+            return subscriptionsList
+      } catch (e: any) {
+            throw new Error(e)
+      }
+}
+
 /** Remove Subscription */
 const deleteSubscription = async (id: string) => {
       try {
@@ -60,5 +70,6 @@ export default {
       updateSubscription,
       getOneSubscriptionByFilter,
       getAllSubscriptions,
+      getAllSubscriptionsName,
       deleteSubscription
 }

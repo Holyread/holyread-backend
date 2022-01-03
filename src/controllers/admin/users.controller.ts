@@ -36,8 +36,8 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         if (!result) {
             return next(Boom.badData(adminControllerResponse.forgotPassowrdFailure))
         }
-        if (body.subscription) {
-            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscription })
+        if (body.subscriptions) {
+            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscriptions })
             if (!subscriptionDetails) {
                 return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }
@@ -50,7 +50,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             type: 'User',
             status: 'Active',
             verified: true,
-            subscriptions: body.subscription
+            subscriptions: body.subscriptions
         })
         res.status(200).send({
             message: adminControllerResponse.createAdminSuccess,
@@ -124,12 +124,18 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
         if (req.body.image === null) {
             await removeImageToAwsS3(userObj.image, s3Bucket)
         }
+        if (String(req.body.status) === 'true') {
+            req.body.status = 'Active'
+        }
+        if (String(req.body.status) === 'false') {
+            req.body.status = 'InActive'
+        }
         if (req.body.image) {
             await removeImageToAwsS3(userObj.image, s3Bucket)
             req.body.image = await uploadImageToAwsS3(req.body.image, userObj.name, s3Bucket)
         }
-        if (req.body.subscription) {
-            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: req.body.subscription })
+        if (req.body.subscriptions) {
+            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: req.body.subscriptions })
             if (!subscriptionDetails) {
                 return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }

@@ -1,4 +1,4 @@
-import { UserModel } from '../../models/index'
+import { UserModel, SubscriptionsModel } from '../../models/index'
 import { getToken, encrypt } from '../../lib/utils/utils'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
@@ -41,6 +41,12 @@ const getOneUserByFilter = async (query: any) => {
         if (result && result.image) {
             result.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + result.image
         }
+        if (result.subscriptions) {
+            const userSubscriptionDetails = await SubscriptionsModel.findById(result.subscriptions).lean()
+            if (userSubscriptionDetails) {
+                result.subscriptions = userSubscriptionDetails.title
+            }
+        }
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -52,11 +58,22 @@ const getAllUsers = async (skip: number, limit, search: object, sort) => {
     try {
         const users = await UserModel.find({ ...search, type: 'User' }).skip(skip).limit(limit).sort(sort).lean()
         const count = await UserModel.find({ ...search, type: 'User' }).count()
-        users.map(oneUser => {
-            if (oneUser && oneUser.image) {
+        await Promise.all(users.map(async oneUser => {
+            if (!oneUser) {
+                return
+            }
+            if (oneUser.image) {
                 oneUser.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + oneUser.image
             }
-        })
+            if (!oneUser.subscriptions) {
+                return;
+            }
+            const userSubscriptionDetails = await SubscriptionsModel.findById(oneUser.subscriptions).lean()
+            if (!userSubscriptionDetails) {
+                return
+            }
+            oneUser.subscriptions = userSubscriptionDetails.title
+        }))
         return { count, users }
     } catch (e: any) {
         throw new Error(e)

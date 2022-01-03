@@ -76,17 +76,14 @@ const getAllUsers = async (request: Request, response: Response, next: NextFunct
         if (params.search) { searchFilter = { 'name': await getSearchRegexp(params.search) } }
 
         const usersSorting = [];
-        switch (Number(params.column)) {
-            case 0:
+        switch (params.column) {
+            case 'name':
                 usersSorting.push(['name', params.order || 'ASC']);
                 break;
-            case 1:
+            case 'email':
                 usersSorting.push(['email', params.order || 'ASC']);
                 break;
-            case 2:
-                usersSorting.push(['subscriptions', params.order || 'ASC']);
-                break;
-            case 3:
+            case 'createdAt':
                 usersSorting.push(['createdAt', params.order || 'ASC']);
                 break;
             default:

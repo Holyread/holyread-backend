@@ -55,20 +55,20 @@ const getAllSubscriptions = async (request: Request, response: Response, next: N
         if (params.search) { searchFilter = { 'name': await getSearchRegexp(params.search) } }
 
         const subscriptionsSorting = [];
-        switch (Number(params.column)) {
-            case 0:
+        switch (params.column) {
+            case 'title':
                 subscriptionsSorting.push(['title', params.order || 'ASC']);
                 break;
-            case 1:
+            case 'price':
                 subscriptionsSorting.push(['price', params.order || 'ASC']);
                 break;
-            case 2:
+            case 'duration':
                 subscriptionsSorting.push(['duration', params.order || 'ASC']);
                 break;
-            case 3:
+            case 'status':
                 subscriptionsSorting.push(['status', params.order || 'ASC']);
                 break;
-            case 4:
+            case 'createdAt':
                 subscriptionsSorting.push(['createdAt', params.order || 'ASC']);
                 break;
             default:

@@ -27,7 +27,8 @@ const updateUser = async (body: any, id: string) => {
         if (body.password) {
             body.password = encrypt(body.password)
         }
-        const data = await UserModel.findOneAndUpdate({ _id: id }, { ...body, updatedAt: new Date() }, { new: true })
+        const data: any = await UserModel.findOneAndUpdate({ _id: id }, { ...body, updatedAt: new Date() }, { new: true })
+        data.status ? data.status = true : false
         return data
     } catch (e: any) {
         throw new Error(e)
@@ -37,10 +38,11 @@ const updateUser = async (body: any, id: string) => {
 /** Get user by id */
 const getOneUserByFilter = async (query: any) => {
     try {
-        const result = await UserModel.findOne(query).select('-password').lean()
+        const result: any = await UserModel.findOne(query).select('-password').lean()
         if (result && result.image) {
             result.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + result.image
         }
+        result && result.status ? result.status = true : false
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -52,13 +54,14 @@ const getAllUsers = async (skip: number, limit, search: object, sort) => {
     try {
         const users = await UserModel.find({ ...search, type: 'User' }).skip(skip).limit(limit).sort(sort).lean()
         const count = await UserModel.find({ ...search, type: 'User' }).count()
-        await Promise.all(users.map(async oneUser => {
+        await Promise.all(users.map(async (oneUser: any) => {
             if (!oneUser) {
                 return
             }
             if (oneUser.image) {
                 oneUser.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + oneUser.image
             }
+            oneUser.status === 'Active' ? oneUser.status = true : oneUser.status = false
             if (!oneUser.subscriptions) {
                 return;
             }

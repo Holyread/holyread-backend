@@ -40,7 +40,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     const verificationCode = Math.floor(100000 + Math.random() * 900000)
     const result = await sentEmail(body.email, 'Verification Code', `Your verification code is: ${verificationCode}`);
     if (!result) {
-      return next(Boom.badData(adminControllerResponse.forgotPassowrdFailure))
+      return next(Boom.badData(adminControllerResponse.sendCodeFailure))
     }
     if (user && !user.verificationCode) {
       await usersService.updateUser({
@@ -95,7 +95,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     const verificationCode = Math.floor(100000 + Math.random() * 900000)
     const result = await sentEmail(email, 'Verification Code', `Your verification code is: ${verificationCode}`);
     if (!result) {
-      return next(Boom.badData(adminControllerResponse.forgotPassowrdFailure))
+      return next(Boom.badData(adminControllerResponse.sendCodeFailure))
     }
     await usersService.updateUser({ verificationCode }, user._id)
     res.status(200).send({
@@ -113,7 +113,7 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
     /** Get user from db */
     const userObj: any = await usersService.getOneUserByFilter({ verificationCode: code, type: 'User' })
     if (!userObj) {
-      return next(Boom.notFound(adminControllerResponse.forgotPassowrdFailure))
+      return next(Boom.notFound(adminControllerResponse.codeVerificationFailure))
     }
     await usersService.updateUser({ password: newPassword, $unset: { verificationCode: 1 } }, userObj._id)
     res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })

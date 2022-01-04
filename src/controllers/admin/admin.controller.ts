@@ -8,6 +8,7 @@ import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
 
 const adminControllerResponse = responseMessage.adminControllerResponse
+const authControllerResponse = responseMessage.authControllerResponse
 const NODE_ENV = config.NODE_ENV
 const s3Bucket = {
     region: awsBucket.region,
@@ -62,7 +63,7 @@ const changePassword = async (req: Request, res: Response, next: NextFunction) =
         /** Get user from db */
         const userObj: any = await usersService.getOneUserByFilter({ _id: id, password: encrypt(password), type: 'Admin' })
         if (!userObj) {
-            return next(Boom.notFound(adminControllerResponse.forgotPassowrdFailure))
+            return next(Boom.notFound(authControllerResponse.userInvalidPasswordError))
         }
         await usersService.updateUser({ password: newPassword }, userObj._id)
         res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })

@@ -28,8 +28,11 @@ export const responseMessage = {
         fetchAdminSuccess: 'Admin details fetched successfully',
         getAdminFailure: 'Admin does not exist',
         sendCodeSuccess: 'Verification code successfully sent on your email',
+        sendCodeFailure: 'Failed to send code',
         verifyCodeSuccess: 'Code already sended on your email on your signUp request, please verify with code',
         forgotPassowrdFailure: 'Failed to proceed your request, please try again',
+        updateCodeFailure: 'Failed to proceed verification code',
+        codeVerificationFailure: 'Invalid code provided',
         failedToSendPassword: 'Failed to send password on email',
         sentEmailFailure: 'Failed to send email, please try again',
         forgotPassowrdSuccess: 'Password updated successfully'

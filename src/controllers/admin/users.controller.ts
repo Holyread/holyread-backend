@@ -34,7 +34,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         const password = (Math.random() + 1).toString(36).substring(2)
         const result = await sentEmail(body.email, 'Temporary Password', `Your temporary password is: ${password}`);
         if (!result) {
-            return next(Boom.badData(adminControllerResponse.forgotPassowrdFailure))
+            return next(Boom.badData(adminControllerResponse.sentEmailFailure))
         }
         if (body.subscriptions) {
             const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscriptions })
@@ -53,7 +53,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             subscriptions: body.subscriptions
         })
         res.status(200).send({
-            message: adminControllerResponse.createAdminSuccess,
+            message: authControllerResponse.signUpSuccess,
             data: {
                 _id: data._id,
                 email: data.email
@@ -106,7 +106,7 @@ const getAllUsers = async (request: Request, response: Response, next: NextFunct
         }
 
         const getUsersList = await usersService.getAllUsers(Number(skip), Number(limit), searchFilter, usersSorting)
-        response.status(200).json({ message: authControllerResponse.getUserSuccess, data: getUsersList })
+        response.status(200).json({ message: authControllerResponse.getUsersSuccess, data: getUsersList })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }

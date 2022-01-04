@@ -23,7 +23,27 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     }
     const updatedUserDetails: any = await usersService.updateUser({ verificationCode }, user._id)
     if (!updatedUserDetails || updatedUserDetails.verificationCode !== String(verificationCode)) {
-      return next(Boom.badData(adminControllerResponse.forgotPassowrdFailure))
+      return next(Boom.badData(adminControllerResponse.updateCodeFailure))
+    }
+    res.status(200).send({
+      message: adminControllerResponse.sendCodeSuccess
+    })
+  } catch (e: any) {
+    next(Boom.badData(e.message))
+  }
+}
+
+/** Resend signIn OTP */
+const resendSignInOtp = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const params: { email: string } = req.body
+    const user = await usersService.getOneUserByFilter({ email: params.email })
+    if (!user) {
+      return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
+    }
+    const result = await sentEmail(params.email, 'Verification Code', `Your verification code is: ${user.verificationCode}`);
+    if (!result) {
+      return next(Boom.badData(adminControllerResponse.sentEmailFailure))
     }
     res.status(200).send({
       message: adminControllerResponse.sendCodeSuccess
@@ -90,4 +110,4 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
   }
 }
 
-export default { signInUser, verifySignInOtp, forgotPassoword, verifyPassword }
+export default { signInUser, resendSignInOtp, verifySignInOtp, forgotPassoword, verifyPassword }

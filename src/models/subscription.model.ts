@@ -6,6 +6,7 @@ export interface ISubscription extends mongoose.Document {
     title: string,
     price: string,
     duration: string,
+    description: string,
     status?: 'Active' | 'Deactive'
 }
 
@@ -13,6 +14,7 @@ export type createSubscriptionType = {
     title: string,
     price: string,
     duration: string,
+    description: string,
     status?: 'Active' | 'Deactive'
 }
 
@@ -21,6 +23,7 @@ export type getSubscriptionType = {
     title?: string,
     price?: string,
     duration?: string,
+    description?: string,
     status?: 'Active' | 'Deactive'
 }
 
@@ -29,6 +32,7 @@ export const SubscriptionsSchema = new Schema({
     price: { type: String, required: true, index: true },
     duration: { type: String, required: true },
     status: { type: String, default: 'Active' },
+    description: { type: String, default: '' },
     createdAt: {
         type: Date, default: () => {
             return new Date()

@@ -43,7 +43,7 @@ export const responseMessage = {
         deleteSubscriptionSuccess: 'Subscription deleted successfully',
         fetchSubscriptionSuccess: 'Subscription details fetched successfully',
         fetchSubscriptionsSuccess: 'Subscriptions list fetched successfully',
-        createSubscriptionFailure: 'Failed to add subscription',
+        createSubscriptionFailure: 'Subscription already added',
         getSubscriptionFailure: 'Failed to fetch subscription details',
     },
     dashboardControllerResponse: {

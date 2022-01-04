@@ -3,7 +3,9 @@ import { SubscriptionsModel } from '../../models/index'
 /** Create Subscription */
 const createSubscription = async (body: any) => {
       try {
-            const result = await SubscriptionsModel.create(body)
+            (body.status === true) ? body.status = 'Active' : body.status = 'DeActive'
+            let result: any = await SubscriptionsModel.create(body)
+            result.status === 'Active' ? result.status = true : result.status = false
             return result
       } catch (e: any) {
             throw new Error(e)
@@ -13,11 +15,14 @@ const createSubscription = async (body: any) => {
 /** Modify Subscription */
 const updateSubscription = async (body: any, id: string) => {
       try {
-            const updatedSubscription = await SubscriptionsModel.findOneAndUpdate(
+            if (body.status === true) body.status = 'Active'
+            if (body.status === false) body.status = 'DeActive'
+            const updatedSubscription: any = await SubscriptionsModel.findOneAndUpdate(
                   { _id: id },
                   { ...body, updatedAt: new Date() },
                   { new: true }
             ).lean()
+            updatedSubscription.status === 'Active' ? updatedSubscription.status = true : updatedSubscription.status = false 
             return updatedSubscription
       } catch (e: any) {
             throw new Error(e)
@@ -27,7 +32,8 @@ const updateSubscription = async (body: any, id: string) => {
 /** Get one Subscription by filter */
 const getOneSubscriptionByFilter = async (query: any) => {
       try {
-            const result = await SubscriptionsModel.findOne(query).lean()
+            const result: any = await SubscriptionsModel.findOne(query).lean()
+            if (result) result.status === 'Active' ? result.status = true : result.status = false
             return result
       } catch (e: any) {
             throw new Error(e)
@@ -37,7 +43,8 @@ const getOneSubscriptionByFilter = async (query: any) => {
 /** Get all Subscriptions for table */
 const getAllSubscriptions = async (skip: number, limit, search: object, sort) => {
       try {
-            const subscriptionsList = await SubscriptionsModel.find(search).skip(skip).limit(limit).sort(sort)
+            const subscriptionsList: any = await SubscriptionsModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+            subscriptionsList.forEach(item => item.status === 'Active' ? item.status = true : item.status = false)
             const count = await SubscriptionsModel.find(search).count()
             return { count, subscriptions: subscriptionsList }
       } catch (e: any) {

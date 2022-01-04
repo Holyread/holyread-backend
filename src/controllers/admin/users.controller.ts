@@ -53,7 +53,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             subscriptions: body.subscriptions
         })
         res.status(200).send({
-            message: authControllerResponse.signUpSuccess,
+            message: adminControllerResponse.addUserSuccess,
             data: {
                 _id: data._id,
                 email: data.email
@@ -123,12 +123,6 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
         }
         if (req.body.image === null) {
             await removeImageToAwsS3(userObj.image, s3Bucket)
-        }
-        if (String(req.body.status) === 'true') {
-            req.body.status = 'Active'
-        }
-        if (String(req.body.status) === 'false') {
-            req.body.status = 'InActive'
         }
         if (req.body.image) {
             await removeImageToAwsS3(userObj.image, s3Bucket)

@@ -20,6 +20,7 @@ export const responseMessage = {
         createUserFailed: 'Failed to create user'
     },
     adminControllerResponse: {
+        addUserSuccess: 'User added successfully',
         createAdminSuccess: 'Admin added successfully',
         AdminExistError: 'Admin already exist and verified',
         createAdminFailure: 'Failed to add admin',
@@ -45,6 +46,7 @@ export const responseMessage = {
         fetchSubscriptionsSuccess: 'Subscriptions list fetched successfully',
         createSubscriptionFailure: 'Subscription already added',
         getSubscriptionFailure: 'Failed to fetch subscription details',
+        subscriptionIsInUsedError: 'Subscription plan is active in user account',
     },
     dashboardControllerResponse: {
         getDashboardSuccess: 'Dashboard details fetched successfully'

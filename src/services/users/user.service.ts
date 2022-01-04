@@ -28,7 +28,6 @@ const updateUser = async (body: any, id: string) => {
             body.password = encrypt(body.password)
         }
         const data: any = await UserModel.findOneAndUpdate({ _id: id }, { ...body, updatedAt: new Date() }, { new: true })
-        data.status ? data.status = true : false
         return data
     } catch (e: any) {
         throw new Error(e)
@@ -42,7 +41,6 @@ const getOneUserByFilter = async (query: any) => {
         if (result && result.image) {
             result.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + result.image
         }
-        result && result.status ? result.status = true : false
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -61,7 +59,6 @@ const getAllUsers = async (skip: number, limit, search: object, sort) => {
             if (oneUser.image) {
                 oneUser.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + oneUser.image
             }
-            oneUser.status === 'Active' ? oneUser.status = true : oneUser.status = false
             if (!oneUser.subscriptions) {
                 return;
             }

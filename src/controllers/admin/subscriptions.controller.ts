@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
 import subscriptionsService from '../../services/subscriptions/subscriptions.service'
+import usersService from '../../services/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
 import { getSearchRegexp } from '../../lib/utils/utils'
 import { dataTable } from '../../constants/app.constant'
@@ -56,7 +57,7 @@ const getAllSubscriptions = async (request: Request, response: Response, next: N
         const limit: any = params.limit ? params.limit : dataTable.limit
 
         let searchFilter = {}
-        if (params.search) { searchFilter = { 'name': await getSearchRegexp(params.search) } }
+        if (params.search) { searchFilter = { 'title': await getSearchRegexp(params.search) } }
 
         const subscriptionsSorting = [];
         switch (params.column) {
@@ -107,6 +108,10 @@ const updateSubscription = async (req: Request, res: Response, next: NextFunctio
 const deleteSubcription = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
+        const subscriptionUser = await usersService.getOneUserByFilter({ subscriptions: id })
+        if (subscriptionUser) {
+            return next(Boom.locked(subscriptionsControllerResponse.subscriptionIsInUsedError))
+        }
         await subscriptionsService.deleteSubscription(id)
         return res.status(200).send({ message: subscriptionsControllerResponse.deleteSubscriptionSuccess })
     } catch (e: any) {

@@ -5,7 +5,7 @@ mongoose.set('useCreateIndex', true)
 export interface ISubscription extends mongoose.Document {
     title: string,
     price: string,
-    duration: string,
+    duration: number,
     description: string,
     status?: 'Active' | 'DeActive'
 }
@@ -13,7 +13,7 @@ export interface ISubscription extends mongoose.Document {
 export type createSubscriptionType = {
     title: string,
     price: string,
-    duration: string,
+    duration: number,
     description: string,
     status?: 'Active' | 'DeActive'
 }
@@ -22,7 +22,7 @@ export type getSubscriptionType = {
     _id?: string,
     title?: string,
     price?: string,
-    duration?: string,
+    duration?: number,
     description?: string,
     status?: 'Active' | 'DeActive'
 }
@@ -30,7 +30,7 @@ export type getSubscriptionType = {
 export const SubscriptionsSchema = new Schema({
     title: { type: String, required: true, index: true },
     price: { type: String, required: true, index: true },
-    duration: { type: String, required: true },
+    duration: { type: Number, required: true },
     status: { type: String, default: 'Active' },
     description: { type: String, default: '' },
     createdAt: {

@@ -4,7 +4,7 @@ import {
   updateAdmin,
   changePassword
 } from '../../controllers/admin/admin.controller'
-2
+
 import adminPassport from '../../middleware/admin.passport'
 
 const router: Router = express.Router()

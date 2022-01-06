@@ -70,6 +70,6 @@ const changePassword = async (req: Request, res: Response, next: NextFunction) =
     } catch (e: any) {
         next(Boom.badData(e.message))
     }
-  }
+}
 
 export { getAdmin, updateAdmin, changePassword }

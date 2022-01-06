@@ -87,7 +87,15 @@ const getAllUsers = async (request: Request, response: Response, next: NextFunct
         const limit: any = params.limit ? params.limit : dataTable.limit
 
         let searchFilter = {}
-        if (params.search) { searchFilter = { 'name': await getSearchRegexp(params.search) } }
+        if (params.search) {
+            searchFilter = {
+                $or: [
+                    { 'name': await getSearchRegexp(params.search) },
+                    { 'email': await getSearchRegexp(params.search) },
+                    { 'status': await getSearchRegexp(params.search) }
+                ]
+            }
+        }
 
         const usersSorting = [];
         switch (params.column) {

@@ -48,6 +48,15 @@ export const responseMessage = {
         getSubscriptionFailure: 'Failed to fetch subscription details',
         subscriptionIsInUsedError: 'Subscription plan is active in user account',
     },
+    bookCategoryControllerResponse: {
+        createBookCategorySuccess: 'Book category added successfully',
+        updateBookCategorySuccess: 'Book category updated successfully',
+        deleteBookCategorySuccess: 'Book category deleted successfully',
+        fetchBookCategorySuccess: 'Book category details fetched successfully',
+        fetchBookCategoriesSuccess: 'Book categories list fetched successfully',
+        createBookCategoryFailure: 'Book category already added',
+        getBookCategoryFailure: 'Failed to fetch book category details'
+    },
     dashboardControllerResponse: {
         getDashboardSuccess: 'Dashboard details fetched successfully'
     },   

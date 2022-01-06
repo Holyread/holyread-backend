@@ -57,8 +57,16 @@ const getAllSubscriptions = async (request: Request, response: Response, next: N
         const limit: any = params.limit ? params.limit : dataTable.limit
 
         let searchFilter = {}
-        if (params.search) { searchFilter = { 'title': await getSearchRegexp(params.search) } }
-
+        if (params.search) {
+            searchFilter = {
+                $or: [
+                    { title: await getSearchRegexp(params.search) },
+                    { price: params.search },
+                    { status: await getSearchRegexp(params.search) },
+                    { duration: params.search },
+                ]
+            }
+        }
         const subscriptionsSorting = [];
         switch (params.column) {
             case 'title':

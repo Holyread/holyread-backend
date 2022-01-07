@@ -5,9 +5,9 @@ import {
   getAllCategory,
   updateCateogry,
   deleteCategory
-} from '../../controllers/admin/bookCategory.controller'
+} from '../../../controllers/admin/book/bookCategory.controller'
 
-import adminPassport from '../../middleware/admin.passport'
+import adminPassport from '../../../middleware/admin.passport'
 
 const router: Router = express.Router()
 

@@ -14,7 +14,7 @@ const createBookSummary = async (body: any) => {
             throw new Error(bookSummaryControllerResponse.createBookSummaryFailure)
         }
         if (result.coverImage) {
-            result.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + result.coverImage
+            result.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + result.coverImage
         }
         if (result.videoFile) {
             result.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + result.videoFile
@@ -37,7 +37,7 @@ const updateBookSummary = async (body: any, id: string) => {
             { new: true }
         )
         if (data.coverImage) {
-            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + data.coverImage
+            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
         }
         if (data.videoFile) {
             data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile
@@ -56,7 +56,7 @@ const getOneBookSummaryByFilter = async (query: any) => {
     try {
         const data: any = await BookSummaryModel.findOne(query).lean()
         if (data && data.coverImage) {
-            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + data.coverImage
+            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
         }
         if (data && data.videoFile) {
             data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile
@@ -80,7 +80,7 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
                 return
             }
             if (item.coverImage) {
-                item.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + item.coverImage
+                item.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + item.coverImage
             }
             if (item.videoFile) {
                 item.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + item.videoFile

@@ -128,10 +128,10 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
         if (req.body.coverImage === null) {
-            await removeImageToAwsS3(summaryDetails.coverImage, s3Bucket)
+            await removeImageToAwsS3(summaryDetails.coverImage, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage'  })
         }
         if (req.body.coverImage) {
-            await removeImageToAwsS3(summaryDetails.coverImage, s3Bucket)
+            await removeImageToAwsS3(summaryDetails.coverImage, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage'  })
             req.body.coverImage = await uploadImageToAwsS3(req.body.coverImage, summaryDetails.title, s3Bucket)
         }
         if (req.body.audioFile === null) {
@@ -160,8 +160,16 @@ const deleteSummary = async (req: Request, res: Response, next: NextFunction) =>
     try {
         const id: any = req.params.id
         const bookCategoryDetails: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
-        if (bookCategoryDetails && bookCategoryDetails.image) {
-            await removeImageToAwsS3(bookCategoryDetails.image, s3Bucket)
+        if (bookCategoryDetails) {
+            if (bookCategoryDetails.image) {
+                await removeImageToAwsS3(bookCategoryDetails.image, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage'  })
+            }
+            if (bookCategoryDetails.audioFile) {
+                await removeImageToAwsS3(bookCategoryDetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio'  })
+            }
+            if (bookCategoryDetails.videoFile) {
+                await removeImageToAwsS3(bookCategoryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video'  })
+            }
         }
         await bookCategoryService.deleteBookCategory(id)
         return res.status(200).send({ message: bookCategoryControllerResponse.deleteBookCategorySuccess })

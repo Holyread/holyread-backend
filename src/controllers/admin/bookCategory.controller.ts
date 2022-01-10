@@ -21,24 +21,30 @@ const addCategory = async (req: Request, res: Response, next: NextFunction) => {
     try {
         console.log('hererererererer')
         const body = req.body
+        console.log('body - > ', body)
         /** Get category from db */
         const category: any = await bookCategoryService.getOneBookCategoryByFilter({ title: req.body.title })
         if (category) {
             return next(Boom.badData(bookCategoryControllerResponse.createBookCategoryFailure))
         }
-        if (body.image) {
-            const result: any = await uploadImageToAwsS3(body.image, body.title, s3Bucket)
-            console.log('result - ', result)
-            if (!result || result.fileName) {
-                return next(Boom.badData('Unable to get file name', result))
-            }
-            body.image = result.fileName
-        }
+        console.log('categroy - > ', category)
+        /** Temporary disable image upload
+         if (body.image) {
+             const result: any = await uploadImageToAwsS3(body.image, body.title, s3Bucket)
+             console.log('result - ', result)
+             if (!result || result.fileName) {
+                 return next(Boom.badData('Unable to get file name', result))
+             }
+             body.image = result.fileName
+         }
+        
+         */
         const data = await bookCategoryService.createBookCategory({
             title: body.title,
-            image: body.image,
+            image: `body.image`,
             status: body.status
         })
+        console.log('create category result - ', data)
         res.status(200).send({
             message: bookCategoryControllerResponse.createBookCategorySuccess,
             data

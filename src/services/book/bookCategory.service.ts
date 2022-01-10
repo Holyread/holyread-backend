@@ -43,9 +43,6 @@ const updateBookCategory = async (body: any, id: string) => {
 const getOneBookCategoryByFilter = async (query: any) => {
     try {
         const result: any = await BookCategoryModel.findOne(query).lean()
-        if (result && result.image) {
-            result.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/category/' + result.image
-        }
         return result
     } catch (e: any) {
         throw new Error(e)

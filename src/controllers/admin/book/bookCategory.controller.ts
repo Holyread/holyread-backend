@@ -19,30 +19,20 @@ const s3Bucket = {
 /** Add book category */
 const addCategory = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        console.log('hererererererer')
         const body = req.body
-        console.log('body - > ', body)
         /** Get category from db */
         const category: any = await bookCategoryService.getOneBookCategoryByFilter({ title: req.body.title })
         if (category) {
             return next(Boom.badData(bookCategoryControllerResponse.createBookCategoryFailure))
         }
-        console.log('categroy - > ', category)
-        console.log('s3Bucket - - > ', s3Bucket)
         if (body.image) {
-            const result: any = await uploadImageToAwsS3(body.image, body.title, s3Bucket)
-            console.log('result - ', result)
-            if (!result || result.fileName) {
-                return next(Boom.badData('Unable to get file name', result))
-            }
-            body.image = result.fileName
+            body.image = await uploadImageToAwsS3(body.image, body.title, s3Bucket)
         }
         const data = await bookCategoryService.createBookCategory({
             title: body.title,
-            image: `body.image`,
+            image: body.image,
             status: body.status
         })
-        console.log('create category result - ', data)
         res.status(200).send({
             message: bookCategoryControllerResponse.createBookCategorySuccess,
             data
@@ -58,6 +48,9 @@ const getOneCategory = async (req: Request, res: Response, next: NextFunction) =
         const id: any = req.params.id
         /** Get category from db */
         const data: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
+        if (data && data.image) {
+            data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/category/' + data.image
+        }
         if (!data) {
             return next(Boom.notFound(bookCategoryControllerResponse.getBookCategoryFailure))
         }

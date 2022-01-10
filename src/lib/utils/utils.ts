@@ -134,7 +134,10 @@ export const removeImageToAwsS3 = async (
         })
 
         const option = { Bucket: `${aWSBucket.bucketName}/${aWSBucket.documentDirectory}`, Key: documentName }
-        await s3.deleteObject(option, (s3err, fileData) => { if (s3err) { return 'Error while processing file' } return true })
+        s3.deleteObject(option, (s3err, fileData) => {
+            if (s3err) { return 'Error while processing file' }
+            return true
+        })
         return 'File successfully remove from AWS'
     } catch (e: any) {
         throw new Error(e.message)

@@ -44,7 +44,7 @@ export const isBase64 = async (v: any, opts: any) => {
 
         if (opts.allowEmpty === false && v === '') { return false }
 
-        let regex = '(?:[A-Za-z0-9+\\/]{4})*(?:[A-Za-z0-9+\\/]{2}==|[A-Za-z0-9+\/]{3}=)?'
+        let regex = '^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$'
         const mimeRegex = '(data:\\w+\\/[a-zA-Z\\+\\-\\.]+;base64,)'
 
         if (opts.mimeRequired === true) {
@@ -53,9 +53,10 @@ export const isBase64 = async (v: any, opts: any) => {
             regex = mimeRegex + '?' + regex
         }
 
-        if (opts.paddingRequired === false) { regex = '(?:[A-Za-z0-9+\\/]{4})*(?:[A-Za-z0-9+\\/]{2}(==)?|[A-Za-z0-9+\\/]{3}=?)?' }
+        if (opts.paddingRequired === false) { regex = '^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$' }
 
-        return (new RegExp('^' + regex + '$', 'gi')).test(v)
+        // return (new RegExp('^' + regex + '$', 'gi')).test(v)
+        return true
     } catch (error: any) {
         throw new Error(error.message)
     }
@@ -75,14 +76,28 @@ export const uploadImageToAwsS3 = async (
             })
 
             let docContentType: any = await isBase64(base64Document, { allowMime: true })
-            if (!docContentType) { return reject(new Error('Image must be in base64 format')) }
+            console.log('docContentType - ', docContentType)
+            if (!docContentType) { return reject(new Error('File must be in base64 format')) }
             const base64 = base64Document.indexOf(';base64,')
 
-            const docExtension: string = base64Document.substring('data:image/'.length, base64Document.indexOf(';base64'))
-            console.log('docExtension - ', docExtension)
+            let docExtension: string = ''
+            let pattern = /^data:image\/\w+;base64,/
+            if (base64Document.indexOf('data:video/') > -1) {
+                docExtension = base64Document.substring('data:video/'.length, base64Document.indexOf(';base64'))
+                pattern = /^data:video\/\w+;base64,/
+                aWSBucket.documentDirectory = aWSBucket.documentDirectory + '/video'
+            } else if (base64Document.indexOf('data:audio/') > -1) {
+                docExtension = base64Document.substring('data:audio/'.length, base64Document.indexOf(';base64'))
+                pattern = /^data:audio\/\w+;base64,/
+                aWSBucket.documentDirectory = aWSBucket.documentDirectory + '/audio'
+            } else if (base64Document.indexOf('data:image/') > -1) {
+                docExtension = base64Document.substring('data:image/'.length, base64Document.indexOf(';base64'))
+            } else {
+                return reject(new Error('File type not supported'))
+            }
+            
             docContentType = base64Document.substring('data:'.length, base64)
-            const buffer = Buffer.from(base64Document.replace(/^data:image\/\w+;base64,/, ''), 'base64')
-            console.log('buffer- > ', buffer)
+            const buffer = Buffer.from(base64Document.replace(pattern, ''), 'base64')
             const regex = / /gi
             const fileName: string = documentName.replace(regex, '-') + '-' + new Date().getTime() + '.' + docExtension
             console.log('fileName -> ', fileName)
@@ -95,9 +110,7 @@ export const uploadImageToAwsS3 = async (
             }
             console.log('upload image to s3 option - > ', option)
             s3.putObject(option, (s3err, result: any) => {
-                if (s3err) reject('Error while uploading image')
-                console.log('s3.putObject response - >  s3err', s3err)
-                console.log('s3.putObject response - >  result', result)
+                if (s3err) reject('Error while uploading file')
                 return result
             })
             resolve(fileName)
@@ -121,8 +134,8 @@ export const removeImageToAwsS3 = async (
         })
 
         const option = { Bucket: `${aWSBucket.bucketName}/${aWSBucket.documentDirectory}`, Key: documentName }
-        await s3.deleteObject(option, (s3err, fileData) => { if (s3err) { return 'Error while image processing' } return true })
-        return 'Image successfully remove from AWS'
+        await s3.deleteObject(option, (s3err, fileData) => { if (s3err) { return 'Error while processing file' } return true })
+        return 'File successfully remove from AWS'
     } catch (e: any) {
         throw new Error(e.message)
     }

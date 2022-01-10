@@ -28,17 +28,15 @@ const addCategory = async (req: Request, res: Response, next: NextFunction) => {
             return next(Boom.badData(bookCategoryControllerResponse.createBookCategoryFailure))
         }
         console.log('categroy - > ', category)
-        /** Temporary disable image upload
-         if (body.image) {
-             const result: any = await uploadImageToAwsS3(body.image, body.title, s3Bucket)
-             console.log('result - ', result)
-             if (!result || result.fileName) {
-                 return next(Boom.badData('Unable to get file name', result))
-             }
-             body.image = result.fileName
-         }
-        
-         */
+        console.log('s3Bucket - - > ', s3Bucket)
+        if (body.image) {
+            const result: any = await uploadImageToAwsS3(body.image, body.title, s3Bucket)
+            console.log('result - ', result)
+            if (!result || result.fileName) {
+                return next(Boom.badData('Unable to get file name', result))
+            }
+            body.image = result.fileName
+        }
         const data = await bookCategoryService.createBookCategory({
             title: body.title,
             image: `body.image`,
@@ -63,7 +61,7 @@ const getOneCategory = async (req: Request, res: Response, next: NextFunction) =
         if (!data) {
             return next(Boom.notFound(bookCategoryControllerResponse.getBookCategoryFailure))
         }
-        res.status(200).send({ message: bookCategoryControllerResponse.fetchBookCategorySuccess, data  })
+        res.status(200).send({ message: bookCategoryControllerResponse.fetchBookCategorySuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }

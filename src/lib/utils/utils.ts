@@ -79,11 +79,13 @@ export const uploadImageToAwsS3 = async (
             const base64 = base64Document.indexOf(';base64,')
 
             const docExtension: string = base64Document.substring('data:image/'.length, base64Document.indexOf(';base64'))
+            console.log('docExtension - ', docExtension)
             docContentType = base64Document.substring('data:'.length, base64)
             const buffer = Buffer.from(base64Document.replace(/^data:image\/\w+;base64,/, ''), 'base64')
+            console.log('buffer- > ', buffer)
             const regex = / /gi
             const fileName: string = documentName.replace(regex, '-') + '-' + new Date().getTime() + '.' + docExtension
-
+            console.log('fileName -> ', fileName)
             const option = {
                 Key: fileName,
                 Body: buffer,
@@ -91,15 +93,18 @@ export const uploadImageToAwsS3 = async (
                 ContentType: docContentType,
                 Bucket: `${aWSBucket.bucketName}/${aWSBucket.documentDirectory}`,
             }
-
+            console.log('upload image to s3 option - > ', option)
             s3.putObject(option, (s3err, result: any) => {
                 if (s3err) reject('Error while uploading image')
-                resolve({ result, fileName })
+                console.log('s3.putObject response - >  s3err', s3err)
+                console.log('s3.putObject response - >  result', result)
                 return result
             })
+            resolve(fileName)
         })
-
+        
     } catch (e: any) {
+        console.log('Image Update catch error - > ', e)
         throw new Error(e.message)
     }
 }

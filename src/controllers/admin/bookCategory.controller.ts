@@ -48,6 +48,9 @@ const getOneCategory = async (req: Request, res: Response, next: NextFunction) =
         const id: any = req.params.id
         /** Get category from db */
         const data: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
+        if (data && data.image) {
+            data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/category/' + data.image
+        }
         if (!data) {
             return next(Boom.notFound(bookCategoryControllerResponse.getBookCategoryFailure))
         }

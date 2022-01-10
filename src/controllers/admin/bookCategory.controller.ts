@@ -29,6 +29,9 @@ const addCategory = async (req: Request, res: Response, next: NextFunction) => {
         if (body.image) {
             const result: any = await uploadImageToAwsS3(body.image, body.title, s3Bucket)
             console.log('result - ', result)
+            if (!result || result.fileName) {
+                return next(Boom.badData('Unable to get file name', result))
+            }
             body.image = result.fileName
         }
         const data = await bookCategoryService.createBookCategory({

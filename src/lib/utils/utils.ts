@@ -94,10 +94,9 @@ export const uploadImageToAwsS3 = async (
 
             s3.putObject(option, (s3err, result: any) => {
                 if (s3err) reject('Error while uploading image')
+                resolve({ result, fileName })
                 return result
             })
-
-            resolve(fileName)
         })
 
     } catch (e: any) {

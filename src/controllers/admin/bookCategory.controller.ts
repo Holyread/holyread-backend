@@ -19,6 +19,7 @@ const s3Bucket = {
 /** Add book category */
 const addCategory = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        console.log('hererererererer')
         const body = req.body
         /** Get category from db */
         const category: any = await bookCategoryService.getOneBookCategoryByFilter({ title: req.body.title })
@@ -26,7 +27,9 @@ const addCategory = async (req: Request, res: Response, next: NextFunction) => {
             return next(Boom.badData(bookCategoryControllerResponse.createBookCategoryFailure))
         }
         if (body.image) {
-            body.image = await uploadImageToAwsS3(body.image, body.title, s3Bucket)
+            const result: any = await uploadImageToAwsS3(body.image, body.title, s3Bucket)
+            console.log('result - ', result)
+            body.image = result.fileName
         }
         const data = await bookCategoryService.createBookCategory({
             title: body.title,

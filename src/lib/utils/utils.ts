@@ -44,7 +44,7 @@ export const isBase64 = async (v: any, opts: any) => {
 
         if (opts.allowEmpty === false && v === '') { return false }
 
-        let regex = '^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$'
+        let regex = '(?:[A-Za-z0-9+\\/]{4})*(?:[A-Za-z0-9+\\/]{2}==|[A-Za-z0-9+\/]{3}=)?'
         const mimeRegex = '(data:\\w+\\/[a-zA-Z\\+\\-\\.]+;base64,)'
 
         if (opts.mimeRequired === true) {
@@ -53,10 +53,9 @@ export const isBase64 = async (v: any, opts: any) => {
             regex = mimeRegex + '?' + regex
         }
 
-        if (opts.paddingRequired === false) { regex = '^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$' }
+        if (opts.paddingRequired === false) { regex = '(?:[A-Za-z0-9+\\/]{4})*(?:[A-Za-z0-9+\\/]{2}(==)?|[A-Za-z0-9+\\/]{3}=?)?' }
 
-        // return (new RegExp('^' + regex + '$', 'gi')).test(v)
-        return true
+        return (new RegExp('^' + regex + '$', 'gi')).test(v)
     } catch (error: any) {
         throw new Error(error.message)
     }
@@ -76,28 +75,12 @@ export const uploadImageToAwsS3 = async (
             })
 
             let docContentType: any = await isBase64(base64Document, { allowMime: true })
-            console.log('docContentType - ', docContentType)
-            if (!docContentType) { return reject(new Error('File must be in base64 format')) }
+            if (!docContentType) { return reject(new Error('Image must be in base64 format')) }
             const base64 = base64Document.indexOf(';base64,')
 
-            let docExtension: string = ''
-            let pattern = /^data:image\/\w+;base64,/
-            if (base64Document.indexOf('data:video/') > -1) {
-                docExtension = base64Document.substring('data:video/'.length, base64Document.indexOf(';base64'))
-                pattern = /^data:video\/\w+;base64,/
-                aWSBucket.documentDirectory = aWSBucket.documentDirectory + '/video'
-            } else if (base64Document.indexOf('data:audio/') > -1) {
-                docExtension = base64Document.substring('data:audio/'.length, base64Document.indexOf(';base64'))
-                pattern = /^data:audio\/\w+;base64,/
-                aWSBucket.documentDirectory = aWSBucket.documentDirectory + '/audio'
-            } else if (base64Document.indexOf('data:image/') > -1) {
-                docExtension = base64Document.substring('data:image/'.length, base64Document.indexOf(';base64'))
-            } else {
-                return reject(new Error('File type not supported'))
-            }
-            
+            const docExtension: string = base64Document.substring('data:image/'.length, base64Document.indexOf(';base64'))
             docContentType = base64Document.substring('data:'.length, base64)
-            const buffer = Buffer.from(base64Document.replace(pattern, ''), 'base64')
+            const buffer = Buffer.from(base64Document.replace(/^data:image\/\w+;base64,/, ''), 'base64')
             const regex = / /gi
             const fileName: string = documentName.replace(regex, '-') + '-' + new Date().getTime() + '.' + docExtension
 
@@ -110,7 +93,7 @@ export const uploadImageToAwsS3 = async (
             }
 
             s3.putObject(option, (s3err, result: any) => {
-                if (s3err) reject('Error while uploading file')
+                if (s3err) reject('Error while uploading image')
                 return result
             })
 
@@ -134,8 +117,8 @@ export const removeImageToAwsS3 = async (
         })
 
         const option = { Bucket: `${aWSBucket.bucketName}/${aWSBucket.documentDirectory}`, Key: documentName }
-        await s3.deleteObject(option, (s3err, fileData) => { if (s3err) { return 'Error while processing file' } return true })
-        return 'File successfully remove from AWS'
+        await s3.deleteObject(option, (s3err, fileData) => { if (s3err) { return 'Error while image processing' } return true })
+        return 'Image successfully remove from AWS'
     } catch (e: any) {
         throw new Error(e.message)
     }
@@ -143,9 +126,8 @@ export const removeImageToAwsS3 = async (
 
 export const sentEmail = async (receiverEmail: string, subject: string, text: string) => {
     const transporter = nodemailer.createTransport(smtpTransport({
-        service: 'mailchimp',
-        host: 'smtp.mandrillapp.com',
-        ports: 25,
+        service: 'gmail',
+        host: 'smtp.gmail.com',
         auth: {
             user: config.SMTP_EMAIL,
             pass: config.SMTP_SECRET
@@ -154,17 +136,15 @@ export const sentEmail = async (receiverEmail: string, subject: string, text: st
 
     const mailOptions = {
         from: config.SMTP_EMAIL,
-        to: [receiverEmail, config.SMTP_EMAIL],
+        to: receiverEmail,
         subject,
         text
     };
     return new Promise((resolve, reject) => {
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-                console.log(error)
                 reject(false)
             } else {
-                console.log(info)
                 resolve(true)
             }
         });

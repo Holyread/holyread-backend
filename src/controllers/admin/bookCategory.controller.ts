@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import bookCategoryService from '../../../services/book/bookCategory.service'
-import { responseMessage } from '../../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../../lib/utils/utils'
-import { awsBucket, dataTable } from '../../../constants/app.constant'
-import config from '../../../../config'
+import bookCategoryService from '../../services/bookCategory/bookCategory.service'
+import { responseMessage } from '../../constants/message.constant'
+import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../lib/utils/utils'
+import { awsBucket, dataTable } from '../../constants/app.constant'
+import config from '../../../config'
 
 const bookCategoryControllerResponse = responseMessage.bookCategoryControllerResponse
 

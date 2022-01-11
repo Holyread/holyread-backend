@@ -28,18 +28,24 @@ const addSummary = async (req: Request, res: Response, next: NextFunction) => {
         if (summaryDetails) {
             return next(Boom.badData(bookSummaryControllerResponse.createBookSummaryFailure))
         }
-        const categoryDetails: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: req.body.category })
-        if (!categoryDetails) {
-            return next(Boom.badData(bookCategoryControllerResponse.getBookCategoryFailure))
+        if (req.body.categories && req.body.categories.length) {
+            const categoryDetails: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: { $in: req.body.categories } })
+            if (!categoryDetails) {
+                return next(Boom.badData(bookCategoryControllerResponse.getBookCategoryFailure))
+            }
         }
         if (body.coverImage) {
-            body.coverImage = await uploadImageToAwsS3(body.coverImage, body.title, s3Bucket)
+            body.coverImage = await uploadImageToAwsS3(body.coverImage, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage' })
         }
-        if (body.audioFile) {
-            body.audioFile = await uploadImageToAwsS3(body.audioFile, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory })
+        if (body.chapters && body.chapters.length) {
+            body.chapters.forEach(async oneChapter => {
+                if (oneChapter.audioFile) {
+                    oneChapter.audioFile = await uploadImageToAwsS3(oneChapter.audioFile, body.name, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' })
+                }
+            });
         }
         if (body.videoFile) {
-            body.videoFile = await uploadImageToAwsS3(body.videoFile, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory })
+            body.videoFile = await uploadImageToAwsS3(body.videoFile, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
         }
         const data = await bookSummaryService.createBookSummary(body)
         res.status(200).send({
@@ -66,8 +72,12 @@ const getOneSummary = async (req: Request, res: Response, next: NextFunction) =>
         if (data.videoFile) {
             data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile
         }
-        if (data.audioFile) {
-            data.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + data.audioFile
+        if (data.chapters && data.chapters.length) {
+            data.chapters.forEach(async oneChapter => {
+                if (oneChapter.audioFile) {
+                    oneChapter.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + oneChapter.audioFile
+                }
+            });
         }
         if (data.category) {
             const categoryDetails = await bookCategoryService.getOneBookCategoryByFilter({ _id: data.category })
@@ -143,12 +153,19 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
             await removeImageToAwsS3(summaryDetails.coverImage, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage'  })
             req.body.coverImage = await uploadImageToAwsS3(req.body.coverImage, summaryDetails.title, s3Bucket)
         }
-        if (req.body.audioFile === null) {
-            await removeImageToAwsS3(summaryDetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio'  })
-        }
-        if (req.body.audioFile) {
-            await removeImageToAwsS3(summaryDetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio'  })
-            req.body.audioFile = await uploadImageToAwsS3(req.body.audioFile, summaryDetails.title, s3Bucket)
+        if (req.body.chapters && req.body.chapters.length) {
+            await Promise.all(req.body.chapters.map(async oneChapter => {
+                const chapterdetails = summaryDetails.chapters.find(item => String(item._id) === String(oneChapter._id))
+                if (oneChapter.audioFile === null && chapterdetails.audioFile) {
+                    await removeImageToAwsS3(chapterdetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio'  })
+                }
+                if (oneChapter.audioFile) {
+                    if (chapterdetails && chapterdetails.audioFile) {
+                        await removeImageToAwsS3(chapterdetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio'  })
+                    }
+                    oneChapter.audioFile = await uploadImageToAwsS3(oneChapter.audioFile, oneChapter.name, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory })
+                }
+            }));
         }
         if (req.body.videoFile === null) {
             await removeImageToAwsS3(summaryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video'  })
@@ -157,7 +174,7 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
             await removeImageToAwsS3(summaryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video'  })
             req.body.videoFile = await uploadImageToAwsS3(req.body.videoFile, summaryDetails.title, s3Bucket)
         }
-        await bookCategoryService.updateBookCategory(req.body, id)
+        await bookSummaryService.updateBookSummary(req.body, id)
         return res.status(200).send({ message: bookCategoryControllerResponse.updateBookCategorySuccess })
     } catch (e: any) {
         return next(Boom.badData(e.message))
@@ -168,7 +185,7 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
 const deleteSummary = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
-        const bookSummaryDetails: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
+        const bookSummaryDetails: any = await bookSummaryService.getOneBookSummaryByFilter({ _id: id })
         if (bookSummaryDetails) {
             if (bookSummaryDetails.image) {
                 await removeImageToAwsS3(bookSummaryDetails.image, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage'  })
@@ -180,7 +197,7 @@ const deleteSummary = async (req: Request, res: Response, next: NextFunction) =>
                 await removeImageToAwsS3(bookSummaryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video'  })
             }
         }
-        await bookCategoryService.deleteBookCategory(id)
+        await bookSummaryService.deleteBookSummary(id)
         return res.status(200).send({ message: bookCategoryControllerResponse.deleteBookCategorySuccess })
     } catch (e: any) {
         return next(Boom.badData(e.message))

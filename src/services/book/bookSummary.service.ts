@@ -19,8 +19,12 @@ const createBookSummary = async (body: any) => {
         if (result.videoFile) {
             result.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + result.videoFile
         }
-        if (result.audioFile) {
-            result.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + result.audioFile
+        if (result.chapters && result.chapters.length) {
+            result.chapters.forEach(async (oneChapter: any) => {
+                if (oneChapter.audioFile) {
+                    oneChapter.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + oneChapter.audioFile
+                }
+            });
         }
         return result
     } catch (e: any) {
@@ -31,7 +35,7 @@ const createBookSummary = async (body: any) => {
 /** Modify book summary */
 const updateBookSummary = async (body: any, id: string) => {
     try {
-        const data: any = await BookSummaryModel.findOneAndUpdate(
+        const data: any = await BookSummaryModel.updateOne(
             { _id: id },
             { ...body, updatedAt: new Date() },
             { new: true }
@@ -42,8 +46,12 @@ const updateBookSummary = async (body: any, id: string) => {
         if (data.videoFile) {
             data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile
         }
-        if (data.audioFile) {
-            data.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + data.audioFile
+        if (data.chapters && data.chapters.length) {
+            data.chapters.forEach(async oneChapter => {
+                if (oneChapter.audioFile) {
+                    oneChapter.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + oneChapter.audioFile
+                }
+            });
         }
         return data
     } catch (e: any) {
@@ -76,8 +84,12 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
             if (item.videoFile) {
                 item.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + item.videoFile
             }
-            if (item.audioFile) {
-                item.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + item.audioFile
+            if (item.chapters && item.chapters.length) {
+                item.chapters.forEach(async oneChapter => {
+                    if (oneChapter.audioFile) {
+                        oneChapter.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + oneChapter.audioFile
+                    }
+                });
             }
         }))
         return { count, summaries: result }

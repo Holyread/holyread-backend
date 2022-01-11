@@ -18,7 +18,7 @@ export interface IBookSummary extends mongoose.Document {
     chapters: [{
         name: string,
         description: string,
-        index: number
+        audioFile: string
     }],
     status?: 'Active' | 'DeActive'
 }
@@ -39,7 +39,7 @@ export type createBookSummaryType = {
     chapters: [{
         name: string,
         description: string,
-        index: number
+        audioFile: string
     }],
     status?: 'Active' | 'DeActive'
 }
@@ -61,7 +61,7 @@ export type getBookSummaryType = {
     chapters?: [{
         name: string,
         description: string,
-        index: number
+        audioFile: string
     }],
     status?: 'Active' | 'DeActive'
 }
@@ -80,9 +80,9 @@ export const BookSummarySchema = new Schema({
     audioFile: { type: String },
     videoFile: { type: String },
     chapters: [{
-        name: String,
-        description: String,
-        index: Number
+        name: { type: String },
+        description: { type: String },
+        audioFile: { type: String }
     }],
     createdAt: {
         type: Date, default: () => {

@@ -68,6 +68,16 @@ const getAllBookCategory = async (skip: number, limit, search: object, sort) => 
     }
 }
 
+/** Get all book categories names */
+const getAllBookCategoriesNames = async () => {
+    try {
+        const result = await BookCategoryModel.find({}).select('title').lean()
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 /** Remove category */
 const deleteBookCategory = async (id: string) => {
     try {
@@ -78,4 +88,11 @@ const deleteBookCategory = async (id: string) => {
     }
 }
 
-export default { createBookCategory, updateBookCategory, getAllBookCategory, getOneBookCategoryByFilter, deleteBookCategory }
+export default {
+    createBookCategory,
+    updateBookCategory,
+    getAllBookCategory,
+    getAllBookCategoriesNames,
+    getOneBookCategoryByFilter,
+    deleteBookCategory
+}

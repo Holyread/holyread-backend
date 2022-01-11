@@ -68,5 +68,14 @@ export const responseMessage = {
     },
     dashboardControllerResponse: {
         getDashboardSuccess: 'Dashboard details fetched successfully'
-    },   
+    },
+    authorControllerResponse: {
+        createAuthorSuccess: 'Author added successfully',
+        updateAuthorSuccess: 'Author updated successfully',
+        deleteAuthorSuccess: 'Author deleted successfully',
+        fetchAuthorSuccess: 'Author details fetched successfully',
+        fetchAuthorsSuccess: 'Authors list fetched successfully',
+        createAuthorFailure: 'Author already added',
+        getAuthorFailure: 'Failed to fetch author details',
+    },  
 }

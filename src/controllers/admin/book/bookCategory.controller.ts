@@ -64,6 +64,10 @@ const getOneCategory = async (req: Request, res: Response, next: NextFunction) =
 const getAllCategory = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
+        if (params.names === 'true') {
+            const data = await bookCategoryService.getAllBookCategoriesNames()
+            response.status(200).json({ message: bookCategoryControllerResponse.fetchBookCategoriesSuccess, data })
+        }
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 

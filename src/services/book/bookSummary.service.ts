@@ -55,15 +55,6 @@ const updateBookSummary = async (body: any, id: string) => {
 const getOneBookSummaryByFilter = async (query: any) => {
     try {
         const data: any = await BookSummaryModel.findOne(query).lean()
-        if (data && data.coverImage) {
-            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
-        }
-        if (data && data.videoFile) {
-            data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile
-        }
-        if (data && data.audioFile) {
-            data.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + data.audioFile
-        }
         return data
     } catch (e: any) {
         throw new Error(e)

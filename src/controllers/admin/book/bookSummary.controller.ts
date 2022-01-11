@@ -60,6 +60,15 @@ const getOneSummary = async (req: Request, res: Response, next: NextFunction) =>
         if (!data) {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
+        if (data.coverImage) {
+            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
+        }
+        if (data.videoFile) {
+            data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile
+        }
+        if (data.audioFile) {
+            data.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + data.audioFile
+        }
         if (data.category) {
             const categoryDetails = await bookCategoryService.getOneBookCategoryByFilter({ _id: data.category })
             data.category = categoryDetails.title
@@ -159,16 +168,16 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
 const deleteSummary = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
-        const bookCategoryDetails: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
-        if (bookCategoryDetails) {
-            if (bookCategoryDetails.image) {
-                await removeImageToAwsS3(bookCategoryDetails.image, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage'  })
+        const bookSummaryDetails: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
+        if (bookSummaryDetails) {
+            if (bookSummaryDetails.image) {
+                await removeImageToAwsS3(bookSummaryDetails.image, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage'  })
             }
-            if (bookCategoryDetails.audioFile) {
-                await removeImageToAwsS3(bookCategoryDetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio'  })
+            if (bookSummaryDetails.audioFile) {
+                await removeImageToAwsS3(bookSummaryDetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio'  })
             }
-            if (bookCategoryDetails.videoFile) {
-                await removeImageToAwsS3(bookCategoryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video'  })
+            if (bookSummaryDetails.videoFile) {
+                await removeImageToAwsS3(bookSummaryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video'  })
             }
         }
         await bookCategoryService.deleteBookCategory(id)

@@ -3,7 +3,7 @@ import { SubscriptionsModel } from '../../models/index'
 /** Create Subscription */
 const createSubscription = async (body: any) => {
       try {
-            (body.status === true) ? body.status = 'Active' : body.status = 'DeActive'
+            body.status = 'Active'
             let result: any = await SubscriptionsModel.create(body)
             result.status === 'Active' ? result.status = true : result.status = false
             return result

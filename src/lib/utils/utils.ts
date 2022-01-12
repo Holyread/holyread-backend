@@ -76,7 +76,6 @@ export const uploadImageToAwsS3 = async (
             })
 
             let docContentType: any = await isBase64(base64Document, { allowMime: true })
-            console.log('docContentType - ', docContentType)
             if (!docContentType) { return reject(new Error('File must be in base64 format')) }
             const base64 = base64Document.indexOf(';base64,')
 
@@ -85,22 +84,19 @@ export const uploadImageToAwsS3 = async (
             if (base64Document.indexOf('data:video/') > -1) {
                 docExtension = base64Document.substring('data:video/'.length, base64Document.indexOf(';base64'))
                 pattern = /^data:video\/\w+;base64,/
-                aWSBucket.documentDirectory = aWSBucket.documentDirectory + '/video'
             } else if (base64Document.indexOf('data:audio/') > -1) {
                 docExtension = base64Document.substring('data:audio/'.length, base64Document.indexOf(';base64'))
                 pattern = /^data:audio\/\w+;base64,/
-                aWSBucket.documentDirectory = aWSBucket.documentDirectory + '/audio'
             } else if (base64Document.indexOf('data:image/') > -1) {
                 docExtension = base64Document.substring('data:image/'.length, base64Document.indexOf(';base64'))
             } else {
                 return reject(new Error('File type not supported'))
             }
-            
+
             docContentType = base64Document.substring('data:'.length, base64)
             const buffer = Buffer.from(base64Document.replace(pattern, ''), 'base64')
             const regex = / /gi
             const fileName: string = documentName.replace(regex, '-') + '-' + new Date().getTime() + '.' + docExtension
-            console.log('fileName -> ', fileName)
             const option = {
                 Key: fileName,
                 Body: buffer,
@@ -108,7 +104,6 @@ export const uploadImageToAwsS3 = async (
                 ContentType: docContentType,
                 Bucket: `${aWSBucket.bucketName}/${aWSBucket.documentDirectory}`,
             }
-            console.log('upload image to s3 option - > ', option)
             s3.putObject(option, (s3err, result: any) => {
                 if (s3err) reject('Error while uploading file')
                 return result

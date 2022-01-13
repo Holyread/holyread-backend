@@ -149,7 +149,7 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
         if (req.body.coverImage === null) {
             await removeImageToAwsS3(summaryDetails.coverImage, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage'  })
         }
-        if (req.body.coverImage) {
+        if (req.body.coverImage && req.body.coverImage.includes('base64')) {
             await removeImageToAwsS3(summaryDetails.coverImage, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage'  })
             req.body.coverImage = await uploadImageToAwsS3(req.body.coverImage, summaryDetails.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage'  })
         }
@@ -159,7 +159,7 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
                 if (oneChapter.audioFile === null && chapterdetails.audioFile) {
                     await removeImageToAwsS3(chapterdetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio'  })
                 }
-                if (oneChapter.audioFile) {
+                if (oneChapter.audioFile && req.body.audioFile.includes('base64')) {
                     if (chapterdetails && chapterdetails.audioFile) {
                         await removeImageToAwsS3(chapterdetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio'  })
                     }
@@ -170,7 +170,7 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
         if (req.body.videoFile === null) {
             await removeImageToAwsS3(summaryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video'  })
         }
-        if (req.body.videoFile) {
+        if (req.body.videoFile && req.body.videoFile.includes('base64')) {
             await removeImageToAwsS3(summaryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video'  })
             req.body.videoFile = await uploadImageToAwsS3(req.body.videoFile, summaryDetails.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video'  })
         }

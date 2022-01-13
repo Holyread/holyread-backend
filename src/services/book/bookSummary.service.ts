@@ -40,18 +40,20 @@ const updateBookSummary = async (body: any, id: string) => {
             { ...body, updatedAt: new Date() },
             { new: true }
         )
-        if (data.coverImage) {
-            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
-        }
-        if (data.videoFile) {
-            data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile
-        }
-        if (data.chapters && data.chapters.length) {
-            data.chapters.forEach(async oneChapter => {
-                if (oneChapter.audioFile) {
-                    oneChapter.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + oneChapter.audioFile
-                }
-            });
+        if (data) {
+            if (data.coverImage) {
+                data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
+            }
+            if (data.videoFile) {
+                data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile
+            }
+            if (data.chapters && data.chapters.length) {
+                data.chapters.forEach(async oneChapter => {
+                    if (oneChapter.audioFile) {
+                        oneChapter.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + oneChapter.audioFile
+                    }
+                });
+            }
         }
         return data
     } catch (e: any) {

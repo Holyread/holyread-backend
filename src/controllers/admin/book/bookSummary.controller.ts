@@ -45,7 +45,7 @@ const addSummary = async (req: Request, res: Response, next: NextFunction) => {
             });
         }
         if (body.videoFile) {
-            body.videoFile = await uploadImageToAwsS3(body.videoFile, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
+            body.videoFile = await uploadImageToAwsS3(body.videoFile, body.title + '-video', { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
         }
         const data = await bookSummaryService.createBookSummary(body)
         res.status(200).send({
@@ -153,13 +153,22 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
             await removeImageToAwsS3(summaryDetails.coverImage, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage'  })
             req.body.coverImage = await uploadImageToAwsS3(req.body.coverImage, summaryDetails.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage'  })
         }
+        if (req.body.coverImage && req.body.coverImage.startsWith('http')) {
+            req.body.coverImage = summaryDetails.coverImage
+        }
         if (req.body.chapters && req.body.chapters.length) {
             await Promise.all(req.body.chapters.map(async oneChapter => {
+                console.log()
                 const chapterdetails = summaryDetails.chapters.find(item => String(item._id) === String(oneChapter._id))
-                if (oneChapter.audioFile === null && chapterdetails.audioFile) {
+                if (oneChapter.audioFile === null && chapterdetails && chapterdetails.audioFile) {
                     await removeImageToAwsS3(chapterdetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio'  })
                 }
-                if (oneChapter.audioFile && req.body.audioFile.includes('base64')) {
+                if (oneChapter.audioFile && oneChapter.audioFile.startsWith('http')) {
+                    console.log('chapterdetails - ', chapterdetails)
+                    oneChapter.audioFile = chapterdetails && chapterdetails.audioFile ? chapterdetails.audioFile : ''
+                    return
+                }
+                if (oneChapter.audioFile && oneChapter.audioFile.includes('base64')) {
                     if (chapterdetails && chapterdetails.audioFile) {
                         await removeImageToAwsS3(chapterdetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio'  })
                     }
@@ -170,8 +179,13 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
         if (req.body.videoFile === null) {
             await removeImageToAwsS3(summaryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video'  })
         }
+        if (req.body.videoFile && req.body.videoFile.startsWith('http')) {
+            req.body.videoFile = summaryDetails.videoFile
+        }
         if (req.body.videoFile && req.body.videoFile.includes('base64')) {
-            await removeImageToAwsS3(summaryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video'  })
+            if (summaryDetails.videoFile) {
+                await removeImageToAwsS3(summaryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video'  })
+            }
             req.body.videoFile = await uploadImageToAwsS3(req.body.videoFile, summaryDetails.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video'  })
         }
         await bookSummaryService.updateBookSummary(req.body, id)

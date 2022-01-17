@@ -96,7 +96,7 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
-        let searchFilter = {}
+        let searchFilter: any = {}
         if (params.search) {
             searchFilter = {
                 $or: [
@@ -111,7 +111,10 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
                 ]
             }
         }
-        const summarySorting = [];
+        if (params.status && params.status === 'MostPopular') {
+            searchFilter.popular = true;
+        }
+        let summarySorting = [];
         switch (params.column) {
             case 'title':
                 summarySorting.push(['title', params.order || 'ASC']);
@@ -129,7 +132,9 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
                 summarySorting.push(['title', 'DESC']);
                 break;
         }
-
+        if (params.status && params.status === 'NewlyAdded') {
+            summarySorting = [['createdAt', 'DESC']];
+        }
         const data = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), searchFilter, summarySorting)
         response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
     } catch (e: any) {

@@ -4,8 +4,7 @@ import Boom from '@hapi/boom';
 import usersService from '../../services/users/user.service'
 import subscriptionService from '../../services/subscriptions/subscriptions.service'
 import { responseMessage } from '../../constants/message.constant'
-// import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp, sentEmail } from '../../lib/utils/utils'
-import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../lib/utils/utils'
+import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp, sentEmail } from '../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../constants/app.constant'
 import config from '../../../config'
 
@@ -33,10 +32,10 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             body.image = await uploadImageToAwsS3(body.image, body.name, s3Bucket)
         }
         const password = (Math.random() + 1).toString(36).substring(2)
-        // const result = await sentEmail(body.email, 'Temporary Password', `Your temporary password is: ${password}`);
-        // if (!result) {
-        //     return next(Boom.badData(adminControllerResponse.sentEmailFailure))
-        // }
+        const result = await sentEmail(body.email, 'Temporary Password', `Your temporary password is: ${password}`);
+        if (!result) {
+            return next(Boom.badData(adminControllerResponse.sentEmailFailure))
+        }
         if (body.subscriptions) {
             const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscriptions })
             if (!subscriptionDetails) {

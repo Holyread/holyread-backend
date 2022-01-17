@@ -9,7 +9,7 @@ export const responseMessage = {
         loginSuccess: 'User login successfully, ',
         signUpSuccess: 'User signUp successfully',
         userUpdateSuccess: 'User updated successfully',
-        userAlreadyExistError: 'User Already exist', 
+        userAlreadyExistError: 'User Already exist',
         getUserSuccess: 'User fetched successfully',
         getUsersSuccess: 'users fetched successfully',
         getUserError: 'User does not exist',
@@ -77,5 +77,14 @@ export const responseMessage = {
         fetchAuthorsSuccess: 'Authors list fetched successfully',
         createAuthorFailure: 'Author already added',
         getAuthorFailure: 'Failed to fetch author details',
-    },  
+    },
+    expertCuratedControllerResponse: {
+        createExpertCuratedSuccess: 'Expert curated added successfully',
+        updateExpertCuratedSuccess: 'Expert curated updated successfully',
+        deleteExpertCuratedSuccess: 'Expert curated deleted successfully',
+        fetchExpertCuratedSuccess: 'Expert curated details fetched successfully',
+        fetchAllExpertCuratedSuccess: 'Expert curated list fetched successfully',
+        createExpertCuratedFailure: 'Expert curated already added',
+        getExpertCuratedFailure: 'Failed to fetch Expert curated details'
+    },
 }

@@ -12,6 +12,7 @@ export const awsBucket = {
     production: { bucketName: 'holyreads-production', s3BaseURL: 'https://holyreads-production.s3.amazonaws.com' },
     usersDirectory: 'users',
     bookDirectory: 'books',
+    expertCuratedDirectory: 'expertCurated',
     region: 'us-east-1',
 }
 

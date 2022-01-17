@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import bookCategoryService from '../../services/bookCategory/bookCategory.service'
-import { responseMessage } from '../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../lib/utils/utils'
-import { awsBucket, dataTable } from '../../constants/app.constant'
-import config from '../../../config'
+import bookCategoryService from '../../../services/book/bookCategory.service'
+import { responseMessage } from '../../../constants/message.constant'
+import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../../lib/utils/utils'
+import { awsBucket, dataTable } from '../../../constants/app.constant'
+import config from '../../../../config'
 
 const bookCategoryControllerResponse = responseMessage.bookCategoryControllerResponse
 
@@ -64,6 +64,10 @@ const getOneCategory = async (req: Request, res: Response, next: NextFunction) =
 const getAllCategory = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
+        if (params.names === 'true') {
+            const data = await bookCategoryService.getAllBookCategoriesNames()
+            response.status(200).json({ message: bookCategoryControllerResponse.fetchBookCategoriesSuccess, data })
+        }
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 

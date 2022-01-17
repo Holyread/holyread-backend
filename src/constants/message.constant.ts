@@ -57,7 +57,25 @@ export const responseMessage = {
         createBookCategoryFailure: 'Book category already added',
         getBookCategoryFailure: 'Failed to fetch book category details'
     },
+    bookSummaryControllerResponse: {
+        createBookSummarySuccess: 'Book summary added successfully',
+        updateBookSummarySuccess: 'Book summary updated successfully',
+        deleteBookSummarySuccess: 'Book summary deleted successfully',
+        fetchBookSummarySuccess: 'Book summary details fetched successfully',
+        fetchBookSummariesSuccess: 'Book summary list fetched successfully',
+        createBookSummaryFailure: 'Book summary already added',
+        getBookSummaryFailure: 'Failed to fetch book summary details'
+    },
     dashboardControllerResponse: {
         getDashboardSuccess: 'Dashboard details fetched successfully'
-    },   
+    },
+    authorControllerResponse: {
+        createAuthorSuccess: 'Author added successfully',
+        updateAuthorSuccess: 'Author updated successfully',
+        deleteAuthorSuccess: 'Author deleted successfully',
+        fetchAuthorSuccess: 'Author details fetched successfully',
+        fetchAuthorsSuccess: 'Authors list fetched successfully',
+        createAuthorFailure: 'Author already added',
+        getAuthorFailure: 'Failed to fetch author details',
+    },  
 }

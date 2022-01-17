@@ -9,14 +9,17 @@ export interface IBookSummary extends mongoose.Document {
     overview: string,
     bookFor: string,
     aboutAuthor: string,
-    coverImage: string,
-    category: string,
-    summaryFile: string,
-    audioFiles: [{
-        chapterName: string,
-        chapterFile: string
+    categories?: [string],
+    coverImage?: string,
+    coverImageBackground?: string,
+    popular?: boolean,
+    videoFile?: string,
+    audioFile?: string,
+    chapters: [{
+        name: string,
+        description: string,
+        audioFile: string
     }],
-    videoFile: string,
     status?: 'Active' | 'DeActive'
 }
 
@@ -27,33 +30,39 @@ export type createBookSummaryType = {
     overview: string,
     bookFor: string,
     aboutAuthor: string,
-    coverImage: string,
-    category: string,
-    summaryFile: string,
-    audioFiles: [{
-        chapterName: string,
-        chapterFile: string
+    categories?: [string],
+    coverImage?: string,
+    coverImageBackground?: string,
+    popular?: boolean,
+    videoFile?: string,
+    audioFile?: string,
+    chapters: [{
+        name: string,
+        description: string,
+        audioFile: string
     }],
-    videoFile: string,
     status?: 'Active' | 'DeActive'
 }
 
 export type getBookSummaryType = {
     _id?: string,
     title: string,
-    author: string,
-    description: string,
-    overview: string,
-    bookFor: string,
-    aboutAuthor: string,
-    coverImage: string,
-    category: string,
-    summaryFile?: string,
-    audioFiles?: [{
-        chapterName: string,
-        chapterFile: string
-    }],
+    author?: string,
+    description?: string,
+    overview?: string,
+    bookFor?: string,
+    aboutAuthor?: string,
+    categories?: [string],
+    coverImage?: string,
+    coverImageBackground?: string,
+    popular?: boolean,
     videoFile?: string,
+    audioFile?: string,
+    chapters?: [{
+        name: string,
+        description: string,
+        audioFile: string
+    }],
     status?: 'Active' | 'DeActive'
 }
 
@@ -64,17 +73,23 @@ export const BookSummarySchema = new Schema({
     overview: { type: String, default: '' },
     bookFor: { type: String, default: '' },
     aboutAuthor: { type: String, default: '' },
+    categories: [{ type: String }],
     coverImage: { type: String, default: '' },
-    category: { type: String, required: true },
-    summaryFile: { type: String, default: '' },
-    audioFiles: [{ type: String }],
-    videoFile: { type: String, default: '' },
-    status: { type: String, default: 'Active' },
+    coverImageBackground: { type: String },
+    popular: { type: Boolean, default: false },
+    audioFile: { type: String },
+    videoFile: { type: String },
+    chapters: [{
+        name: { type: String },
+        description: { type: String },
+        audioFile: { type: String }
+    }],
     createdAt: {
         type: Date, default: () => {
             return new Date()
         },
     },
+    status: { type: String, default: 'Active' },
     updatedAt: { type: Date },
 }, { strict: 'throw' })
 

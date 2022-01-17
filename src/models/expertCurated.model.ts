@@ -2,7 +2,7 @@ import mongoose, { Schema } from 'mongoose'
 
 mongoose.set('useCreateIndex', true)
 
-export interface IExpertCuruted extends mongoose.Document {
+export interface IExpertCurated extends mongoose.Document {
     title: string,
     description: string,
     shortDescription: string,
@@ -10,7 +10,7 @@ export interface IExpertCuruted extends mongoose.Document {
     status?: 'Active' | 'DeActive',
 }
 
-export type createExpertCurutedType = {
+export type createExpertCuratedType = {
     title: string
     description: string,
     shortDescription: string,
@@ -18,7 +18,7 @@ export type createExpertCurutedType = {
     status?: 'Active' | 'DeActive'
 }
 
-export type getExpertCurutedType = {
+export type getExpertCuratedType = {
     _id?: string,
     title: string,
     description: string,
@@ -27,7 +27,7 @@ export type getExpertCurutedType = {
     status?: 'Active' | 'DeActive'
 }
 
-export const ExpertCurutedSchema = new Schema({
+export const ExpertCuratedSchema = new Schema({
     title: { type: String, required: true, index: true },
     description: { type: String, default: '' },
     shortDescription: { type: String, default: '' },
@@ -41,4 +41,4 @@ export const ExpertCurutedSchema = new Schema({
     updatedAt: { type: Date },
 }, { strict: 'throw' })
 
-export const ExpertCurutedModel = mongoose.model<IExpertCuruted>('expertCuruted', ExpertCurutedSchema)
+export const ExpertCuratedModel = mongoose.model<IExpertCurated>('expertCurated', ExpertCuratedSchema)

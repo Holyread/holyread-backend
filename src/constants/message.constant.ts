@@ -78,13 +78,13 @@ export const responseMessage = {
         createAuthorFailure: 'Author already added',
         getAuthorFailure: 'Failed to fetch author details',
     },
-    expertCurutedControllerResponse: {
-        createExpertCurutedSuccess: 'Expert curuted added successfully',
-        updateExpertCurutedSuccess: 'Expert curuted updated successfully',
-        deleteExpertCurutedSuccess: 'Expert curuted deleted successfully',
-        fetchExpertCurutedSuccess: 'Expert curuted details fetched successfully',
-        fetchAllExpertCurutedSuccess: 'Expert curuted list fetched successfully',
-        createExpertCurutedFailure: 'Expert curuted already added',
-        getExpertCurutedFailure: 'Failed to fetch Expert curuted details'
+    expertCuratedControllerResponse: {
+        createExpertCuratedSuccess: 'Expert curated added successfully',
+        updateExpertCuratedSuccess: 'Expert curated updated successfully',
+        deleteExpertCuratedSuccess: 'Expert curated deleted successfully',
+        fetchExpertCuratedSuccess: 'Expert curated details fetched successfully',
+        fetchAllExpertCuratedSuccess: 'Expert curated list fetched successfully',
+        createExpertCuratedFailure: 'Expert curated already added',
+        getExpertCuratedFailure: 'Failed to fetch Expert curated details'
     },
 }

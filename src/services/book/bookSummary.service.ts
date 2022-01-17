@@ -76,24 +76,6 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
     try {
         const result = await BookSummaryModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         const count = await BookSummaryModel.find(search).count()
-        await Promise.all(result.map(async (item: any) => {
-            if (!item) {
-                return
-            }
-            if (item.coverImage) {
-                item.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + item.coverImage
-            }
-            if (item.videoFile) {
-                item.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + item.videoFile
-            }
-            if (item.chapters && item.chapters.length) {
-                item.chapters.forEach(async oneChapter => {
-                    if (oneChapter.audioFile) {
-                        oneChapter.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + oneChapter.audioFile
-                    }
-                });
-            }
-        }))
         return { count, summaries: result }
     } catch (e: any) {
         throw new Error(e)

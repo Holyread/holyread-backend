@@ -38,11 +38,11 @@ const addSummary = async (req: Request, res: Response, next: NextFunction) => {
             body.coverImage = await uploadImageToAwsS3(body.coverImage, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage' })
         }
         if (body.chapters && body.chapters.length) {
-            body.chapters.forEach(async oneChapter => {
+            await Promise.all(body.chapters.map(async oneChapter => {
                 if (oneChapter.audioFile) {
                     oneChapter.audioFile = await uploadImageToAwsS3(oneChapter.audioFile, oneChapter.name, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' })
                 }
-            });
+            }));
         }
         if (body.videoFile) {
             body.videoFile = await uploadImageToAwsS3(body.videoFile, body.title + '-video', { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })

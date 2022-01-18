@@ -73,6 +73,9 @@ const getOneUser = async (req: Request, res: Response, next: NextFunction) => {
         if (!userObj) {
             return next(Boom.notFound(authControllerResponse.getUserError))
         }
+        if (userObj.image) {
+            userObj.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + userObj.image
+        }
         res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
     } catch (e: any) {
         next(Boom.badData(e.message))

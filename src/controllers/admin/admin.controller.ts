@@ -25,6 +25,9 @@ const getAdmin = async (req: Request, res: Response, next: NextFunction) => {
         if (!data) {
             return next(Boom.notFound(adminControllerResponse.getAdminFailure))
         }
+        if (data.image) {
+            data.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + data.image
+        }
         delete data.verificationCode
         res.status(200).send({ message: adminControllerResponse.fetchAdminSuccess, data: data })
     } catch (e: any) {

@@ -38,9 +38,6 @@ const updateUser = async (body: any, id: string) => {
 const getOneUserByFilter = async (query: any) => {
     try {
         const result: any = await UserModel.findOne(query).select('-password').lean()
-        if (result && result.image) {
-            result.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + result.image
-        }
         return result
     } catch (e: any) {
         throw new Error(e)

@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
 import authorService from '../../../services/book/author.service'
+import bookSummaryService from '../../../services/book/bookSummary.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { getSearchRegexp } from '../../../lib/utils/utils'
 import { dataTable } from '../../../constants/app.constant'
@@ -106,7 +107,12 @@ const updateAuthor = async (req: Request, res: Response, next: NextFunction) => 
 const deleteAuthor = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
+        const bookSummaryDetails = await bookSummaryService.getOneBookSummaryByFilter({ author: id })
+        if (bookSummaryDetails) {
+            return next(Boom.locked(authorControllerResponse.authorHaveBooksError))
+        }
         await authorService.deleteAuthor(id)
+
         return res.status(200).send({ message: authorControllerResponse.deleteAuthorSuccess })
     } catch (e: any) {
         return next(Boom.badData(e.message))

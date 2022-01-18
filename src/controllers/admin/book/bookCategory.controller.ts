@@ -114,9 +114,12 @@ const updateCateogry = async (req: Request, res: Response, next: NextFunction) =
         if (req.body.image === null) {
             await removeImageToAwsS3(categoryDetails.image, s3Bucket)
         }
-        if (req.body.image) {
+        if (req.body.image && req.body.image.includes('base64')) {
             await removeImageToAwsS3(categoryDetails.image, s3Bucket)
             req.body.image = await uploadImageToAwsS3(req.body.image, categoryDetails.title, s3Bucket)
+        }
+        if (req.body.image && req.body.image.startsWith('http')) {
+            req.body.image = categoryDetails.image
         }
         await bookCategoryService.updateBookCategory(req.body, id)
         return res.status(200).send({ message: bookCategoryControllerResponse.updateBookCategorySuccess })

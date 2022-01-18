@@ -132,9 +132,12 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
         if (req.body.image === null) {
             await removeImageToAwsS3(userObj.image, s3Bucket)
         }
-        if (req.body.image) {
+        if (req.body.image && req.body.image.includes('base64')) {
             await removeImageToAwsS3(userObj.image, s3Bucket)
             req.body.image = await uploadImageToAwsS3(req.body.image, userObj.name, s3Bucket)
+        }
+        if (req.body.image && req.body.image.startsWith('http')) {
+            req.body.image = userObj.image
         }
         if (req.body.subscriptions) {
             const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: req.body.subscriptions })

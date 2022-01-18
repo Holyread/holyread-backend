@@ -52,6 +52,7 @@ const getAllSubscriptions = async (request: Request, response: Response, next: N
         if (params.names === 'true') {
             const getSubscriptionsList = await subscriptionsService.getAllSubscriptionsName()
             response.status(200).json({ message: subscriptionsControllerResponse.fetchSubscriptionsSuccess, data: getSubscriptionsList })
+            return
         }
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit

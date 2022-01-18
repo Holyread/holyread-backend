@@ -52,6 +52,7 @@ const getAllAuthors = async (request: Request, response: Response, next: NextFun
         if (params.names === 'true') {
             const getAuthorsNames = await authorService.getAllAuthorsNames()
             response.status(200).json({ message: authorControllerResponse.fetchAuthorsSuccess, data: getAuthorsNames })
+            return
         }
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit

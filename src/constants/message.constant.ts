@@ -77,6 +77,7 @@ export const responseMessage = {
         fetchAuthorsSuccess: 'Authors list fetched successfully',
         createAuthorFailure: 'Author already added',
         getAuthorFailure: 'Failed to fetch author details',
+        authorHaveBooksError: 'First remove book from author profile',
     },
     expertCuratedControllerResponse: {
         createExpertCuratedSuccess: 'Expert curated added successfully',

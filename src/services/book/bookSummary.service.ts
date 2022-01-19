@@ -85,7 +85,14 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
 /** Get all book categories names */
 const getAllBookSummariesNames = async () => {
     try {
-        const result = await BookSummaryModel.find({}).select('title').lean()
+        const result = await BookSummaryModel.find({}).select('title coverImage').lean()
+        if (result && result.length) {
+            result.forEach(element => {
+                if (element && element.coverImage) {
+                    element.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + element.coverImage
+                }
+            })
+        }
         return result
     } catch (e: any) {
         throw new Error(e)

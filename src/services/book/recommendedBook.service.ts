@@ -28,6 +28,9 @@ const updateRecommendedBook = async (body: any, id: string) => {
 const getOneRecommendedBookByFilter = async (query: any) => {
       try {
             const result: any = await RecommendedBookModel.findOne(query).populate('book', 'title -_id').lean()
+            if (result && result.book) {
+                  result.book = result.book.title
+            }
             return result
       } catch (e: any) {
             throw new Error(e)
@@ -39,6 +42,11 @@ const getAllRecommendedBooks = async (skip: number, limit, search: object, sort)
       try {
             const recommendedBooks: any = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).populate('book', 'title -_id').lean()
             const count = await RecommendedBookModel.find(search).count()
+            recommendedBooks.forEach(element => {
+                  if (element && element.book) {
+                        element.book = element.book.title
+                  }
+            });
             return { count, recommendedBooks: recommendedBooks }
       } catch (e: any) {
             throw new Error(e)

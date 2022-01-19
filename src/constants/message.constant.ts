@@ -64,7 +64,8 @@ export const responseMessage = {
         fetchBookSummarySuccess: 'Book summary details fetched successfully',
         fetchBookSummariesSuccess: 'Book summary list fetched successfully',
         createBookSummaryFailure: 'Book summary already added',
-        getBookSummaryFailure: 'Failed to fetch book summary details'
+        getBookSummaryFailure: 'Failed to fetch book summary details',
+        recommendedBookError: 'Book is locked due to book exist in recommended list'
     },
     dashboardControllerResponse: {
         getDashboardSuccess: 'Dashboard details fetched successfully'
@@ -87,5 +88,13 @@ export const responseMessage = {
         fetchAllExpertCuratedSuccess: 'Expert curated list fetched successfully',
         createExpertCuratedFailure: 'Expert curated already added',
         getExpertCuratedFailure: 'Failed to fetch Expert curated details'
+    },
+    recommendedBookControllerResponse: {
+        createRecommendedBookSuccess: 'Recommended book added successfully',
+        updateRecommendedBookSuccess: 'Recommended book updated successfully',
+        deleteRecommendedBookSuccess: 'Recommended book deleted successfully',
+        fetchRecommendedBookSuccess: 'Recommended book details fetched successfully',
+        fetchRecommendedBooksSuccess: 'Recommended books list fetched successfully',
+        getRecommendedBookFailure: 'Failed to fetch recommended book details'
     },
 }

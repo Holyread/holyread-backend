@@ -3,6 +3,7 @@ import Boom from '@hapi/boom';
 
 import bookCategoryService from '../../../services/book/bookCategory.service'
 import bookSummaryService from '../../../services/book/bookSummary.service'
+import recommendedBookService from '../../../services/book/recommendedBook.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../../constants/app.constant'
@@ -22,7 +23,6 @@ const s3Bucket = {
 const addSummary = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
-        console.log(Object.keys(body))
         /** Get book summary from db */
         const summaryDetails: any = await bookSummaryService.getOneBookSummaryByFilter({ title: req.body.title })
         if (summaryDetails) {
@@ -93,6 +93,11 @@ const getOneSummary = async (req: Request, res: Response, next: NextFunction) =>
 const getAllSummaries = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
+        if (params.names === 'true') {
+            const data = await bookSummaryService.getAllBookSummariesNames()
+            response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
+            return
+        }
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
@@ -204,6 +209,10 @@ const deleteSummary = async (req: Request, res: Response, next: NextFunction) =>
         const id: any = req.params.id
         const bookSummaryDetails: any = await bookSummaryService.getOneBookSummaryByFilter({ _id: id })
         if (bookSummaryDetails) {
+            const bookRecommendedBookDetails = await recommendedBookService.getOneRecommendedBookByFilter({ book: id })
+            if (bookRecommendedBookDetails) {
+                return next(Boom.notFound(bookSummaryControllerResponse.recommendedBookError))
+            }
             if (bookSummaryDetails.image) {
                 await removeImageToAwsS3(bookSummaryDetails.image, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage' })
             }

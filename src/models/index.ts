@@ -6,6 +6,7 @@ import { BookSummaryModel } from './bookSummary.model'
 import { BookCategoryModel } from './bookCategory.model'
 import { BookAuthorModel } from './bookAuthor.model'
 import { ExpertCuratedModel } from './expertCurated.model'
+import { RecommendedBookModel } from './recommendedBooks.model'
 
 const NODE_ENV = config.NODE_ENV
 const option = { useNewUrlParser: true, useUnifiedTopology: true }
@@ -27,5 +28,6 @@ export {
   BookSummaryModel,
   BookCategoryModel,
   BookAuthorModel,
-  ExpertCuratedModel
+  ExpertCuratedModel,
+  RecommendedBookModel
 }

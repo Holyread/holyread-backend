@@ -9,6 +9,7 @@ import bookCategroy from './admin/book/bookCategory.route'
 import bookSummary from './admin/book/bookSummary.route'
 import author from './admin/book/author.route'
 import expertCurated from './admin/book/expertCurated.route'
+import recommendedBook from './admin/book/recommendedBook.route'
 
 const router: Router = express.Router()
 router.use('/auth', auth)
@@ -20,4 +21,5 @@ router.use('/book-category', bookCategroy)
 router.use('/book-summary', bookSummary)
 router.use('/expert-curated', expertCurated)
 router.use('/author', author)
+router.use('/recommended-book', recommendedBook)
 export default router

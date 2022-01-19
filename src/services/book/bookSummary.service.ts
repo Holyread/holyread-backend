@@ -82,6 +82,16 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
     }
 }
 
+/** Get all book categories names */
+const getAllBookSummariesNames = async () => {
+    try {
+        const result = await BookSummaryModel.find({}).select('title').lean()
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 /** Remove book summary */
 const deleteBookSummary = async (id: string) => {
     try {
@@ -92,4 +102,11 @@ const deleteBookSummary = async (id: string) => {
     }
 }
 
-export default { createBookSummary, updateBookSummary, getAllBookSummaries, getOneBookSummaryByFilter, deleteBookSummary }
+export default {
+    createBookSummary,
+    updateBookSummary,
+    getAllBookSummaries,
+    getAllBookSummariesNames,
+    getOneBookSummaryByFilter,
+    deleteBookSummary
+}

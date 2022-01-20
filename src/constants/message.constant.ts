@@ -97,4 +97,13 @@ export const responseMessage = {
         fetchRecommendedBooksSuccess: 'Recommended books list fetched successfully',
         getRecommendedBookFailure: 'Failed to fetch recommended book details'
     },
+    testimonialControllerResponse: {
+        createTestimonialSuccess: 'Testimonial added successfully',
+        updateTestimonialSuccess: 'Testimonial updated successfully',
+        deleteTestimonialSuccess: 'Testimonial deleted successfully',
+        fetchTestimonialSuccess: 'Testimonial details fetched successfully',
+        fetchTestimonialsSuccess: 'Testimonials list fetched successfully',
+        createTestimonialFailure: 'Testimonial already added',
+        getTestimonialFailure: 'Failed to fetch testimonial details'
+    },
 }

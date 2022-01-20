@@ -7,14 +7,12 @@ import {
   deleteUser
 } from '../../controllers/admin/users.controller'
 
-import adminPassport from '../../middleware/admin.passport'
-
 const router: Router = express.Router()
 
-router.post('/', adminPassport, addUser)
-router.get('/:userId', adminPassport, getOneUser)
-router.get('/', adminPassport, getAllUsers)
-router.put('/:userId', adminPassport, updateUser)
-router.delete('/:userId', adminPassport, deleteUser)
+router.post('/', addUser)
+router.get('/:userId', getOneUser)
+router.get('/', getAllUsers)
+router.put('/:userId', updateUser)
+router.delete('/:userId', deleteUser)
 
 export default router

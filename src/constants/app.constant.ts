@@ -13,6 +13,7 @@ export const awsBucket = {
     usersDirectory: 'users',
     bookDirectory: 'books',
     expertCuratedDirectory: 'expertCurated',
+    testimonialDirectory: 'testimonial',
     region: 'us-east-1',
 }
 

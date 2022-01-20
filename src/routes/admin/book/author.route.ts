@@ -7,14 +7,12 @@ import {
   deleteAuthor
 } from '../../../controllers/admin/book/author.controller'
 
-import adminPassport from '../../../middleware/admin.passport'
-
 const router: Router = express.Router()
 
-router.post('/', adminPassport, addAuthor)
-router.get('/:id', adminPassport, getOneAuthor)
-router.get('/', adminPassport, getAllAuthors)
-router.put('/:id', adminPassport, updateAuthor)
-router.delete('/:id', adminPassport, deleteAuthor)
+router.post('/', addAuthor)
+router.get('/:id', getOneAuthor)
+router.get('/', getAllAuthors)
+router.put('/:id', updateAuthor)
+router.delete('/:id', deleteAuthor)
 
 export default router

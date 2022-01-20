@@ -7,14 +7,12 @@ import {
   deleteSummary
 } from '../../../controllers/admin/book/bookSummary.controller'
 
-import adminPassport from '../../../middleware/admin.passport'
-
 const router: Router = express.Router()
 
-router.post('/', adminPassport, addSummary)
-router.get('/:id', adminPassport, getOneSummary)
-router.get('/', adminPassport, getAllSummaries)
-router.put('/:id', adminPassport, updateSummary)
-router.delete('/:id', adminPassport, deleteSummary)
+router.post('/', addSummary)
+router.get('/:id', getOneSummary)
+router.get('/', getAllSummaries)
+router.put('/:id', updateSummary)
+router.delete('/:id', deleteSummary)
 
 export default router

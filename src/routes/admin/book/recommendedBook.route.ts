@@ -6,13 +6,11 @@ import {
   deleteRecommendedBook
 } from '../../../controllers/admin/book/recommendedBook.controller'
 
-import adminPassport from '../../../middleware/admin.passport'
-
 const router: Router = express.Router()
 
-router.post('/', adminPassport, addRecommendedBook)
-router.get('/:id', adminPassport, getOneRecommendedBook)
-router.get('/', adminPassport, getAllRecommendedBooks)
-router.delete('/:id', adminPassport, deleteRecommendedBook)
+router.post('/', addRecommendedBook)
+router.get('/:id', getOneRecommendedBook)
+router.get('/', getAllRecommendedBooks)
+router.delete('/:id', deleteRecommendedBook)
 
 export default router

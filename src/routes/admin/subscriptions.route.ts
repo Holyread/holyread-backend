@@ -7,14 +7,12 @@ import {
   updateSubscription
 } from '../../controllers/admin/subscriptions.controller'
 
-import adminPassport from '../../middleware/admin.passport'
-
 const router: Router = express.Router()
 
-router.post('/', adminPassport, addSubscription)
-router.get('/:id', adminPassport, getOneSubscription)
-router.get('/', adminPassport, getAllSubscriptions)
-router.put('/:id', adminPassport, updateSubscription)
-router.delete('/:id', adminPassport, deleteSubcription)
+router.post('/', addSubscription)
+router.get('/:id', getOneSubscription)
+router.get('/', getAllSubscriptions)
+router.put('/:id', updateSubscription)
+router.delete('/:id', deleteSubcription)
 
 export default router

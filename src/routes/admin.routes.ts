@@ -10,16 +10,19 @@ import bookSummary from './admin/book/bookSummary.route'
 import author from './admin/book/author.route'
 import expertCurated from './admin/book/expertCurated.route'
 import recommendedBook from './admin/book/recommendedBook.route'
+import testimonial from './admin/testimonial.route'
 
 const router: Router = express.Router()
 router.use('/auth', auth)
 router.use('/users', adminPassport, users)
-router.use('/subscriptions', subscriptions)
-router.use('/dashboard', dashboard)
+router.use('/subscriptions', adminPassport, subscriptions)
+router.use('/dashboard', adminPassport, dashboard)
 router.use('/account', admin)
-router.use('/book-category', bookCategroy)
-router.use('/book-summary', bookSummary)
-router.use('/expert-curated', expertCurated)
-router.use('/author', author)
-router.use('/recommended-book', recommendedBook)
+router.use('/book-category', adminPassport, bookCategroy)
+router.use('/book-summary', adminPassport, bookSummary)
+router.use('/expert-curated', adminPassport, expertCurated)
+router.use('/author', adminPassport, author)
+router.use('/recommended-book', adminPassport, recommendedBook)
+router.use('/testimonial', adminPassport, testimonial)
+
 export default router

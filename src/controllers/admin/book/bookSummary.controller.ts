@@ -94,7 +94,8 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
     try {
         const params = request.query
         if (params.names === 'true') {
-            const data = await bookSummaryService.getAllBookSummariesNames()
+            const query = params.category ? { categories: { $in: [params.category] } } : {}
+            const data = await bookSummaryService.getAllBookSummariesNames(query)
             response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
             return
         }

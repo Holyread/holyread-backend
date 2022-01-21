@@ -32,7 +32,7 @@ const addTestimonial = async (req: Request, res: Response, next: NextFunction) =
             name: body.name,
             image: body.image,
             description: body.description,
-            status: body.status
+            status: 'Active'
         })
         res.status(200).send({
             message: testimonialControllerResponse.createTestimonialSuccess,

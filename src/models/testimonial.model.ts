@@ -28,7 +28,7 @@ export const TestimonialSchema = new Schema({
     name: { type: String, required: true, index: true },
     image: { type: String, required: true },
     description: { type: String },
-    status: { type: String, required: true, index: true },
+    status: { type: String},
     createdAt: {
         type: Date, default: () => {
             return new Date()

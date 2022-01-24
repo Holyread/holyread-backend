@@ -8,7 +8,6 @@ const expertCuratedControllerResponse = responseMessage.expertCuratedControllerR
 
 const createExpertCurated = async (body: any) => {
     try {
-        body.status = 'Active'
         const result = await ExpertCuratedModel.create(body)
         if (!result) {
             throw new Error(expertCuratedControllerResponse.createExpertCuratedFailure)
@@ -25,8 +24,6 @@ const createExpertCurated = async (body: any) => {
 /** Modify Expert Curated */
 const updateExpertCurated = async (body: any, id: string) => {
     try {
-        if (body.status === true) body.status = 'Active'
-        if (body.status === false) body.status = ' Deactive'
         const data: any = await ExpertCuratedModel.updateOne(
             { _id: id },
             { ...body, updatedAt: new Date() },
@@ -35,7 +32,6 @@ const updateExpertCurated = async (body: any, id: string) => {
         if (data && data.image) {
             data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/' + data.image
         }
-        data.status === 'Active' ? data.status = true : data.status = false 
         return data
     } catch (e: any) {
         throw new Error(e)
@@ -46,9 +42,6 @@ const updateExpertCurated = async (body: any, id: string) => {
 const getOneExpertCuratedByFilter = async (query: any) => {
     try {
         const data: any = await ExpertCuratedModel.findOne(query).lean()
-        if (data) {
-            data.status === 'Active' ? data.status = true : data.status = false
-      }
         return data
     } catch (e: any) {
         throw new Error(e)

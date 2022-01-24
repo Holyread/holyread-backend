@@ -16,7 +16,7 @@ const createSubscription = async (body: any) => {
 const updateSubscription = async (body: any, id: string) => {
       try {
             if (body.status === true) body.status = 'Active'
-            if (body.status === false) body.status = ' Deactive'
+            if (body.status === false) body.status = 'DeActive'
             const updatedSubscription: any = await SubscriptionsModel.findOneAndUpdate(
                   { _id: id },
                   { ...body, updatedAt: new Date() },

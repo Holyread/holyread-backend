@@ -9,7 +9,6 @@ const testimonialControllerResponse = responseMessage.testimonialControllerRespo
 /** Add testimonial */
 const createTestimonial = async (body: any) => {
     try {
-        body.status = 'Active'
         const result = await TestimonialModel.create(body)
         if (!result) {
             throw new Error(testimonialControllerResponse.createTestimonialFailure)
@@ -26,8 +25,6 @@ const createTestimonial = async (body: any) => {
 /** Modify testimonial */
 const updateTestimonial = async (body: any, id: string) => {
     try {
-        if (body.status === true) body.status = 'Active'
-        if (body.status === false) body.status = ' Deactive'
         const data: any = await TestimonialModel.findOneAndUpdate(
             { _id: id },
             { ...body, updatedAt: new Date() },
@@ -36,7 +33,6 @@ const updateTestimonial = async (body: any, id: string) => {
         if (data && data.image) {
             data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.testimonialDirectory + '/' + data.image
         }
-        data.status === 'Active' ? data.status = true : data.status = false 
         return data
     } catch (e: any) {
         throw new Error(e)
@@ -47,9 +43,6 @@ const updateTestimonial = async (body: any, id: string) => {
 const getOneTestimonialByFilter = async (query: any) => {
     try {
         const result: any = await TestimonialModel.findOne(query).lean()
-        if (result) {
-            result.status === 'Active' ? result.status = true : result.status = false
-      }
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -62,7 +55,6 @@ const getAllTestimonials = async (skip: number, limit, search: object, sort) => 
         const result = await TestimonialModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         const count = await TestimonialModel.find(search).count()
         await Promise.all(result.map(async (item: any) => {
-            item.status === 'Active' ? item.status = true : item.status = false
             if (!item) {
                 return
             }

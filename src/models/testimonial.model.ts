@@ -6,14 +6,14 @@ export interface ITestimonial extends mongoose.Document {
     name: string,
     image: string,
     description?: string,
-    status?: 'Active' | ' Deactive'
+    status?: 'Active' | 'DeActive'
 }
 
 export type createTestimonialType = {
     name: string,
     image: string,
     description?: string,
-    status?: 'Active' | ' Deactive'
+    status?: 'Active' | 'DeActive'
 }
 
 export type getTestimonialType = {
@@ -21,14 +21,14 @@ export type getTestimonialType = {
     name?: string,
     image: string,
     description?: string,
-    status?: 'Active' | ' Deactive'
+    status?: 'Active' | 'DeActive'
 }
 
 export const TestimonialSchema = new Schema({
     name: { type: String, required: true, index: true },
     image: { type: String, required: true },
     description: { type: String },
-    status: { type: String, default: 'Active' },
+    status: { type: String},
     createdAt: {
         type: Date, default: () => {
             return new Date()

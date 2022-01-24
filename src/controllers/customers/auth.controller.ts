@@ -1,11 +1,14 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
-import { encrypt, getToken, sentEmail } from '../../lib/utils/utils'
+import { encrypt, getToken, verifyToken, sentEmail } from '../../lib/utils/utils'
 import usersService from '../../services/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
+import { origins } from '../../constants/app.constant'
+import config from '../../../config'
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
+const NODE_ENV = config.NODE_ENV
 
 /** user signIn */
 const signInUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -32,32 +35,33 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     /** Get user from db */
     const user: any = await usersService.getOneUserByFilter({ email: req.body.email })
     if (user && !user.verified) {
-      res.status(200).send({ message: adminControllerResponse.verifyCodeSuccess })
+      res.status(200).send({ message: authControllerResponse.verifyEmailSuccess })
     }
     if (user && user.verified) {
-      return next(Boom.badData(adminControllerResponse.AdminExistError))
+      return next(Boom.badData(authControllerResponse.userAlreadyExistError))
     }
     const verificationCode = Math.floor(100000 + Math.random() * 900000)
-    const result = await sentEmail(body.email, 'Verification Code', `Your verification code is: ${verificationCode}`);
+    const token: string = getToken({ code: String(verificationCode) })
+    const link: string = `${origins[NODE_ENV]}/verify-user?token=${token}`
+    const result = await sentEmail(body.email, 'Verification Mail', `Please click this link for verify account - ${link}`);
     if (!result) {
-      return next(Boom.badData(adminControllerResponse.sendCodeFailure))
+      return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
     }
     if (user && !user.verificationCode) {
       await usersService.updateUser({
         verificationCode
       }, user._id)
-      res.status(200).send({ message: adminControllerResponse.sendCodeSuccess })
+      res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
     }
     await usersService.createUser({
-      name: body.name,
       email: body.email,
       password: body.password,
       type: 'User',
-      status: 'Active',
+      status: 'InActive',
       verified: false,
       verificationCode
     })
-    res.status(200).send({ message: adminControllerResponse.sendCodeSuccess })
+    res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
   } catch (e: any) {
     next(Boom.badData(e.message))
   }
@@ -66,7 +70,9 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
 /** Verify User signup */
 const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const code = req.params.code
+    const token = req.query.token as string
+    const decryptToken: any = verifyToken(token)
+    const code = decryptToken.code
     /** Get user from db */
     const user: any = await usersService.getOneUserByFilter({ verificationCode: code })
     if (!user) {

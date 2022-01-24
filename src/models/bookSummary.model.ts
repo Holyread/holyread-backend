@@ -20,7 +20,7 @@ export interface IBookSummary extends mongoose.Document {
         description: string,
         audioFile: string
     }],
-    status?: 'Active' | ' Deactive'
+    status?: 'Active' | 'DeActive'
 }
 
 export type createBookSummaryType = {
@@ -41,7 +41,7 @@ export type createBookSummaryType = {
         description: string,
         audioFile: string
     }],
-    status?: 'Active' | ' Deactive'
+    status?: 'Active' | 'DeActive'
 }
 
 export type getBookSummaryType = {
@@ -63,7 +63,7 @@ export type getBookSummaryType = {
         description: string,
         audioFile: string
     }],
-    status?: 'Active' | ' Deactive'
+    status?: 'Active' | 'DeActive'
 }
 
 export const BookSummarySchema = new Schema({

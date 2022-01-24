@@ -5,20 +5,20 @@ mongoose.set('useCreateIndex', true)
 export interface IBookCategory extends mongoose.Document {
     title: string,
     image: string,
-    status?: 'Active' | ' Deactive'
+    status?: 'Active' | 'DeActive'
 }
 
 export type createBookCategoryType = {
     title: string,
     image: string,
-    status?: 'Active' | ' Deactive'
+    status?: 'Active' | 'DeActive'
 }
 
 export type getBookCategoryType = {
     _id?: string,
     title?: string,
     image: string,
-    status?: 'Active' | ' Deactive'
+    status?: 'Active' | 'DeActive'
 }
 
 export const BookCategorySchema = new Schema({

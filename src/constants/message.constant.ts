@@ -106,4 +106,14 @@ export const responseMessage = {
         createTestimonialFailure: 'Testimonial already added',
         getTestimonialFailure: 'Failed to fetch testimonial details'
     },
+    shareImageControllerResponse: {
+        createShareImageSuccess: 'Share image added successfully',
+        updateShareImageSuccess: 'Share image updated successfully',
+        deleteShareImageSuccess: 'Share image deleted successfully',
+        fetchShareImageSuccess: 'Share image details fetched successfully',
+        fetchShareImagesSuccess: 'Share images list fetched successfully',
+        createShareImageFailure: 'Failed to create share image image',
+        shareImageExistError: 'Share image already added',
+        getShareImageFailure: 'Failed to fetch share image details'
+    },
 }

@@ -14,6 +14,7 @@ export const awsBucket = {
     bookDirectory: 'books',
     expertCuratedDirectory: 'expertCurated',
     testimonialDirectory: 'testimonial',
+    shareImageDirectory: 'shareImage',
     region: 'us-east-1',
 }
 

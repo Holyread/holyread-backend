@@ -7,7 +7,7 @@ import { corsOptionsDelegate } from '../app'
 
 const router: Router = express.Router()
 
-router.use('/auth', cors(corsOptionsDelegate), auth)
-router.use('/users', users)
+router.use('/auth', auth)
+router.use('/users', cors(corsOptionsDelegate), users)
 
 export default router

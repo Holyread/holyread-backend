@@ -17,7 +17,10 @@ export const responseMessage = {
         userInvalidPasswordError: 'Password is incorrect',
         passwordUpdateSuccess: 'Password has been changed successfully',
         deleteUserSuccess: 'User deleted successfully',
-        createUserFailed: 'Failed to create user'
+        createUserFailed: 'Failed to create user',
+        verifyEmailRequest: 'Please check your email and activate your account',
+        sentVerifyEmailFailure: 'Failed to send verification email',
+        verifyEmailSuccess: 'verification link already sended on your register email',
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

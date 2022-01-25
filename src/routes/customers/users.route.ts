@@ -2,7 +2,8 @@ import express, { Router } from 'express'
 import {
   getUserAccount,
   changePassword,
-  getUserSubscription
+  getUserSubscription,
+  updateUserAccount
 } from '../../controllers/customers/users.controller'
 
 import customerPassport from '../../middleware/customers.passport'
@@ -10,6 +11,7 @@ import customerPassport from '../../middleware/customers.passport'
 const router: Router = express.Router()
 
 router.get('/:id', customerPassport, getUserAccount)
+router.put('/:id', customerPassport, updateUserAccount)
 router.put('/:id/change-password', customerPassport, changePassword)
 router.get('/:id/subscription', customerPassport, getUserSubscription)
 export default router

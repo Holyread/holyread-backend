@@ -27,6 +27,9 @@ const getUserAccount = async (req: Request, res: Response, next: NextFunction) =
             if (!userObj) {
                   return next(Boom.notFound(authControllerResponse.getUserError))
             }
+            if (userObj.image) {
+                  userObj.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + userObj.image
+              }
             res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
       } catch (e: any) {
             next(Boom.badData(e.message))
@@ -76,7 +79,7 @@ const updateUserAccount = async (req: Request, res: Response, next: NextFunction
       try {
           const id: any = req.params.id
           /** Get user from db */
-          const data: any = await usersService.getOneUserByFilter({ _id: id, type: 'Admin' })
+          const data: any = await usersService.getOneUserByFilter({ _id: id, type: 'User' })
           if (!data) {
               return next(Boom.notFound(authControllerResponse.getUserError))
           }

@@ -29,13 +29,13 @@ require('./scripts')
 
 const appControllerResponse = responseMessage.appResponse
 
-const corsOptionsDelegate = async (req, callback) => {
+export const corsOptionsDelegate = async (req, callback) => {
   return allowedOrigins[config.NODE_ENV].indexOf(req.header('Origin')) === -1
       ? callback(Boom.forbidden(appControllerResponse.corsError))
       : callback(undefined, { origin: true })
 }
 
-app.use('/api/v1/customers', cors(corsOptionsDelegate), customersRoutes)
+app.use('/api/v1/customers', customersRoutes)
 app.use('/api/v1/admin', cors(corsOptionsDelegate), adminRoutes)
 app.get('/', async (req: Request, res: Response) => res.sendFile(__dirname + '/views/index.html'))
 app.use(appConfig.handleError)

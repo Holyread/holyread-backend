@@ -9,7 +9,7 @@ export const allowedOrigins = {
 export const origins = {
     test: '*',
     local: 'http://localhost:4200',
-    development: 'https://dev-admin.holyreads.com',
+    development: 'https://dev-customer.holyreads.com',
     staging: '',
     production: '',
 }

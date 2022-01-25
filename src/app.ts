@@ -6,7 +6,7 @@ import path from 'path'
 import cors from 'cors'
 import Boom from '@hapi/boom'
 
-import customersRoutes from './routes/customers.routes'
+import customersRoutes from './routes/customers-auth.routes'
 import adminRoutes from './routes/admin.routes'
 
 import appConfig from './lib/appConfig'

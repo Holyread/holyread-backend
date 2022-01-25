@@ -42,7 +42,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     }
     const verificationCode = Math.floor(100000 + Math.random() * 900000)
     const token: string = getToken({ code: String(verificationCode) })
-    const link: string = `${origins[NODE_ENV]}/verify-user?token=${token}`
+    const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
     const result = await sentEmail(body.email, 'Verification Mail', `Please click this link for verify account - ${link}`);
     if (!result) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))

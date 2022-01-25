@@ -4,11 +4,19 @@ import { encrypt, getToken, verifyToken, sentEmail } from '../../lib/utils/utils
 import usersService from '../../services/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
 import { origins } from '../../constants/app.constant'
+import { uploadImageToAwsS3 } from '../../lib/utils/utils'
+import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
 const NODE_ENV = config.NODE_ENV
+const s3Bucket = {
+  region: awsBucket.region,
+  bucketName: awsBucket[NODE_ENV].bucketName,
+  documentDirectory: `${awsBucket.usersDirectory}`,
+}
+
 
 /** user signIn */
 const signInUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -53,7 +61,11 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       }, user._id)
       res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
     }
+    if (body.image) {
+      body.image = await uploadImageToAwsS3(body.image, `user-${verificationCode}`, s3Bucket)
+    }
     await usersService.createUser({
+      image: body.image ? body.image : '',
       email: body.email,
       password: body.password,
       type: 'User',

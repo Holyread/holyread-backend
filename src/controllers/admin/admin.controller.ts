@@ -44,6 +44,7 @@ const updateAdmin = async (req: Request, res: Response, next: NextFunction) => {
         if (!data) {
             return next(Boom.notFound(adminControllerResponse.getAdminFailure))
         }
+        req.body.email = data.email
         if (req.body.image === null) {
             await removeImageToAwsS3(data.image, s3Bucket)
         }

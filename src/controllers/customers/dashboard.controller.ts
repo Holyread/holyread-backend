@@ -5,6 +5,7 @@ import bookSummaryService from '../../services/book/bookSummary.service'
 import bookCategoryService from '../../services/book/bookCategory.service'
 import expertCuratedService from '../../services/book/expertCurated.service'
 import recommendedBookService from '../../services/book/recommendedBook.service'
+import readsOfDayService from '../../services/readsOfDay/readsOfDay.service'
 import { responseMessage } from '../../constants/message.constant'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
@@ -26,6 +27,14 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
         })
         const recentReads = []
         const sharedImages = []
+        const readsOfDayList = await readsOfDayService.getAllReadsOfDay(0, 0, { status: 'Active' }, [['createdAt', 'DESC']])
+        readsOfDayList.reads.forEach(oneReads => {
+            sharedImages.push({
+                title: oneReads.title,
+                banner: oneReads.banner,
+                subTitle: oneReads.subTitle
+            })
+        });
         const recommendedBooksList = await recommendedBookService.getAllRecommendedBooks(0, 0, {}, [])
         const recommendedBooks = []
         recommendedBooksList.recommendedBooks.forEach((oneBook: any) => {
@@ -34,6 +43,7 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
                     _id: oneBook.book._id,
                     coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneBook.book.coverImage,
                     title: oneBook.book.title,
+                    author: oneBook.author,
                     overview: oneBook.book.overview,
                     totalStar: 100,
                     totalReads: 100
@@ -46,6 +56,7 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
                 mostPopular.push({
                     coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneSummary.coverImage,
                     title: oneSummary.title,
+                    author: oneSummary.author,
                     overview: oneSummary.overview,
                     totalStar: 100,
                     totalReads: 100,
@@ -72,6 +83,7 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
                 latestBooks.push({
                     coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneSummary.coverImage,
                     title: oneSummary.title,
+                    author: oneSummary.author,
                     overview: oneSummary.overview,
                     totalStar: 100,
                     totalReads: 100,

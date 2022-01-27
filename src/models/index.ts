@@ -9,6 +9,7 @@ import { ExpertCuratedModel } from './expertCurated.model'
 import { RecommendedBookModel } from './recommendedBooks.model'
 import { TestimonialModel } from './testimonial.model'
 import { ShareImageModel } from './shareImage.model'
+import { ReadsOfDayModel } from './readsOfDay.model'
 
 const NODE_ENV = config.NODE_ENV
 const option = { useNewUrlParser: true, useUnifiedTopology: true }
@@ -33,5 +34,6 @@ export {
   ExpertCuratedModel,
   RecommendedBookModel,
   TestimonialModel,
-  ShareImageModel
+  ShareImageModel,
+  ReadsOfDayModel
 }

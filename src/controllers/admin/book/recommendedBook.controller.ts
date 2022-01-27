@@ -79,6 +79,11 @@ const getAllRecommendedBooks = async (request: Request, response: Response, next
         }
 
         const data = await recommendedBookService.getAllRecommendedBooks(Number(skip), Number(limit), searchFilter, listSorting)
+        data.recommendedBooks.forEach(element => {
+            if (element && element.book) {
+                  element.book = element.book.title
+            }
+      });
         response.status(200).json({ message: recommendedBookControllerResponse.fetchRecommendedBooksSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))

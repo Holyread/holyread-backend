@@ -119,4 +119,13 @@ export const responseMessage = {
         shareImageExistError: 'Share image already added',
         getShareImageFailure: 'Failed to fetch share image details'
     },
+    readsOfDayControllerResponse: {
+        createReadOfDaySuccess: 'Read of day added successfully',
+        updateReadOfDaySuccess: 'Read of day updated successfully',
+        deleteReadOfDaySuccess: 'Read of day deleted successfully',
+        fetchReadOfDaySuccess: 'Read of day details fetched successfully',
+        fetchReadsOfDaySuccess: 'Reads of day list fetched successfully',
+        createReadOfDayFailure: 'Read of day already added',
+        getReadOfDayFailure: 'Failed to fetch Read of day details'
+    },
 }

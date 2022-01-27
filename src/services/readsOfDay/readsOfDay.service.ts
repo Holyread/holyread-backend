@@ -39,7 +39,7 @@ const updateReadOfDay = async (body: any, id: string) => {
     }
 }
 
-/** Get read of day by category id */
+/** Get read of day by reads id */
 const getOneReadOfDayByFilter = async (query: any) => {
     try {
         const result: any = await ReadsOfDayModel.findOne(query).lean()
@@ -62,13 +62,13 @@ const getAllReadsOfDay = async (skip: number, limit, search: object, sort) => {
                 item.banner = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.banner
             }
         }))
-        return { count, categories: result }
+        return { count, reads: result }
     } catch (e: any) {
         throw new Error(e)
     }
 }
 
-/** Remove category */
+/** Remove reads of day */
 const deleteReadOfDay = async (id: string) => {
     try {
         await ReadsOfDayModel.findOneAndDelete({ _id: id })

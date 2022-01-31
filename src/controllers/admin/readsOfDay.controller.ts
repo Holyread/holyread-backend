@@ -25,15 +25,15 @@ const addReadOfDay = async (req: Request, res: Response, next: NextFunction) => 
         if (readOfDay) {
             return next(Boom.badData(readsOfDayControllerResponse.createReadOfDayFailure))
         }
-        if (body.banner) {
-            body.banner = await uploadImageToAwsS3(body.banner, body.title, s3Bucket)
+        if (body.image) {
+            body.image = await uploadImageToAwsS3(body.image, body.title, s3Bucket)
         }
         const data = await readsOfDayService.createReadOfDay({
             title: body.title,
             subTitle: body.subTitle,
             description: body.description,
-            banner: body.banner,
-            status: body.status
+            image: body.image,
+            status: body.status || 'Active'
         })
         res.status(200).send({
             message: readsOfDayControllerResponse.createReadOfDaySuccess,
@@ -50,8 +50,8 @@ const getOneReadOfDay = async (req: Request, res: Response, next: NextFunction) 
         const id: any = req.params.id
         /** Get read of day from db */
         const data: any = await readsOfDayService.getOneReadOfDayByFilter({ _id: id })
-        if (data && data.banner) {
-            data.banner = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + data.banner
+        if (data && data.image) {
+            data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + data.image
         }
         if (!data) {
             return next(Boom.notFound(readsOfDayControllerResponse.getReadOfDayFailure))
@@ -108,15 +108,15 @@ const updateReadOfDay = async (req: Request, res: Response, next: NextFunction) 
         if (!readOfDayDetails) {
             return next(Boom.notFound(readsOfDayControllerResponse.getReadOfDayFailure))
         }
-        if (req.body.banner === null) {
-            await removeImageToAwsS3(readOfDayDetails.banner, s3Bucket)
+        if (req.body.image === null) {
+            await removeImageToAwsS3(readOfDayDetails.image, s3Bucket)
         }
-        if (req.body.banner && req.body.banner.includes('base64')) {
-            await removeImageToAwsS3(readOfDayDetails.banner, s3Bucket)
-            req.body.banner = await uploadImageToAwsS3(req.body.banner, readOfDayDetails.title, s3Bucket)
+        if (req.body.image && req.body.image.includes('base64')) {
+            await removeImageToAwsS3(readOfDayDetails.image, s3Bucket)
+            req.body.image = await uploadImageToAwsS3(req.body.image, readOfDayDetails.title, s3Bucket)
         }
-        if (req.body.banner && req.body.banner.startsWith('http')) {
-            req.body.banner = readOfDayDetails.banner
+        if (req.body.image && req.body.image.startsWith('http')) {
+            req.body.image = readOfDayDetails.image
         }
         await readsOfDayService.updateReadOfDay(req.body, id)
         return res.status(200).send({ message: readsOfDayControllerResponse.updateReadOfDaySuccess })
@@ -130,8 +130,8 @@ const deleteReadOfDay = async (req: Request, res: Response, next: NextFunction) 
     try {
         const id: any = req.params.id
         const readOfDayDetails: any = await readsOfDayService.getOneReadOfDayByFilter({ _id: id })
-        if (readOfDayDetails && readOfDayDetails.banner) {
-            await removeImageToAwsS3(readOfDayDetails.banner, s3Bucket)
+        if (readOfDayDetails && readOfDayDetails.image) {
+            await removeImageToAwsS3(readOfDayDetails.image, s3Bucket)
         }
         await readsOfDayService.deleteReadOfDay(id)
         return res.status(200).send({ message: readsOfDayControllerResponse.deleteReadOfDaySuccess })

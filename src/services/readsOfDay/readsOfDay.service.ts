@@ -13,8 +13,8 @@ const createReadOfDay = async (body: any) => {
         if (!result) {
             throw new Error(readsOfDayControllerResponse.createReadOfDayFailure)
         }
-        if (result.banner) {
-            result.banner = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + result.banner
+        if (result.image) {
+            result.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + result.image
         }
         return result
     } catch (e: any) {
@@ -30,8 +30,8 @@ const updateReadOfDay = async (body: any, id: string) => {
             { ...body, updatedAt: new Date() },
             { new: true }
         )
-        if (data && data.banner) {
-            data.banner = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + data.banner
+        if (data && data.image) {
+            data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + data.image
         }
         return data
     } catch (e: any) {
@@ -58,8 +58,8 @@ const getAllReadsOfDay = async (skip: number, limit, search: object, sort) => {
             if (!item) {
                 return
             }
-            if (item.banner) {
-                item.banner = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.banner
+            if (item.image) {
+                item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image
             }
         }))
         return { count, categories: result }

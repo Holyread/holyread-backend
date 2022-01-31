@@ -47,7 +47,7 @@ const getOneUserByFilter = async (query: any) => {
 /** Get all Users for table */
 const getAllUsers = async (skip: number, limit, search: object, sort) => {
     try {
-        const users = await UserModel.find({ ...search, type: 'User' }).skip(skip).limit(limit).sort(sort).lean()
+        const users = await UserModel.find({ ...search, type: 'User' }).select('-password').skip(skip).limit(limit).sort(sort).lean()
         const count = await UserModel.find({ ...search, type: 'User' }).count()
         await Promise.all(users.map(async (oneUser: any) => {
             if (!oneUser) {

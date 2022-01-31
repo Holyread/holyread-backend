@@ -25,7 +25,6 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
                 image: oneCategory.image
             }
         })
-        const recentReads = []
         const sharedImages = []
         const readsOfDayList = await readsOfDayService.getAllReadsOfDay(0, 0, { status: 'Active' }, [['createdAt', 'DESC']])
         readsOfDayList.reads.forEach(oneReads => {
@@ -51,9 +50,21 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
             }
         })
         const mostPopular = []
+        const recentReads = []
         bookSummaryList.summaries.forEach(oneSummary => {
             if (oneSummary && oneSummary.popular) {
                 mostPopular.push({
+                    coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneSummary.coverImage,
+                    title: oneSummary.title,
+                    author: oneSummary.author,
+                    overview: oneSummary.overview,
+                    totalStar: 100,
+                    totalReads: 100,
+                    bookMark: true
+                })
+            }
+            if (recentReads.length < 10) {
+                recentReads.push({
                     coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneSummary.coverImage,
                     title: oneSummary.title,
                     author: oneSummary.author,
@@ -97,7 +108,7 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
             data: {
                 categories,
                 recentReads,
-                sharedImages,
+                sharedImages: [],
                 mostPopular,
                 curatedList,
                 latest: latestBooks,

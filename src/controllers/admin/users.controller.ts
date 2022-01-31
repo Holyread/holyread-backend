@@ -148,6 +148,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
                 return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }
         }
+        req.body.email = userObj.email
         await usersService.updateUser(req.body, req.params.userId)
         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
     } catch (e: any) {

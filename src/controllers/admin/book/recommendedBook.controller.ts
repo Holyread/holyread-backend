@@ -26,7 +26,7 @@ const addRecommendedBook = async (req: Request, res: Response, next: NextFunctio
             })
             return;
         }
-        const data = await recommendedBookService.createRecommendedBook(body)
+        const data = await recommendedBookService.createRecommendedBook({ book: body.book })
         res.status(200).send({
             message: recommendedBookControllerResponse.createRecommendedBookSuccess,
             data

@@ -62,7 +62,7 @@ const getAllReadsOfDay = async (skip: number, limit, search: object, sort) => {
                 item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image
             }
         }))
-        return { count, categories: result }
+        return { count, reads: result }
     } catch (e: any) {
         throw new Error(e)
     }

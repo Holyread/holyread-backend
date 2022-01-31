@@ -142,6 +142,11 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
             summarySorting = [['createdAt', 'DESC']];
         }
         const data = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), searchFilter, summarySorting)
+        data.summaries.forEach((element: any) => {
+            if (element && element.author && element.author.name) {
+                element.author = element.author.name
+            }
+        });
         response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))

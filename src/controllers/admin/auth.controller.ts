@@ -16,7 +16,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     if (!user) {
       return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
     }
-    const verificationCode = Math.floor(100000 + Math.random() * 900000)
+    const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const result = await sentEmail(params.email, 'Verification Code', `Your verification code is: ${verificationCode}`);
     if (!result) {
       return next(Boom.badData(adminControllerResponse.sentEmailFailure))
@@ -80,7 +80,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
       if (!user) {
           return next(Boom.badData(adminControllerResponse.getAdminFailure))
       }
-      const verificationCode = Math.floor(100000 + Math.random() * 900000)
+      const verificationCode = Math.floor(1000 + Math.random() * 9000)
       const result = await sentEmail(email, 'Verification Code', `Your verification code is: ${verificationCode}`);
       if (!result) {
           return next(Boom.badData(adminControllerResponse.updateCodeFailure))
@@ -102,7 +102,7 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
       const userObj: any = await usersService.getOneUserByFilter({ verificationCode: code, type: 'Admin' })
       if (!userObj) {
           return next(Boom.notFound(adminControllerResponse.updateCodeFailure))
-      } 
+      }
       await usersService.updateUser({ password: newPassword, $unset: { verificationCode: 1 } }, userObj._id)
       res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
   } catch (e: any) {

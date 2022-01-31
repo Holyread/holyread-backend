@@ -48,7 +48,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     if (user && user.verified) {
       return next(Boom.badData(authControllerResponse.userAlreadyExistError))
     }
-    const verificationCode = Math.floor(100000 + Math.random() * 900000)
+    const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const token: string = getToken({ code: String(verificationCode) })
     const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
     const result = await sentEmail(body.email, 'Verification Mail', `Please click this link for verify account - ${link}`);
@@ -110,7 +110,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     if (!user) {
       return next(Boom.badData(authControllerResponse.getUserError))
     }
-    const verificationCode = Math.floor(100000 + Math.random() * 900000)
+    const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const result = await sentEmail(email, 'Verification Code', `Your verification code is: ${verificationCode}`);
     if (!result) {
       return next(Boom.badData(adminControllerResponse.sendCodeFailure))

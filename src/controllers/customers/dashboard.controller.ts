@@ -25,12 +25,12 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
                 image: oneCategory.image
             }
         })
-        const sharedImages = []
+        const readsOfTheDay = []
         const readsOfDayList = await readsOfDayService.getAllReadsOfDay(0, 0, { status: 'Active' }, [['createdAt', 'DESC']])
         readsOfDayList.reads.forEach(oneReads => {
-            sharedImages.push({
+            readsOfTheDay.push({
                 title: oneReads.title,
-                banner: oneReads.banner,
+                image: oneReads.image,
                 subTitle: oneReads.subTitle
             })
         });
@@ -108,9 +108,10 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
             data: {
                 categories,
                 recentReads,
-                sharedImages: [],
                 mostPopular,
                 curatedList,
+                recommendedBooks,
+                readsOfTheDayList: readsOfTheDay,
                 latest: latestBooks,
                 smallGroups
             }

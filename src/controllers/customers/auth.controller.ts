@@ -26,6 +26,9 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     if (!user) {
       return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
     }
+    if (user && user.status !== 'Active') {
+      return next(Boom.badData(authControllerResponse.userNotActivatedError))
+    }
     const token: string = getToken({ email: user.email })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,

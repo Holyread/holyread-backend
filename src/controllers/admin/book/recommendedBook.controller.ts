@@ -20,11 +20,7 @@ const addRecommendedBook = async (req: Request, res: Response, next: NextFunctio
         }
         const existingRecommendedBook = await recommendedBookService.getOneRecommendedBookByFilter({ book: body.book })
         if (existingRecommendedBook) {
-            res.status(200).send({
-                message: recommendedBookControllerResponse.createRecommendedBookSuccess,
-                data: existingRecommendedBook
-            })
-            return;
+            return next(Boom.notFound(recommendedBookControllerResponse.createRecommendedBookFailure))
         }
         const data = await recommendedBookService.createRecommendedBook({ book: body.book })
         res.status(200).send({

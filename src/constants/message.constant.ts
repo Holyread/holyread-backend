@@ -14,6 +14,7 @@ export const responseMessage = {
         getUsersSuccess: 'users fetched successfully',
         getUserError: 'User does not exist',
         userNotAuthorizationError: 'User not authorized',
+        userNotActivatedError: 'User not activated',
         userInvalidPasswordError: 'Password is incorrect',
         passwordUpdateSuccess: 'Password has been changed successfully',
         deleteUserSuccess: 'User deleted successfully',
@@ -94,6 +95,7 @@ export const responseMessage = {
     },
     recommendedBookControllerResponse: {
         createRecommendedBookSuccess: 'Recommended book added successfully',
+        createRecommendedBookFailure: 'Recommended book already added',
         updateRecommendedBookSuccess: 'Recommended book updated successfully',
         deleteRecommendedBookSuccess: 'Recommended book deleted successfully',
         fetchRecommendedBookSuccess: 'Recommended book details fetched successfully',

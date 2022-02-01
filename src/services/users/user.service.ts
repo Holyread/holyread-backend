@@ -3,13 +3,19 @@ import { getToken, encrypt } from '../../lib/utils/utils'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
 import { responseMessage } from '../../constants/message.constant'
-
+import subscriptionService from '../subscriptions/subscriptions.service'
 const NODE_ENV = config.NODE_ENV
 const authControllerResponse = responseMessage.authControllerResponse
 /** Add User */
 const createUser = async (body: any) => {
     try {
         body.password = encrypt(body.password)
+        if (!body.subscriptions) {
+            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ title: 'Free-Trial' })
+            if (subscriptionDetails) {
+                body.subscriptions = subscriptionDetails._id
+            }
+        }
         const result = await UserModel.create(body)
         if (!result) {
             throw new Error(authControllerResponse.createUserFailed)

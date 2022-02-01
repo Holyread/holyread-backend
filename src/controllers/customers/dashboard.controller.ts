@@ -30,7 +30,7 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
         readsOfDayList.reads.forEach(oneReads => {
             sharedImages.push({
                 title: oneReads.title,
-                banner: oneReads.banner,
+                image: oneReads.image,
                 subTitle: oneReads.subTitle
             })
         });

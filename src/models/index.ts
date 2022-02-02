@@ -10,6 +10,7 @@ import { RecommendedBookModel } from './recommendedBooks.model'
 import { TestimonialModel } from './testimonial.model'
 import { ShareImageModel } from './shareImage.model'
 import { ReadsOfDayModel } from './readsOfDay.model'
+import { SmallGroupModel } from './smallGroup.model'
 
 const NODE_ENV = config.NODE_ENV
 const option = { useNewUrlParser: true, useUnifiedTopology: true }
@@ -35,5 +36,6 @@ export {
   RecommendedBookModel,
   TestimonialModel,
   ShareImageModel,
-  ReadsOfDayModel
+  ReadsOfDayModel,
+  SmallGroupModel
 }

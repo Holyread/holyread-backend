@@ -130,4 +130,14 @@ export const responseMessage = {
         createReadOfDayFailure: 'Read of day already added',
         getReadOfDayFailure: 'Failed to fetch Read of day details'
     },
+    smallGroupControllerResponse: {
+        createSmallGroupSuccess: 'Small group added successfully',
+        updateSmallGroupSuccess: 'Small group updated successfully',
+        deleteSmallGroupSuccess: 'Small group deleted successfully',
+        fetchSmallGroupSuccess: 'Small group details fetched successfully',
+        fetchSmallGroupsSuccess: 'Small groups list fetched successfully',
+        createSmallGroupFailure: 'Failed to create Small group image',
+        smallGroupExistError: 'Small group already added',
+        getSmallGroupFailure: 'Failed to fetch small group details'
+    },
 }

@@ -21,8 +21,8 @@ const s3Bucket = {
 const addSmallGroup = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
-        const data: any = await smallGroupService.getOneSmallGroupByFilter({ title: body.title })
-        if (data) {
+        const existingSmallGroup: any = await smallGroupService.getOneSmallGroupByFilter({ title: body.title })
+        if (existingSmallGroup) {
             return next(Boom.notFound(smallGroupControllerResponse.createSmallGroupFailure))
         }
         if (body.coverImage) {

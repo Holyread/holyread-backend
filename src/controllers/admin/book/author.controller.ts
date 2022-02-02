@@ -98,7 +98,7 @@ const updateAuthor = async (req: Request, res: Response, next: NextFunction) => 
             return next(Boom.notFound(authorControllerResponse.getAuthorFailure))
         }
         const data = await authorService.updateAuthor(req.body, id)
-        return res.status(200).send({ message: authorControllerResponse.updateAuthorSuccess, data })
+        res.status(200).send({ message: authorControllerResponse.updateAuthorSuccess, data })
     } catch (e: any) {
         return next(Boom.badData(e.message))
     }
@@ -114,7 +114,7 @@ const deleteAuthor = async (req: Request, res: Response, next: NextFunction) => 
         }
         await authorService.deleteAuthor(id)
 
-        return res.status(200).send({ message: authorControllerResponse.deleteAuthorSuccess })
+        res.status(200).send({ message: authorControllerResponse.deleteAuthorSuccess })
     } catch (e: any) {
         return next(Boom.badData(e.message))
     }

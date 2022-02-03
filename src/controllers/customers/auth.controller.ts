@@ -46,7 +46,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     /** Get user from db */
     const user: any = await usersService.getOneUserByFilter({ email: req.body.email })
     if (user && !user.verified) {
-      res.status(200).send({ message: authControllerResponse.verifyEmailSuccess })
+      return res.status(200).send({ message: authControllerResponse.verifyEmailSuccess })
     }
     if (user && user.verified) {
       return next(Boom.badData(authControllerResponse.userAlreadyExistError))
@@ -62,7 +62,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       await usersService.updateUser({
         verificationCode
       }, user._id)
-      res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
+      return res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
     }
     if (body.image) {
       body.image = await uploadImageToAwsS3(body.image, `user-${verificationCode}`, s3Bucket)

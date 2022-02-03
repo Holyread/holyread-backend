@@ -16,8 +16,7 @@ const dashboardControllerResponse = responseMessage.dashboardControllerResponse
 /** Get Dashboard */
 const getDashboard = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const bookSummaryList: any = await bookSummaryService.getAllBookSummaries(0, 0, {}, [['createdAt', 'DESC']])
-        const bookCategoriesList: any = await bookCategoryService.getAllBookCategory(0, 0, { status: 'Active' }, [])
+        const bookCategoriesList: any = await bookCategoryService.getAllBookCategory(0, 10, { status: 'Active' }, [['createdAt', 'DESC']])
         const categories = bookCategoriesList.categories.map(oneCategory => {
             return {
                 _id: oneCategory._id,
@@ -26,7 +25,7 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
             }
         })
         const readsOfTheDay = []
-        const readsOfDayList = await readsOfDayService.getAllReadsOfDay(0, 0, { status: 'Active' }, [['createdAt', 'DESC']])
+        const readsOfDayList = await readsOfDayService.getAllReadsOfDay(0, 10, { status: 'Active' }, [['createdAt', 'DESC']])
         readsOfDayList.reads.forEach(oneReads => {
             readsOfTheDay.push({
                 title: oneReads.title,
@@ -34,7 +33,7 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
                 subTitle: oneReads.subTitle
             })
         });
-        const recommendedBooksList = await recommendedBookService.getAllRecommendedBooks(0, 0, {}, [])
+        const recommendedBooksList = await recommendedBookService.getAllRecommendedBooks(0, 10, {}, [])
         const recommendedBooks = []
         recommendedBooksList.recommendedBooks.forEach((oneBook: any) => {
             if (oneBook && oneBook.book && oneBook.book._id) {
@@ -49,34 +48,46 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
                 })
             }
         })
-        const mostPopular = []
-        const recentReads = []
-        bookSummaryList.summaries.forEach(oneSummary => {
-            if (oneSummary && oneSummary.popular) {
-                mostPopular.push({
-                    coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneSummary.coverImage,
-                    title: oneSummary.title,
-                    author: oneSummary.author,
-                    overview: oneSummary.overview,
-                    totalStar: 100,
-                    totalReads: 100,
-                    bookMark: true
-                })
+        let mostPopular: any = await bookSummaryService.getAllBookSummaries(0, 10, { popular: true }, [['createdAt', 'DESC']])
+        let books: any = await bookSummaryService.getAllBookSummaries(0, 10, {}, [['createdAt', 'DESC']])
+        mostPopular = mostPopular.summaries.map(oneItem => {
+            return {
+                coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneItem.coverImage,
+                title: oneItem.title,
+                author: oneItem.author,
+                overview: oneItem.overview,
+                totalStar: 100,
+                totalReads: 100,
+                bookMark: true,
+                coverImageBackground: oneItem.coverImageBackground
             }
-            if (recentReads.length < 10) {
-                recentReads.push({
-                    coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneSummary.coverImage,
-                    title: oneSummary.title,
-                    author: oneSummary.author,
-                    overview: oneSummary.overview,
-                    totalStar: 100,
-                    totalReads: 100,
-                    bookMark: true
-                })
+        })
+        const latestBooks = books.summaries.map(oneItem => {
+            return {
+                coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneItem.coverImage,
+                title: oneItem.title,
+                author: oneItem.author,
+                overview: oneItem.overview,
+                totalStar: 100,
+                totalReads: 100,
+                bookMark: true,
+                coverImageBackground: oneItem.coverImageBackground
+            }
+        })
+        const recentReads = books.summaries.map(oneItem => {
+            return {
+                coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneItem.coverImage,
+                title: oneItem.title,
+                author: oneItem.author,
+                overview: oneItem.overview,
+                totalStar: 100,
+                totalReads: 100,
+                bookMark: true,
+                coverImageBackground: oneItem.coverImageBackground
             }
         })
         const curatedList = [];
-        const expertCuratedList = await expertCuratedService.getAllExpertCurated(0, 0, { status: 'Active' }, [])
+        const expertCuratedList = await expertCuratedService.getAllExpertCurated(0, 10, { status: 'Active' }, [['createdAt', 'DESC']])
         expertCuratedList.data.forEach(element => {
             if (element) {
                 curatedList.push({
@@ -88,20 +99,7 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
                 })
             }
         });
-        const latestBooks = []
-        bookSummaryList.summaries.slice(0, 10).forEach(oneSummary => {
-            if (oneSummary) {
-                latestBooks.push({
-                    coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneSummary.coverImage,
-                    title: oneSummary.title,
-                    author: oneSummary.author,
-                    overview: oneSummary.overview,
-                    totalStar: 100,
-                    totalReads: 100,
-                    bookMark: true
-                })
-            }
-        })
+
         const smallGroups = []
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,

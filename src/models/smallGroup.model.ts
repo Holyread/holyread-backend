@@ -13,6 +13,7 @@ export interface ISmallGroup extends mongoose.Document {
     questions: [{
         type: string
     }],
+    backgroundColor?: string,
     status?: 'Active' | 'DeActive'
 }
 
@@ -26,6 +27,7 @@ export type createSmallGroupType = {
     questions: [{
         type: string
     }],
+    backgroundColor?: string,
     status: 'Active' | 'DeActive'
 }
 
@@ -40,6 +42,7 @@ export type getSmallGroupType = {
     questions?: [{
         type: string
     }],
+    backgroundColor?: string,
     status?: 'Active' | 'DeActive'
 }
 
@@ -59,6 +62,7 @@ export const SmallGroupSchema = new Schema({
     questions: [{
         type: String, index: true
     }],
+    backgroundColor: { type: String, default: '' },
     createdAt: {
         type: Date, default: () => {
             return new Date()

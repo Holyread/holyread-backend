@@ -42,7 +42,7 @@ const updateSmallGroup = async (body: any, id: string) => {
 /** Get small group by category id */
 const getOneSmallGroupByFilter = async (query: any) => {
     try {
-        const result: any = await SmallGroupModel.findOne(query).populate('books').lean()
+        const result: any = await SmallGroupModel.findOne(query).populate('books', 'title').lean()
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -52,7 +52,7 @@ const getOneSmallGroupByFilter = async (query: any) => {
 /** Get all small group for table */
 const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
     try {
-        const result = await SmallGroupModel.find(search).populate('books').skip(skip).limit(limit).sort(sort).lean()
+        const result = await SmallGroupModel.find(search).populate('books', 'title').skip(skip).limit(limit).sort(sort).lean()
         const count = await SmallGroupModel.find(search).count()
         await Promise.all(result.map(async (item: any) => {
             if (!item) {
@@ -60,13 +60,6 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
             }
             if (item.coverImage) {
                 item.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + item.coverImage
-            }
-            if (item.books.length) {
-                item.books.forEach(element => {
-                    if (element && element.coverImage) {
-                        element.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + element.coverImage
-                    }
-                });
             }
         }))
         return { count, smallGroups: result }

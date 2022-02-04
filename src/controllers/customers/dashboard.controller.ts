@@ -6,6 +6,7 @@ import bookCategoryService from '../../services/book/bookCategory.service'
 import expertCuratedService from '../../services/book/expertCurated.service'
 import recommendedBookService from '../../services/book/recommendedBook.service'
 import readsOfDayService from '../../services/readsOfDay/readsOfDay.service'
+import smallGroupService from '../../services/smallGroup/smallGroup.service'
 import { responseMessage } from '../../constants/message.constant'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
@@ -100,7 +101,17 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
             }
         });
 
-        const smallGroups = []
+        let smallGroupsList: any = await smallGroupService.getAllSmallGroups(0, 10, { status: 'Active' }, [['createdAt', 'DESC']])
+        smallGroupsList = smallGroupsList.smallGroups.map(element => {
+            return {
+                iceBreaker: element.iceBreaker,
+                introduction: element.introduction,
+                title: element.title,
+                description: element.description,
+                coverImage: element.coverImage,
+                backgroundColor: element.backgroundColor
+            }
+        });
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data: {
@@ -110,7 +121,7 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
                 curatedList,
                 readsOfTheDayList: readsOfTheDay,
                 latest: latestBooks,
-                smallGroups
+                smallGroups: smallGroupsList
             }
         })
     } catch (e: any) {

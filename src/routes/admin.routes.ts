@@ -13,6 +13,7 @@ import recommendedBook from './admin/book/recommendedBook.route'
 import testimonial from './admin/testimonial.route'
 import shareImage from './admin/shareImage.route'
 import readsOfDay from './admin/readsOfDay.route'
+import smallGroup from './admin/smallGroup.route'
 
 const router: Router = express.Router()
 router.use('/auth', auth)
@@ -28,5 +29,6 @@ router.use('/recommended-book', adminPassport, recommendedBook)
 router.use('/testimonial', adminPassport, testimonial)
 router.use('/share-image', adminPassport, shareImage)
 router.use('/reads-of-day', adminPassport, readsOfDay)
+router.use('/small-group', adminPassport, smallGroup)
 
 export default router

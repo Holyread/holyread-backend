@@ -41,8 +41,9 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
                 recommendedBooks.push({
                     _id: oneBook.book._id,
                     coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneBook.book.coverImage,
+                    coverImageBackground: oneBook.book.coverImageBackground,
                     title: oneBook.book.title,
-                    author: oneBook.author,
+                    author: oneBook.book.author,
                     overview: oneBook.book.overview,
                     totalStar: 100,
                     totalReads: 100
@@ -120,6 +121,7 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
                 mostPopular,
                 curatedList,
                 readsOfTheDayList: readsOfTheDay,
+                recommendedBooks,
                 latest: latestBooks,
                 smallGroups: smallGroupsList
             }

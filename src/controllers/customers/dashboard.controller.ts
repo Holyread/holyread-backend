@@ -17,7 +17,7 @@ const dashboardControllerResponse = responseMessage.dashboardControllerResponse
 /** Get Dashboard */
 const getDashboard = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const bookCategoriesList: any = await bookCategoryService.getAllBookCategory(0, 10, { status: 'Active' }, [['createdAt', 'DESC']])
+        const bookCategoriesList: any = await bookCategoryService.getAllBookCategory(0, 0, { status: 'Active' }, [['createdAt', 'DESC']])
         const categories = bookCategoriesList.categories.map(oneCategory => {
             return {
                 _id: oneCategory._id,

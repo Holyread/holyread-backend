@@ -72,7 +72,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       email: body.email,
       password: body.password,
       type: 'User',
-      status: 'InActive',
+      status: 'DeActive',
       verified: false,
       verificationCode
     })

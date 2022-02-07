@@ -98,6 +98,9 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
 const verifyPassword = async (req: Request, res: Response, next: NextFunction) => {
   try {
       const { newPassword, code }: any = req.body
+      if (!newPassword) {
+        return next(Boom.notFound(adminControllerResponse.passwordMissingError))
+      }
       /** Get user from db */
       const userObj: any = await usersService.getOneUserByFilter({ verificationCode: code, type: 'Admin' })
       if (!userObj) {

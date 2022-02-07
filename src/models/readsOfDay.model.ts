@@ -7,7 +7,7 @@ export interface IReadsOfDay extends mongoose.Document {
     subTitle: string,
     description: string,
     image: string,
-    status?: 'Active' | 'DeActive'
+    status?: 'Active' | 'Deactive'
 }
 
 export type createReadsOfDayType = {
@@ -15,7 +15,7 @@ export type createReadsOfDayType = {
     subTitle: string,
     description: string,
     image: string,
-    status?: 'Active' | 'DeActive'
+    status?: 'Active' | 'Deactive'
 }
 
 export type getReadsOfDayType = {
@@ -24,7 +24,7 @@ export type getReadsOfDayType = {
     subTitle?: string,
     description?: string,
     image?: string,
-    status?: 'Active' | 'DeActive'
+    status?: 'Active' | 'Deactive'
 }
 
 export const ReadsOfDaySchema = new Schema({

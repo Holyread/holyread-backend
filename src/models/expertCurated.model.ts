@@ -7,7 +7,7 @@ export interface IExpertCurated extends mongoose.Document {
     description: string,
     shortDescription: string,
     image: string,
-    status?: 'Active' | 'DeActive',
+    status?: 'Active' | 'Deactive',
 }
 
 export type createExpertCuratedType = {
@@ -15,7 +15,7 @@ export type createExpertCuratedType = {
     description: string,
     shortDescription: string,
     image: string,
-    status?: 'Active' | 'DeActive'
+    status?: 'Active' | 'Deactive'
 }
 
 export type getExpertCuratedType = {
@@ -24,7 +24,7 @@ export type getExpertCuratedType = {
     description: string,
     shortDescription: string,
     image?: string,
-    status?: 'Active' | 'DeActive'
+    status?: 'Active' | 'Deactive'
 }
 
 export const ExpertCuratedSchema = new Schema({

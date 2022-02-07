@@ -15,7 +15,7 @@ export interface ISmallGroup extends mongoose.Document {
     }],
     backgroundColor?: string,
     conclusion?: string,
-    status?: 'Active' | 'DeActive'
+    status?: 'Active' | 'Deactive'
 }
 
 export type createSmallGroupType = {
@@ -30,7 +30,7 @@ export type createSmallGroupType = {
     }],
     backgroundColor?: string,
     conclusion?: string,
-    status: 'Active' | 'DeActive'
+    status: 'Active' | 'Deactive'
 }
 
 export type getSmallGroupType = {
@@ -46,7 +46,7 @@ export type getSmallGroupType = {
     }],
     backgroundColor?: string,
     conclusion?: string,
-    status?: 'Active' | 'DeActive'
+    status?: 'Active' | 'Deactive'
 }
 
 export const SmallGroupSchema = new Schema({

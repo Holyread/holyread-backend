@@ -40,7 +40,8 @@ export const responseMessage = {
         codeVerificationFailure: 'Invalid code provided',
         failedToSendPassword: 'Failed to send password on email',
         sentEmailFailure: 'Failed to send email, please try again',
-        forgotPassowrdSuccess: 'Password updated successfully'
+        forgotPassowrdSuccess: 'Password updated successfully',
+        passwordMissingError: 'Password is missing'
     },
     subscriptionsControllerResponse: {
         createSubscriptionSuccess: 'Subscription added successfully',

@@ -74,7 +74,7 @@ const getOneBookSummaryByFilter = async (query: any) => {
 /** Get all book summaries for table */
 const getAllBookSummaries = async (skip: number, limit, search: object, sort) => {
     try {
-        const result = await BookSummaryModel.find(search).populate('author', 'name').skip(skip).limit(limit).sort(sort).lean()
+        const result = await BookSummaryModel.find(search).populate('author', 'name').populate('categories','title').skip(skip).limit(limit).sort(sort).lean()
         const count = await BookSummaryModel.find(search).count()
         return { count, summaries: result }
     } catch (e: any) {

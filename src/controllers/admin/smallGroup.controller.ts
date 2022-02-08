@@ -4,18 +4,12 @@ import Boom from '@hapi/boom';
 import smallGroupService from '../../services/smallGroup/smallGroup.service'
 import bookSummaryService from '../../services/book/bookSummary.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../lib/utils/utils'
+import { getSearchRegexp } from '../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../constants/app.constant'
 import config from '../../../config'
 
 const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
-
 const NODE_ENV = config.NODE_ENV
-const s3Bucket = {
-    region: awsBucket.region,
-    bucketName: awsBucket[NODE_ENV].bucketName,
-    documentDirectory: `${awsBucket.smallGroupDirectory}`,
-}
 
 /** Add small group */
 const addSmallGroup = async (req: Request, res: Response, next: NextFunction) => {
@@ -24,9 +18,6 @@ const addSmallGroup = async (req: Request, res: Response, next: NextFunction) =>
         const existingSmallGroup: any = await smallGroupService.getOneSmallGroupByFilter({ title: body.title })
         if (existingSmallGroup) {
             return next(Boom.notFound(smallGroupControllerResponse.createSmallGroupFailure))
-        }
-        if (body.coverImage) {
-            body.coverImage = await uploadImageToAwsS3(body.coverImage, body.title, s3Bucket)
         }
         if (body.books.length) {
             body.books = await Promise.all(body.books.filter(async (oneBook) => {
@@ -56,9 +47,6 @@ const getOneSmallGroup = async (req: Request, res: Response, next: NextFunction)
                     element.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + element.coverImage
                 }
             });
-        }
-        if (data.coverImage) {
-            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + data.coverImage
         }
         if (!data) {
             return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure))
@@ -127,16 +115,6 @@ const updateSmallGroup = async (req: Request, res: Response, next: NextFunction)
         if (!smallGroupDetails) {
             return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure))
         }
-        if (req.body.coverImage === null && smallGroupDetails.coverImage) {
-            await removeImageToAwsS3(smallGroupDetails.coverImage, s3Bucket)
-        }
-        if (req.body.coverImage && req.body.coverImage.includes('base64')) {
-            await removeImageToAwsS3(smallGroupDetails.coverImage, s3Bucket)
-            req.body.coverImage = await uploadImageToAwsS3(req.body.coverImage, smallGroupDetails.title, s3Bucket)
-        }
-        if (req.body.coverImage && req.body.coverImage.startsWith('http')) {
-            req.body.coverImage = smallGroupDetails.coverImage
-        }
         await smallGroupService.updateSmallGroup(req.body, id)
         return res.status(200).send({ message: smallGroupControllerResponse.updateSmallGroupSuccess })
     } catch (e: any) {
@@ -148,10 +126,6 @@ const updateSmallGroup = async (req: Request, res: Response, next: NextFunction)
 const deleteSmallGroup = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
-        const smallGroupDetails: any = await smallGroupService.getOneSmallGroupByFilter({ _id: id })
-        if (smallGroupDetails && smallGroupDetails.coverImage) {
-            await removeImageToAwsS3(smallGroupDetails.coverImage, s3Bucket)
-        }
         await smallGroupService.deleteSmallGroup(id)
         return res.status(200).send({ message: smallGroupControllerResponse.deleteSmallGroupSuccess })
     } catch (e: any) {

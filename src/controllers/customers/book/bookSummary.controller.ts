@@ -15,13 +15,13 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
     try {
         const params = request.query
         let searchFilter: any = { status: 'Active' }
-        if (params.search === 'byCategory') {
+        if (params.section === 'byCategory') {
             searchFilter = { categories: String(params.categories).split(','), status: 'Active' }
         }
-        if (params.search === 'popular') {
+        if (params.section === 'popular') {
             searchFilter = { popular: true, status: 'Active' }
         }
-        if (params.search === 'recommended') {
+        if (params.section === 'recommended') {
             const recommendedBooks = await recommendedBookService.getAllRecommendedBooks(0, 0, {}, [['createdAt', 'DESC']])
             let data = recommendedBooks.recommendedBooks.map(item => {
                 return {

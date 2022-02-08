@@ -109,7 +109,6 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
                 introduction: element.introduction,
                 title: element.title,
                 description: element.description,
-                coverImage: element.coverImage,
                 backgroundColor: element.backgroundColor
             }
         });

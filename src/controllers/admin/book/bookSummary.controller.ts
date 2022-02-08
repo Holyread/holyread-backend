@@ -107,11 +107,9 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
                 $or: [
                     { 'title': await getSearchRegexp(params.search) },
                     { 'status': await getSearchRegexp(params.search) },
-                    { 'author': await getSearchRegexp(params.search) },
                     { 'description': await getSearchRegexp(params.search) },
                     { 'overview': await getSearchRegexp(params.search) },
                     { 'bookFor': await getSearchRegexp(params.search) },
-                    { 'aboutAuthor': await getSearchRegexp(params.search) },
                     { 'chapters.name': await getSearchRegexp(params.search) }
                 ]
             }
@@ -144,6 +142,9 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
         data.summaries.forEach((element: any) => {
             if (element && element.author && element.author.name) {
                 element.author = element.author.name
+            }
+            if (element.coverImage) {
+                element.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + element.coverImage
             }
         });
         response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })

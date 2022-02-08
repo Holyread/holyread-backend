@@ -1,9 +1,6 @@
 import { SmallGroupModel } from '../../models/index'
-import { awsBucket } from '../../constants/app.constant'
-import config from '../../../config'
 import { responseMessage } from '../../constants/message.constant'
 
-const NODE_ENV = config.NODE_ENV
 const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
 
 /** Add small group */
@@ -12,9 +9,6 @@ const createSmallGroup = async (body: any) => {
         const result = await SmallGroupModel.create(body)
         if (!result) {
             throw new Error(smallGroupControllerResponse.createSmallGroupFailure)
-        }
-        if (result.coverImage) {
-            result.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + result.coverImage
         }
         return result
     } catch (e: any) {
@@ -29,10 +23,7 @@ const updateSmallGroup = async (body: any, id: string) => {
             { _id: id },
             { ...body, updatedAt: new Date() },
             { new: true }
-        ) 
-        if (data && data.coverImage) {
-            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + data.coverImage
-        }
+        )
         return data
     } catch (e: any) {
         throw new Error(e)
@@ -57,9 +48,6 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
         await Promise.all(result.map(async (item: any) => {
             if (!item) {
                 return
-            }
-            if (item.coverImage) {
-                item.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + item.coverImage
             }
         }))
         return { count, smallGroups: result }

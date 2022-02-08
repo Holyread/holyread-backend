@@ -24,7 +24,6 @@ export const awsBucket = {
     testimonialDirectory: 'testimonial',
     shareImageDirectory: 'shareImage',
     readsOfDayDirectory: 'readsOfDay',
-    smallGroupDirectory: 'smallGroup',
     region: 'us-east-1',
 }
 

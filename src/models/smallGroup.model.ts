@@ -4,7 +4,6 @@ import { BookSummaryModel } from './bookSummary.model'
 mongoose.set('useCreateIndex', true)
 
 export interface ISmallGroup extends mongoose.Document {
-    coverImage: string,
     title: string,
     books: [string],
     description: string,
@@ -19,7 +18,6 @@ export interface ISmallGroup extends mongoose.Document {
 }
 
 export type createSmallGroupType = {
-    coverImage: string,
     title: string,
     books: [string],
     description: string,
@@ -35,7 +33,6 @@ export type createSmallGroupType = {
 
 export type getSmallGroupType = {
     _id?: string,
-    coverImage?: string,
     title: string,
     books?: [string],
     description?: string,
@@ -51,7 +48,6 @@ export type getSmallGroupType = {
 
 export const SmallGroupSchema = new Schema({
     title: { type: String, required: true, index: true },
-    coverImage: { type: String, required: true, index: true },
     books: [{
         type: Schema.Types.ObjectId,
         ref: BookSummaryModel,

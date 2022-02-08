@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose'
 import { BookAuthorModel } from './bookAuthor.model'
+import { BookCategoryModel } from './bookCategory.model'
 mongoose.set('useCreateIndex', true)
 
 export interface IBookSummary extends mongoose.Document {
@@ -78,7 +79,12 @@ export const BookSummarySchema = new Schema({
     overview: { type: String, default: '' },
     bookFor: { type: String, default: '' },
     aboutAuthor: { type: String, default: '' },
-    categories: [{ type: String }],
+    categories: [{
+        type: Schema.Types.ObjectId,
+        ref: BookCategoryModel,
+        required: true,
+        index: true
+    }],
     coverImage: { type: String, default: '' },
     coverImageBackground: { type: String },
     popular: { type: Boolean, default: false },

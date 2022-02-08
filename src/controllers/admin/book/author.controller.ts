@@ -61,10 +61,8 @@ const getAllAuthors = async (request: Request, response: Response, next: NextFun
         if (params.search) {
             searchFilter = {
                 $or: [
-                    { title: await getSearchRegexp(params.search) },
-                    { price: params.search },
-                    { status: await getSearchRegexp(params.search) },
-                    { duration: params.search },
+                    { name: await getSearchRegexp(params.search) },
+                    { about: await getSearchRegexp(params.search) },
                 ]
             }
         }

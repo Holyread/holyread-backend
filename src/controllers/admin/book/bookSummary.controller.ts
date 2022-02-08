@@ -79,9 +79,8 @@ const getOneSummary = async (req: Request, res: Response, next: NextFunction) =>
                 }
             });
         }
-        if (data.category) {
-            const categoryDetails = await bookCategoryService.getOneBookCategoryByFilter({ _id: data.category })
-            data.category = categoryDetails.title
+        if (data.categories) {
+            data.categories = await bookCategoryService.getAllBookCategory(0, 0, { _id: { $in: data.categories } }, [['createdAt', 'DESC']])
         }
         res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummarySuccess, data })
     } catch (e: any) {

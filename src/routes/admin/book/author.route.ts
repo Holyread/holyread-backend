@@ -4,7 +4,8 @@ import {
   getOneAuthor,
   getAllAuthors,
   updateAuthor,
-  deleteAuthor
+  deleteAuthor,
+  getAllAuthorsNames
 } from '../../../controllers/admin/book/author.controller'
 
 const router: Router = express.Router()
@@ -12,6 +13,7 @@ const router: Router = express.Router()
 router.post('/', addAuthor)
 router.get('/:id', getOneAuthor)
 router.get('/', getAllAuthors)
+router.get('/names/all', getAllAuthorsNames)
 router.put('/:id', updateAuthor)
 router.delete('/:id', deleteAuthor)
 

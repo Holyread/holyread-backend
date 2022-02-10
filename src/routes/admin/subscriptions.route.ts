@@ -4,7 +4,8 @@ import {
   deleteSubcription,
   getAllSubscriptions,
   getOneSubscription,
-  updateSubscription
+  updateSubscription,
+  getAllSubscriptionsNames
 } from '../../controllers/admin/subscriptions.controller'
 
 const router: Router = express.Router()
@@ -12,6 +13,7 @@ const router: Router = express.Router()
 router.post('/', addSubscription)
 router.get('/:id', getOneSubscription)
 router.get('/', getAllSubscriptions)
+router.get('/names/all', getAllSubscriptionsNames)
 router.put('/:id', updateSubscription)
 router.delete('/:id', deleteSubcription)
 

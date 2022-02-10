@@ -52,7 +52,7 @@ const getOneExpertCuratedByFilter = async (query: any) => {
 const getAllExpertCurated = async (skip: number, limit, search: object, sort) => {
     try {
         const result = await ExpertCuratedModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        const count = await ExpertCuratedModel.find(search).count()
+        const count: number = await ExpertCuratedModel.find(search).count()
         if (result.length) {
             await Promise.all(result.map(item => {
                 if (item && item.image) {
@@ -61,6 +61,31 @@ const getAllExpertCurated = async (skip: number, limit, search: object, sort) =>
             }))
         }
         return { count, data: result }
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+/** Get all expert Curated for app */
+const getAllExpertCuratedsForApp = async (skip: number, limit, search: object, sort) => {
+    try {
+        let result = await ExpertCuratedModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+        if (result.length) {
+            result = await Promise.all(result.map(item => {
+                if (item && item.image) {
+                    item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/' + item.image
+                }
+                return {
+                    _id: item._id,
+                    title: item.title,
+                    description: item.description,
+                    shortDescription: item.shortDescription,
+                    image: item.image,
+                    totalReads: 100
+                }
+            }))
+        }
+        return result
     } catch (e: any) {
         throw new Error(e)
     }
@@ -80,6 +105,7 @@ const deleteExpertCurated = async (id: string) => {
 export default {
     createExpertCurated,
     getAllExpertCurated,
+    getAllExpertCuratedsForApp,
     getOneExpertCuratedByFilter,
     updateExpertCurated,
     deleteExpertCurated

@@ -50,10 +50,16 @@ const getOneReadOfDayByFilter = async (query: any) => {
 }
 
 /** Get all read of day for table */
-const getAllReadsOfDay = async (skip: number, limit, search: object, sort) => {
+const getAllReadsOfDay = async (skip: number, limit, search: object, sort, isForApp?: any) => {
     try {
-        const result = await ReadsOfDayModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        const count = await ReadsOfDayModel.find(search).count()
+        let result = []
+        let count: number = 0
+        if (isForApp) {
+            result = await ReadsOfDayModel.find(search).select('title image subTitle').skip(skip).limit(limit).sort(sort).lean()
+        } else {
+            result = await ReadsOfDayModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+            count = await ReadsOfDayModel.find(search).count()
+        }
         await Promise.all(result.map(async (item: any) => {
             if (!item) {
                 return
@@ -62,7 +68,7 @@ const getAllReadsOfDay = async (skip: number, limit, search: object, sort) => {
                 item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image
             }
         }))
-        return { count, reads: result }
+        return isForApp ? result : { count, reads: result }
     } catch (e: any) {
         throw new Error(e)
     }

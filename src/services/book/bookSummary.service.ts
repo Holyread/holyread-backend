@@ -1,4 +1,4 @@
-import { BookSummaryModel } from '../../models/index'
+import { BookSummaryModel, BookAuthorModel } from '../../models/index'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
 import { responseMessage } from '../../constants/message.constant'
@@ -72,11 +72,38 @@ const getOneBookSummaryByFilter = async (query: any) => {
 }
 
 /** Get all book summaries for table */
-const getAllBookSummaries = async (skip: number, limit, search: object, sort) => {
+const getAllBookSummaries = async (skip: number, limit, search: object, sort, isForApp?: any) => {
     try {
-        const result = await BookSummaryModel.find(search).populate('author', 'name').populate('categories','title').skip(skip).limit(limit).sort(sort).lean()
-        const count = await BookSummaryModel.find(search).count()
-        return { count, summaries: result }
+        let result: any = []
+        let count: number = 0;
+        if (!isForApp) {
+            result = await BookSummaryModel.find(search).populate('author', 'name').populate('categories','title').skip(skip).limit(limit).sort(sort).lean()
+            count = await BookSummaryModel.find(search).count()
+        } else {
+            result = await BookSummaryModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+            result = await Promise.all(result.map(async oneItem => {
+                if (oneItem.author) {
+                    oneItem.author = await BookAuthorModel.findById(oneItem.author).lean()
+                    oneItem.author = {
+                        _id: oneItem.author._id,
+                        name: oneItem.author.name,
+                        about: oneItem.author.about,
+                    }
+                }
+                return {
+                    _id: oneItem._id,
+                    coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneItem.coverImage,
+                    title: oneItem.title,
+                    author: oneItem.author,
+                    overview: oneItem.overview,
+                    totalStar: 100,
+                    totalReads: 100,
+                    bookMark: true,
+                    coverImageBackground: oneItem.coverImageBackground
+                }
+            }))
+        }
+        return isForApp ? result : { count, summaries: result }
     } catch (e: any) {
         throw new Error(e)
     }

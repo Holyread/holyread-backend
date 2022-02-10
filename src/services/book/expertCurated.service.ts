@@ -49,18 +49,39 @@ const getOneExpertCuratedByFilter = async (query: any) => {
 }
 
 /** Get all expert Curated for table */
-const getAllExpertCurated = async (skip: number, limit, search: object, sort) => {
+const getAllExpertCurated = async (skip: number, limit, search: object, sort, isForApp?: any) => {
     try {
-        const result = await ExpertCuratedModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        const count = await ExpertCuratedModel.find(search).count()
-        if (result.length) {
-            await Promise.all(result.map(item => {
-                if (item && item.image) {
-                    item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/' + item.image
-                }
-            }))
+        let result = []
+        let count: number = 0;
+        if (isForApp) {
+            result = await ExpertCuratedModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+            if (result.length) {
+                result = await Promise.all(result.map(item => {
+                    if (item && item.image) {
+                        item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/' + item.image
+                    }
+                    return {
+                        _id: item._id,
+                        title: item.title,
+                        description: item.description,
+                        shortDescription: item.shortDescription,
+                        image: item.image,
+                        totalReads: 100
+                    }
+                }))
+            }
+        } else {
+            count = await ExpertCuratedModel.find(search).count()
+            result = await ExpertCuratedModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+            if (result.length) {
+                await Promise.all(result.map(item => {
+                    if (item && item.image) {
+                        item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/' + item.image
+                    }
+                }))
+            }
         }
-        return { count, data: result }
+        return isForApp ? result : { count, data: result }
     } catch (e: any) {
         throw new Error(e)
     }

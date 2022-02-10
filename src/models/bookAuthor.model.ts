@@ -28,5 +28,5 @@ export const BookAuthorSchema = new Schema({
     },
     updatedAt: { type: Date },
 }, { strict: 'throw' })
-
+                        
 export const BookAuthorModel = mongoose.model<IBookAuthor>('bookAuthor', BookAuthorSchema)

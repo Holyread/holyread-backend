@@ -1,4 +1,4 @@
-import { RecommendedBookModel } from '../../models/index'
+import { RecommendedBookModel, BookSummaryModel, BookAuthorModel } from '../../models/index'
 
 /** Create recommended book */
 const createRecommendedBook = async (body: any) => {
@@ -38,11 +38,39 @@ const getOneRecommendedBookByFilter = async (query: any) => {
 }
 
 /** Get all recommended books for table */
-const getAllRecommendedBooks = async (skip: number, limit, search: object, sort) => {
+const getAllRecommendedBooks = async (skip: number, limit, search: object, sort, isForApp?: any) => {
       try {
-            const recommendedBooks: any = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).populate({ path: 'book', populate: { path: 'author', select: 'name' } }).lean()
-            const count = await RecommendedBookModel.find(search).count()
-            return { count, recommendedBooks: recommendedBooks }
+            let recommendedBooks: any = []
+            let count: number = 0 
+            if (isForApp) {
+                  recommendedBooks = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+                  recommendedBooks = await Promise.all(recommendedBooks.map(async item => {
+                        if (item && item.book) {
+                              item.book = await BookSummaryModel.findById(item.book).lean()
+                              item.book = {
+                                    _id: item.book._id,
+                                    coverImage: item.book.coverImage,
+                                    coverImageBackground: item.book.coverImageBackground,
+                                    title: item.book.title,
+                                    author: item.book.author,
+                                    overview: item.book.overview
+                              }
+                        }
+                        if (item && item.book && item.book.author) {
+                              item.book.author = await BookAuthorModel.findById(item.book.author).select('name about').lean()
+                              item.book.author = {
+                                    _id: item.book.author._id,
+                                    name: item.book.author.name,
+                                    about: item.book.author.about
+                              }
+                        }
+                        return item
+                  }))
+            } else { 
+                  recommendedBooks = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).populate({ path: 'book', populate: { path: 'author', select: 'name' } }).lean()
+                  count = await RecommendedBookModel.find(search).count()
+            }
+            return isForApp ? recommendedBooks : { count, recommendedBooks: recommendedBooks }
       } catch (e: any) {
             throw new Error(e)
       }

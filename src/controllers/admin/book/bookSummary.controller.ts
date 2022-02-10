@@ -110,7 +110,8 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
                     { 'description': await getSearchRegexp(params.search) },
                     { 'overview': await getSearchRegexp(params.search) },
                     { 'bookFor': await getSearchRegexp(params.search) },
-                    { 'chapters.name': await getSearchRegexp(params.search) }
+                    { 'chapters.name': await getSearchRegexp(params.search) },
+                    { 'author.name': await getSearchRegexp(params.search) }
                 ]
             }
         }
@@ -138,7 +139,7 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
         if (params.status && params.status === 'NewlyAdded') {
             summarySorting = [['createdAt', 'DESC']];
         }
-        const data = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), searchFilter, summarySorting)
+        const data: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), searchFilter, summarySorting)
         data.summaries.forEach((element: any) => {
             if (element && element.author && element.author.name) {
                 element.author = element.author.name

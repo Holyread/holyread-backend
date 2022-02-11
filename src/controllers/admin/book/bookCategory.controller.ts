@@ -64,11 +64,6 @@ const getOneCategory = async (req: Request, res: Response, next: NextFunction) =
 const getAllCategory = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
-        if (params.names === 'true') {
-            const data = await bookCategoryService.getAllBookCategoriesNames()
-            response.status(200).json({ message: bookCategoryControllerResponse.fetchBookCategoriesSuccess, data })
-            return
-        }
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
@@ -96,6 +91,16 @@ const getAllCategory = async (request: Request, response: Response, next: NextFu
         }
 
         const data = await bookCategoryService.getAllBookCategory(Number(skip), Number(limit), searchFilter, categorySorting)
+        response.status(200).json({ message: bookCategoryControllerResponse.fetchBookCategoriesSuccess, data })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
+/** Get all book categories options list */
+const getAllCategoriesOptionsList = async (request: Request, response: Response, next: NextFunction) => {
+    try {
+        const data = await bookCategoryService.getAllBookCategoriesOptionsList()
         response.status(200).json({ message: bookCategoryControllerResponse.fetchBookCategoriesSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -143,4 +148,4 @@ const deleteCategory = async (req: Request, res: Response, next: NextFunction) =
     }
 }
 
-export { addCategory, getOneCategory, getAllCategory, updateCateogry, deleteCategory }
+export { addCategory, getOneCategory, getAllCategory, getAllCategoriesOptionsList, updateCateogry, deleteCategory }

@@ -92,12 +92,6 @@ const getOneSummary = async (req: Request, res: Response, next: NextFunction) =>
 const getAllSummaries = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
-        if (params.names === 'true') {
-            const query = params.category ? { categories: { $in: params.category } } : {}
-            const data = await bookSummaryService.getAllBookSummariesNames(query)
-            response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
-            return
-        }
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
@@ -148,6 +142,19 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
                 element.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + element.coverImage
             }
         });
+        response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
+/** Get all book summaries options list */
+const getAllSummariesOptionsList = async (request: Request, response: Response, next: NextFunction) => {
+    try {
+        const params = request.query
+        const query = params.category ? { categories: { $in: [params.category] } } : {}
+        console.log(query)
+        const data = await bookSummaryService.getAllBookSummariesOptionsList(query)
         response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -244,4 +251,4 @@ const deleteSummary = async (req: Request, res: Response, next: NextFunction) =>
     }
 }
 
-export { addSummary, getOneSummary, getAllSummaries, updateSummary, deleteSummary }
+export { addSummary, getOneSummary, getAllSummaries, getAllSummariesOptionsList, updateSummary, deleteSummary }

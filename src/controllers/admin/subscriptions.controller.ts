@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import subscriptionsService from '../../services/subscriptions/subscriptions.service'
-import usersService from '../../services/users/user.service'
+import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service'
+import usersService from '../../services/admin/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
 import { getSearchRegexp } from '../../lib/utils/utils'
 import { dataTable } from '../../constants/app.constant'

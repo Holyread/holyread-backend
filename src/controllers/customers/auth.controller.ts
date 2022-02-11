@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 import { encrypt, getToken, verifyToken, sentEmail } from '../../lib/utils/utils'
-import usersService from '../../services/users/user.service'
+import usersService from '../../services/admin/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
 import { origins } from '../../constants/app.constant'
 import { uploadImageToAwsS3 } from '../../lib/utils/utils'

@@ -9,7 +9,6 @@ export interface IBookSummary extends mongoose.Document {
     description: string,
     overview: string,
     bookFor: string,
-    aboutAuthor: string,
     categories?: [string],
     coverImage?: string,
     coverImageBackground?: string,
@@ -30,7 +29,6 @@ export type createBookSummaryType = {
     description: string,
     overview: string,
     bookFor: string,
-    aboutAuthor: string,
     categories?: [string],
     coverImage?: string,
     coverImageBackground?: string,
@@ -52,7 +50,6 @@ export type getBookSummaryType = {
     description?: string,
     overview?: string,
     bookFor?: string,
-    aboutAuthor?: string,
     categories?: [string],
     coverImage?: string,
     coverImageBackground?: string,
@@ -78,7 +75,6 @@ export const BookSummarySchema = new Schema({
     description: { type: String, default: '' },
     overview: { type: String, default: '' },
     bookFor: { type: String, default: '' },
-    aboutAuthor: { type: String, default: '' },
     categories: [{
         type: Schema.Types.ObjectId,
         ref: BookCategoryModel,
@@ -87,7 +83,7 @@ export const BookSummarySchema = new Schema({
     }],
     coverImage: { type: String, default: '' },
     coverImageBackground: { type: String },
-    popular: { type: Boolean, default: false },
+    popular: { type: Boolean, default: false, index: true },
     audioFile: { type: String },
     videoFile: { type: String },
     chapters: [{
@@ -100,7 +96,7 @@ export const BookSummarySchema = new Schema({
             return new Date()
         },
     },
-    status: { type: String, default: 'Active' },
+    status: { type: String, default: 'Active', index: true },
     updatedAt: { type: Date },
 }, { strict: 'throw' })
 

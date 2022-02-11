@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import bookSummaryService from '../../../services/book/bookSummary.service'
-import recommendedBookService from '../../../services/book/recommendedBook.service'
+import bookSummaryService from '../../../services/admin/book/bookSummary.service'
+import recommendedBookService from '../../../services/admin/book/recommendedBook.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
@@ -23,7 +23,7 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
         }
         if (params.section === 'recommended') {
             const recommendedBooks = await recommendedBookService.getAllRecommendedBooks(0, 0, {}, [['createdAt', 'DESC']])
-            let data = recommendedBooks.recommendedBooks.map(item => {
+            let data = recommendedBooks.recommendedBooks.map((item: any) => {
                 return {
                     _id: item.book._id,
                     title: item.book.title,

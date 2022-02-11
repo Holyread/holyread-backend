@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import bookCategoryService from '../../../services/book/bookCategory.service'
+import bookCategoryService from '../../../services/admin/book/bookCategory.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../../constants/app.constant'
@@ -100,7 +100,7 @@ const getAllCategory = async (request: Request, response: Response, next: NextFu
 /** Get all book categories options list */
 const getAllCategoriesOptionsList = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const data = await bookCategoryService.getAllBookCategoriesOptionsList()
+        const data = await bookCategoryService.getAllBookCategoriesNames()
         response.status(200).json({ message: bookCategoryControllerResponse.fetchBookCategoriesSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))

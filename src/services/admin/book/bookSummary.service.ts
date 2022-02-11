@@ -1,7 +1,7 @@
-import { BookSummaryModel } from '../../models/index'
-import { awsBucket } from '../../constants/app.constant'
-import config from '../../../config'
-import { responseMessage } from '../../constants/message.constant'
+import { BookSummaryModel } from '../../../models/index'
+import { awsBucket } from '../../../constants/app.constant'
+import config from '../../../../config'
+import { responseMessage } from '../../../constants/message.constant'
 
 const NODE_ENV = config.NODE_ENV
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -74,15 +74,15 @@ const getOneBookSummaryByFilter = async (query: any) => {
 /** Get all book summaries for table */
 const getAllBookSummaries = async (skip: number, limit, search: object, sort) => {
     try {
-        const result = await BookSummaryModel.find(search).populate('author', 'name').populate('categories','title').skip(skip).limit(limit).sort(sort).lean()
-        const count = await BookSummaryModel.find(search).count()
+        const result: any = await BookSummaryModel.find(search).populate('author', 'name').populate('categories', 'title').skip(skip).limit(limit).sort(sort).lean()
+        const count: number = await BookSummaryModel.find(search).count()
         return { count, summaries: result }
     } catch (e: any) {
         throw new Error(e)
     }
 }
 
-/** Get all book summaries options list */
+/** Get all book categories names */
 const getAllBookSummariesOptionsList = async (query) => {
     try {
         const result = await BookSummaryModel.find(query).select('title coverImage').lean()

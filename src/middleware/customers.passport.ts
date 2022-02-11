@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express'
 import { verifyToken } from '../lib/utils/utils'
-import userService from '../services/users/user.service'
+import userService from '../services/admin/users/user.service'
 import Boom from '@hapi/boom'
 
 export default async (req: any, res: Response, next: NextFunction): Promise<any> => {

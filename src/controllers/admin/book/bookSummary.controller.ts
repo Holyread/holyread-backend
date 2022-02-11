@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import bookCategoryService from '../../../services/book/bookCategory.service'
-import bookSummaryService from '../../../services/book/bookSummary.service'
-import recommendedBookService from '../../../services/book/recommendedBook.service'
+import bookCategoryService from '../../../services/admin/book/bookCategory.service'
+import bookSummaryService from '../../../services/admin/book/bookSummary.service'
+import recommendedBookService from '../../../services/admin/book/recommendedBook.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../../constants/app.constant'
@@ -104,7 +104,8 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
                     { 'description': await getSearchRegexp(params.search) },
                     { 'overview': await getSearchRegexp(params.search) },
                     { 'bookFor': await getSearchRegexp(params.search) },
-                    { 'chapters.name': await getSearchRegexp(params.search) }
+                    { 'chapters.name': await getSearchRegexp(params.search) },
+                    { 'author.name': await getSearchRegexp(params.search) }
                 ]
             }
         }
@@ -132,7 +133,7 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
         if (params.status && params.status === 'NewlyAdded') {
             summarySorting = [['createdAt', 'DESC']];
         }
-        const data = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), searchFilter, summarySorting)
+        const data: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), searchFilter, summarySorting)
         data.summaries.forEach((element: any) => {
             if (element && element.author && element.author.name) {
                 element.author = element.author.name

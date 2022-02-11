@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import usersService from '../../services/users/user.service'
-import subscriptionService from '../../services/subscriptions/subscriptions.service'
+import usersService from '../../services/admin/users/user.service'
+import subscriptionService from '../../services/admin/subscriptions/subscriptions.service'
 import { responseMessage } from '../../constants/message.constant'
 import { removeImageToAwsS3, uploadImageToAwsS3, encrypt } from '../../lib/utils/utils'
 import { awsBucket } from '../../constants/app.constant'

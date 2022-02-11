@@ -1,4 +1,4 @@
-import { RecommendedBookModel } from '../../models/index'
+import { RecommendedBookModel } from '../../../models/index'
 
 /** Create recommended book */
 const createRecommendedBook = async (body: any) => {
@@ -17,7 +17,7 @@ const updateRecommendedBook = async (body: any, id: string) => {
                   { _id: id },
                   { ...body, updatedAt: new Date() },
                   { new: true }
-            ).lean() 
+            ).lean()
             return result
       } catch (e: any) {
             throw new Error(e)
@@ -40,7 +40,7 @@ const getOneRecommendedBookByFilter = async (query: any) => {
 /** Get all recommended books for table */
 const getAllRecommendedBooks = async (skip: number, limit, search: object, sort) => {
       try {
-            const recommendedBooks: any = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).populate({ path: 'book', populate: { path: 'author', select: 'name' } }).lean()
+            const recommendedBooks = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).populate({ path: 'book', populate: { path: 'author', select: 'name' } }).lean()
             const count = await RecommendedBookModel.find(search).count()
             return { count, recommendedBooks: recommendedBooks }
       } catch (e: any) {

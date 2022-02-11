@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import recommendedBookService from '../../../services/book/recommendedBook.service'
-import bookSummaryService from '../../../services/book/bookSummary.service'
+import recommendedBookService from '../../../services/admin/book/recommendedBook.service'
+import bookSummaryService from '../../../services/admin/book/bookSummary.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { getSearchRegexp } from '../../../lib/utils/utils'
 import { dataTable } from '../../../constants/app.constant'
@@ -75,7 +75,7 @@ const getAllRecommendedBooks = async (request: Request, response: Response, next
         }
 
         const data = await recommendedBookService.getAllRecommendedBooks(Number(skip), Number(limit), searchFilter, listSorting)
-        data.recommendedBooks.forEach(element => {
+        data.recommendedBooks.forEach((element: any) => {
             if (element && element.book) {
                   element.book = element.book.title
             }

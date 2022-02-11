@@ -1,7 +1,7 @@
-import { awsBucket } from '../../constants/app.constant'
-import config from '../../../config'
-import { ExpertCuratedModel } from '../../models/index'
-import { responseMessage } from '../../constants/message.constant'
+import { awsBucket } from '../../../constants/app.constant'
+import config from '../../../../config'
+import { ExpertCuratedModel } from '../../../models/index'
+import { responseMessage } from '../../../constants/message.constant'
 
 const NODE_ENV = config.NODE_ENV
 const expertCuratedControllerResponse = responseMessage.expertCuratedControllerResponse
@@ -52,7 +52,7 @@ const getOneExpertCuratedByFilter = async (query: any) => {
 const getAllExpertCurated = async (skip: number, limit, search: object, sort) => {
     try {
         const result = await ExpertCuratedModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        const count = await ExpertCuratedModel.find(search).count()
+        const count: number = await ExpertCuratedModel.find(search).count()
         if (result.length) {
             await Promise.all(result.map(item => {
                 if (item && item.image) {

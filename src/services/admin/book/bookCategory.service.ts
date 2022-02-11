@@ -1,7 +1,7 @@
-import { BookCategoryModel } from '../../models/index'
-import { awsBucket } from '../../constants/app.constant'
-import config from '../../../config'
-import { responseMessage } from '../../constants/message.constant'
+import { BookCategoryModel } from '../../../models/index'
+import { awsBucket } from '../../../constants/app.constant'
+import config from '../../../../config'
+import { responseMessage } from '../../../constants/message.constant'
 
 const NODE_ENV = config.NODE_ENV
 const bookCategoryControllerResponse = responseMessage.bookCategoryControllerResponse
@@ -53,7 +53,7 @@ const getOneBookCategoryByFilter = async (query: any) => {
 const getAllBookCategory = async (skip: number, limit, search: object, sort) => {
     try {
         const result = await BookCategoryModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        const count = await BookCategoryModel.find(search).count()
+        let count = await BookCategoryModel.find(search).count()
         await Promise.all(result.map(async (item: any) => {
             if (!item) {
                 return
@@ -68,8 +68,8 @@ const getAllBookCategory = async (skip: number, limit, search: object, sort) => 
     }
 }
 
-/** Get all book categories options list */
-const getAllBookCategoriesOptionsList = async () => {
+/** Get all book categories names */
+const getAllBookCategoriesNames = async () => {
     try {
         const result = await BookCategoryModel.find({}).select('title').lean()
         return result
@@ -92,7 +92,7 @@ export default {
     createBookCategory,
     updateBookCategory,
     getAllBookCategory,
-    getAllBookCategoriesOptionsList,
+    getAllBookCategoriesNames,
     getOneBookCategoryByFilter,
     deleteBookCategory
 }

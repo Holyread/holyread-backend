@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import readsOfDayService from '../../services/readsOfDay/readsOfDay.service'
+import readsOfDayService from '../../services/admin/readsOfDay/readsOfDay.service'
 import { responseMessage } from '../../constants/message.constant'
 import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../constants/app.constant'

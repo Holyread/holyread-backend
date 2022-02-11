@@ -1,5 +1,5 @@
-import { SmallGroupModel } from '../../models/index'
-import { responseMessage } from '../../constants/message.constant'
+import { SmallGroupModel } from '../../../models/index'
+import { responseMessage } from '../../../constants/message.constant'
 
 const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
 
@@ -45,11 +45,6 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
     try {
         const result = await SmallGroupModel.find(search).populate('books', 'title').skip(skip).limit(limit).sort(sort).lean()
         const count = await SmallGroupModel.find(search).count()
-        await Promise.all(result.map(async (item: any) => {
-            if (!item) {
-                return
-            }
-        }))
         return { count, smallGroups: result }
     } catch (e: any) {
         throw new Error(e)

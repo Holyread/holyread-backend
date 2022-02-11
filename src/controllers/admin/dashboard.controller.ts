@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import usersService from '../../services/users/user.service'
-import bookSummaryService from '../../services/book/bookSummary.service'
+import usersService from '../../services/admin/users/user.service'
+import bookSummaryService from '../../services/admin/book/bookSummary.service'
 import { responseMessage } from '../../constants/message.constant'
 
 const dashboardControllerResponse = responseMessage.dashboardControllerResponse

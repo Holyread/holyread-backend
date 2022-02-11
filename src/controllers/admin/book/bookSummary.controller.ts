@@ -153,7 +153,7 @@ const getAllSummariesOptionsList = async (request: Request, response: Response, 
     try {
         const params = request.query
         const query = params.category ? { categories: { $in: [params.category] } } : {}
-        const data = await bookSummaryService.getAllBookSummariesNames(query)
+        const data = await bookSummaryService.getAllBookSummariesOptionsList(query)
         response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))

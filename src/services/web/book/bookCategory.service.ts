@@ -1,7 +1,7 @@
-import { BookCategoryModel } from '../../models/index'
-import { awsBucket } from '../../constants/app.constant'
-import config from '../../../config'
-import { responseMessage } from '../../constants/message.constant'
+import { BookCategoryModel } from '../../../models/index'
+import { awsBucket } from '../../../constants/app.constant'
+import config from '../../../../config'
+import { responseMessage } from '../../../constants/message.constant'
 
 const NODE_ENV = config.NODE_ENV
 const bookCategoryControllerResponse = responseMessage.bookCategoryControllerResponse
@@ -50,7 +50,7 @@ const getOneBookCategoryByFilter = async (query: any) => {
 }
 
 /** Get all book category for table */
-const getAllBookCategory = async (skip: number, limit, search: object, sort, isForApp?: any) => {
+const getAllBookCategory = async (skip: number, limit, search: object, sort) => {
     try {
         const result = await BookCategoryModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         let count = await BookCategoryModel.find(search).count()
@@ -62,25 +62,7 @@ const getAllBookCategory = async (skip: number, limit, search: object, sort, isF
                 item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/category/' + item.image
             }
         }))
-        return isForApp ? result : { count, categories: result }
-    } catch (e: any) {
-        throw new Error(e)
-    }
-}
-
-/** Get all book category for app */
-const getAllBookCategoriesForApp = async (skip: number, limit, search: object, sort) => {
-    try {
-        const result = await BookCategoryModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        await Promise.all(result.map(async (item: any) => {
-            if (!item) {
-                return
-            }
-            if (item.image) {
-                item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/category/' + item.image
-            }
-        }))
-        return result
+        return { count, categories: result }
     } catch (e: any) {
         throw new Error(e)
     }
@@ -110,7 +92,6 @@ export default {
     createBookCategory,
     updateBookCategory,
     getAllBookCategory,
-    getAllBookCategoriesForApp,
     getAllBookCategoriesNames,
     getOneBookCategoryByFilter,
     deleteBookCategory

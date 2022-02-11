@@ -1,4 +1,4 @@
-import { SubscriptionsModel } from '../../models/index'
+import { SubscriptionsModel } from '../../../models/index'
 
 /** Create Subscription */
 const createSubscription = async (body: any) => {

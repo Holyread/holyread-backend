@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import bookCategoryService from '../../../services/book/bookCategory.service'
-import bookSummaryService from '../../../services/book/bookSummary.service'
-import recommendedBookService from '../../../services/book/recommendedBook.service'
+import bookCategoryService from '../../../services/web/book/bookCategory.service'
+import bookSummaryService from '../../../services/web/book/bookSummary.service'
+import recommendedBookService from '../../../services/web/book/recommendedBook.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../../constants/app.constant'

@@ -1,7 +1,7 @@
-import { TestimonialModel } from '../../models/index'
-import { awsBucket } from '../../constants/app.constant'
-import config from '../../../config'
-import { responseMessage } from '../../constants/message.constant'
+import { TestimonialModel } from '../../../models/index'
+import { awsBucket } from '../../../constants/app.constant'
+import config from '../../../../config'
+import { responseMessage } from '../../../constants/message.constant'
 
 const NODE_ENV = config.NODE_ENV
 const testimonialControllerResponse = responseMessage.testimonialControllerResponse

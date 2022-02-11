@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import recommendedBookService from '../../../services/book/recommendedBook.service'
-import bookSummaryService from '../../../services/book/bookSummary.service'
+import recommendedBookService from '../../../services/web/book/recommendedBook.service'
+import bookSummaryService from '../../../services/web/book/bookSummary.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { getSearchRegexp } from '../../../lib/utils/utils'
 import { dataTable } from '../../../constants/app.constant'

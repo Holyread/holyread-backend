@@ -1,7 +1,7 @@
-import { BookSummaryModel, BookAuthorModel } from '../../models/index'
-import { awsBucket } from '../../constants/app.constant'
-import config from '../../../config'
-import { responseMessage } from '../../constants/message.constant'
+import { BookSummaryModel } from '../../../models/index'
+import { awsBucket } from '../../../constants/app.constant'
+import config from '../../../../config'
+import { responseMessage } from '../../../constants/message.constant'
 
 const NODE_ENV = config.NODE_ENV
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -72,7 +72,7 @@ const getOneBookSummaryByFilter = async (query: any) => {
 }
 
 /** Get all book summaries for table */
-const getAllBookSummaries = async (skip: number, limit, search: object, sort, isForApp?: any) => {
+const getAllBookSummaries = async (skip: number, limit, search: object, sort) => {
     try {
         const result: any = await BookSummaryModel.find(search).populate('author', 'name').populate('categories', 'title').skip(skip).limit(limit).sort(sort).lean()
         const count: number = await BookSummaryModel.find(search).count()
@@ -82,39 +82,8 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort, is
     }
 }
 
-/** Get all book summaries for table */
-const getAllBookSummariesForApp = async (skip: number, limit, search: object, sort) => {
-    try {
-        let result: any = await BookSummaryModel.find().sort([['createdAt', 'DESC']]).lean()
-        result = await Promise.all(result.map(async oneItem => {
-            if (oneItem.author) {
-                oneItem.author = await BookAuthorModel.findById(oneItem.author).lean()
-                oneItem.author = {
-                    _id: oneItem.author._id,
-                    name: oneItem.author.name,
-                    about: oneItem.author.about,
-                }
-            }
-            return {
-                _id: oneItem._id,
-                coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneItem.coverImage,
-                title: oneItem.title,
-                author: oneItem.author,
-                overview: oneItem.overview,
-                totalStar: 100,
-                totalReads: 100,
-                bookMark: true,
-                coverImageBackground: oneItem.coverImageBackground
-            }
-        }))
-        return result
-    } catch (e: any) {
-        throw new Error(e)
-    }
-}
-
 /** Get all book categories names */
-const getAllBookSummariesNames = async (query) => {
+const getAllBookSummariesOptionsList = async (query) => {
     try {
         const result = await BookSummaryModel.find(query).select('title coverImage').lean()
         if (result && result.length) {
@@ -144,8 +113,7 @@ export default {
     createBookSummary,
     updateBookSummary,
     getAllBookSummaries,
-    getAllBookSummariesForApp,
-    getAllBookSummariesNames,
+    getAllBookSummariesOptionsList,
     getOneBookSummaryByFilter,
     deleteBookSummary
 }

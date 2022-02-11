@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 import { encrypt, getToken } from '../../lib/utils/utils'
-import usersService from '../../services/users/user.service'
+import usersService from '../../services/web/users/user.service'
 import { sentEmail } from '../../lib/utils/utils'
 import { responseMessage } from '../../constants/message.constant'
 

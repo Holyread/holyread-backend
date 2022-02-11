@@ -1,7 +1,7 @@
-import { ReadsOfDayModel } from '../../models/index'
-import { awsBucket } from '../../constants/app.constant'
-import config from '../../../config'
-import { responseMessage } from '../../constants/message.constant'
+import { ReadsOfDayModel } from '../../../models/index'
+import { awsBucket } from '../../../constants/app.constant'
+import config from '../../../../config'
+import { responseMessage } from '../../../constants/message.constant'
 
 const NODE_ENV = config.NODE_ENV
 const readsOfDayControllerResponse = responseMessage.readsOfDayControllerResponse
@@ -50,29 +50,11 @@ const getOneReadOfDayByFilter = async (query: any) => {
 }
 
 /** Get all read of day for table */
-const getAllReadsOfDay = async (skip: number, limit, search: object, sort, isForApp?: any) => {
+const getAllReadsOfDay = async (skip: number, limit, search: object, sort) => {
     try {
         let result = await ReadsOfDayModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         const count = await ReadsOfDayModel.find(search).count()
         return { count, reads: result }
-    } catch (e: any) {
-        throw new Error(e)
-    }
-}
-
-/** Get all read of day for app */
-const getAllReadsOfDayForApp = async (skip: number, limit, search: object, sort) => {
-    try { 
-        let result: any = await ReadsOfDayModel.find(search).select('title image subTitle').skip(skip).limit(limit).sort(sort).lean()
-        result = await Promise.all(result.map(async (item: any) => {
-            return {
-                _id: item._id,
-                image: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image,
-                title: item.title,
-                subTitle: item.subTitle
-            }
-        }))
-        return result
     } catch (e: any) {
         throw new Error(e)
     }
@@ -92,7 +74,6 @@ export default {
     createReadOfDay,
     updateReadOfDay,
     getAllReadsOfDay,
-    getAllReadsOfDayForApp,
     getOneReadOfDayByFilter,
     deleteReadOfDay
 }

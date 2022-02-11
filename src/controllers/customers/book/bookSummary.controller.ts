@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import bookSummaryService from '../../../services/book/bookSummary.service'
-import recommendedBookService from '../../../services/book/recommendedBook.service'
+import bookSummaryService from '../../../services/web/book/bookSummary.service'
+import recommendedBookService from '../../../services/web/book/recommendedBook.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'

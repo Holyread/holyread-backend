@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import smallGroupService from '../../services/smallGroup/smallGroup.service'
-import bookSummaryService from '../../services/book/bookSummary.service'
+import smallGroupService from '../../services/web/smallGroup/smallGroup.service'
+import bookSummaryService from '../../services/web/book/bookSummary.service'
 import { responseMessage } from '../../constants/message.constant'
 import { getSearchRegexp } from '../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../constants/app.constant'

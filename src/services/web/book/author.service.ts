@@ -1,4 +1,4 @@
-import { BookAuthorModel } from '../../models/index'
+import { BookAuthorModel } from '../../../models/index'
 
 /** Create Author */
 const createAuthor = async (body: any) => {

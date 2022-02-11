@@ -23,7 +23,7 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
         }
         if (params.section === 'recommended') {
             const recommendedBooks = await recommendedBookService.getAllRecommendedBooks(0, 0, {}, [['createdAt', 'DESC']])
-            let data = recommendedBooks.recommendedBooks.map(item => {
+            let data = recommendedBooks.recommendedBooks.map((item: any) => {
                 return {
                     _id: item.book._id,
                     title: item.book.title,

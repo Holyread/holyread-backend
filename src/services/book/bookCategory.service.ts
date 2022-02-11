@@ -53,10 +53,7 @@ const getOneBookCategoryByFilter = async (query: any) => {
 const getAllBookCategory = async (skip: number, limit, search: object, sort, isForApp?: any) => {
     try {
         const result = await BookCategoryModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        let count = 0
-        if (!isForApp) {
-            count = await BookCategoryModel.find(search).count()
-        }
+        let count = await BookCategoryModel.find(search).count()
         await Promise.all(result.map(async (item: any) => {
             if (!item) {
                 return
@@ -71,8 +68,26 @@ const getAllBookCategory = async (skip: number, limit, search: object, sort, isF
     }
 }
 
-/** Get all book categories options list */
-const getAllBookCategoriesOptionsList = async () => {
+/** Get all book category for app */
+const getAllBookCategoriesForApp = async (skip: number, limit, search: object, sort) => {
+    try {
+        const result = await BookCategoryModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+        await Promise.all(result.map(async (item: any) => {
+            if (!item) {
+                return
+            }
+            if (item.image) {
+                item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/category/' + item.image
+            }
+        }))
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+/** Get all book categories names */
+const getAllBookCategoriesNames = async () => {
     try {
         const result = await BookCategoryModel.find({}).select('title').lean()
         return result
@@ -95,7 +110,8 @@ export default {
     createBookCategory,
     updateBookCategory,
     getAllBookCategory,
-    getAllBookCategoriesOptionsList,
+    getAllBookCategoriesForApp,
+    getAllBookCategoriesNames,
     getOneBookCategoryByFilter,
     deleteBookCategory
 }

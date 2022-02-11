@@ -75,7 +75,7 @@ const getAllRecommendedBooks = async (request: Request, response: Response, next
         }
 
         const data = await recommendedBookService.getAllRecommendedBooks(Number(skip), Number(limit), searchFilter, listSorting)
-        data.recommendedBooks.forEach(element => {
+        data.recommendedBooks.forEach((element: any) => {
             if (element && element.book) {
                   element.book = element.book.title
             }

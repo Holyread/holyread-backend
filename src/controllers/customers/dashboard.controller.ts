@@ -17,9 +17,9 @@ const dashboardControllerResponse = responseMessage.dashboardControllerResponse
 /** Get Dashboard */
 const getDashboard = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const categories: any = await bookCategoryService.getAllBookCategory(0, 0, { status: 'Active' }, [['createdAt', 'DESC']], true)
-        const readsOfTheDayList: any = await readsOfDayService.getAllReadsOfDay(0, 10, { status: 'Active' }, [['createdAt', 'DESC']], true)
-        const recommendedBooksList = await recommendedBookService.getAllRecommendedBooks(0, 10, {}, [], true)
+        const categories: any = await bookCategoryService.getAllBookCategoriesForApp(0, 0, { status: 'Active' }, [['createdAt', 'DESC']])
+        const readsOfTheDayList: any = await readsOfDayService.getAllReadsOfDayForApp(0, 10, { status: 'Active' }, [['createdAt', 'DESC']])
+        const recommendedBooksList = await recommendedBookService.getAllRecommendedBooksForApp(0, 10, {}, [])
         const recommendedBooks = []
         if (recommendedBooksList && recommendedBooksList.length) {
             recommendedBooksList.map((oneBook: any) => {
@@ -37,10 +37,10 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
                 }
             })
         } 
-        const mostPopular: any = await bookSummaryService.getAllBookSummaries(0, 10, { popular: true }, [['createdAt', 'DESC']], true)
-        const books: any = await bookSummaryService.getAllBookSummaries(0, 10, {}, [['createdAt', 'DESC']], true)
-        const curatedList: any = await expertCuratedService.getAllExpertCurated(0, 10, { status: 'Active' }, [['createdAt', 'DESC']], true)
-        const smallGroupsList: any = await smallGroupService.getAllSmallGroups(0, 10, { status: 'Active' }, [['createdAt', 'DESC']], true)
+        const mostPopular: any = await bookSummaryService.getAllBookSummariesForApp(0, 10, { popular: true }, [['createdAt', 'DESC']])
+        const books: any = await bookSummaryService.getAllBookSummariesForApp(0, 10, {}, [['createdAt', 'DESC']])
+        const curatedList: any = await expertCuratedService.getAllExpertCuratedsForApp(0, 10, { status: 'Active' }, [['createdAt', 'DESC']])
+        const smallGroupsList: any = await smallGroupService.getAllSmallGroupsForApp(0, 10, { status: 'Active' }, [['createdAt', 'DESC']])
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data: {

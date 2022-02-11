@@ -5,7 +5,7 @@ import {
   getAllSummaries,
   updateSummary,
   deleteSummary,
-  getAllSummariesNames
+  getAllSummariesOptionsList
 } from '../../../controllers/admin/book/bookSummary.controller'
 
 const router: Router = express.Router()
@@ -13,7 +13,7 @@ const router: Router = express.Router()
 router.post('/', addSummary)
 router.get('/:id', getOneSummary)
 router.get('/', getAllSummaries)
-router.get('/names/all', getAllSummariesNames)
+router.get('/optionsList/all', getAllSummariesOptionsList)
 router.put('/:id', updateSummary)
 router.delete('/:id', deleteSummary)
 

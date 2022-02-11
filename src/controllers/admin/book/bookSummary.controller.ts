@@ -147,13 +147,13 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
     }
 }
 
-/** Get all book summaries names */
-const getAllSummariesNames = async (request: Request, response: Response, next: NextFunction) => {
+/** Get all book summaries options list */
+const getAllSummariesOptionsList = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
         const query = params.category ? { categories: { $in: [params.category] } } : {}
         console.log(query)
-        const data = await bookSummaryService.getAllBookSummariesNames(query)
+        const data = await bookSummaryService.getAllBookSummariesOptionsList(query)
         response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -250,4 +250,4 @@ const deleteSummary = async (req: Request, res: Response, next: NextFunction) =>
     }
 }
 
-export { addSummary, getOneSummary, getAllSummaries, getAllSummariesNames, updateSummary, deleteSummary }
+export { addSummary, getOneSummary, getAllSummaries, getAllSummariesOptionsList, updateSummary, deleteSummary }

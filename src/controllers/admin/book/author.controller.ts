@@ -81,11 +81,11 @@ const getAllAuthors = async (request: Request, response: Response, next: NextFun
     }
 }
 
-/** Get all author names */
-const getAllAuthorsNames = async (request: Request, response: Response, next: NextFunction) => {
+/** Get all author options list */
+const getAllAuthorsOptionsList = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const getAuthorsNames = await authorService.getAllAuthorsNames()
-        response.status(200).json({ message: authorControllerResponse.fetchAuthorsSuccess, data: getAuthorsNames })
+        const getAuthorsOptionsList = await authorService.getAllAuthorsOptionsList()
+        response.status(200).json({ message: authorControllerResponse.fetchAuthorsSuccess, data: getAuthorsOptionsList })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }
@@ -123,4 +123,4 @@ const deleteAuthor = async (req: Request, res: Response, next: NextFunction) => 
     }
 }
 
-export { addAuthor, getOneAuthor, getAllAuthors, getAllAuthorsNames, updateAuthor, deleteAuthor }
+export { addAuthor, getOneAuthor, getAllAuthors, getAllAuthorsOptionsList, updateAuthor, deleteAuthor }

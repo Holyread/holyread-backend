@@ -82,8 +82,8 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
     }
 }
 
-/** Get all book categories names */
-const getAllBookSummariesNames = async (query) => {
+/** Get all book summaries options list */
+const getAllBookSummariesOptionsList = async (query) => {
     try {
         const result = await BookSummaryModel.find(query).select('title coverImage').lean()
         if (result && result.length) {
@@ -113,7 +113,7 @@ export default {
     createBookSummary,
     updateBookSummary,
     getAllBookSummaries,
-    getAllBookSummariesNames,
+    getAllBookSummariesOptionsList,
     getOneBookSummaryByFilter,
     deleteBookSummary
 }

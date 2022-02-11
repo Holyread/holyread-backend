@@ -97,10 +97,10 @@ const getAllCategory = async (request: Request, response: Response, next: NextFu
     }
 }
 
-/** Get all book categories names */
-const getAllCategoriesNames = async (request: Request, response: Response, next: NextFunction) => {
+/** Get all book categories options list */
+const getAllCategoriesOptionsList = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const data = await bookCategoryService.getAllBookCategoriesNames()
+        const data = await bookCategoryService.getAllBookCategoriesOptionsList()
         response.status(200).json({ message: bookCategoryControllerResponse.fetchBookCategoriesSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -148,4 +148,4 @@ const deleteCategory = async (req: Request, res: Response, next: NextFunction) =
     }
 }
 
-export { addCategory, getOneCategory, getAllCategory, getAllCategoriesNames, updateCateogry, deleteCategory }
+export { addCategory, getOneCategory, getAllCategory, getAllCategoriesOptionsList, updateCateogry, deleteCategory }

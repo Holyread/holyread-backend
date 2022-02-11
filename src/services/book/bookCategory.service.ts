@@ -68,8 +68,8 @@ const getAllBookCategory = async (skip: number, limit, search: object, sort) => 
     }
 }
 
-/** Get all book categories names */
-const getAllBookCategoriesNames = async () => {
+/** Get all book categories options list */
+const getAllBookCategoriesOptionsList = async () => {
     try {
         const result = await BookCategoryModel.find({}).select('title').lean()
         return result
@@ -92,7 +92,7 @@ export default {
     createBookCategory,
     updateBookCategory,
     getAllBookCategory,
-    getAllBookCategoriesNames,
+    getAllBookCategoriesOptionsList,
     getOneBookCategoryByFilter,
     deleteBookCategory
 }

@@ -92,8 +92,8 @@ const getAllSubscriptions = async (request: Request, response: Response, next: N
     }
 }
 
-/** Get all Subscriptions names */
-const getAllSubscriptionsNames = async (request: Request, response: Response, next: NextFunction) => {
+/** Get all Subscriptions options list */
+const getAllSubscriptionsOptionsList = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const getSubscriptionsList = await subscriptionsService.getAllSubscriptionsName()
         response.status(200).json({ message: subscriptionsControllerResponse.fetchSubscriptionsSuccess, data: getSubscriptionsList })
@@ -134,4 +134,4 @@ const deleteSubcription = async (req: Request, res: Response, next: NextFunction
     }
 }
 
-export { addSubscription, getOneSubscription, getAllSubscriptions, getAllSubscriptionsNames, updateSubscription, deleteSubcription }
+export { addSubscription, getOneSubscription, getAllSubscriptions, getAllSubscriptionsOptionsList, updateSubscription, deleteSubcription }

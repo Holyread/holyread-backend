@@ -100,7 +100,7 @@ const getAllCategory = async (request: Request, response: Response, next: NextFu
 /** Get all book categories options list */
 const getAllCategoriesOptionsList = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const data = await bookCategoryService.getAllBookCategoriesOptionsList()
+        const data = await bookCategoryService.getAllBookCategoriesNames()
         response.status(200).json({ message: bookCategoryControllerResponse.fetchBookCategoriesSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))

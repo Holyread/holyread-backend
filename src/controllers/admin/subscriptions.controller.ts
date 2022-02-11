@@ -49,11 +49,6 @@ const getOneSubscription = async (req: Request, res: Response, next: NextFunctio
 const getAllSubscriptions = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
-        if (params.names === 'true') {
-            const getSubscriptionsList = await subscriptionsService.getAllSubscriptionsName()
-            response.status(200).json({ message: subscriptionsControllerResponse.fetchSubscriptionsSuccess, data: getSubscriptionsList })
-            return
-        }
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
@@ -97,6 +92,17 @@ const getAllSubscriptions = async (request: Request, response: Response, next: N
     }
 }
 
+/** Get all Subscriptions options list */
+const getAllSubscriptionsOptionsList = async (request: Request, response: Response, next: NextFunction) => {
+    try {
+        const getSubscriptionsList = await subscriptionsService.getAllSubscriptionsName()
+        response.status(200).json({ message: subscriptionsControllerResponse.fetchSubscriptionsSuccess, data: getSubscriptionsList })
+
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
 /** Update Subscription */
 const updateSubscription = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -128,4 +134,4 @@ const deleteSubcription = async (req: Request, res: Response, next: NextFunction
     }
 }
 
-export { addSubscription, getOneSubscription, getAllSubscriptions, updateSubscription, deleteSubcription }
+export { addSubscription, getOneSubscription, getAllSubscriptions, getAllSubscriptionsOptionsList, updateSubscription, deleteSubcription }

@@ -49,11 +49,6 @@ const getOneAuthor = async (req: Request, res: Response, next: NextFunction) => 
 const getAllAuthors = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
-        if (params.names === 'true') {
-            const getAuthorsNames = await authorService.getAllAuthorsNames()
-            response.status(200).json({ message: authorControllerResponse.fetchAuthorsSuccess, data: getAuthorsNames })
-            return
-        }
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
@@ -81,6 +76,16 @@ const getAllAuthors = async (request: Request, response: Response, next: NextFun
 
         const getAuthorsList = await authorService.getAllAuthors(Number(skip), Number(limit), searchFilter, authorListSorting)
         response.status(200).json({ message: authorControllerResponse.fetchAuthorsSuccess, data: getAuthorsList })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
+/** Get all author options list */
+const getAllAuthorsOptionsList = async (request: Request, response: Response, next: NextFunction) => {
+    try {
+        const getAuthorsOptionsList = await authorService.getAllAuthorsOptionsList()
+        response.status(200).json({ message: authorControllerResponse.fetchAuthorsSuccess, data: getAuthorsOptionsList })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }
@@ -118,4 +123,4 @@ const deleteAuthor = async (req: Request, res: Response, next: NextFunction) => 
     }
 }
 
-export { addAuthor, getOneAuthor, getAllAuthors, updateAuthor, deleteAuthor }
+export { addAuthor, getOneAuthor, getAllAuthors, getAllAuthorsOptionsList, updateAuthor, deleteAuthor }

@@ -45,11 +45,11 @@ const getAllAuthors = async (skip: number, limit, search: object, sort) => {
       }
 }
 
-/** Get all author name */
-const getAllAuthorsNames = async () => {
+/** Get all author options list */
+const getAllAuthorsOptionsList = async () => {
       try {
-            const authorsNamesList = await BookAuthorModel.find({}).select('name')
-            return authorsNamesList
+            const authorsOptionsList = await BookAuthorModel.find({}).select('name')
+            return authorsOptionsList
       } catch (e: any) {
             throw new Error(e)
       }
@@ -70,6 +70,6 @@ export default {
       updateAuthor,
       getOneAuthorByFilter,
       getAllAuthors,
-      getAllAuthorsNames,
+      getAllAuthorsOptionsList,
       deleteAuthor
 }

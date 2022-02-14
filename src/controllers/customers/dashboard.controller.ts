@@ -14,11 +14,74 @@ import config from '../../../config'
 const NODE_ENV = config.NODE_ENV
 const dashboardControllerResponse = responseMessage.dashboardControllerResponse
 
-/** Get Dashboard */
-const getDashboard = async (request: Request, response: Response, next: NextFunction) => {
+/** Get categories for dashboard */
+const getCategories = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const categories: any = await bookCategoryService.getAllBookCategories(0, 0, { status: 'Active' }, [['createdAt', 'DESC']])
+        response.status(200).json({
+            message: dashboardControllerResponse.getDashboardSuccess,
+            data: categories
+        })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
+/** Get recent reads books for Dashboard */
+const getRecentReadsBooks = async (request: Request, response: Response, next: NextFunction) => {
+    try {
+        const recentReads: any = await bookSummaryService.getAllBookSummaries(0, 10, {}, [['createdAt', 'DESC']])
+        response.status(200).json({
+            message: dashboardControllerResponse.getDashboardSuccess,
+            data: recentReads
+        })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
+/** Get popular books for Dashboard */
+const getPopularBooks = async (request: Request, response: Response, next: NextFunction) => {
+    try {
+        const mostPopular: any = await bookSummaryService.getAllBookSummaries(0, 10, { popular: true }, [['createdAt', 'DESC']])
+        response.status(200).json({
+            message: dashboardControllerResponse.getDashboardSuccess,
+            data: mostPopular
+        })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
+/** Get curuted list for Dashboard */
+const getCurutedList = async (request: Request, response: Response, next: NextFunction) => {
+    try {
+        const curatedList: any = await expertCuratedService.getAllExpertCurateds(0, 10, { status: 'Active' }, [['createdAt', 'DESC']])
+        response.status(200).json({
+            message: dashboardControllerResponse.getDashboardSuccess,
+            data: curatedList
+        })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
+/** Get reads of the day for Dashboard */
+const getReadsOfTheDay = async (request: Request, response: Response, next: NextFunction) => {
+    try {
         const readsOfTheDayList: any = await readsOfDayService.getAllReadsOfDays(0, 10, { status: 'Active' }, [['createdAt', 'DESC']])
+        response.status(200).json({
+            message: dashboardControllerResponse.getDashboardSuccess,
+            data: readsOfTheDayList
+        })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
+/** Get recommended books for dashboard */
+const getRecommendedBooks = async (request: Request, response: Response, next: NextFunction) => {
+    try {
         const recommendedBooksList = await recommendedBookService.getAllRecommendedBooks(0, 10, {}, [])
         const recommendedBooks = []
         if (recommendedBooksList && recommendedBooksList.length) {
@@ -36,27 +99,49 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
                     })
                 }
             })
-        } 
-        const mostPopular: any = await bookSummaryService.getAllBookSummaries(0, 10, { popular: true }, [['createdAt', 'DESC']])
-        const books: any = await bookSummaryService.getAllBookSummaries(0, 10, {}, [['createdAt', 'DESC']])
-        const curatedList: any = await expertCuratedService.getAllExpertCurateds(0, 10, { status: 'Active' }, [['createdAt', 'DESC']])
-        const smallGroupsList: any = await smallGroupService.getAllSmallGroups(0, 10, { status: 'Active' }, [['createdAt', 'DESC']])
+        }
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
-            data: {
-                categories,
-                recentReads: books,
-                mostPopular,
-                curatedList,
-                readsOfTheDayList,
-                recommendedBooks,
-                latest: books,
-                smallGroups: smallGroupsList
-            }
+            data: recommendedBooks,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }
 }
 
-export { getDashboard }
+/** Get small groups for Dashboard */
+const getSmallGroups = async (request: Request, response: Response, next: NextFunction) => {
+    try {
+        const smallGroupsList: any = await smallGroupService.getAllSmallGroups(0, 10, { status: 'Active' }, [['createdAt', 'DESC']])
+        response.status(200).json({
+            message: dashboardControllerResponse.getDashboardSuccess,
+            data: smallGroupsList
+        })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
+/** Get latest books for dashboard */
+const getLatestBooks = async (request: Request, response: Response, next: NextFunction) => {
+    try {
+        const books: any = await bookSummaryService.getAllBookSummaries(0, 10, {}, [['createdAt', 'DESC']])
+        response.status(200).json({
+            message: dashboardControllerResponse.getDashboardSuccess,
+            data: books
+        })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
+export {
+    getCategories,
+    getCurutedList,
+    getLatestBooks,
+    getPopularBooks,
+    getReadsOfTheDay,
+    getRecentReadsBooks,
+    getRecommendedBooks,
+    getSmallGroups
+}

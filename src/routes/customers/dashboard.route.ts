@@ -1,11 +1,25 @@
 import express, { Router } from 'express'
 import {
-  getDashboard
+  getCategories,
+  getCurutedsList,
+  getLatestBooks,
+  getPopularBooks,
+  getReadsOfTheDay,
+  getRecentReads,
+  getRecommendedBooks,
+  getSmallGroups
 } from '../../controllers/customers/dashboard.controller'
 
 import customerPassport from '../../middleware/customers.passport'
 
 const router: Router = express.Router()
 
-router.get('/', customerPassport, getDashboard)
+router.get('/categories', customerPassport, getCategories)
+router.get('/curuteds', customerPassport, getCurutedsList)
+router.get('/latest-books', customerPassport, getLatestBooks)
+router.get('/popular-books', customerPassport, getPopularBooks)
+router.get('/reads-of-the-day', customerPassport, getReadsOfTheDay)
+router.get('/recent-reads', customerPassport, getRecentReads)
+router.get('/recommended-books', customerPassport, getRecommendedBooks)
+router.get('/small-groups', customerPassport, getSmallGroups)
 export default router

@@ -28,7 +28,7 @@ const getCategories = async (request: Request, response: Response, next: NextFun
 }
 
 /** Get recent reads books for Dashboard */
-const getRecentReadsBooks = async (request: Request, response: Response, next: NextFunction) => {
+const getRecentReads = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const recentReads: any = await bookSummaryService.getAllBookSummaries(0, 10, {}, [['createdAt', 'DESC']])
         response.status(200).json({
@@ -53,8 +53,8 @@ const getPopularBooks = async (request: Request, response: Response, next: NextF
     }
 }
 
-/** Get curuted list for Dashboard */
-const getCurutedList = async (request: Request, response: Response, next: NextFunction) => {
+/** Get curuteds list for Dashboard */
+const getCurutedsList = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const curatedList: any = await expertCuratedService.getAllExpertCurateds(0, 10, { status: 'Active' }, [['createdAt', 'DESC']])
         response.status(200).json({
@@ -137,11 +137,11 @@ const getLatestBooks = async (request: Request, response: Response, next: NextFu
 
 export {
     getCategories,
-    getCurutedList,
+    getCurutedsList,
     getLatestBooks,
     getPopularBooks,
     getReadsOfTheDay,
-    getRecentReadsBooks,
+    getRecentReads,
     getRecommendedBooks,
     getSmallGroups
 }

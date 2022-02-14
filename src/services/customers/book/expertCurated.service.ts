@@ -29,6 +29,17 @@ const getAllExpertCurateds = async (skip: number, limit, search: object, sort) =
     }
 }
 
+/** Get all expert Curated for web */
+const getAllExpertCuratedsCount = async () => {
+    try {
+        let result = await ExpertCuratedModel.find({}).count().lean()
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 export default {
-    getAllExpertCurateds
+    getAllExpertCurateds,
+    getAllExpertCuratedsCount
 };

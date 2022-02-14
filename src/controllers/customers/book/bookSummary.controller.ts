@@ -2,43 +2,35 @@ import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
 import bookSummaryService from '../../../services/admin/book/bookSummary.service'
-import recommendedBookService from '../../../services/admin/book/recommendedBook.service'
 import { responseMessage } from '../../../constants/message.constant'
-import { awsBucket } from '../../../constants/app.constant'
+import { awsBucket, dataLimit } from '../../../constants/app.constant'
+import { getSearchRegexp } from '../../../lib/utils/utils'
 import config from '../../../../config'
 
 const NODE_ENV = config.NODE_ENV
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
 
-/** Get all book summary by filter */
+/** Get all book summary by for discover */
 const getAllSummaries = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
+        const skip: any = params.skip ? params.skip : dataLimit.skip
+        const limit: any = params.limit ? params.limit : dataLimit.limit
         let searchFilter: any = { status: 'Active' }
-        if (params.section === 'byCategory') {
-            searchFilter = { categories: String(params.categories).split(','), status: 'Active' }
+        if (params.search) {
+            searchFilter = {
+                $or: [
+                    { 'title': await getSearchRegexp(params.search) },
+                    { 'overview': await getSearchRegexp(params.search) },
+                    { 'bookFor': await getSearchRegexp(params.search) }
+                ],
+                status: 'Active'
+            }
         }
-        if (params.section === 'popular') {
-            searchFilter = { popular: true, status: 'Active' }
+        if (params.category) {
+            searchFilter = { categories: { '$in': [String(params.category)] }, status: 'Active' }
         }
-        if (params.section === 'recommended') {
-            const recommendedBooks = await recommendedBookService.getAllRecommendedBooks(0, 0, {}, [['createdAt', 'DESC']])
-            let data = recommendedBooks.recommendedBooks.map((item: any) => {
-                return {
-                    _id: item.book._id,
-                    title: item.book.title,
-                    overview: item.book.overview,
-                    author: item.book && item.book.author && item.book.author.name ? item.book.author.name : item.book.author,
-                    coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + item.book.coverImage,
-                    totalStar: 100,
-                    totalReads: 100,
-                    bookmark: true
-                }
-            })
-            response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data: { count: data.length, summaries: data } })
-            return
-        }
-        const data: any = await bookSummaryService.getAllBookSummaries(0, 0, searchFilter, [['createdAt', 'DESC']])
+        const data: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), searchFilter, [['createdAt', 'DESC']])
         data.summaries = data.summaries.map((element: any) => {
             if (element && element.author && element.author.name) {
                 element.author = element.author.name

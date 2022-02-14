@@ -7,7 +7,7 @@ const NODE_ENV = config.NODE_ENV
 /** Get all book summaries */
 const getAllBookSummaries = async (skip: number, limit, search: object, sort) => {
     try {
-        let result: any = await BookSummaryModel.find().sort([['createdAt', 'DESC']]).lean()
+        let result: any = await BookSummaryModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         result = await Promise.all(result.map(async oneItem => {
             if (oneItem.author) {
                 oneItem.author = await BookAuthorModel.findById(oneItem.author).lean()
@@ -35,6 +35,17 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
     }
 }
 
+/** Get all book summaries count for web */
+const getAllBookSummariesCount = async () => {
+    try {
+        let result: any = await BookSummaryModel.find().count().lean()
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 export default {
-    getAllBookSummaries
+    getAllBookSummaries,
+    getAllBookSummariesCount
 }

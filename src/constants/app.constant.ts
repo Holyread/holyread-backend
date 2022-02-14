@@ -31,3 +31,8 @@ export const dataTable = {
     limit: 100,
     skip: 0,
 }
+
+export const dataLimit = {
+    limit: 10,
+    skip: 0,
+}

@@ -3,7 +3,7 @@ import { RecommendedBookModel, BookSummaryModel, BookAuthorModel } from '../../.
 /** Get all recommended books for app */
 const getAllRecommendedBooks = async (skip: number, limit, search: object, sort) => {
       try {
-            let recommendedBooks: any = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+            let recommendedBooks: any = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).lean().exec()
             recommendedBooks = await Promise.all(recommendedBooks.map(async item => {
                   if (item && item.book) {
                         item.book = await BookSummaryModel.findById(item.book).lean()

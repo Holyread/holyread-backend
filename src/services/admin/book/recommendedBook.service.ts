@@ -40,7 +40,7 @@ const getOneRecommendedBookByFilter = async (query: any) => {
 /** Get all recommended books for table */
 const getAllRecommendedBooks = async (skip: number, limit, search: object, sort) => {
       try {
-            const recommendedBooks = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).populate({ path: 'book', populate: { path: 'author', select: 'name' } }).lean()
+            const recommendedBooks = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).populate({ path: 'book', populate: { path: 'author', select: 'name' } }).lean().exec()
             const count = await RecommendedBookModel.find(search).count()
             return { count, recommendedBooks: recommendedBooks }
       } catch (e: any) {

@@ -1,5 +1,4 @@
 import mongoose, { Schema } from 'mongoose'
-import { BookSummaryModel } from './bookSummary.model'
 
 mongoose.set('useCreateIndex', true)
 
@@ -19,8 +18,8 @@ export type getRecommendedBookType = {
 export const RecommendedBookSchema = new Schema({
     book: {
         type: Schema.Types.ObjectId,
-        ref: BookSummaryModel,
         required: true,
+        ref: 'bookSummary',
         index: true
     },
     createdAt: {

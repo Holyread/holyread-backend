@@ -1,5 +1,4 @@
 import mongoose, {Schema} from 'mongoose'
-import { BookSummaryModel } from './bookSummary.model'
 
 mongoose.set('useCreateIndex', true)
 
@@ -50,8 +49,8 @@ export const SmallGroupSchema = new Schema({
     title: { type: String, required: true, index: true },
     books: [{
         type: Schema.Types.ObjectId,
-        ref: BookSummaryModel,
         required: true,
+        ref: 'bookSummary',
         index: true
     }],
     description: { type: String, required: true },

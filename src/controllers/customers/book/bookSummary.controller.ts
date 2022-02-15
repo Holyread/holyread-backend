@@ -28,7 +28,7 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
             }
         }
         if (params.category) {
-            searchFilter = { categories: { '$in': [String(params.category)] }, status: 'Active' }
+            searchFilter = { categories: String(params.category) }
         }
         const data: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), searchFilter, [['createdAt', 'DESC']])
         data.summaries = data.summaries.map((element: any) => {

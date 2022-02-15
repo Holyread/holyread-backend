@@ -41,15 +41,15 @@ const getOneSmallGroup = async (req: Request, res: Response, next: NextFunction)
         const id: any = req.params.id
         /** Get small group from db */
         const data: any = await smallGroupService.getOneSmallGroupByFilter({ _id: id })
+        if (!data) {
+            return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure))
+        }
         if (data.books.length) {
             data.books.forEach(element => {
                 if (element && element.coverImage) {
                     element.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + element.coverImage
                 }
             });
-        }
-        if (!data) {
-            return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure))
         }
         res.status(200).send({ message: smallGroupControllerResponse.fetchSmallGroupSuccess, data })
     } catch (e: any) {

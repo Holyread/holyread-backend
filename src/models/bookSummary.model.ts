@@ -75,9 +75,8 @@ export const BookSummarySchema = new Schema({
     bookFor: { type: String, default: '' },
     categories: [{
         type: Schema.Types.ObjectId,
-        required: true,
         ref: 'bookCategory',
-        index: true
+        required: true
     }],
     coverImage: { type: String, default: '' },
     coverImageBackground: { type: String },
@@ -97,5 +96,10 @@ export const BookSummarySchema = new Schema({
     status: { type: String, default: 'Active', index: true },
     updatedAt: { type: Date },
 }, { strict: 'throw' })
+
+BookSummarySchema.index({ categories: -1 });
+BookSummarySchema.index({ title: -1, status: -1 });
+BookSummarySchema.index({ overview: -1, status: -1 });
+BookSummarySchema.index({ bookFor: -1, status: -1 });
 
 export const BookSummaryModel = mongoose.model<IBookSummary>('bookSummary', BookSummarySchema)

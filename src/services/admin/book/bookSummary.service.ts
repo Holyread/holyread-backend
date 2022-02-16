@@ -1,4 +1,4 @@
-import { BookSummaryModel } from '../../../models/index'
+import { BookSummaryModel, BookAuthorModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
@@ -74,8 +74,21 @@ const getOneBookSummaryByFilter = async (query: any) => {
 /** Get all book summaries for table */
 const getAllBookSummaries = async (skip: number, limit, search: object, sort) => {
     try {
-        const result: any = await BookSummaryModel.find(search).populate('author', 'name').populate('categories', 'title').skip(skip).limit(limit).sort(sort).lean()
-        const count: number = await BookSummaryModel.find(search).count()
+        let authorsList: any;
+        if (search['$or']) {
+            authorsList = await BookAuthorModel.find({
+                $or: [
+                    { 'name': search['$or'][0].title },
+                    { 'about': search['$or'][0].title }
+                ]
+            }).select('_id').lean().exec();
+        }
+        if (authorsList && authorsList.length) {
+            const authorIds = authorsList.map(oneAuthor => oneAuthor._id)
+            search['$or'].push({ 'author': { '$in': authorIds } })
+        }
+        const result: any = await BookSummaryModel.find(search).populate('author', 'name').populate('categories', 'title').skip(skip).limit(limit).sort(sort).lean().exec()
+        const count: number = await BookSummaryModel.find(search).count().lean().exec()
         return { count, summaries: result }
     } catch (e: any) {
         throw new Error(e)
@@ -85,7 +98,7 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
 /** Get all book categories names */
 const getAllBookSummariesOptionsList = async (query) => {
     try {
-        const result = await BookSummaryModel.find(query).select('title coverImage').lean()
+        const result = await BookSummaryModel.find(query).select('title coverImage').lean().exec()
         if (result && result.length) {
             result.forEach(element => {
                 if (element && element.coverImage) {

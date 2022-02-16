@@ -20,7 +20,7 @@ export type getBookAuthorType = {
 
 export const BookAuthorSchema = new Schema({
     name: { type: String, required: true, index: true },
-    about: { type: String, required: true },
+    about: { type: String, required: true, index: true },
     createdAt: {
         type: Date, default: () => {
             return new Date()

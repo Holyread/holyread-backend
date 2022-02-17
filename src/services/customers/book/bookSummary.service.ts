@@ -11,8 +11,7 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
         if (search['$or']) {
             authorsList = await BookAuthorModel.find({
                 $or: [
-                    { 'name': search['$or'][0].title },
-                    { 'about': search['$or'][0].title }
+                    { 'name': search['$or'][0].title }
                 ]
             }).select('_id').lean().exec();
         }
@@ -26,8 +25,7 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
                 oneItem.author = await BookAuthorModel.findById(oneItem.author).lean()
                 oneItem.author = {
                     _id: oneItem.author._id,
-                    name: oneItem.author.name,
-                    about: oneItem.author.about,
+                    name: oneItem.author.name
                 }
             }
             return {
@@ -58,7 +56,27 @@ const getAllBookSummariesCount = async () => {
     }
 }
 
+/** Get book summary by summary id */
+const getOneBookSummaryByFilter = async (query: any) => {
+    try {
+        const data: any = await BookSummaryModel.findOne(query).lean()
+        if (data.author) {
+            data.author = await BookAuthorModel.findById(data.author).select('_id name about').lean().exec()
+        }
+        return data
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 export default {
     getAllBookSummaries,
-    getAllBookSummariesCount
+    getAllBookSummariesCount,
+    getOneBookSummaryByFilter
 }
+
+/*
+fix search 
+get one book with book author name instead of book author id
+
+*/

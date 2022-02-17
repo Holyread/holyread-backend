@@ -3,7 +3,7 @@ import Boom from '@hapi/boom';
 
 import bookSummaryService from '../../../services/customers/book/bookSummary.service'
 import { responseMessage } from '../../../constants/message.constant'
-import { awsBucket } from '../../../constants/app.constant'
+import { awsBucket, dataLimit } from '../../../constants/app.constant'
 import { getSearchRegexp } from '../../../lib/utils/utils'
 import config from '../../../../config'
 
@@ -14,8 +14,8 @@ const bookSummaryControllerResponse = responseMessage.bookSummaryControllerRespo
 const getAllSummaries = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
-        const skip: any = params.skip ? params.skip : 0
-        const limit: any = params.limit ? params.limit : 0
+        const skip: any = params.skip ? params.skip : dataLimit
+        const limit: any = params.limit ? params.limit : dataLimit
         let searchFilter: any = { status: 'Active' }
         if (params.category) {
             searchFilter.categories = String(params.category)

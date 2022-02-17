@@ -20,6 +20,7 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
             search['$or'].push({ 'author': { '$in': authorIds } })
         }
         let result: any = await BookSummaryModel.find(search).skip(skip).limit(limit).sort(sort).lean().exec()
+        let count: any = await BookSummaryModel.find(search).count().lean().exec()
         result = await Promise.all(result.map(async oneItem => {
             if (oneItem.author) {
                 oneItem.author = await BookAuthorModel.findById(oneItem.author).lean()
@@ -40,7 +41,7 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
                 coverImageBackground: oneItem.coverImageBackground
             }
         }))
-        return result
+        return { count, summaries: result }
     } catch (e: any) {
         throw new Error(e)
     }

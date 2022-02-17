@@ -14,8 +14,8 @@ const bookSummaryControllerResponse = responseMessage.bookSummaryControllerRespo
 const getAllSummaries = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
-        const skip: any = params.skip ? params.skip : dataLimit.skip
-        const limit: any = params.limit ? params.limit : dataLimit.limit
+        const skip: any = params.skip ? params.skip : dataLimit
+        const limit: any = params.limit ? params.limit : dataLimit
         let searchFilter: any = { status: 'Active' }
         if (params.category) {
             searchFilter.categories = String(params.category)

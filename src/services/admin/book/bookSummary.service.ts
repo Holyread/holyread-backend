@@ -1,4 +1,4 @@
-import { BookSummaryModel, BookAuthorModel } from '../../../models/index'
+import { BookSummaryModel, BookAuthorModel, HighLightsModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
@@ -115,6 +115,7 @@ const getAllBookSummariesOptionsList = async (query) => {
 /** Remove book summary */
 const deleteBookSummary = async (id: string) => {
     try {
+        await HighLightsModel.deleteMany({ bookId: id })
         await BookSummaryModel.findOneAndDelete({ _id: id })
         return true
     } catch (e: any) {

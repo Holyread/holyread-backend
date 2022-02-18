@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
 import bookSummaryService from '../../../services/customers/book/bookSummary.service'
+import bookAuthorService from '../../../services/admin/book/author.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket, dataLimit } from '../../../constants/app.constant'
 import { getSearchRegexp } from '../../../lib/utils/utils'
@@ -16,17 +17,21 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
         const params = request.query
         const skip: any = params.skip ? params.skip : dataLimit
         const limit: any = params.limit ? params.limit : dataLimit
-        let searchFilter: any = { status: 'Active' }
+        let bookSearchFilter: any = { status: 'Active' }
+        let authorSearchFilter: any = {}
         if (params.category) {
-            searchFilter.categories = String(params.category)
+            bookSearchFilter.categories = String(params.category)
         }
         if (params.search) {
-            searchFilter['$or'] = [
-                { 'title': await getSearchRegexp(params.search) }
-            ]
+            bookSearchFilter.title = await getSearchRegexp(params.search)
+            authorSearchFilter.name = await getSearchRegexp(params.search)
         }
-        const data: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), searchFilter, [['createdAt', 'DESC']])
-        response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
+        const bookSummariesList: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), bookSearchFilter, [['createdAt', 'DESC']])
+        const authorsList: any = await bookAuthorService.getAllAuthors(Number(skip), Number(limit), authorSearchFilter, [['createdAt', 'DESC']])
+        response.status(200).json({
+            message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
+            data: { books: bookSummariesList, authors: authorsList }
+        })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }

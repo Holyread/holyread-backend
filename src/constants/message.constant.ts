@@ -141,4 +141,12 @@ export const responseMessage = {
         smallGroupExistError: 'Small group already added',
         getSmallGroupFailure: 'Failed to fetch small group details'
     },
+    highLightsControllerResponse: {
+        createHighLightSuccess: 'High light added successfully',
+        updateHighLightSuccess: 'High light updated successfully',
+        deleteHighLightSuccess: 'High light deleted successfully',
+        fetchHighLightsSuccess: 'High lights list fetched successfully',
+        HighLightExistError: 'High light already added',
+        getHighLightFailure: 'Failed to fetch High light details'
+    },
 }

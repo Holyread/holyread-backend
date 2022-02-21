@@ -24,8 +24,7 @@ const createHighLight = async (body: any) => {
             'note': body.note,
             'color': body.color,
             'startIndex': body.startIndex,
-            'endIndex': body.endIndex,
-            textDecoration: body.textDecoration
+            'endIndex': body.endIndex
         }
         if (body.textDecoration) {
             highLights.textDecoration = body.textDecoration

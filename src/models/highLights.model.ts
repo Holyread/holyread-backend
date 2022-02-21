@@ -9,8 +9,9 @@ export interface IHighLights extends mongoose.Document {
         color: string,
         startIndex: number,
         endIndex: number,
-        note: string
-    }]
+        note: string,
+        textDecoration?: string
+    }],
 }
 
 export type createHighLightsType = {
@@ -21,8 +22,9 @@ export type createHighLightsType = {
         color: string,
         startIndex: number,
         endIndex: number,
-        note: string
-    }]
+        note: string,
+        textDecoration?: string
+    }],
 }
 
 export type getHighLightsType = {
@@ -34,8 +36,9 @@ export type getHighLightsType = {
         color?: string,
         startIndex?: number,
         endIndex?: number,
-        note?: string
-    }]
+        note?: string,
+        textDecoration?: string
+    }],
 }
 
 export const HighLightsSchema = new Schema({
@@ -61,7 +64,8 @@ export const HighLightsSchema = new Schema({
         startIndex: { type: Number, required: true },
         endIndex: { type: Number, required: true },
         note: { type: String },
-    }]
+        textDecoration: { type: String }
+    }],
 }, { strict: 'throw' })
 
 HighLightsSchema.index({ userId: -1, bookId: -1, chapterId: -1 });

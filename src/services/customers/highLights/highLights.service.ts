@@ -11,13 +11,25 @@ const createHighLight = async (body: any) => {
                 chapterId: body.chapterId,
                 bookId: body.bookId,
                 'highLights.startIndex': body.startIndex,
-                'highLights.endIndex': body.endIndex,
+                'highLights.endIndex': body.endIndex
             }
         ).lean().exec()
         if (existingHighLight) {
             throw new Error(highLightsControllerResponse.HighLightExistError)
         }
-
+        if (body.startIndex > body.endIndex) {
+            throw new Error(highLightsControllerResponse.invalidStartIndexError)
+        }
+        const highLights = {
+            'note': body.note,
+            'color': body.color,
+            'startIndex': body.startIndex,
+            'endIndex': body.endIndex,
+            textDecoration: body.textDecoration
+        }
+        if (body.textDecoration) {
+            highLights.textDecoration = body.textDecoration
+        }
         const result = await HighLightsModel.findOneAndUpdate(
             {
                 userId: body.userId,
@@ -25,14 +37,7 @@ const createHighLight = async (body: any) => {
                 bookId: body.bookId
             },
             {
-                '$push': {
-                    highLights: {
-                        'note': body.note,
-                        'color': body.color,
-                        'startIndex': body.startIndex,
-                        'endIndex': body.endIndex,
-                    }
-                },
+                '$push': { highLights },
             },
             { upsert: true, new: true }
         ).lean().exec()
@@ -45,13 +50,17 @@ const createHighLight = async (body: any) => {
 /** Modify high light */
 const updateHighLight = async (body: any, id: string) => {
     try {
+        const newBody: any = {
+            'highLights.$.color': body.color,
+            'highLights.$.note': body.note,
+        }
+        if (body.textDecoration) {
+            newBody['highLights.$.textDecoration'] = body.textDecoration
+        }
         const data: any = await HighLightsModel.findOneAndUpdate(
             { 'highLights._id': id },
             {
-                '$set': {
-                    'highLights.$.color': body.color,
-                    'highLights.$.note': body.note,
-                }
+                '$set': newBody
             }
         ).lean().exec()
         return data

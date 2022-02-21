@@ -26,7 +26,17 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
             bookSearchFilter.title = await getSearchRegexp(params.search)
             authorSearchFilter.name = await getSearchRegexp(params.search)
         }
+        if (params.author) {
+            bookSearchFilter.author = params.author
+        }
         const bookSummariesList: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), bookSearchFilter, [['createdAt', 'DESC']])
+        if (params.author) {
+            response.status(200).json({
+                message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
+                data: bookSummariesList
+            })
+            return    
+        }
         const authorsList: any = await bookAuthorService.getAllAuthors(Number(skip), Number(limit), authorSearchFilter, [['createdAt', 'DESC']])
         response.status(200).json({
             message: bookSummaryControllerResponse.fetchBookSummariesSuccess,

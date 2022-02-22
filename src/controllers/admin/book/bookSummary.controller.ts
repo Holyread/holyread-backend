@@ -80,7 +80,8 @@ const getOneSummary = async (req: Request, res: Response, next: NextFunction) =>
             });
         }
         if (data.categories) {
-            data.categories = await bookCategoryService.getAllBookCategory(0, 0, { _id: { $in: data.categories } }, [['createdAt', 'DESC']])
+            const categoryObj = await bookCategoryService.getAllBookCategory(0, 0, { _id: { $in: data.categories } }, [['createdAt', 'DESC']])
+            data.categories = categoryObj.categories
         }
         res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummarySuccess, data })
     } catch (e: any) {

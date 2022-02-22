@@ -20,7 +20,7 @@ const createHighLight = async (body: any) => {
         if (body.startIndex > body.endIndex) {
             throw new Error(highLightsControllerResponse.invalidStartIndexError)
         }
-        const highLights = {
+        const highLights: any = {
             'note': body.note,
             'color': body.color,
             'startIndex': body.startIndex,

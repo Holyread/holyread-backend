@@ -7,18 +7,6 @@ const NODE_ENV = config.NODE_ENV
 /** Get all book summaries */
 const getAllBookSummaries = async (skip: number, limit, search: object, sort) => {
     try {
-        let authorsList: any;
-        if (search['$or']) {
-            authorsList = await BookAuthorModel.find({
-                $or: [
-                    { 'name': search['$or'][0].title }
-                ]
-            }).select('_id').lean().exec();
-        }
-        if (authorsList && authorsList.length) {
-            const authorIds = authorsList.map(oneAuthor => oneAuthor._id)
-            search['$or'].push({ 'author': { '$in': authorIds } })
-        }
         let result: any = await BookSummaryModel.find(search).skip(skip).limit(limit).sort(sort).lean().exec()
         let count: any = await BookSummaryModel.find(search).count().lean().exec()
         result = await Promise.all(result.map(async oneItem => {

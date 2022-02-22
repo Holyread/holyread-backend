@@ -147,6 +147,7 @@ export const responseMessage = {
         deleteHighLightSuccess: 'High light deleted successfully',
         fetchHighLightsSuccess: 'High lights list fetched successfully',
         HighLightExistError: 'High light already added',
-        getHighLightFailure: 'Failed to fetch High light details'
+        getHighLightFailure: 'Failed to fetch High light details',
+        invalidStartIndexError: 'Start index should be less then end index'
     },
 }

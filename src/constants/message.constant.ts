@@ -150,4 +150,13 @@ export const responseMessage = {
         getHighLightFailure: 'Failed to fetch High light details',
         invalidStartIndexError: 'Start index should be less then end index'
     },
+    cmsControllerResponse: {
+        createCmsSuccess: 'Cms added successfully',
+        updateCmsSuccess: 'Cms updated successfully',
+        deleteCmsSuccess: 'Cms deleted successfully',
+        fetchCmsSuccess: 'Cms details fetched successfully',
+        fetchAllCmsSuccess: 'All cms list fetched successfully',
+        createCmsFailure: 'Cms already added',
+        getCmsFailure: 'Failed to fetch cms details',
+    },
 }

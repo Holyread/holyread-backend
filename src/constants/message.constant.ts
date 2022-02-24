@@ -159,13 +159,4 @@ export const responseMessage = {
         createCmsFailure: 'Cms already added',
         getCmsFailure: 'Failed to fetch cms details',
     },
-    FaqControllerResponse: {
-        createFaqSuccess: 'Faq added successfully',
-        updateFaqSuccess: 'Faq updated successfully',
-        deleteFaqSuccess: 'Faq deleted successfully',
-        fetchFaqSuccess: 'Faq details fetched successfully',
-        fetchAllFaqSuccess: 'All faqs list fetched successfully',
-        createFaqFailure: 'Faq already added',
-        getFaqFailure: 'Failed to fetch faq details',
-    },
 }

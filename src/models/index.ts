@@ -13,7 +13,6 @@ import { ReadsOfDayModel } from './readsOfDay.model'
 import { SmallGroupModel } from './smallGroup.model'
 import { HighLightsModel } from './highLights.model'
 import { CmsModel } from './cms.model'
-import { FaqModel } from './faq.model'
 
 const NODE_ENV = config.NODE_ENV
 const option = { useNewUrlParser: true, useUnifiedTopology: true }
@@ -42,6 +41,5 @@ export {
   ReadsOfDayModel,
   SmallGroupModel,
   HighLightsModel,
-  CmsModel,
-  FaqModel
+  CmsModel
 }

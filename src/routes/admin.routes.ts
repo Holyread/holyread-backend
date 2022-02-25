@@ -15,6 +15,7 @@ import shareImage from './admin/shareImage.route'
 import readsOfDay from './admin/readsOfDay.route'
 import smallGroup from './admin/smallGroup.route'
 import cms from './admin/cms.route'
+import faq from './admin/faq.route'
 
 const router: Router = express.Router()
 router.use('/auth', auth)
@@ -32,5 +33,6 @@ router.use('/share-image', adminPassport, shareImage)
 router.use('/reads-of-day', adminPassport, readsOfDay)
 router.use('/small-group', adminPassport, smallGroup)
 router.use('/cms', adminPassport, cms)
+router.use('/faq', adminPassport, faq)
 
 export default router

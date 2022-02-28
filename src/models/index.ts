@@ -14,6 +14,7 @@ import { SmallGroupModel } from './smallGroup.model'
 import { HighLightsModel } from './highLights.model'
 import { CmsModel } from './cms.model'
 import { FaqModel } from './faq.model'
+import { EmailTemplateModel } from './emailTemplate.model'
 
 const NODE_ENV = config.NODE_ENV
 const option = { useNewUrlParser: true, useUnifiedTopology: true }
@@ -43,5 +44,6 @@ export {
   SmallGroupModel,
   HighLightsModel,
   CmsModel,
-  FaqModel
+  FaqModel,
+  EmailTemplateModel
 }

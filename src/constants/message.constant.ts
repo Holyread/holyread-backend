@@ -168,4 +168,13 @@ export const responseMessage = {
         createFaqFailure: 'Faq already added',
         getFaqFailure: 'Failed to fetch faq details',
     },
+    emailTemplateControllerResponse: {
+        createEmailTemplateSuccess: 'EmailTemplate added successfully',
+        updateEmailTemplateSuccess: 'EmailTemplate updated successfully',
+        deleteEmailTemplateSuccess: 'EmailTemplate deleted successfully',
+        fetchEmailTemplateSuccess: 'EmailTemplate details fetched successfully',
+        fetchAllEmailTemplatesSuccess: 'All emailTemplates list fetched successfully',
+        createEmailTemplateFailure: 'EmailTemplate already added',
+        getEmailTemplateFailure: 'Failed to fetch emailTemplate details',
+    },
 }

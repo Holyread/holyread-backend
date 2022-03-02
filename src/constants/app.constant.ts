@@ -41,9 +41,10 @@ export const emailTemplatesTitles = {
     customer: {
         registration: 'Customer Registration',
         forgotPassword: 'Customer Forgot Password',
-        resendOtp: 'Customer Resend OTP'
     },
     admin: {
-        customerRegistration: 'Admin Customer Registration'
+        customerRegistration: 'Admin Customer Registration',
+        login: 'Admin Login',
+        forgotPassword: 'Forgot Password'
     }
 }

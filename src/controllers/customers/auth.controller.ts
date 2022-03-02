@@ -5,7 +5,7 @@ import usersService from '../../services/admin/users/user.service'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
 import { origins, emailTemplatesTitles } from '../../constants/app.constant'
-import { uploadImageToAwsS3 } from '../../lib/utils/utils'
+import { uploadImageToAwsS3, compileHtml } from '../../lib/utils/utils'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
 
@@ -55,15 +55,15 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     const token: string = getToken({ code: String(verificationCode) })
     const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
-    const subject = emailTemplateDetails.subject || 'Verification Mail'
+    const subject = emailTemplateDetails?.subject || 'Verification Mail'
     let html = `Please click this link for verify account - ${link}`
-
+    
     if (emailTemplateDetails && emailTemplateDetails.content) {
-      emailTemplateDetails.content = emailTemplateDetails.content.replace('{link}', link)
-      emailTemplateDetails.content = emailTemplateDetails.content.replace('{email}', body.email)
-      emailTemplateDetails.content = emailTemplateDetails.content.replace('{password}', body.password)
-      emailTemplateDetails.content = emailTemplateDetails.content.replace('{username}', body.email.substr(0, body.email.indexOf('@')))
-      html = emailTemplateDetails.content
+      const contentData = { email: body.email, password: body.password, username: body.email.substr(0, body.email.indexOf('@')), link }
+      const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+      if (htmlData) {
+        html = htmlData
+      }
     }
     const result = await sentEmail(body.email, subject, html);
     if (!result) {
@@ -130,9 +130,11 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     let html = `Your verification code is: ${verificationCode}`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
-      emailTemplateDetails.content = emailTemplateDetails.content.replace('{otp}', verificationCode)
-      emailTemplateDetails.content = emailTemplateDetails.content.replace('{username}', email.substr(0, email.indexOf('@')))
-      html = emailTemplateDetails.content
+      const contentData = { otp: verificationCode, username: email.substr(0, email.indexOf('@')) }
+      const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+      if (htmlData) {
+        html = htmlData
+      }
     }
     const result = await sentEmail(email, subject, html);
     if (!result) {

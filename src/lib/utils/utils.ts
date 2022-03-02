@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import aws from 'aws-sdk';
 import nodemailer from 'nodemailer';
 import smtpTransport from 'nodemailer-smtp-transport';
+import handlebars from 'handlebars'
 
 import config from '../../../config'
 
@@ -170,4 +171,14 @@ export const getSearchRegexp = async (value) => {
     if (value.toString().startsWith('+')) { return value.slice(1) }
     const result = { $regex: '.*' + value.trim() + '.*', $options: '-i' }
     return result
+}
+
+export const compileHtml = async (source: string, data: any) => {
+    try {
+        const template = handlebars.compile(source);
+        const result = template(data);
+        return result
+    } catch (e) {
+        return null
+    }
 }

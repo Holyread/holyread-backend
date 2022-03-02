@@ -36,3 +36,14 @@ export const dataLimit = {
     limit: 10,
     skip: 0,
 }
+
+export const emailTemplatesTitles = {
+    customer: {
+        registration: 'Customer Registration',
+        forgotPassword: 'Customer Forgot Password',
+        resendOtp: 'Customer Resend OTP'
+    },
+    admin: {
+        customerRegistration: 'Admin Customer Registration'
+    }
+}

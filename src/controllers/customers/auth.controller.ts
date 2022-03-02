@@ -2,8 +2,9 @@ import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 import { encrypt, getToken, verifyToken, sentEmail } from '../../lib/utils/utils'
 import usersService from '../../services/admin/users/user.service'
+import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
-import { origins } from '../../constants/app.constant'
+import { origins, emailTemplatesTitles } from '../../constants/app.constant'
 import { uploadImageToAwsS3 } from '../../lib/utils/utils'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
@@ -16,7 +17,6 @@ const s3Bucket = {
   bucketName: awsBucket[NODE_ENV].bucketName,
   documentDirectory: `${awsBucket.usersDirectory}`,
 }
-
 
 /** user signIn */
 const signInUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -54,7 +54,18 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const token: string = getToken({ code: String(verificationCode) })
     const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
-    const result = await sentEmail(body.email, 'Verification Mail', `Please click this link for verify account - ${link}`);
+    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
+    const subject = emailTemplateDetails.subject || 'Verification Mail'
+    let html = `Please click this link for verify account - ${link}`
+
+    if (emailTemplateDetails && emailTemplateDetails.content) {
+      emailTemplateDetails.content = emailTemplateDetails.content.replace('{link}', link)
+      emailTemplateDetails.content = emailTemplateDetails.content.replace('{email}', body.email)
+      emailTemplateDetails.content = emailTemplateDetails.content.replace('{password}', body.password)
+      emailTemplateDetails.content = emailTemplateDetails.content.replace('{username}', body.email.substr(0, body.email.indexOf('@')))
+      html = emailTemplateDetails.content
+    }
+    const result = await sentEmail(body.email, subject, html);
     if (!result) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
     }
@@ -114,7 +125,16 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
       return next(Boom.badData(authControllerResponse.getUserError))
     }
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
-    const result = await sentEmail(email, 'Verification Code', `Your verification code is: ${verificationCode}`);
+    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.forgotPassword })
+    const subject = emailTemplateDetails.subject || 'Verification Code'
+    let html = `Your verification code is: ${verificationCode}`
+
+    if (emailTemplateDetails && emailTemplateDetails.content) {
+      emailTemplateDetails.content = emailTemplateDetails.content.replace('{otp}', verificationCode)
+      emailTemplateDetails.content = emailTemplateDetails.content.replace('{username}', email.substr(0, email.indexOf('@')))
+      html = emailTemplateDetails.content
+    }
+    const result = await sentEmail(email, subject, html);
     if (!result) {
       return next(Boom.badData(adminControllerResponse.sendCodeFailure))
     }

@@ -138,7 +138,7 @@ export const removeImageToAwsS3 = async (
     }
 }
 
-export const sentEmail = async (receiverEmail: string, subject: string, text: string) => {
+export const sentEmail = async (receiverEmail: string, subject: string, html: string) => {
     const transporter = nodemailer.createTransport(smtpTransport({
         service: 'gmail',
         host: 'smtp.gmail.com',
@@ -152,11 +152,12 @@ export const sentEmail = async (receiverEmail: string, subject: string, text: st
         from: config.SMTP_EMAIL,
         to: receiverEmail,
         subject,
-        text
+        html
     };
     return new Promise((resolve, reject) => {
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
+                console.log(error.message)
                 reject(false)
             } else {
                 resolve(true)

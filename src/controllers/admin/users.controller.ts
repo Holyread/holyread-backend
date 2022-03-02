@@ -3,9 +3,10 @@ import Boom from '@hapi/boom';
 
 import usersService from '../../services/admin/users/user.service'
 import subscriptionService from '../../services/admin/subscriptions/subscriptions.service'
+import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp, sentEmail } from '../../lib/utils/utils'
-import { awsBucket, dataTable } from '../../constants/app.constant'
+import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp, sentEmail, compileHtml } from '../../lib/utils/utils'
+import { awsBucket, dataTable, emailTemplatesTitles } from '../../constants/app.constant'
 import config from '../../../config'
 
 const authControllerResponse = responseMessage.authControllerResponse
@@ -32,7 +33,18 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             body.image = await uploadImageToAwsS3(body.image, body.name, s3Bucket)
         }
         const password = (Math.random() + 1).toString(36).substring(2)
-        const result = await sentEmail(body.email, 'Temporary Password', `Your temporary password is: ${password}`);
+        const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.customerRegistration })
+        const subject = emailTemplateDetails.subject || 'Customer Registration'
+        let html = `Your temporary password is: ${password}`
+
+        if (emailTemplateDetails && emailTemplateDetails.content) {
+            const contentData = { email: body.email, password, username: body.name }
+            const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+            if (htmlData) {
+                html = htmlData
+            }
+        }
+        const result = await sentEmail(body.email, subject, html);
         if (!result) {
             return next(Boom.badData(adminControllerResponse.sentEmailFailure))
         }

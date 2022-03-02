@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import aws from 'aws-sdk';
 import nodemailer from 'nodemailer';
 import smtpTransport from 'nodemailer-smtp-transport';
+import handlebars from 'handlebars'
 
 import config from '../../../config'
 
@@ -138,7 +139,7 @@ export const removeImageToAwsS3 = async (
     }
 }
 
-export const sentEmail = async (receiverEmail: string, subject: string, text: string) => {
+export const sentEmail = async (receiverEmail: string, subject: string, html: string) => {
     const transporter = nodemailer.createTransport(smtpTransport({
         service: 'gmail',
         host: 'smtp.gmail.com',
@@ -152,11 +153,12 @@ export const sentEmail = async (receiverEmail: string, subject: string, text: st
         from: config.SMTP_EMAIL,
         to: receiverEmail,
         subject,
-        text
+        html
     };
     return new Promise((resolve, reject) => {
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
+                console.log(error.message)
                 reject(false)
             } else {
                 resolve(true)
@@ -169,4 +171,14 @@ export const getSearchRegexp = async (value) => {
     if (value.toString().startsWith('+')) { return value.slice(1) }
     const result = { $regex: '.*' + value.trim() + '.*', $options: '-i' }
     return result
+}
+
+export const compileHtml = async (source: string, data: any) => {
+    try {
+        const template = handlebars.compile(source);
+        const result = template(data);
+        return result
+    } catch (e) {
+        return null
+    }
 }

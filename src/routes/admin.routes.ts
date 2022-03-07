@@ -17,6 +17,7 @@ import smallGroup from './admin/smallGroup.route'
 import cms from './admin/cms.route'
 import faq from './admin/faq.route'
 import emailTemplate from './admin/emailTemplate.route'
+import setting from './admin/setting.route'
 
 const router: Router = express.Router()
 router.use('/auth', auth)
@@ -36,5 +37,6 @@ router.use('/small-group', adminPassport, smallGroup)
 router.use('/cms', adminPassport, cms)
 router.use('/faq', adminPassport, faq)
 router.use('/email-template', adminPassport, emailTemplate)
+router.use('/setting', adminPassport, setting)
 
 export default router

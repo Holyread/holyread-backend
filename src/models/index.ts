@@ -15,6 +15,7 @@ import { HighLightsModel } from './highLights.model'
 import { CmsModel } from './cms.model'
 import { FaqModel } from './faq.model'
 import { EmailTemplateModel } from './emailTemplate.model'
+import { SettingModel } from './setting.model'
 
 const NODE_ENV = config.NODE_ENV
 const option = { useNewUrlParser: true, useUnifiedTopology: true }
@@ -45,5 +46,6 @@ export {
   HighLightsModel,
   CmsModel,
   FaqModel,
-  EmailTemplateModel
+  EmailTemplateModel,
+  SettingModel
 }

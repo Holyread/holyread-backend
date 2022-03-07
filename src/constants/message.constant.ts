@@ -177,4 +177,9 @@ export const responseMessage = {
         createEmailTemplateFailure: 'Email template already added',
         getEmailTemplateFailure: 'Failed to fetch email template details',
     },
+    settingControllerResponse: {
+        updateSettingSuccess: 'Setting saved successfully',
+        fetchSettingSuccess: 'Setting details fetched successfully',
+        getSettingFailure: 'Failed to fetch setting details',
+    },
 }

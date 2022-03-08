@@ -85,6 +85,10 @@ const updateUserAccount = async (req: Request, res: Response, next: NextFunction
                   return next(Boom.notFound(authControllerResponse.getUserError))
             }
             req.body.email = data.email
+            delete req.body.password
+            delete req.body.type
+            delete req.body.verified
+            delete req.body.status
             if (req.body.image === null) {
                   await removeImageToAwsS3(data.image, s3Bucket)
             }

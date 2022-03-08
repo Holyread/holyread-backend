@@ -116,19 +116,23 @@ const updateUserAccount = async (req: Request, res: Response, next: NextFunction
 const getUserLibrary = async (req: Request, res: Response, next: NextFunction) => {
       try {
             const id: any = req.params.id
-            const section = req.query.section as 'saved' | 'completed' | 'reading'
+            const { section, sort, author } = req.query as any
             /** Get user from db */
             const userObj: any = await usersService.getOneUserByFilter({ _id: id })
             if (!userObj) {
                   return next(Boom.notFound(authControllerResponse.getUserError))
             }
             if (section === 'saved' && userObj.library && userObj.library.saved && userObj.library.saved.length) {
-                  const data = await bookService.getAllBookSummaries(0, 0, { _id: { $in: userObj.library.saved } }, [])
+                  const search: any = { _id: { $in: userObj.library.saved } }
+                  if (author) { search.author = author }
+                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']])
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return
             }
             if (section === 'completed' && userObj.library && userObj.library.completed && userObj.library.completed.length) {
-                  const data = await bookService.getAllBookSummaries(0, 0, { _id: { $in: userObj.library.completed } }, [])
+                  const search: any = { _id: { $in: userObj.library.completed } }
+                  if (author) { search.author = author }
+                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']])
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return
             }
@@ -140,7 +144,9 @@ const getUserLibrary = async (req: Request, res: Response, next: NextFunction) =
                   userObj.library.reading.length
             ) {
                   const bookIds = userObj.library.reading.map(oneBook => oneBook.bookId)
-                  const data = await bookService.getAllBookSummaries(0, 0, { _id: { $in: bookIds } }, [], true)
+                  const search: any = { _id: { $in: bookIds } }
+                  if (author) { search.author = author }
+                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']], true)
                   data.summaries = data.summaries.map(oneBook => {
                         const libBookChapters = userObj.library.reading.find(item => String(item.bookId) === String(oneBook._id)).chaptersCompleted
                         oneBook.reads = (libBookChapters && libBookChapters.length ? (100 * libBookChapters.length) / oneBook.chapters.length : 0) + '%'

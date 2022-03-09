@@ -1,0 +1,23 @@
+import { UserModel } from '../../../models/index'
+
+/** Modify User */
+const updateUser = async (body: any, query: object) => {
+    try {
+        const data: any = await UserModel.findOneAndUpdate(query, { ...body, updatedAt: new Date() }, { new: true })
+        return data
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+/** Get user by id */
+const getOneUserByFilter = async (query: any) => {
+    try {
+        const result: any = await UserModel.findOne(query).select('-password')
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+export default { updateUser, getOneUserByFilter }

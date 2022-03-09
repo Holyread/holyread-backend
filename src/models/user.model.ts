@@ -26,7 +26,15 @@ export interface IUser extends mongoose.Document {
     twitterLink?: string,
     iosAppLink?: string,
     androidAppLink?: string,
-    maxDevicesLogin?: string
+    maxDevicesLogin?: string,
+    library?: {
+        saved?: [string],
+        completed?: [string],
+        reading?: [{
+            bookId: string,
+            chaptersCompleted: [string]
+        }]
+    }
 }
 
 export type createUserType = {
@@ -53,7 +61,15 @@ export type createUserType = {
     twitterLink?: string,
     iosAppLink?: string,
     androidAppLink?: string,
-    maxDevicesLogin?: string
+    maxDevicesLogin?: string,
+    library?: {
+        saved?: [string],
+        completed?: [string],
+        reading?: [{
+            bookId: string,
+            chaptersCompleted: [string]
+        }]
+    }
 }
 
 export type getUserType = {
@@ -80,7 +96,15 @@ export type getUserType = {
     twitterLink?: string,
     iosAppLink?: string,
     androidAppLink?: string,
-    maxDevicesLogin?: string
+    maxDevicesLogin?: string,
+    library?: {
+        saved?: [string],
+        completed?: [string],
+        reading?: [{
+            bookId: string,
+            chaptersCompleted: [string]
+        }]
+    }
 }
 
 export const UserSchema = new Schema({
@@ -108,6 +132,14 @@ export const UserSchema = new Schema({
     iosAppLink: { type: String },
     androidAppLink: { type: String },
     maxDevicesLogin: { type: String },
+    library: {
+        saved: [{ type: String }],
+        completed: [{ type: String }],
+        reading: [{
+            bookId: { type: String },
+            chaptersCompleted: [{ type: String }]
+        }]
+    },
     createdAt: {
         type: Date, default: () => {
             return new Date()

@@ -5,7 +5,7 @@ import config from '../../../../config'
 const NODE_ENV = config.NODE_ENV
 
 /** Get all book summaries */
-const getAllBookSummaries = async (skip: number, limit, search: object, sort) => {
+const getAllBookSummaries = async (skip: number, limit, search: object, sort, library?: any) => {
     try {
         let result: any = await BookSummaryModel.find(search).skip(skip).limit(limit).sort(sort).lean().exec()
         let count: any = await BookSummaryModel.find(search).count().lean().exec()
@@ -26,7 +26,8 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
                 totalStar: 100,
                 totalReads: 100,
                 bookMark: true,
-                coverImageBackground: oneItem.coverImageBackground
+                coverImageBackground: oneItem.coverImageBackground,
+                chapters: library ? oneItem.chapters : null
             }
         }))
         return { count, summaries: result }

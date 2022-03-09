@@ -22,6 +22,7 @@ export const responseMessage = {
         verifyEmailRequest: 'Please check your email and activate your account',
         sentVerifyEmailFailure: 'Failed to send verification email',
         verifyEmailSuccess: 'verification link already sended on your register email',
+        missingSectionParams: 'Missing section params',
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

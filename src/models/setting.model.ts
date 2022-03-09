@@ -9,7 +9,7 @@ export interface ISetting extends mongoose.Document {
     adminPaging?: number;
     adminReceiveEmail?: string;
     contactEmail?: string;
-    contactNumber?: string;
+    contactNumber?: number;
     facebookLink?: string;
     googlePlusLink?: string;
     twitterLink?: string;
@@ -25,7 +25,7 @@ export type createSettingType = {
     adminPaging?: number;
     adminReceiveEmail?: string;
     contactEmail?: string;
-    contactNumber?: string;
+    contactNumber?: number;
     facebookLink?: string;
     googlePlusLink?: string;
     twitterLink?: string;
@@ -42,7 +42,7 @@ export type getSettingType = {
     adminPaging?: number;
     adminReceiveEmail?: string;
     contactEmail?: string;
-    contactNumber?: string;
+    contactNumber?: number;
     facebookLink?: string;
     googlePlusLink?: string;
     twitterLink?: string;
@@ -58,7 +58,7 @@ export const SettingSchema = new Schema({
     adminPaging: { type: Number, default: '' },
     adminReceiveEmail: { type: String, default: '' },
     contactEmail: { type: String, default: '' },
-    contactNumber: { type: String, default: '' },
+    contactNumber: { type: Number, default: 0 },
     facebookLink: { type: String, default: '' },
     googlePlusLink: { type: String, default: '' },
     twitterLink: { type: String, default: '' },

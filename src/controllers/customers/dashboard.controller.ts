@@ -17,10 +17,10 @@ const dashboardControllerResponse = responseMessage.dashboardControllerResponse
 /** Get categories for dashboard */
 const getCategories = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const categories: any = await bookCategoryService.getAllBookCategories(0, 0, { status: 'Active' }, [['createdAt', 'DESC']])
+        const data: any = await bookCategoryService.getAllBookCategories(0, 0, { status: 'Active' }, [['createdAt', 'DESC']])
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
-            data: { categories }
+            data 
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -49,18 +49,13 @@ const getRecentReads = async (request: Request, response: Response, next: NextFu
 const getPopularBooks = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params: any = request.query
-        let count: any = undefined
-        if (params.skip) {
-            count = await bookSummaryService.getAllBookSummariesCount()
-        }
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
         const mostPopular: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), { popular: true }, [['createdAt', 'DESC']])
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data: {
-                mostPopular,
-                count
+                mostPopular
             }
         })
     } catch (e: any) {
@@ -68,20 +63,16 @@ const getPopularBooks = async (request: Request, response: Response, next: NextF
     }
 }
 
-/** Get curuteds list for Dashboard */
-const getCurutedsList = async (request: Request, response: Response, next: NextFunction) => {
+/** Get curateds list for Dashboard */
+const getCuratedsList = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params: any = request.query
-        let count: any = undefined
-        if (params.skip) {
-            count = await expertCuratedService.getAllExpertCuratedsCount()
-        }
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        const curatedList: any = await expertCuratedService.getAllExpertCurateds(Number(skip), Number(limit), { status: 'Active' }, [['createdAt', 'DESC']])
+        const data: any = await expertCuratedService.getAllExpertCurateds(Number(skip), Number(limit), { status: 'Active' }, [['createdAt', 'DESC']])
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
-            data: { curatedList, count }
+            data
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -94,10 +85,10 @@ const getReadsOfTheDay = async (request: Request, response: Response, next: Next
         const params: any = request.query
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        const readsOfTheDayList: any = await readsOfDayService.getAllReadsOfDays(Number(skip), Number(limit), { status: 'Active' }, [['createdAt', 'DESC']])
+        const data: any = await readsOfDayService.getAllReadsOfDays(Number(skip), Number(limit), { status: 'Active' }, [['createdAt', 'DESC']])
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
-            data: { readsOfTheDayList }
+            data
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -108,13 +99,12 @@ const getReadsOfTheDay = async (request: Request, response: Response, next: Next
 const getRecommendedBooks = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params: any = request.query
-        let count: any = 0
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        const recommendedBooksList = await recommendedBookService.getAllRecommendedBooks(Number(skip), Number(limit), {}, [])
+        const result = await recommendedBookService.getAllRecommendedBooks(Number(skip), Number(limit), {}, [])
         const recommendedBooks = []
-        if (recommendedBooksList && recommendedBooksList.length) {
-            recommendedBooksList.map((oneBook: any) => {
+        if (result && result.recommendedBooks && result.recommendedBooks.length) {
+            result.recommendedBooks.map((oneBook: any) => {
                 if (oneBook && oneBook.book && oneBook.book._id) {
                     recommendedBooks.push({
                         _id: oneBook.book._id,
@@ -126,9 +116,8 @@ const getRecommendedBooks = async (request: Request, response: Response, next: N
                         totalStar: 100,
                         totalReads: 100
                     })
-                }
-                if (request.query.skip) {
-                    count += 1
+                } else {
+                    --result.count
                 }
             })
         }
@@ -136,7 +125,7 @@ const getRecommendedBooks = async (request: Request, response: Response, next: N
             message: dashboardControllerResponse.getDashboardSuccess,
             data: {
                 recommendedBooks,
-                count: request.query.skip ? count : undefined
+                count: result.count
             }
         })
     } catch (e: any) {
@@ -150,10 +139,10 @@ const getSmallGroups = async (request: Request, response: Response, next: NextFu
         const params: any = request.query
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        const smallGroupsList: any = await smallGroupService.getAllSmallGroups(Number(skip), Number(limit), { status: 'Active' }, [['createdAt', 'DESC']])
+        const data: any = await smallGroupService.getAllSmallGroups(Number(skip), Number(limit), { status: 'Active' }, [['createdAt', 'DESC']])
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
-            data: { smallGroupsList }
+            data
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -164,17 +153,12 @@ const getSmallGroups = async (request: Request, response: Response, next: NextFu
 const getLatestBooks = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params: any = request.query
-        let count: any = undefined
-        if (params.skip) {
-            count = await bookSummaryService.getAllBookSummariesCount()
-        }
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        console.log(skip, limit)
-        const books: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), {}, [['createdAt', 'DESC']])
+        const data: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), {}, [['createdAt', 'DESC']])
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
-            data: { books, count }
+            data
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -183,7 +167,7 @@ const getLatestBooks = async (request: Request, response: Response, next: NextFu
 
 export {
     getCategories,
-    getCurutedsList,
+    getCuratedsList,
     getLatestBooks,
     getPopularBooks,
     getReadsOfTheDay,

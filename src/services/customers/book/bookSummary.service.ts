@@ -8,7 +8,7 @@ const NODE_ENV = config.NODE_ENV
 const getAllBookSummaries = async (skip: number, limit, search: object, sort, library?: any) => {
     try {
         let result: any = await BookSummaryModel.find(search).skip(skip).limit(limit).sort(sort).lean().exec()
-        let count: any = await BookSummaryModel.find(search).count().lean().exec()
+        let count: any = await BookSummaryModel.count(search).lean().exec()
         result = await Promise.all(result.map(async oneItem => {
             if (oneItem.author) {
                 oneItem.author = await BookAuthorModel.findById(oneItem.author).lean()

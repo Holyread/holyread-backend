@@ -4,6 +4,7 @@ import { RecommendedBookModel, BookSummaryModel, BookAuthorModel } from '../../.
 const getAllRecommendedBooks = async (skip: number, limit, search: object, sort) => {
       try {
             let recommendedBooks: any = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).lean().exec()
+            let count: any = await RecommendedBookModel.count(search).lean().exec()
             recommendedBooks = await Promise.all(recommendedBooks.map(async item => {
                   if (item && item.book) {
                         item.book = await BookSummaryModel.findById(item.book).lean()
@@ -26,7 +27,7 @@ const getAllRecommendedBooks = async (skip: number, limit, search: object, sort)
                   }
                   return item
             }))
-            return recommendedBooks
+            return { recommendedBooks, count }
       } catch (e: any) {
             throw new Error(e)
       }

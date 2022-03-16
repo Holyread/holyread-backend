@@ -7,8 +7,9 @@ const NODE_ENV = config.NODE_ENV
 /** Get all book categories */
 const getAllBookCategories = async (skip: number, limit, search: object, sort) => {
     try {
-        const result = await BookCategoryModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        await Promise.all(result.map(async (item: any) => {
+        const categories = await BookCategoryModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+        const count = await BookCategoryModel.count(search).lean().exec()
+        await Promise.all(categories.map(async (item: any) => {
             if (!item) {
                 return
             }
@@ -16,7 +17,7 @@ const getAllBookCategories = async (skip: number, limit, search: object, sort) =
                 item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/category/' + item.image
             }
         }))
-        return result
+        return { categories, count }
     } catch (e: any) {
         throw new Error(e)
     }

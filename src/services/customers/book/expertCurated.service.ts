@@ -7,9 +7,10 @@ const NODE_ENV = config.NODE_ENV
 /** Get all expert Curated for app */
 const getAllExpertCurateds = async (skip: number, limit, search: object, sort) => {
     try {
-        let result = await ExpertCuratedModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        if (result.length) {
-            result = await Promise.all(result.map(item => {
+        let curatedList = await ExpertCuratedModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+        let count = await ExpertCuratedModel.count(search).lean().exec()
+        if (curatedList.length) {
+            curatedList = await Promise.all(curatedList.map(item => {
                 if (item && item.image) {
                     item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/' + item.image
                 }
@@ -23,7 +24,7 @@ const getAllExpertCurateds = async (skip: number, limit, search: object, sort) =
                 }
             }))
         }
-        return result
+        return { curatedList, count }
     } catch (e: any) {
         throw new Error(e)
     }

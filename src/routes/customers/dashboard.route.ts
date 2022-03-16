@@ -1,7 +1,7 @@
 import express, { Router } from 'express'
 import {
   getCategories,
-  getCurutedsList,
+  getCuratedsList,
   getLatestBooks,
   getPopularBooks,
   getReadsOfTheDay,
@@ -15,7 +15,7 @@ import customerPassport from '../../middleware/customers.passport'
 const router: Router = express.Router()
 
 router.get('/categories', customerPassport, getCategories)
-router.get('/curuteds', customerPassport, getCurutedsList)
+router.get('/curateds', customerPassport, getCuratedsList)
 router.get('/latest-books', customerPassport, getLatestBooks)
 router.get('/popular-books', customerPassport, getPopularBooks)
 router.get('/reads-of-the-day', customerPassport, getReadsOfTheDay)

@@ -30,11 +30,11 @@ const getAllExpertCurateds = async (skip: number, limit, search: object, sort) =
     }
 }
 
-/** Get all expert Curated for web */
-const getAllExpertCuratedsCount = async () => {
+/** Get expert Curated  by id */
+const getOneExpertCuratedByFilter = async (query: any) => {
     try {
-        let result = await ExpertCuratedModel.find({}).count().lean()
-        return result
+        const data: any = await ExpertCuratedModel.findOne(query).lean()
+        return data
     } catch (e: any) {
         throw new Error(e)
     }
@@ -42,5 +42,5 @@ const getAllExpertCuratedsCount = async () => {
 
 export default {
     getAllExpertCurateds,
-    getAllExpertCuratedsCount
+    getOneExpertCuratedByFilter
 };

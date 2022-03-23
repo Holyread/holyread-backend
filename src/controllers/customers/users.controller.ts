@@ -131,7 +131,7 @@ const updateUserLibrary = async (req: Request, res: Response, next: NextFunction
                   delete req.body.saved
             }
             if (type === 'delete' && section === 'saved') {
-                  req.body['$pull'] = { 'library': { saved: req.body.saved } }
+                  req.body['$pull'] = { 'library.saved': req.body.saved }
                   delete req.body.saved
             }
             if (section === 'reading') {

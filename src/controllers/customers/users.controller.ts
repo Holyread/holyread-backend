@@ -160,13 +160,17 @@ const updateUserLibrary = async (req: Request, res: Response, next: NextFunction
 const getUserLibrary = async (req: Request, res: Response, next: NextFunction) => {
       try {
             const id: any = req.params.id
-            const { section, sort, author } = req.query as any
+            const { section, sort, author, bookId } = req.query as any
             /** Get user from db */
             let userObj: any = await usersService.getOneUserByFilter({ _id: id })
             if (!userObj) {
                   return next(Boom.notFound(authControllerResponse.getUserError))
             }
             userObj = userObj.toJSON()
+            if (bookId) {
+                  const book = userObj && userObj.library && userObj.library.saved.find(id => String(id) === bookId)
+                  return res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data: { saved: book ? true : false } })
+            }
             if (section === 'saved' && userObj.library && userObj.library.saved && userObj.library.saved.length) {
                   const search: any = { _id: { $in: userObj.library.saved } }
                   if (author) { search.author = author }

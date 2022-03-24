@@ -92,6 +92,9 @@ const updateUserAccount = async (req: Request, res: Response, next: NextFunction
             delete req.body.type
             delete req.body.verified
             delete req.body.status
+            delete req.body.subscription
+            delete req.body.verificationCode
+            delete req.body.library
             if (req.body.image === null) {
                   await removeImageToAwsS3(data.image, s3Bucket)
             }

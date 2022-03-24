@@ -145,6 +145,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.userId
         delete req.body.password
+        delete req.body.library
         /** Get user from db */
         const userObj: any = await usersService.getOneUserByFilter({ _id: id })
         if (!userObj) {

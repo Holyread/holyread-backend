@@ -50,7 +50,7 @@ const updateAdmin = async (req: Request, res: Response, next: NextFunction) => {
         }
         if (req.body.image && req.body.image.includes('base64')) {
             await removeImageToAwsS3(data.image, s3Bucket)
-            req.body.image = await uploadImageToAwsS3(req.body.image, data.name, s3Bucket)
+            req.body.image = await uploadImageToAwsS3(req.body.image, data.firstName, s3Bucket)
         }
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = data.image

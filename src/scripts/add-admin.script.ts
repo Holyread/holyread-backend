@@ -12,7 +12,8 @@ const s3Bucket = {
 }
 
 const createAdminBody = {
-      name: 'A4Admin',
+      firstName: 'A4Admin',
+      lastName: '2022',
       email: 'holyread@mailinator.com',
       password: 'A4admin',
       verified: true,
@@ -30,7 +31,7 @@ const createAdminBody = {
             }
             body.password = encrypt(body.password)
             if (body.image) {
-                  body.image = await uploadImageToAwsS3(body.image, body.name, s3Bucket)
+                  body.image = await uploadImageToAwsS3(body.image, body.firstName, s3Bucket)
             }
             body.type = 'Admin'
             const result = await UserModel.create(body)

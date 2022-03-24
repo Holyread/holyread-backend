@@ -30,7 +30,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             return next(Boom.badData(authControllerResponse.userAlreadyExistError))
         }
         if (body.image) {
-            body.image = await uploadImageToAwsS3(body.image, body.name, s3Bucket)
+            body.image = await uploadImageToAwsS3(body.image, body.firstName, s3Bucket)
         }
         const password = (Math.random() + 1).toString(36).substring(2)
         const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.customerRegistration })
@@ -38,7 +38,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         let html = `Your temporary password is: ${password}`
 
         if (emailTemplateDetails && emailTemplateDetails.content) {
-            const contentData = { email: body.email, password, username: body.name }
+            const contentData = { email: body.email, password, username: body.firstName + ' ' + body.lastName  }
             const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
             if (htmlData) {
                 html = htmlData
@@ -55,7 +55,8 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             }
         }
         const data = await usersService.createUser({
-            name: body.name,
+            firstName: body.firstName,
+            lastName: body.lastName,
             email: body.email,
             password,
             image: body.image,
@@ -105,7 +106,8 @@ const getAllUsers = async (request: Request, response: Response, next: NextFunct
         if (params.search) {
             searchFilter = {
                 $or: [
-                    { 'name': await getSearchRegexp(params.search) },
+                    { 'firstName': await getSearchRegexp(params.search) },
+                    { 'lastName': await getSearchRegexp(params.search) },
                     { 'email': await getSearchRegexp(params.search) },
                     { 'status': await getSearchRegexp(params.search) }
                 ]
@@ -114,8 +116,11 @@ const getAllUsers = async (request: Request, response: Response, next: NextFunct
 
         const usersSorting = [];
         switch (params.column) {
-            case 'name':
-                usersSorting.push(['name', params.order || 'ASC']);
+            case 'firstName':
+                usersSorting.push(['firstName', params.order || 'ASC']);
+                break;
+            case 'lastName':
+                usersSorting.push(['lastName', params.order || 'ASC']);
                 break;
             case 'email':
                 usersSorting.push(['email', params.order || 'ASC']);
@@ -124,7 +129,7 @@ const getAllUsers = async (request: Request, response: Response, next: NextFunct
                 usersSorting.push(['createdAt', params.order || 'ASC']);
                 break;
             default:
-                usersSorting.push(['name', 'DESC']);
+                usersSorting.push(['firstName', 'DESC']);
                 break;
         }
 
@@ -150,7 +155,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
         }
         if (req.body.image && req.body.image.includes('base64')) {
             await removeImageToAwsS3(userObj.image, s3Bucket)
-            req.body.image = await uploadImageToAwsS3(req.body.image, userObj.name, s3Bucket)
+            req.body.image = await uploadImageToAwsS3(req.body.image, userObj.firstName, s3Bucket)
         }
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = userObj.image

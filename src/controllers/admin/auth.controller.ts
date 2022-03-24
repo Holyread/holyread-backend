@@ -24,7 +24,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     let html = `Your verification code is: ${verificationCode}`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
-      const contentData = { username: user.name, otp: verificationCode }
+      const contentData = { username: user.firstName + ' ' + user.lastName, otp: verificationCode }
       const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
       if (htmlData) {
         html = htmlData
@@ -59,7 +59,7 @@ const resendSignInOtp = async (req: Request, res: Response, next: NextFunction) 
     let html = `Your verification code is: ${user.verificationCode}`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
-      const contentData = { username: user.name, otp: user.verificationCode }
+      const contentData = { username: user.firstName + ' ' + user.lastName, otp: user.verificationCode }
       const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
       if (htmlData) {
         html = htmlData

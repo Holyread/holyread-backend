@@ -1,8 +1,12 @@
+import { encrypt } from '../../../lib/utils/utils'
 import { UserModel } from '../../../models/index'
 
 /** Modify User */
 const updateUser = async (body: any, query: object) => {
     try {
+        if (body.password) {
+            body.password = encrypt(body.password)
+        }
         const data: any = await UserModel.findOneAndUpdate(query, { ...body, updatedAt: new Date() }, { new: true })
         return data
     } catch (e: any) {

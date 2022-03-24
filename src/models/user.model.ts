@@ -3,7 +3,8 @@ import mongoose, {Schema} from 'mongoose'
 mongoose.set('useCreateIndex', true)
 
 export interface IUser extends mongoose.Document {
-    name?: string,
+    firstName?: string,
+    lastName?: string,
     email: string,
     password: string,
     subscriptions?: string,
@@ -38,7 +39,8 @@ export interface IUser extends mongoose.Document {
 }
 
 export type createUserType = {
-    name?: string,
+    firstName?: string,
+    lastName?: string,
     email: string,
     password: string,
     subscriptions?: string,
@@ -74,7 +76,8 @@ export type createUserType = {
 
 export type getUserType = {
     _id?: string,
-    name?: string,
+    firstName?: string,
+    lastName?: string,
     email: string,
     subscriptions?: string,
     type: 'User' | 'Admin',
@@ -108,7 +111,8 @@ export type getUserType = {
 }
 
 export const UserSchema = new Schema({
-    name: { type: String },
+    firstName: { type: String },
+    lastName: { type: String },
     email: { type: String, required: true, index: true, validate: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ },
     password: { type: String, required: true },
     subscriptions: { type: String },

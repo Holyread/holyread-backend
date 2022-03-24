@@ -97,7 +97,7 @@ const updateUserAccount = async (req: Request, res: Response, next: NextFunction
             }
             if (req.body.image && req.body.image.includes('base64')) {
                   await removeImageToAwsS3(data.image, s3Bucket)
-                  req.body.image = await uploadImageToAwsS3(req.body.image, data.name, s3Bucket)
+                  req.body.image = await uploadImageToAwsS3(req.body.image, data.firstName, s3Bucket)
             }
             if (req.body.image && req.body.image.startsWith('http')) {
                   req.body.image = data.image
@@ -169,7 +169,7 @@ const getUserLibrary = async (req: Request, res: Response, next: NextFunction) =
             userObj = userObj.toJSON()
             if (bookId) {
                   const book = userObj && userObj.library && userObj.library.saved.find(id => String(id) === bookId)
-                  return res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data: { saved: book ? true : false } })
+                  return res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data: { library: userObj.library, saved: book ? true : false } })
             }
             if (section === 'saved' && userObj.library && userObj.library.saved && userObj.library.saved.length) {
                   const search: any = { _id: { $in: userObj.library.saved } }

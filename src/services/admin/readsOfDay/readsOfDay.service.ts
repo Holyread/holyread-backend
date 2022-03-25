@@ -52,7 +52,10 @@ const getOneReadOfDayByFilter = async (query: any) => {
 /** Get all read of day for table */
 const getAllReadsOfDay = async (skip: number, limit, search: object, sort) => {
     try {
-        let result = await ReadsOfDayModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+        const result = await ReadsOfDayModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+        await result.map(async (item: any) => {
+            item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image
+        })
         const count = await ReadsOfDayModel.find(search).count()
         return { count, reads: result }
     } catch (e: any) {

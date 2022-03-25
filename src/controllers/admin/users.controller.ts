@@ -78,7 +78,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 /**  Get one user by id */
-const getOneUser = async (req: Request, res: Response, next: NextFunction) => {
+const getOneUser = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.userId
         /** Get user from db */
@@ -96,7 +96,7 @@ const getOneUser = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 /** Get all Users */
-const getAllUsers = async (request: Request, response: Response, next: NextFunction) => {
+const getAllUsers = async (request: Request | any, response: Response, next: NextFunction) => {
     try {
         const params = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
@@ -141,7 +141,7 @@ const getAllUsers = async (request: Request, response: Response, next: NextFunct
 }
 
 /** Update user */
-const updateUser = async (req: Request, res: Response, next: NextFunction) => {
+const updateUser = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.userId
         delete req.body.password
@@ -176,7 +176,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 /** Remove User */
-const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
+const deleteUser = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.userId
         const userObj: any = await usersService.getOneUserByFilter({ _id: id })

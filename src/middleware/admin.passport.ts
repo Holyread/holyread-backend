@@ -3,7 +3,7 @@ import { verifyToken } from '../lib/utils/utils'
 import userService from '../services/admin/users/user.service'
 import Boom from '@hapi/boom'
 
-export default async (req: any, res: Response, next: NextFunction): Promise<any> => {
+export default async (req: Request | any, res: Response, next: NextFunction): Promise<any> => {
     const accessToken: string | null = req.headers['x-access-token'] as string;
 
     if (!accessToken) {

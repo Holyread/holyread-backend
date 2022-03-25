@@ -12,9 +12,6 @@ const bookSummaryControllerResponse = responseMessage.bookSummaryControllerRespo
 const addHighLight = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
-        console.log({
-            _id: body.bookId, 'chapters._id': body.chapterId
-        })
         const bookDetails = await bookSummaryService.getOneBookSummaryByFilter({
             _id: body.bookId, 'chapters._id': body.chapterId
         })
@@ -32,20 +29,20 @@ const addHighLight = async (req: Request, res: Response, next: NextFunction) => 
 }
 
 /**  Get high lights by filter */
-const getHighLightsByFilter = async (req: Request, res: Response, next: NextFunction) => {
+const getHighLightsByFilter = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         let filter = {}
         let params = req.query
-        if (params.userId && params.bookId, params.chapterId) {
+        if (params.bookId && params.chapterId) {
             filter = {
-                userId: params.userId,
+                userId: req.user._id,
                 bookId: params.bookId,
                 chapterId: params.chapterId
             }
         }
         /** Get high lights from db */
         const data: any = await highLightsService.getHighLightsByFilter(filter)
-        res.status(200).send({ message: highLightsControllerResponse.fetchHighLightsSuccess, data: params.userId && data.length ? data[0] : data })
+        res.status(200).send({ message: highLightsControllerResponse.fetchHighLightsSuccess, data: params.bookId && data.length ? data[0] : data })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }

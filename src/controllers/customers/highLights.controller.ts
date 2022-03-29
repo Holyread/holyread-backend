@@ -12,9 +12,6 @@ const bookSummaryControllerResponse = responseMessage.bookSummaryControllerRespo
 const addHighLight = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
-        console.log({
-            _id: body.bookId, 'chapters._id': body.chapterId
-        })
         const bookDetails = await bookSummaryService.getOneBookSummaryByFilter({
             _id: body.bookId, 'chapters._id': body.chapterId
         })

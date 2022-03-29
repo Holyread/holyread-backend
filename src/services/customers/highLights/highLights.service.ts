@@ -49,9 +49,12 @@ const createHighLight = async (body: any) => {
 /** Modify high light */
 const updateHighLight = async (body: any, id: string) => {
     try {
-        const newBody: any = {
-            'highLights.$.color': body.color,
-            'highLights.$.note': body.note,
+        const newBody: any = {}
+        if (body.color) {
+            newBody['highLights.$.color'] = body.color
+        }
+        if (body.note) {
+            newBody['highLights.$.note'] = body.note
         }
         if (body.textDecoration) {
             newBody['highLights.$.textDecoration'] = body.textDecoration

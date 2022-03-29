@@ -96,8 +96,8 @@ export const uploadImageToAwsS3 = async (
 
             docContentType = base64Document.substring('data:'.length, base64)
             const buffer = Buffer.from(base64Document.replace(pattern, ''), 'base64')
-            const regex = / /gi
-            const fileName: string = documentName.replace(regex, '-') + '-' + new Date().getTime() + '.' + docExtension
+            const regex = /[^A-Z0-9]+/ig
+            const fileName: string = documentName.replace(regex, '_') + '_' + new Date().getTime() + '.' + docExtension
             const option = {
                 Key: fileName,
                 Body: buffer,

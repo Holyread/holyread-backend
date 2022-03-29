@@ -12,11 +12,11 @@ import customerPassport from '../../middleware/customers.passport'
 
 const router: Router = express.Router()
 
-router.get('/:id', customerPassport, getUserAccount)
-router.put('/:id', customerPassport, updateUserAccount)
-router.put('/:id/change-password', customerPassport, changePassword)
-router.get('/:id/subscription', customerPassport, getUserSubscription)
-router.get('/:id/library', customerPassport, getUserLibrary)
-router.patch('/:id/library', customerPassport, updateUserLibrary)
+router.get('/', customerPassport, getUserAccount)
+router.put('/', customerPassport, updateUserAccount)
+router.put('/change-password', customerPassport, changePassword)
+router.get('/subscription', customerPassport, getUserSubscription)
+router.get('/library', customerPassport, getUserLibrary)
+router.patch('/library', customerPassport, updateUserLibrary)
 
 export default router

@@ -29,7 +29,7 @@ const addHighLight = async (req: Request, res: Response, next: NextFunction) => 
 }
 
 /**  Get high lights by filter */
-const getHighLightsByFilter = async (req: Request, res: Response, next: NextFunction) => {
+const getHighLightsByFilter = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         let params = req.query
         let filter: any = { userId: params.userId }

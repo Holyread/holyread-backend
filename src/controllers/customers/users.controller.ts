@@ -20,9 +20,9 @@ const s3Bucket = {
 }
 
 /**  Get one user by id */
-const getUserAccount = async (req: Request, res: Response, next: NextFunction) => {
+const getUserAccount = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const id: any = req.params.id
+            const id: any = req.user._id
             /** Get user from db */
             let userObj: any = await usersService.getOneUserByFilter({ _id: id })
             if (!userObj) {
@@ -38,9 +38,9 @@ const getUserAccount = async (req: Request, res: Response, next: NextFunction) =
       }
 }
 
-const changePassword = async (req: Request, res: Response, next: NextFunction) => {
+const changePassword = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const id: any = req.params.id
+            const id: any = req.user._id
             const { password, newPassword }: { password: string, newPassword: string } = req.body;
             /** Get user from db */
             const userObj: any = await usersService.getOneUserByFilter({ _id: id, password: encrypt(password) })
@@ -55,9 +55,9 @@ const changePassword = async (req: Request, res: Response, next: NextFunction) =
 }
 
 /**  Get user subscription by user id */
-const getUserSubscription = async (req: Request, res: Response, next: NextFunction) => {
+const getUserSubscription = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const id: any = req.params.id
+            const id: any = req.user._id
             /** Get user from db */
             let data: any = await usersService.getOneUserByFilter({ _id: id })
             if (!data) {
@@ -78,9 +78,9 @@ const getUserSubscription = async (req: Request, res: Response, next: NextFuncti
 }
 
 /** Update user account details */
-const updateUserAccount = async (req: Request, res: Response, next: NextFunction) => {
+const updateUserAccount = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const id: any = req.params.id
+            const id: any = req.user._id
             /** Get user from db */
             let data: any = await usersService.getOneUserByFilter({ _id: id, type: 'User' })
             if (!data) {
@@ -113,12 +113,12 @@ const updateUserAccount = async (req: Request, res: Response, next: NextFunction
 }
 
 /** Update user library details */
-const updateUserLibrary = async (req: Request, res: Response, next: NextFunction) => {
+const updateUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const query: any = { _id: req.params.id }
+            const query: any = { _id: req.user._id }
             const { type, section } = req.query as any
             /** Get user from db */
-            const data: any = await usersService.getOneUserByFilter({ _id: req.params.id, type: 'User' })
+            const data: any = await usersService.getOneUserByFilter({ _id: req.user._id, type: 'User' })
             if (!data) {
                   return next(Boom.notFound(authControllerResponse.getUserError))
             }
@@ -160,9 +160,9 @@ const updateUserLibrary = async (req: Request, res: Response, next: NextFunction
 }
 
 /**  Get one user library by library id */
-const getUserLibrary = async (req: Request, res: Response, next: NextFunction) => {
+const getUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const id: any = req.params.id
+            const id: any = req.user._id
             const { section, sort, author, bookId } = req.query as any
             /** Get user from db */
             let userObj: any = await usersService.getOneUserByFilter({ _id: id })

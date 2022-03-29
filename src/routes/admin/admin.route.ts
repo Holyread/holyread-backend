@@ -9,7 +9,7 @@ import adminPassport from '../../middleware/admin.passport'
 
 const router: Router = express.Router()
 
-router.get('/:id', adminPassport, getAdmin)
-router.put('/:id', adminPassport, updateAdmin)
-router.post('/:id/change-password', changePassword)
+router.get('/', adminPassport, getAdmin)
+router.put('/', adminPassport, updateAdmin)
+router.post('/change-password', changePassword)
 export default router

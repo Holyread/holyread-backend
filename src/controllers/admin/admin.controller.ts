@@ -17,9 +17,9 @@ const s3Bucket = {
 }
 
 /**  Get one admin by id */
-const getAdmin = async (req: Request, res: Response, next: NextFunction) => {
+const getAdmin = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.params.id
+        const id: any = req.user._id
         /** Get admin from db */
         const data: any = await usersService.getOneUserByFilter({ _id: id, type: 'Admin' })
         if (!data) {
@@ -36,9 +36,9 @@ const getAdmin = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 /** Update admin details */
-const updateAdmin = async (req: Request, res: Response, next: NextFunction) => {
+const updateAdmin = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.params.id
+        const id: any = req.user._id
         /** Get user from db */
         const data: any = await usersService.getOneUserByFilter({ _id: id, type: 'Admin' })
         if (!data) {
@@ -63,10 +63,10 @@ const updateAdmin = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 /**  change password */
-const changePassword = async (req: Request, res: Response, next: NextFunction) => {
+const changePassword = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         const { password, newPassword }: { password: string, newPassword: string } = req.body
-        const id = req.params.id as string
+        const id = req.user._id as string
         /** Get user from db */
         const userObj: any = await usersService.getOneUserByFilter({ _id: id, password: encrypt(password), type: 'Admin' })
         if (!userObj) {

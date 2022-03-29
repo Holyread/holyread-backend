@@ -38,14 +38,13 @@ const getHighLightsByFilter = async (req: Request, res: Response, next: NextFunc
         let params = req.query
         if (params.userId && params.bookId, params.chapterId) {
             filter = {
-                userId: params.userId,
                 bookId: params.bookId,
                 chapterId: params.chapterId
             }
         }
         /** Get high lights from db */
         const data: any = await highLightsService.getHighLightsByFilter(filter)
-        res.status(200).send({ message: highLightsControllerResponse.fetchHighLightsSuccess, data: params.userId && data.length ? data[0] : data })
+        res.status(200).send({ message: highLightsControllerResponse.fetchHighLightsSuccess, data: params.bookId && data.length ? data[0] : data })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }

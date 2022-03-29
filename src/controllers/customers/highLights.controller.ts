@@ -13,7 +13,7 @@ const addHighLight = async (req: Request, res: Response, next: NextFunction) => 
     try {
         const body = req.body
         const bookDetails = await bookSummaryService.getOneBookSummaryByFilter({
-            _id: body.bookId, 'chapters._id': body.chapterId, userId: body.userId
+            _id: body.bookId, 'chapters._id': body.chapterId
         })
         if (!bookDetails) {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
@@ -37,7 +37,7 @@ const getHighLightsByFilter = async (req: Request | any, res: Response, next: Ne
         const limit: any = params.limit ? params.limit : 0
         if (params.bookId, params.chapterId) {
             filter = {
-                userId: params.userId,
+                userId: req.user._id,
                 bookId: params.bookId,
                 chapterId: params.chapterId
             }

@@ -12,6 +12,9 @@ const bookSummaryControllerResponse = responseMessage.bookSummaryControllerRespo
 const addHighLight = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
+        console.log({
+            _id: body.bookId, 'chapters._id': body.chapterId
+        })
         const bookDetails = await bookSummaryService.getOneBookSummaryByFilter({
             _id: body.bookId, 'chapters._id': body.chapterId
         })
@@ -29,15 +32,15 @@ const addHighLight = async (req: Request, res: Response, next: NextFunction) => 
 }
 
 /**  Get high lights by filter */
-const getHighLightsByFilter = async (req: Request | any, res: Response, next: NextFunction) => {
+const getHighLightsByFilter = async (req: Request, res: Response, next: NextFunction) => {
     try {
         let filter = {}
         let params = req.query
-        if (params.bookId && params.chapterId) {
+        if (params.userId && params.bookId, params.chapterId) {
             filter = {
-                userId: req.user._id,
                 bookId: params.bookId,
-                chapterId: params.chapterId
+                chapterId: params.chapterId,
+                userId: params.userId
             }
         }
         /** Get high lights from db */

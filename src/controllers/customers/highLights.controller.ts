@@ -31,9 +31,11 @@ const addHighLight = async (req: Request, res: Response, next: NextFunction) => 
 /**  Get high lights by filter */
 const getHighLightsByFilter = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
-        let filter = {}
         let params = req.query
-        if (params.bookId && params.chapterId) {
+        let filter: any = { userId: params.userId }
+        const skip: any = params.skip ? params.skip : 0
+        const limit: any = params.limit ? params.limit : 0
+        if (params.bookId, params.chapterId) {
             filter = {
                 userId: req.user._id,
                 bookId: params.bookId,
@@ -41,8 +43,8 @@ const getHighLightsByFilter = async (req: Request | any, res: Response, next: Ne
             }
         }
         /** Get high lights from db */
-        const data: any = await highLightsService.getHighLightsByFilter(filter)
-        res.status(200).send({ message: highLightsControllerResponse.fetchHighLightsSuccess, data: params.bookId && data.length ? data[0] : data })
+        const data: any = await highLightsService.getHighLightsByFilter(Number(skip), Number(limit), filter, [['createdAt', 'DESC']])
+        res.status(200).send({ message: highLightsControllerResponse.fetchHighLightsSuccess, data: params.bookId && data.highLightsBooks.length ? data.highLightsBooks[0] : data })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }

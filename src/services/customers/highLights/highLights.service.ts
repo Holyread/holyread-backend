@@ -1,5 +1,9 @@
-import { HighLightsModel } from '../../../models/index'
+import { HighLightsModel, BookAuthorModel } from '../../../models/index'
 import { responseMessage } from '../../../constants/message.constant'
+import { awsBucket } from '../../../constants/app.constant'
+import config from '../../../../config'
+
+const NODE_ENV = config.NODE_ENV
 
 const highLightsControllerResponse = responseMessage.highLightsControllerResponse
 /** Add high lights */
@@ -72,10 +76,17 @@ const updateHighLight = async (body: any, id: string) => {
 }
 
 /** Get high lights by category id */
-const getHighLightsByFilter = async (query: any) => {
+const getHighLightsByFilter = async (skip: number, limit, search: object, sort) => {
     try {
-        const result: any = await HighLightsModel.find(query).lean().exec()
-        return result
+        const result: any = await HighLightsModel.find(search).populate('bookId', 'title coverImage author overview').skip(skip).limit(limit).sort(sort).lean().exec()
+        await Promise.all(await result.map(async (item: any) => {
+            item.bookId = Object.assign({}, { ...item.bookId, coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + item.bookId.coverImage })
+            if (item && item.bookId && item.bookId.author) {
+                item.bookId.author = await BookAuthorModel.findOne({ _id: item.bookId.author }).lean().exec()
+            }
+        }))
+        const count: any = await HighLightsModel.count(search).lean().exec()
+        return { highLightsBooks: result, count }
     } catch (e: any) {
         throw new Error(e)
     }

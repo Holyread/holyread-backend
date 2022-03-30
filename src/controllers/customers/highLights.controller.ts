@@ -32,10 +32,10 @@ const addHighLight = async (req: Request, res: Response, next: NextFunction) => 
 const getHighLightsByFilter = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         let params = req.query
-        let filter: any = { userId: params.userId }
+        let filter: any = { userId: req.user._id }
         const skip: any = params.skip ? params.skip : 0
         const limit: any = params.limit ? params.limit : 0
-        if (params.bookId, params.chapterId) {
+        if (params.bookId && params.chapterId) {
             filter = {
                 userId: req.user._id,
                 bookId: params.bookId,

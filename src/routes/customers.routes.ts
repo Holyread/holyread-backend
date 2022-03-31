@@ -10,6 +10,7 @@ import cms from './customers/cms.route'
 import faq from './customers/faq.route'
 const router: Router = express.Router()
 import customerPassport from '../middleware/customers.passport'
+import shareImage from './customers/shareImage.route'
 
 router.use('/auth', auth)
 router.use('/users', users)
@@ -19,5 +20,6 @@ router.use('/high-lights', customerPassport, highLight)
 router.use('/expert-curated', expertCurated)
 router.use('/cms', cms)
 router.use('/faq', faq)
+router.use('/share-image', customerPassport, shareImage)
 
 export default router

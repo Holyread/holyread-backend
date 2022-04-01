@@ -35,7 +35,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         const password = (Math.random() + 1).toString(36).substring(2)
         const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.customerRegistration })
         const subject = emailTemplateDetails.subject || 'Customer Registration'
-        let html = `Your temporary password is: ${password}`
+        let html = `<p>Your temporary password is: <b>${password}</b></p>`
 
         if (emailTemplateDetails && emailTemplateDetails.content) {
             const contentData = { email: body.email, password, username: body.firstName + ' ' + body.lastName  }

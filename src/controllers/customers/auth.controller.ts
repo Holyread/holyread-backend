@@ -52,7 +52,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       return next(Boom.badData(authControllerResponse.userAlreadyExistError))
     }
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
-    const token: string = getToken({ code: String(verificationCode), email: user.email })
+    const token: string = getToken({ code: String(verificationCode), email: body.email })
     const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
     const subject = emailTemplateDetails?.subject || 'Verification Mail'

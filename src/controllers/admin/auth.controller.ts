@@ -21,7 +21,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.login })
     const subject = emailTemplateDetails.subject || 'Verification Code'
-    let html = `Your verification code is: ${verificationCode}`
+    let html = `<p>Your verification code is: <b>${verificationCode}</b></p>`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { username: user.firstName + ' ' + user.lastName, otp: verificationCode }
@@ -56,7 +56,7 @@ const resendSignInOtp = async (req: Request, res: Response, next: NextFunction) 
     }
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.login })
     const subject = emailTemplateDetails.subject || 'Verification Code'
-    let html = `Your verification code is: ${user.verificationCode}`
+    let html = `<p>Your verification code is: <b>${user.verificationCode}</b></p>`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { username: user.firstName + ' ' + user.lastName, otp: user.verificationCode }
@@ -107,7 +107,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.forgotPassword })
     const subject = emailTemplateDetails.subject || 'Verification Code'
-    let html = `Your verification code is: ${verificationCode}`
+    let html = `<p>Your verification code is: <b>${verificationCode}</b></p>`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { otp: verificationCode }

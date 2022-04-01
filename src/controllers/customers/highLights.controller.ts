@@ -28,20 +28,25 @@ const addHighLight = async (req: Request, res: Response, next: NextFunction) => 
     }
 }
 
-/** Get high lights by category id */
-const getHighLightsByFilter = async (skip: number, limit, search: object, sort) => {
+/**  Get high lights by filter */
+const getHighLightsByFilter = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
-        const result: any = await HighLightsModel.find(search).populate('bookId', 'title coverImage author overview').skip(skip).limit(limit).sort(sort).lean().exec()
-        await Promise.all(await result.map(async (item: any) => {
-            item.bookId = Object.assign({}, { ...item.bookId, coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + item.bookId.coverImage })
-            if (item && item.bookId && item.bookId.author) {
-                item.bookId.author = await BookAuthorModel.findOne({ _id: item.bookId.author }).lean().exec()
+        let params = req.query
+        let filter: any = { userId: req.user._id }
+        const skip: any = params.skip ? params.skip : 0
+        const limit: any = params.limit ? params.limit : 0
+        if (params.bookId && params.chapterId) {
+            filter = {
+                userId: req.user._id,
+                bookId: params.bookId,
+                chapterId: params.chapterId
             }
-        }))
-        const count: any = await HighLightsModel.count(search).lean().exec()
-        return { highLightsBooks: result, count }
+        }
+        /** Get high lights from db */
+        const data: any = await highLightsService.getHighLightsByFilter(Number(skip), Number(limit), filter, [['createdAt', 'DESC']])
+        res.status(200).send({ message: highLightsControllerResponse.fetchHighLightsSuccess, data: params.bookId && data.highLightsBooks.length ? data.highLightsBooks[0] : data })
     } catch (e: any) {
-        throw new Error(e)
+        next(Boom.badData(e.message))
     }
 }
 

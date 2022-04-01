@@ -85,7 +85,7 @@ const verifySignInOtp = async (req: Request, res: Response, next: NextFunction) 
     if (!user) {
       return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
     }
-    const token: string = getToken({ email: user.email })
+    const token: string = getToken({ email: user.email, id: user._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
       data: { _id: user._id, email: user.email, token, type: user.type }

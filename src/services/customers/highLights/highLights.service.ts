@@ -1,4 +1,4 @@
-import { HighLightsModel, BookAuthorModel } from '../../../models/index'
+import { HighLightsModel, BookAuthorModel, BookSummaryModel } from '../../../models/index'
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
@@ -78,11 +78,17 @@ const updateHighLight = async (body: any, id: string) => {
 /** Get high lights by category id */
 const getHighLightsByFilter = async (skip: number, limit, search: object, sort) => {
     try {
-        const result: any = await HighLightsModel.find(search).populate('bookId', 'title coverImage author overview').skip(skip).limit(limit).sort(sort).lean().exec()
+        const result: any = await HighLightsModel.find(search).skip(skip).limit(limit).sort(sort).lean().exec()
         await Promise.all(await result.map(async (item: any) => {
-            item.bookId = Object.assign({}, { ...item.bookId, coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + item.bookId.coverImage })
-            if (item && item.bookId && item.bookId.author) {
-                item.bookId.author = await BookAuthorModel.findOne({ _id: item.bookId.author }).lean().exec()
+            const bookDetails = await BookSummaryModel.findOne({ _id: item.bookId })
+            if (!bookDetails) return
+            item.chapter = bookDetails.chapters.find((oneChapter: any) => String(oneChapter._id) === String(item.chapterId))
+            item.title = bookDetails.title
+            item.overview = bookDetails.overview
+            item.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + bookDetails.coverImage
+            item.bookId = item.bookId._id
+            if (bookDetails.author) {
+                item.author = await BookAuthorModel.findOne({ _id: bookDetails.author }).lean().exec()
             }
         }))
         const count: any = await HighLightsModel.count(search).lean().exec()

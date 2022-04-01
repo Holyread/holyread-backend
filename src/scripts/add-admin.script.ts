@@ -35,7 +35,7 @@ const createAdminBody = {
             }
             body.type = 'Admin'
             const result = await UserModel.create(body)
-            const token: string = getToken({ email: result.email })
+            const token: string = getToken({ email: result.email, id: result._id })
             console.log('Admin created successfully')
             return { _id: result._id, email: result.email, token }
       } catch (e: any) {

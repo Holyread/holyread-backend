@@ -11,7 +11,7 @@ export default async (req: Request | any, res: Response, next: NextFunction): Pr
     } else {
         try {
             const details = await verifyToken(accessToken)
-            const userDetails = await userService.getOneUserByFilter({ email: details?.email, type: 'Admin' })
+            const userDetails = await userService.getOneUserByFilter({ email: details?.email, _id: details.id, type: 'Admin' })
             if (!userDetails) {
                 next(Boom.badRequest('Admin not authorized'));
             }

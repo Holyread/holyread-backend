@@ -20,7 +20,7 @@ const createUser = async (body: any) => {
         if (!result) {
             throw new Error(authControllerResponse.createUserFailed)
         }
-        const token: string = getToken({ email: result.email })
+        const token: string = getToken({ email: result.email, id: result._id })
         return { _id: result._id, email: result.email, token }
     } catch (e: any) {
         throw new Error(e)

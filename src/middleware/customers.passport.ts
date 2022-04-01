@@ -10,7 +10,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
     } else {
         try {
             const details = await verifyToken(accessToken)
-            const userDetails = await userService.getOneUserByFilter({ email: details?.email, type: 'User' })
+            const userDetails = await userService.getOneUserByFilter({ email: details?.email, _id: details.id, type: 'User' })
             if (!userDetails) {
                 next(Boom.badRequest('User not authorized'));
             }
@@ -20,7 +20,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             req.user = userDetails
             next();
         } catch (err: any) {
-            next(Boom.badRequest('User not authorized'));
+            next(Boom.badRequest(err));
         }
     }
 }

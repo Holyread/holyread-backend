@@ -21,7 +21,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.login })
     const subject = emailTemplateDetails.subject || 'Verification Code'
-    let html = `Your verification code is: ${verificationCode}`
+    let html = `<p>Your verification code is: <b>${verificationCode}</b></p>`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { username: user.firstName + ' ' + user.lastName, otp: verificationCode }
@@ -56,7 +56,7 @@ const resendSignInOtp = async (req: Request, res: Response, next: NextFunction) 
     }
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.login })
     const subject = emailTemplateDetails.subject || 'Verification Code'
-    let html = `Your verification code is: ${user.verificationCode}`
+    let html = `<p>Your verification code is: <b>${user.verificationCode}</b></p>`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { username: user.firstName + ' ' + user.lastName, otp: user.verificationCode }
@@ -85,7 +85,7 @@ const verifySignInOtp = async (req: Request, res: Response, next: NextFunction) 
     if (!user) {
       return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
     }
-    const token: string = getToken({ email: user.email })
+    const token: string = getToken({ email: user.email, id: user._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
       data: { _id: user._id, email: user.email, token, type: user.type }
@@ -107,7 +107,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.forgotPassword })
     const subject = emailTemplateDetails.subject || 'Verification Code'
-    let html = `Your verification code is: ${verificationCode}`
+    let html = `<p>Your verification code is: <b>${verificationCode}</b></p>`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { otp: verificationCode }

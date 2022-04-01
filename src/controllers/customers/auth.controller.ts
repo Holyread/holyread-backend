@@ -29,7 +29,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     if (user && user.status !== 'Active') {
       return next(Boom.badData(authControllerResponse.userNotActivatedError))
     }
-    const token: string = getToken({ email: user.email })
+    const token: string = getToken({ email: user.email, id: user._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
       data: { _id: user._id, email: user.email, token, type: user.type }
@@ -52,11 +52,11 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       return next(Boom.badData(authControllerResponse.userAlreadyExistError))
     }
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
-    const token: string = getToken({ code: String(verificationCode) })
+    const token: string = getToken({ code: String(verificationCode), email: body.email })
     const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
     const subject = emailTemplateDetails?.subject || 'Verification Mail'
-    let html = `Please click this link for verify account - ${link}`
+    let html = `<p>Please click this link for verify account - <a href="${link}" alt='verification link'>link</a><p>`
     
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { email: body.email, password: body.password, username: body.email.substr(0, body.email.indexOf('@')), link }
@@ -99,8 +99,9 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     const token = req.query.token as string
     const decryptToken: any = verifyToken(token)
     const code = decryptToken.code
+    const email = decryptToken.email
     /** Get user from db */
-    const user: any = await usersService.getOneUserByFilter({ verificationCode: code })
+    const user: any = await usersService.getOneUserByFilter({ verificationCode: code, email })
     if (!user) {
       return next(Boom.badData(authControllerResponse.getUserError))
     }
@@ -127,7 +128,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.forgotPassword })
     const subject = emailTemplateDetails.subject || 'Verification Code'
-    let html = `Your verification code is: ${verificationCode}`
+    let html = `<h4>Your verification code is: ${verificationCode}<h4>`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { otp: verificationCode, username: email.substr(0, email.indexOf('@')) }

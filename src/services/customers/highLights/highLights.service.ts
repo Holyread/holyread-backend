@@ -55,19 +55,23 @@ const updateHighLight = async (body: any, id: string) => {
     try {
         const newBody: any = {}
         if (body.color) {
-            newBody['highLights.$.color'] = body.color
+            newBody['$set'] = { ...newBody['$set'], 'highLights.$.color': body.color }
         }
         if (body.note) {
-            newBody['highLights.$.note'] = body.note
+            newBody['$set'] = { ...newBody['$set'], 'highLights.$.note': body.note }
         }
         if (body.textDecoration) {
-            newBody['highLights.$.textDecoration'] = body.textDecoration
+            newBody['$set'] = { ...newBody['$set'], 'highLights.$.textDecoration': body.textDecoration }
+        }
+        if (body.color === null) {
+            newBody['$unset'] = { ...newBody['$unset'], 'highLights.$.color': 1 }
+        }
+        if (body.textDecoration === null) {
+            newBody['$unset'] = { ...newBody['$unset'], 'highLights.$.textDecoration': 1 }
         }
         const data: any = await HighLightsModel.findOneAndUpdate(
             { 'highLights._id': id },
-            {
-                '$set': newBody
-            }
+            newBody
         ).lean().exec()
         return data
     } catch (e: any) {

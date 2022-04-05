@@ -35,7 +35,7 @@ export interface IUser extends mongoose.Document {
             bookId: string,
             chaptersCompleted: [string]
         }]
-    },
+    }
 }
 
 export type createUserType = {
@@ -71,7 +71,7 @@ export type createUserType = {
             bookId: string,
             chaptersCompleted: [string]
         }]
-    },
+    }
 }
 
 export type getUserType = {
@@ -107,7 +107,7 @@ export type getUserType = {
             bookId: string,
             chaptersCompleted: [string]
         }]
-    },
+    }
 }
 
 export const UserSchema = new Schema({

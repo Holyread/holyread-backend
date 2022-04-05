@@ -36,7 +36,6 @@ export interface IUser extends mongoose.Document {
             chaptersCompleted: [string]
         }]
     },
-    shareImages?: [string]
 }
 
 export type createUserType = {
@@ -73,7 +72,6 @@ export type createUserType = {
             chaptersCompleted: [string]
         }]
     },
-    shareImages?: [string]
 }
 
 export type getUserType = {
@@ -110,7 +108,6 @@ export type getUserType = {
             chaptersCompleted: [string]
         }]
     },
-    shareImages?: [string]
 }
 
 export const UserSchema = new Schema({
@@ -147,7 +144,6 @@ export const UserSchema = new Schema({
             chaptersCompleted: [{ type: String }]
         }]
     },
-    shareImages: [{ type: String }],
     createdAt: {
         type: Date, default: () => {
             return new Date()

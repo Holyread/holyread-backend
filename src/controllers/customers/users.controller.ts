@@ -100,7 +100,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             }
             if (req.body.image && req.body.image.includes('base64')) {
                   await removeImageToAwsS3(data.image, s3Bucket)
-                  req.body.image = await uploadImageToAwsS3(req.body.image, data.firstName || data.email.substring(0, data.email.lastIndexOf("@")), s3Bucket)
+                  req.body.image = await uploadImageToAwsS3(req.body.image, data.email.substring(0, data.email.lastIndexOf("@")), s3Bucket)
             }
             if (req.body.image && req.body.image.startsWith('http')) {
                   req.body.image = data.image
@@ -123,9 +123,8 @@ const getShareOptionImageUrl = async (req: Request | any, res: Response, next: N
             }
             data = data.toJSON()
             if (req.body.image) {
-                  req.body.image = await uploadImageToAwsS3(req.body.image, data.firstName || data.email.substring(0, data.email.lastIndexOf("@")), { ...s3Bucket, documentDirectory: 'users/share-options'  })
+                  req.body.image = await uploadImageToAwsS3(req.body.image, data.email.substring(0, data.email.lastIndexOf("@")), { ...s3Bucket, documentDirectory: 'users/share-options'  })
             }
-            await usersService.updateUser({ $set: { shareImages: req.body.image }}, { _id: id })
             const imageUrl: string = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.usersDirectory + '/share-options/' + req.body.image
             return res.status(200).send({ message: authControllerResponse.addShareImage, data: { image: imageUrl } })
       } catch (e: any) {

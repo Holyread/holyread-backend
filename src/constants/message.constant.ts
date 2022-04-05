@@ -23,6 +23,7 @@ export const responseMessage = {
         sentVerifyEmailFailure: 'Failed to send verification email',
         verifyEmailSuccess: 'verification link already sended on your register email',
         missingSectionParams: 'Missing section params',
+        addShareImage: 'Share image uploaded successfully'
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

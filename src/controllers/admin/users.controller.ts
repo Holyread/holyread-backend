@@ -30,7 +30,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             return next(Boom.badData(authControllerResponse.userAlreadyExistError))
         }
         if (body.image) {
-            body.image = await uploadImageToAwsS3(body.image, body.firstName, s3Bucket)
+            body.image = await uploadImageToAwsS3(body.image, body.firstName || body.email.substring(0, body.email.lastIndexOf("@")), s3Bucket)
         }
         const password = (Math.random() + 1).toString(36).substring(2)
         const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.customerRegistration })

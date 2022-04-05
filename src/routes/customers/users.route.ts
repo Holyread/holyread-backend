@@ -1,6 +1,7 @@
 import express, { Router } from 'express'
 import {
   getUserAccount,
+  getShareOptionImageUrl,
   changePassword,
   getUserSubscription,
   updateUserAccount,
@@ -14,6 +15,7 @@ const router: Router = express.Router()
 
 router.get('/', customerPassport, getUserAccount)
 router.put('/', customerPassport, updateUserAccount)
+router.post('/share-options-image', customerPassport, getShareOptionImageUrl)
 router.put('/change-password', customerPassport, changePassword)
 router.get('/subscription', customerPassport, getUserSubscription)
 router.get('/library', customerPassport, getUserLibrary)

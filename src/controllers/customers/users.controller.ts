@@ -100,13 +100,33 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             }
             if (req.body.image && req.body.image.includes('base64')) {
                   await removeImageToAwsS3(data.image, s3Bucket)
-                  req.body.image = await uploadImageToAwsS3(req.body.image, data.firstName, s3Bucket)
+                  req.body.image = await uploadImageToAwsS3(req.body.image, data.email.substring(0, data.email.lastIndexOf("@")), s3Bucket)
             }
             if (req.body.image && req.body.image.startsWith('http')) {
                   req.body.image = data.image
             }
             await usersService.updateUser(req.body, { _id: id })
             return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
+      } catch (e: any) {
+            return next(Boom.badData(e.message))
+      }
+}
+
+/** get share option image url */
+const getShareOptionImageUrl = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const id: any = req.user._id
+            /** Get user from db */
+            let data: any = await usersService.getOneUserByFilter({ _id: id, type: 'User' })
+            if (!data) {
+                  return next(Boom.notFound(authControllerResponse.getUserError))
+            }
+            data = data.toJSON()
+            if (req.body.image) {
+                  req.body.image = await uploadImageToAwsS3(req.body.image, data.email.substring(0, data.email.lastIndexOf("@")), { ...s3Bucket, documentDirectory: 'users/share-options'  })
+            }
+            const imageUrl: string = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.usersDirectory + '/share-options/' + req.body.image
+            return res.status(200).send({ message: authControllerResponse.addShareImage, data: { image: imageUrl } })
       } catch (e: any) {
             return next(Boom.badData(e.message))
       }
@@ -215,4 +235,4 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
       }
 }
 
-export { getUserAccount, changePassword, getUserSubscription, updateUserAccount, updateUserLibrary, getUserLibrary }
+export { getUserAccount, getShareOptionImageUrl, changePassword, getUserSubscription, updateUserAccount, updateUserLibrary, getUserLibrary }

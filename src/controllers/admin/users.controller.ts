@@ -30,7 +30,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             return next(Boom.badData(authControllerResponse.userAlreadyExistError))
         }
         if (body.image) {
-            body.image = await uploadImageToAwsS3(body.image, body.firstName, s3Bucket)
+            body.image = await uploadImageToAwsS3(body.image, body.email.substring(0, body.email.lastIndexOf("@")), s3Bucket)
         }
         const password = (Math.random() + 1).toString(36).substring(2)
         const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.customerRegistration })
@@ -156,7 +156,7 @@ const updateUser = async (req: Request | any, res: Response, next: NextFunction)
         }
         if (req.body.image && req.body.image.includes('base64')) {
             await removeImageToAwsS3(userObj.image, s3Bucket)
-            req.body.image = await uploadImageToAwsS3(req.body.image, userObj.firstName, s3Bucket)
+            req.body.image = await uploadImageToAwsS3(req.body.image, userObj.email.substring(0, userObj.email.lastIndexOf("@")), s3Bucket)
         }
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = userObj.image

@@ -9,7 +9,7 @@ const highLightsControllerResponse = responseMessage.highLightsControllerRespons
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
 
 /** Add high light */
-const addHighLight = async (req: Request, res: Response, next: NextFunction) => {
+const addHighLight = async (req: any, res: Response, next: NextFunction) => {
     try {
         const body = req.body
         const bookDetails = await bookSummaryService.getOneBookSummaryByFilter({
@@ -18,7 +18,7 @@ const addHighLight = async (req: Request, res: Response, next: NextFunction) => 
         if (!bookDetails) {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
-        const data = await highLightsService.createHighLight(body)
+        const data = await highLightsService.createHighLight({ ...body, userId: req.user._id })
         res.status(200).send({
             message: highLightsControllerResponse.createHighLightSuccess,
             data
@@ -51,10 +51,10 @@ const getHighLightsByFilter = async (req: Request | any, res: Response, next: Ne
 }
 
 /** Update high light */
-const updateHighLight = async (req: Request, res: Response, next: NextFunction) => {
+const updateHighLight = async (req: any, res: Response, next: NextFunction) => {
     try {
         const { highLightId } = req.params
-        await highLightsService.updateHighLight(req.body, highLightId)
+        await highLightsService.updateHighLight({ ...req.body, userId: req.user._id }, highLightId)
         return res.status(200).send({ message: highLightsControllerResponse.updateHighLightSuccess })
     } catch (e: any) {
         return next(Boom.badData(e.message))
@@ -62,11 +62,11 @@ const updateHighLight = async (req: Request, res: Response, next: NextFunction) 
 }
 
 /** Remove high light */
-const deleteHighLight = async (req: Request, res: Response, next: NextFunction) => {
+const deleteHighLight = async (req: any, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
         const highLightId = req.params.highLightId
-        await highLightsService.deleteHighLight(id, highLightId)
+        await highLightsService.deleteHighLight(req.user._id, id, highLightId)
         return res.status(200).send({ message: highLightsControllerResponse.deleteHighLightSuccess })
     } catch (e: any) {
         return next(Boom.badData(e.message))

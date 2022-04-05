@@ -172,7 +172,8 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
             userObj = userObj.toJSON()
             if (bookId) {
                   const book = userObj && userObj.library && userObj.library.saved.find(id => String(id) === bookId)
-                  return res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data: { library: userObj.library, saved: book ? true : false } })
+                  res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data: { library: userObj.library, saved: book ? true : false } })
+                  return
             }
             if (section === 'saved' && userObj.library && userObj.library.saved && userObj.library.saved.length) {
                   const search: any = { _id: { $in: userObj.library.saved } }

@@ -70,7 +70,7 @@ const updateHighLight = async (body: any, id: string) => {
             newBody['$unset'] = { ...newBody['$unset'], 'highLights.$.textDecoration': 1 }
         }
         const data: any = await HighLightsModel.findOneAndUpdate(
-            { 'highLights._id': id },
+            { 'highLights._id': id, userId: body.userId },
             newBody
         ).lean().exec()
         return data
@@ -103,10 +103,10 @@ const getHighLightsByFilter = async (skip: number, limit, search: object, sort) 
 }
 
 /** Remove high light */
-const deleteHighLight = async (id: string, highLightId: string) => {
+const deleteHighLight = async (userId: string, id: string, highLightId: string) => {
     try {
         await HighLightsModel.findOneAndUpdate(
-            { '_id': id },
+            { '_id': id, userId },
             {
                 '$pull': {
                     'highLights': { '_id': highLightId }

@@ -2,7 +2,6 @@ import { HighLightsModel, BookAuthorModel, BookSummaryModel } from '../../../mod
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
-import { searchTextInHTML } from '../../../lib/utils/utils'
 const NODE_ENV = config.NODE_ENV
 
 const highLightsControllerResponse = responseMessage.highLightsControllerResponse
@@ -28,7 +27,8 @@ const createHighLight = async (body: any) => {
             'note': body.note,
             'color': body.color,
             'startIndex': body.startIndex,
-            'endIndex': body.endIndex
+            'endIndex': body.endIndex,
+            'text': body.text
         }
         if (body.textDecoration) {
             highLights.textDecoration = body.textDecoration
@@ -93,7 +93,7 @@ const getHighLightByFilter = async (skip: number, limit, search: object, sort) =
 /** Get high lights by category id */
 const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => {
     try {
-        const search = filter.search ? filter.search.trim() : filter.search
+        const search = filter.search ? filter.search.trim().toLowerCase() : filter.search
         delete filter.search
         let result: any = await HighLightsModel.find(filter).lean().exec()
         let newResult = []
@@ -136,13 +136,13 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
             if (!search) {
                 return true
             }
-            else if (i.title.includes(search)) {
+            else if (i.title.toLowerCase().includes(search)) {
                 return true
             }
-            else if (i.author && i.author.name.includes(search)) {
+            else if (i.author && i.author.name.toLowerCase().includes(search)) {
                 return true
             }
-            else if (filter.bookId && i.highLights.find(o => o.chapter.name.includes(search))) {
+            else if (filter.bookId && i.highLights.find(o => o.chapter.name.toLowerCase().includes(search))) {
                 return true
             }
             else if (filter.bookId) {
@@ -152,9 +152,9 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                             oneHl.startIndex &&
                             oneHl.endIndex &&
                             oneHl.startIndex < oneHl.endIndex &&
-                            searchTextInHTML(oneHl.chapter.description.substring(oneHl.startIndex, oneHl.endIndex), search).includes(search)
+                            oneHl.text.toLowerCase().includes(search)
                         )
-                        || i.highLights.find(o => o.chapter.name.includes(search))
+                        || i.highLights.find(o => o.chapter.name.toLowerCase().includes(search))
                     ) ? true : false
                 })
                 return i.highLights.length ? true : false

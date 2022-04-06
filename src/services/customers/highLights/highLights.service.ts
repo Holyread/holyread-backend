@@ -2,7 +2,7 @@ import { HighLightsModel, BookAuthorModel, BookSummaryModel } from '../../../mod
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
-
+import { searchTextInHTML } from '../../../lib/utils/utils'
 const NODE_ENV = config.NODE_ENV
 
 const highLightsControllerResponse = responseMessage.highLightsControllerResponse
@@ -79,24 +79,90 @@ const updateHighLight = async (body: any, id: string) => {
     }
 }
 
-/** Get high lights by category id */
-const getHighLightsByFilter = async (skip: number, limit, search: object, sort) => {
+/** Get high light by filter */
+const getHighLightByFilter = async (skip: number, limit, search: object, sort) => {
     try {
         const result: any = await HighLightsModel.find(search).skip(skip).limit(limit).sort(sort).lean().exec()
+        const count: any = await HighLightsModel.count(search).lean().exec()
+        return { highLightsBooks: result, count }
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+/** Get high lights by category id */
+const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => {
+    try {
+        const search = filter.search ? filter.search.trim() : filter.search
+        delete filter.search
+        let result: any = await HighLightsModel.find(filter).lean().exec()
+        let newResult = []
         await Promise.all(await result.map(async (item: any) => {
             const bookDetails = await BookSummaryModel.findOne({ _id: item.bookId })
             if (!bookDetails) return
-            item.chapter = bookDetails.chapters.find((oneChapter: any) => String(oneChapter._id) === String(item.chapterId))
-            item.title = bookDetails.title
-            item.overview = bookDetails.overview
-            item.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + bookDetails.coverImage
-            item.bookId = item.bookId._id
-            if (bookDetails.author) {
-                item.author = await BookAuthorModel.findOne({ _id: bookDetails.author }).lean().exec()
+            const chapterDetails: any = bookDetails.chapters.find((oneChapter: any) => String(oneChapter._id) === String(item.chapterId))
+            const authorDetails = await BookAuthorModel.findOne({ _id: bookDetails.author }).select('name').lean().exec()
+            const existingHighLight = newResult.findIndex(o => String(o.bookId) === String(item.bookId))
+
+            if (filter.bookId) {
+                item.highLights.map(oneItem => {
+                    delete chapterDetails.audioFile
+                    oneItem.chapter = {
+                        _id: chapterDetails._id,
+                        name: chapterDetails.name,
+                        description: chapterDetails.description
+                    }
+                })
+            }
+
+            if (existingHighLight === -1) {
+                newResult.push({
+                    bookId: item.bookId,
+                    title: bookDetails.title,
+                    coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + bookDetails.coverImage,
+                    author: authorDetails,
+                    overview: bookDetails.overview,
+                    highLights: item.highLights,
+                    count: item.highLights && item.highLights.length ? item.highLights.length : 0
+                })
+            } else {
+                newResult[existingHighLight].highLights = newResult[existingHighLight].highLights.concat(item.highLights)
+                newResult[existingHighLight].count = newResult[existingHighLight].count + item.highLights.length
             }
         }))
-        const count: any = await HighLightsModel.count(search).lean().exec()
-        return { highLightsBooks: result, count }
+
+        result = newResult.filter(i => {
+            if (!i) return false
+            if (!search) {
+                return true
+            }
+            else if (i.title.includes(search)) {
+                return true
+            }
+            else if (i.author && i.author.name.includes(search)) {
+                return true
+            }
+            else if (filter.bookId && i.highLights.find(o => o.chapter.name.includes(search))) {
+                return true
+            }
+            else if (filter.bookId) {
+                i.highLights = i.highLights.filter(oneHl => {
+                    return (
+                        (
+                            oneHl.startIndex &&
+                            oneHl.endIndex &&
+                            oneHl.startIndex < oneHl.endIndex &&
+                            searchTextInHTML(oneHl.chapter.description.substring(oneHl.startIndex, oneHl.endIndex), search).includes(search)
+                        )
+                        || i.highLights.find(o => o.chapter.name.includes(search))
+                    ) ? true : false
+                })
+                return i.highLights.length ? true : false
+            }
+            return false
+        })
+        const count: any = result.length;
+        return { highLightsBooks: limit ? result.splice(skip, (skip + limit)) : result, count }
     } catch (e: any) {
         throw new Error(e)
     }
@@ -122,6 +188,7 @@ const deleteHighLight = async (userId: string, id: string, highLightId: string) 
 export default {
     createHighLight,
     updateHighLight,
+    getHighLightByFilter,
     getHighLightsByFilter,
     deleteHighLight
 }

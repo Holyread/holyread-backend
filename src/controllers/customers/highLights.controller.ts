@@ -35,12 +35,21 @@ const getHighLightsByFilter = async (req: Request | any, res: Response, next: Ne
         let filter: any = { userId: req.user._id }
         const skip: any = params.skip ? params.skip : 0
         const limit: any = params.limit ? params.limit : 0
+        if (params.bookId) {
+            filter.bookId = params.bookId
+        }
         if (params.bookId && params.chapterId) {
             filter = {
                 userId: req.user._id,
                 bookId: params.bookId,
                 chapterId: params.chapterId
             }
+            const data: any = await highLightsService.getHighLightByFilter(Number(skip), Number(limit), filter, [['createdAt', 'DESC']])
+            res.status(200).send({ message: highLightsControllerResponse.fetchHighLightsSuccess, data: data.highLightsBooks[0] })
+            return;
+        }
+        if (params.search) {
+            filter.search = params.search
         }
         /** Get high lights from db */
         const data: any = await highLightsService.getHighLightsByFilter(Number(skip), Number(limit), filter, [['createdAt', 'DESC']])

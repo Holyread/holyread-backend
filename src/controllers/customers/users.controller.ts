@@ -11,6 +11,7 @@ import config from '../../../config'
 
 const authControllerResponse = responseMessage.authControllerResponse
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
+const subscriptionsControllerResponse = responseMessage.subscriptionsControllerResponse
 const NODE_ENV = config.NODE_ENV
 
 const s3Bucket = {
@@ -87,6 +88,12 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   return next(Boom.notFound(authControllerResponse.getUserError))
             }
             data = data.toJSON()
+            if (req.body.subscriptions) {
+                  const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: req.body.subscriptions })
+                  if (!subscriptionDetails) {
+                        return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
+                  }
+            }
             req.body.email = data.email
             delete req.body.password
             delete req.body.type
@@ -123,7 +130,7 @@ const getShareOptionImageUrl = async (req: Request | any, res: Response, next: N
             }
             data = data.toJSON()
             if (req.body.image) {
-                  req.body.image = await uploadImageToAwsS3(req.body.image, data.email.substring(0, data.email.lastIndexOf("@")), { ...s3Bucket, documentDirectory: 'users/share-options'  })
+                  req.body.image = await uploadImageToAwsS3(req.body.image, data.email.substring(0, data.email.lastIndexOf("@")), { ...s3Bucket, documentDirectory: 'users/share-options' })
             }
             const imageUrl: string = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.usersDirectory + '/share-options/' + req.body.image
             return res.status(200).send({ message: authControllerResponse.addShareImage, data: { image: imageUrl } })

@@ -18,6 +18,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
                 next(Boom.badRequest('User not active'));
             }
             req.user = userDetails
+            global.currentUser = req.user;
             next();
         } catch (err: any) {
             next(Boom.badRequest(err));

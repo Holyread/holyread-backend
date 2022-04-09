@@ -10,16 +10,14 @@ import {
   getSmallGroups
 } from '../../controllers/customers/dashboard.controller'
 
-import customerPassport from '../../middleware/customers.passport'
-
 const router: Router = express.Router()
 
-router.get('/categories', customerPassport, getCategories)
-router.get('/curateds', customerPassport, getCuratedsList)
-router.get('/latest-books', customerPassport, getLatestBooks)
-router.get('/popular-books', customerPassport, getPopularBooks)
-router.get('/reads-of-the-day', customerPassport, getReadsOfTheDay)
-router.get('/recent-reads', customerPassport, getRecentReads)
-router.get('/recommended-books', customerPassport, getRecommendedBooks)
-router.get('/small-groups', customerPassport, getSmallGroups)
+router.get('/categories', getCategories)
+router.get('/curateds', getCuratedsList)
+router.get('/latest-books', getLatestBooks)
+router.get('/popular-books', getPopularBooks)
+router.get('/reads-of-the-day', getReadsOfTheDay)
+router.get('/recent-reads', getRecentReads)
+router.get('/recommended-books', getRecommendedBooks)
+router.get('/small-groups', getSmallGroups)
 export default router

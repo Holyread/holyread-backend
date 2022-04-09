@@ -223,12 +223,15 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   userObj.library.reading &&
                   userObj.library.reading.length
             ) {
-                  const bookIds = userObj.library.reading.map(oneBook => oneBook.bookId)
+                  const bookIds = userObj.library.reading.map(oneBook => 
+                        oneBook.bookId &&
+                        !userObj.library.completed.find(cb => String(cb) !== String(oneBook.bookId))
+                  ).filter(b => b)
                   const search: any = { _id: { $in: bookIds } }
                   if (author) { search.author = author }
                   const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']], true)
                   data.summaries = data.summaries.map(oneBook => {
-                        const libBookChapters = userObj.library.reading.find(item => String(item.bookId) === String(oneBook._id)).chaptersCompleted
+                        const libBookChapters = userObj.library.reading.find(item => String(item.bookId) === String(oneBook._id))?.chaptersCompleted
                         oneBook.reads = (libBookChapters && libBookChapters.length ? (100 * libBookChapters.length) / oneBook.chapters.length : 0) + '%'
                         delete oneBook.chapters
                         return oneBook

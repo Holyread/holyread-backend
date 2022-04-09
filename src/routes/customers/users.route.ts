@@ -9,16 +9,14 @@ import {
   getUserLibrary,
 } from '../../controllers/customers/users.controller'
 
-import customerPassport from '../../middleware/customers.passport'
-
 const router: Router = express.Router()
 
-router.get('/', customerPassport, getUserAccount)
-router.put('/', customerPassport, updateUserAccount)
-router.post('/share-options-image', customerPassport, getShareOptionImageUrl)
-router.put('/change-password', customerPassport, changePassword)
-router.get('/subscription', customerPassport, getUserSubscription)
-router.get('/library', customerPassport, getUserLibrary)
-router.patch('/library', customerPassport, updateUserLibrary)
+router.get('/', getUserAccount)
+router.put('/', updateUserAccount)
+router.post('/share-options-image', getShareOptionImageUrl)
+router.put('/change-password', changePassword)
+router.get('/subscription', getUserSubscription)
+router.get('/library', getUserLibrary)
+router.patch('/library', updateUserLibrary)
 
 export default router

@@ -18,6 +18,7 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort, li
                 }
             }
             const isSaved = global?.currentUser?.library?.saved?.find(b => String(b) === String(oneItem?._id)) ? true : false
+            const libBookChapters = global?.currentUser?.library.reading.find(item => String(item.bookId) === String(oneItem._id))?.chaptersCompleted
             return {
                 _id: oneItem._id,
                 coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneItem.coverImage,
@@ -28,7 +29,8 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort, li
                 totalReads: 100,
                 bookMark: isSaved,
                 coverImageBackground: oneItem.coverImageBackground,
-                chapters: library ? oneItem.chapters : undefined
+                chapters: library ? oneItem.chapters : undefined,
+                reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / oneItem?.chapters?.length : 0).toFixed(0))
             }
         }))
         return { count, summaries: result }

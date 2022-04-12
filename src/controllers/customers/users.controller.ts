@@ -154,6 +154,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
             }
             if (section === 'completed') {
                   req.body['$addToSet'] = { 'library.completed': req.body.completed }
+                  req.body['$pull'] = { 'library.reading': { bookId: { '$in': [req.body.completed] } } }
                   delete req.body.completed
             }
             if (type === 'add' && section === 'saved') {

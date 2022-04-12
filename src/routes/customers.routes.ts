@@ -14,9 +14,9 @@ import shareImage from './customers/shareImage.route'
 import subscriptions from './customers/subscriptions.route'
 
 router.use('/auth', auth)
-router.use('/users', users)
-router.use('/dashboard', dashboard)
-router.use('/book-summary', bookSummary)
+router.use('/users', customerPassport, users)
+router.use('/dashboard', customerPassport, dashboard)
+router.use('/book-summary', customerPassport, bookSummary)
 router.use('/high-lights', customerPassport, highLight)
 router.use('/expert-curated', expertCurated)
 router.use('/cms', cms)

@@ -69,7 +69,7 @@ const updateHighLight = async (body: any, id: string) => {
         if (body.textDecoration === null) {
             newBody['$unset'] = { ...newBody['$unset'], 'highLights.$.textDecoration': 1 }
         }
-        const data: any = await HighLightsModel.findOneAndUpdate(
+        const data: any = await HighLightsModel.updateOne(
             { 'highLights._id': id, userId: body.userId },
             newBody
         ).lean().exec()
@@ -98,7 +98,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
         let result: any = await HighLightsModel.find(filter).lean().exec()
         let newResult = []
         await Promise.all(await result.map(async (item: any) => {
-            const bookDetails = await BookSummaryModel.findOne({ _id: item.bookId })
+            const bookDetails = await BookSummaryModel.findOne({ _id: item.bookId }).lean().exec()
             if (!bookDetails) return
             const chapterDetails: any = bookDetails.chapters.find((oneChapter: any) => String(oneChapter._id) === String(item.chapterId))
             const authorDetails = await BookAuthorModel.findOne({ _id: bookDetails.author }).select('name').lean().exec()
@@ -117,7 +117,9 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
 
             if (existingHighLight === -1) {
                 newResult.push({
+                    _id: item._id,
                     bookId: item.bookId,
+                    userId: item.userId,
                     title: bookDetails.title,
                     coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + bookDetails.coverImage,
                     author: authorDetails,
@@ -132,17 +134,21 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
         }))
 
         result = newResult.filter(i => {
-            if (!i) return false
+            if (!i || !i?.highLights?.length) return false
             if (!search) {
+                i.highLights = i.highLights.slice(skip, skip + limit)
                 return true
             }
             else if (i.title.toLowerCase().includes(search)) {
+                i.highLights = i.highLights.slice(skip, skip + limit)
                 return true
             }
             else if (i.author && i.author.name.toLowerCase().includes(search)) {
+                i.highLights = i.highLights.slice(skip, skip + limit)
                 return true
             }
             else if (filter.bookId && i.highLights.find(o => o.chapter.name.toLowerCase().includes(search))) {
+                i.highLights = i.highLights.slice(skip, skip + limit)
                 return true
             }
             else if (filter.bookId) {
@@ -157,12 +163,14 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                         || i.highLights.find(o => o.chapter.name.toLowerCase().includes(search))
                     ) ? true : false
                 })
+                i.count = i.highLights.length
+                i.highLights = i.highLights.slice(skip, skip + limit)
                 return i.highLights.length ? true : false
             }
             return false
         })
         const count: any = result.length;
-        return { highLightsBooks: limit ? result.splice(skip, (skip + limit)) : result, count }
+        return { highLightsBooks: limit && !filter.bookId ? result.slice(skip, (skip + limit)) : result, count }
     } catch (e: any) {
         throw new Error(e)
     }
@@ -172,7 +180,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
 const deleteHighLight = async (userId: string, id: string, highLightId: string) => {
     try {
         await HighLightsModel.findOneAndUpdate(
-            { '_id': id, userId },
+            { '_id': id, userId: userId },
             {
                 '$pull': {
                     'highLights': { '_id': highLightId }

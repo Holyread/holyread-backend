@@ -25,7 +25,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
         /** Get user from db */
-        const user: any = await usersService.getOneUserByFilter({ email: req.body.email })
+        const user: any = await usersService.getOneUserByFilter({ email: body.email })
         if (user) {
             return next(Boom.badData(authControllerResponse.userAlreadyExistError))
         }

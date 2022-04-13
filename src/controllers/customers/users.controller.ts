@@ -23,16 +23,15 @@ const s3Bucket = {
 /**  Get one user by id */
 const getUserAccount = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const id: any = req.user._id
-            /** Get user from db */
-            let userObj: any = await usersService.getOneUserByFilter({ _id: id })
-            if (!userObj) {
-                  return next(Boom.notFound(authControllerResponse.getUserError))
-            }
-            userObj = userObj.toJSON()
+            /** Get current user */
+            let userObj: any = Object.assign({}, req.user)
             if (userObj.image) {
                   userObj.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + userObj.image
             }
+            delete userObj.password
+            delete userObj.library
+            delete userObj.smallGroups
+            delete userObj.verificationCode
             res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
       } catch (e: any) {
             next(Boom.badData(e.message))
@@ -41,15 +40,13 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
 
 const changePassword = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const id: any = req.user._id
             const { password, newPassword }: { password: string, newPassword: string } = req.body;
-            /** Get user from db */
-            const userObj: any = await usersService.getOneUserByFilter({ _id: id, password: encrypt(password) })
-            if (!userObj) {
+            const userObj = Object.assign({}, req.user)
+            if (userObj?.password !== encrypt(password)) {
                   return next(Boom.notFound(authControllerResponse.userInvalidPasswordError))
             }
-            await usersService.updateUser({ password: newPassword }, { _id: id })
-            res.status(200).send({ message: authControllerResponse.passwordUpdateSuccess, data: userObj.toJSON() })
+            await usersService.updateUser({ password: newPassword }, { _id: userObj._id })
+            res.status(200).send({ message: authControllerResponse.passwordUpdateSuccess })
       } catch (e: any) {
             next(Boom.badData(e.message))
       }
@@ -58,13 +55,8 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
 /**  Get user subscription by user id */
 const getUserSubscription = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const id: any = req.user._id
-            /** Get user from db */
-            let data: any = await usersService.getOneUserByFilter({ _id: id })
-            if (!data) {
-                  return next(Boom.notFound(authControllerResponse.getUserError))
-            }
-            data = data.toJSON()
+            /** Get current user */
+            let data: any = Object.assign({}, req.user)
             if (data.subscriptions) {
                   try {
                         data.subscriptions = await subscriptionService.getOneSubscriptionByFilter({ _id: data.subscriptions })
@@ -72,6 +64,10 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
                         /** Handle get subscription error here */
                   }
             }
+            delete data.password
+            delete data.library
+            delete data.smallGroups
+            delete data.verificationCode
             res.status(200).send({ message: authControllerResponse.getUserSuccess, data })
       } catch (e: any) {
             next(Boom.badData(e.message))
@@ -81,38 +77,31 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
 /** Update user account details */
 const updateUserAccount = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const id: any = req.user._id
-            /** Get user from db */
-            let data: any = await usersService.getOneUserByFilter({ _id: id, type: 'User' })
-            if (!data) {
-                  return next(Boom.notFound(authControllerResponse.getUserError))
-            }
-            data = data.toJSON()
+            /** Get current user */
+            let userObj: any = Object.assign({}, req.user)
             if (req.body.subscriptions) {
                   const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: req.body.subscriptions })
                   if (!subscriptionDetails) {
                         return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
                   }
             }
-            req.body.email = data.email
-            delete req.body.password
-            delete req.body.type
-            delete req.body.verified
-            delete req.body.status
-            delete req.body.subscription
-            delete req.body.verificationCode
-            delete req.body.library
+            const body: any = {
+                  email: userObj.email,
+                  firstName: req.body.firstName || userObj.firstName,
+                  lastName: req.body.lastName || userObj.lastName,
+                  subscriptions: req.body.subscriptions || userObj.subscriptions
+            }
             if (req.body.image === null) {
-                  await removeImageToAwsS3(data.image, s3Bucket)
+                  await removeImageToAwsS3(userObj.image, s3Bucket)
             }
             if (req.body.image && req.body.image.includes('base64')) {
-                  await removeImageToAwsS3(data.image, s3Bucket)
-                  req.body.image = await uploadImageToAwsS3(req.body.image, data.email.substring(0, data.email.lastIndexOf("@")), s3Bucket)
+                  await removeImageToAwsS3(userObj.image, s3Bucket)
+                  body.image = await uploadImageToAwsS3(req.body.image, userObj.email.substring(0, userObj.email.lastIndexOf("@")), s3Bucket)
             }
             if (req.body.image && req.body.image.startsWith('http')) {
-                  req.body.image = data.image
+                  body.image = userObj.image
             }
-            await usersService.updateUser(req.body, { _id: id })
+            await usersService.updateUser(body, { _id: userObj._id })
             return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
       } catch (e: any) {
             return next(Boom.badData(e.message))
@@ -122,13 +111,9 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
 /** get share option image url */
 const getShareOptionImageUrl = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const id: any = req.user._id
-            /** Get user from db */
-            let data: any = await usersService.getOneUserByFilter({ _id: id, type: 'User' })
-            if (!data) {
-                  return next(Boom.notFound(authControllerResponse.getUserError))
-            }
-            data = data.toJSON()
+            /** Get current user */
+            let data: any = Object.assign({}, req.user)
+            
             if (req.body.image) {
                   req.body.image = await uploadImageToAwsS3(req.body.image, data.email.substring(0, data.email.lastIndexOf("@")), { ...s3Bucket, documentDirectory: 'users/share-options' })
             }
@@ -145,10 +130,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
             const query: any = { _id: req.user._id }
             const { type, section } = req.query as any
             /** Get user from db */
-            const data: any = await usersService.getOneUserByFilter({ _id: req.user._id, type: 'User' })
-            if (!data) {
-                  return next(Boom.notFound(authControllerResponse.getUserError))
-            }
+            const userObj: any = Object.assign({}, req.user)
             if (!section) {
                   return next(Boom.notFound(authControllerResponse.missingSectionParams))
             }
@@ -166,13 +148,13 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   delete req.body.saved
             }
             if (section === 'reading') {
-                  const readingObj = data.toJSON().library.reading.find(oneRead => oneRead.bookId === req.body.bookId)
+                  const readingObj = userObj.library.reading.find(oneRead => oneRead.bookId === req.body.bookId)
                   if (!readingObj) {
-                        data.library.reading.push({
+                        userObj.library.reading.push({
                               bookId: req.body.bookId,
                               chaptersCompleted: [req.body.chapter]
                         })
-                        data.save()
+                        await usersService.updateUser({ library: userObj.library }, query)
                         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
                   }
                   req.body['$addToSet'] = { 'library.reading.$.chaptersCompleted': req.body.chapter }
@@ -200,14 +182,9 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
 /**  Get one user library by library id */
 const getUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const id: any = req.user._id
             const { section, sort, author, bookId } = req.query as any
-            /** Get user from db */
-            let userObj: any = await usersService.getOneUserByFilter({ _id: id })
-            if (!userObj) {
-                  return next(Boom.notFound(authControllerResponse.getUserError))
-            }
-            userObj = userObj.toJSON()
+            /** Get current user */
+            let userObj: any = Object.assign({}, req.user)
             if (bookId) {
                   const book = userObj && userObj.library && userObj.library.saved.find(id => String(id) === bookId)
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data: { library: userObj.library, saved: book ? true : false } })

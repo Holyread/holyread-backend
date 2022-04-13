@@ -17,7 +17,7 @@ const updateUser = async (body: any, query: object) => {
 /** Get user by id */
 const getOneUserByFilter = async (query: any) => {
     try {
-        const result: any = await UserModel.findOne(query).select('-password')
+        const result: any = await UserModel.findOne(query).select('-password').lean().exec()
         return result
     } catch (e: any) {
         throw new Error(e)

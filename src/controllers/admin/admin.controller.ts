@@ -19,16 +19,14 @@ const s3Bucket = {
 /**  Get one admin by id */
 const getAdmin = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.user._id
-        /** Get admin from db */
-        const data: any = await usersService.getOneUserByFilter({ _id: id, type: 'Admin' })
-        if (!data) {
-            return next(Boom.notFound(adminControllerResponse.getAdminFailure))
-        }
+        const data: any = Object.assign({}, req.user)
         if (data.image) {
             data.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + data.image
         }
         delete data.verificationCode
+        delete data.password
+        delete data.library
+        delete data.smallGroups
         res.status(200).send({ message: adminControllerResponse.fetchAdminSuccess, data: data })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -38,12 +36,7 @@ const getAdmin = async (req: Request | any, res: Response, next: NextFunction) =
 /** Update admin details */
 const updateAdmin = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.user._id
-        /** Get user from db */
-        const data: any = await usersService.getOneUserByFilter({ _id: id, type: 'Admin' })
-        if (!data) {
-            return next(Boom.notFound(adminControllerResponse.getAdminFailure))
-        }
+        const data: any = req.user
         req.body.email = data.email
         if (req.body.image === null) {
             await removeImageToAwsS3(data.image, s3Bucket)
@@ -55,7 +48,7 @@ const updateAdmin = async (req: Request | any, res: Response, next: NextFunction
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = data.image
         }
-        await usersService.updateUser(req.body, id)
+        await usersService.updateUser(req.body, data._id)
         return res.status(200).send({ message: adminControllerResponse.updateAdminSuccess })
     } catch (e: any) {
         return next(Boom.badData(e.message))
@@ -66,13 +59,10 @@ const updateAdmin = async (req: Request | any, res: Response, next: NextFunction
 const changePassword = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         const { password, newPassword }: { password: string, newPassword: string } = req.body
-        const id = req.user._id as string
-        /** Get user from db */
-        const userObj: any = await usersService.getOneUserByFilter({ _id: id, password: encrypt(password), type: 'Admin' })
-        if (!userObj) {
+        if (req.user?.password !== encrypt(password)) {
             return next(Boom.notFound(authControllerResponse.userInvalidPasswordError))
         }
-        await usersService.updateUser({ password: newPassword }, userObj._id)
+        await usersService.updateUser({ password: newPassword }, req.user._id)
         res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
     } catch (e: any) {
         next(Boom.badData(e.message))

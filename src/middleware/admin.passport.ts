@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express'
 import { verifyToken } from '../lib/utils/utils'
-import userService from '../services/admin/users/user.service'
+import { UserModel } from '../models'
 import Boom from '@hapi/boom'
 
 export default async (req: Request | any, res: Response, next: NextFunction): Promise<any> => {
@@ -11,7 +11,7 @@ export default async (req: Request | any, res: Response, next: NextFunction): Pr
     } else {
         try {
             const details = await verifyToken(accessToken)
-            const userDetails = await userService.getOneUserByFilter({ email: details?.email, _id: details.id, type: 'Admin' })
+            const userDetails = await UserModel.findOne({ email: details?.email, _id: details.id, type: 'Admin' }).lean().exec()
             if (!userDetails) {
                 next(Boom.badRequest('Admin not authorized'));
             }

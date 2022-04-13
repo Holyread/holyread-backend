@@ -11,5 +11,5 @@ const router: Router = express.Router()
 
 router.get('/', adminPassport, getAdmin)
 router.put('/', adminPassport, updateAdmin)
-router.post('/change-password', changePassword)
+router.post('/change-password', adminPassport, changePassword)
 export default router

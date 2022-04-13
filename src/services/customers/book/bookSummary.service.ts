@@ -39,16 +39,6 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort, li
     }
 }
 
-/** Get all book summaries count for web */
-const getAllBookSummariesCount = async () => {
-    try {
-        let result: any = await BookSummaryModel.find().count().lean()
-        return result
-    } catch (e: any) {
-        throw new Error(e)
-    }
-}
-
 /** Get book summary by summary id */
 const getOneBookSummaryByFilter = async (query: any) => {
     try {
@@ -68,7 +58,6 @@ const getOneBookSummaryByFilter = async (query: any) => {
 
 export default {
     getAllBookSummaries,
-    getAllBookSummariesCount,
     getOneBookSummaryByFilter
 }
 

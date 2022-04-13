@@ -1,4 +1,4 @@
-import { SmallGroupModel, BookSummaryModel } from '../../../models/index'
+import { SmallGroupModel, BookSummaryModel, BookAuthorModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 
@@ -29,7 +29,8 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
                 title: item.title,
                 description: item.description,
                 backgroundColor: item.backgroundColor,
-                books: item.books
+                books: item.books,
+                bookMark: global?.currentUser?.smallGroups?.find(os => String(os) === String(item._id)) ? true : false
             }
         }))
         return { smallgroupsList, count }
@@ -38,6 +39,30 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
     }
 }
 
+/** Get one small group by filter */
+const getOneSmallGroupByFilter = async (query: any) => {
+    try {
+        const result: any = await SmallGroupModel.findOne(query).populate('books', 'title overview author coverImage coverImageBackground').lean()
+        if (result?.books.length) {
+            result.books = await Promise.all(result?.books?.map(async oneBook => {
+                if (!oneBook?._id) return undefined
+                if (oneBook.author) {
+                    const authorDetails = await BookAuthorModel.findOne({ _id: oneBook.author }).select('name _id').lean().exec()
+                    oneBook.author = authorDetails ? authorDetails : oneBook.author
+                }
+                oneBook.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneBook.coverImage
+                oneBook.totalStar = 100
+                oneBook.totalReads = 100
+                return oneBook
+            }).filter(ob => ob))
+        }
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 export default {
-    getAllSmallGroups
+    getAllSmallGroups,
+    getOneSmallGroupByFilter
 }

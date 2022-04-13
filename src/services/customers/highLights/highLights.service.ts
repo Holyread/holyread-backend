@@ -122,6 +122,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     userId: item.userId,
                     title: bookDetails.title,
                     coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + bookDetails.coverImage,
+                    coverImageBackground: bookDetails.coverImageBackground,
                     author: authorDetails,
                     overview: bookDetails.overview,
                     highLights: item.highLights,
@@ -133,6 +134,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
             }
         }))
 
+        /** filters results by search */
         result = newResult.filter(i => {
             if (!i || !i?.highLights?.length) return false
             if (!search) {

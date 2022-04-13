@@ -13,6 +13,7 @@ import config from '../../../config'
 
 const NODE_ENV = config.NODE_ENV
 const dashboardControllerResponse = responseMessage.dashboardControllerResponse
+const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
 
 /** Get categories for dashboard */
 const getCategories = async (request: Request, response: Response, next: NextFunction) => {
@@ -139,6 +140,14 @@ const getSmallGroups = async (request: Request, response: Response, next: NextFu
         const params: any = request.query
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
+        if (params.id) {
+            const data = await smallGroupService.getOneSmallGroupByFilter({ _id: params.id, status: 'Active' })
+            response.status(200).json({
+                message: smallGroupControllerResponse.fetchSmallGroupSuccess,
+                data
+            })
+            return;
+        }
         const data: any = await smallGroupService.getAllSmallGroups(Number(skip), Number(limit), { status: 'Active' }, [['createdAt', 'DESC']])
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,

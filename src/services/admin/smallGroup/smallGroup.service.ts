@@ -33,7 +33,7 @@ const updateSmallGroup = async (body: any, id: string) => {
 /** Get small group by category id */
 const getOneSmallGroupByFilter = async (query: any) => {
     try {
-        const result: any = await SmallGroupModel.findOne(query).populate('books', 'title').lean()
+        const result: any = await SmallGroupModel.findOne(query).populate('books', 'title coverImage').lean()
         return result
     } catch (e: any) {
         throw new Error(e)

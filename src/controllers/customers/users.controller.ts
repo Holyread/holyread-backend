@@ -180,6 +180,16 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   delete req.body.bookId
                   delete req.body.chapter
             }
+            /** Add to User small group */
+            if (type === 'add' && section === 'smallGroup') {
+                  req.body['$addToSet'] = { 'smallGroups': req.body.smallGroup }
+                  delete req.body.smallGroup
+            }
+            /** Delete from User small group */
+            if (type === 'delete' && section === 'smallGroup') {
+                  req.body['$pull'] = { 'smallGroups': req.body.smallGroup }
+                  delete req.body.smallGroup
+            }
             await usersService.updateUser(req.body, query)
             return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
       } catch (e: any) {

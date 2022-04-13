@@ -34,8 +34,9 @@ export interface IUser extends mongoose.Document {
         reading?: [{
             bookId: string,
             chaptersCompleted: [string]
-        }]
-    }
+        }],
+    },
+    smallGroups?: [string]
 }
 
 export type createUserType = {
@@ -71,7 +72,8 @@ export type createUserType = {
             bookId: string,
             chaptersCompleted: [string]
         }]
-    }
+    },
+    smallGroups?: [string]
 }
 
 export type getUserType = {
@@ -107,7 +109,8 @@ export type getUserType = {
             bookId: string,
             chaptersCompleted: [string]
         }]
-    }
+    },
+    smallGroups?: [string]
 }
 
 export const UserSchema = new Schema({
@@ -144,6 +147,7 @@ export const UserSchema = new Schema({
             chaptersCompleted: [{ type: String }]
         }]
     },
+    smallGroups: [{ type: String }],
     createdAt: {
         type: Date, default: () => {
             return new Date()

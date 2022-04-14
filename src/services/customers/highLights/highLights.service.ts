@@ -97,6 +97,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
         delete filter.search
         let result: any = await HighLightsModel.find(filter).lean().exec()
         let newResult = []
+        // console.log(result)
         await Promise.all(await result.map(async (item: any) => {
             const bookDetails = await BookSummaryModel.findOne({ _id: item.bookId }).lean().exec()
             if (!bookDetails) return
@@ -109,8 +110,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     delete chapterDetails.audioFile
                     oneItem.chapter = {
                         _id: chapterDetails._id,
-                        name: chapterDetails.name,
-                        description: chapterDetails.description
+                        name: chapterDetails.name
                     }
                 })
             }

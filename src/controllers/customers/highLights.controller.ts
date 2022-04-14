@@ -52,7 +52,7 @@ const getHighLightsByFilter = async (req: Request | any, res: Response, next: Ne
             filter.search = params.search
         }
         /** Get high lights from db */
-        const data: any = await highLightsService.getHighLightsByFilter(Number(skip), Number(limit), filter, [['createdAt', 'DESC']])
+        const data: any = await highLightsService.getHighLightsByFilter(Number(skip), params.limit ? Number(params.limit) : 10, filter, [['createdAt', 'DESC']])
         res.status(200).send({ message: highLightsControllerResponse.fetchHighLightsSuccess, data: params.bookId && data.highLightsBooks.length ? data.highLightsBooks[0] : data })
     } catch (e: any) {
         next(Boom.badData(e.message))

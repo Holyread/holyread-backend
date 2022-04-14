@@ -109,8 +109,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     delete chapterDetails.audioFile
                     oneItem.chapter = {
                         _id: chapterDetails._id,
-                        name: chapterDetails.name,
-                        description: chapterDetails.description
+                        name: chapterDetails.name
                     }
                 })
             }

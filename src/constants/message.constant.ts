@@ -148,7 +148,7 @@ export const responseMessage = {
         updateHighLightSuccess: 'High light updated successfully',
         deleteHighLightSuccess: 'High light deleted successfully',
         fetchHighLightsSuccess: 'High lights list fetched successfully',
-        HighLightExistError: 'High light already added',
+        invalidHighLightColor: 'Color value should be HEX',
         getHighLightFailure: 'Failed to fetch High light details',
         invalidStartIndexError: 'Start index should be less then end index'
     },

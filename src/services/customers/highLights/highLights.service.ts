@@ -8,17 +8,33 @@ const highLightsControllerResponse = responseMessage.highLightsControllerRespons
 /** Add high lights */
 const createHighLight = async (body: any) => {
     try {
-        const existingHighLight = await HighLightsModel.findOne(
-            {
-                userId: body.userId,
-                chapterId: body.chapterId,
-                bookId: body.bookId,
-                'highLights.startIndex': body.startIndex,
-                'highLights.endIndex': body.endIndex
-            }
-        ).lean().exec()
+        const query = {
+            userId: body.userId,
+            chapterId: body.chapterId,
+            bookId: body.bookId,
+            'highLights.startIndex': body.startIndex,
+            'highLights.endIndex': body.endIndex
+        }
+        if (body.color && !(/^#([0-9a-f]{3}){1,2}$/i).test(body.color)) {
+            throw new Error(highLightsControllerResponse.invalidHighLightColor)
+        }
+        const existingHighLight = await HighLightsModel.findOne(query).lean().exec()
         if (existingHighLight) {
-            throw new Error(highLightsControllerResponse.HighLightExistError)
+            let newBody = {}
+            if (body.color) {
+                newBody['$set'] = { ...newBody['$set'], 'highLights.$.color': body.color }
+            }
+            if (body.textDecoration) {
+                newBody['$set'] = { ...newBody['$set'], 'highLights.$.textDecoration': body.textDecoration }
+            }
+            if (body.color === null) {
+                newBody['$unset'] = { ...newBody['$unset'], 'highLights.$.color': 1 }
+            }
+            if (body.textDecoration === null) {
+                newBody['$unset'] = { ...newBody['$unset'], 'highLights.$.textDecoration': 1 }
+            }
+            const data: any = await HighLightsModel.findOneAndUpdate(query, newBody, { new: true }).lean().exec()
+            return data
         }
         if (body.startIndex > body.endIndex) {
             throw new Error(highLightsControllerResponse.invalidStartIndexError)
@@ -54,6 +70,9 @@ const createHighLight = async (body: any) => {
 const updateHighLight = async (body: any, id: string) => {
     try {
         const newBody: any = {}
+        if (body.color && !(/^#([0-9a-f]{3}){1,2}$/i).test(body.color)) {
+            throw new Error(highLightsControllerResponse.invalidHighLightColor)
+        }
         if (body.color) {
             newBody['$set'] = { ...newBody['$set'], 'highLights.$.color': body.color }
         }

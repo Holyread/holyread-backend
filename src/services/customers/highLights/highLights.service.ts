@@ -5,6 +5,8 @@ import config from '../../../../config'
 const NODE_ENV = config.NODE_ENV
 
 const highLightsControllerResponse = responseMessage.highLightsControllerResponse
+const validateColor = (color: string) => (/^#([0-9a-f]{3}){1,2}$/i).test(color)
+
 /** Add high lights */
 const createHighLight = async (body: any) => {
     try {
@@ -15,7 +17,7 @@ const createHighLight = async (body: any) => {
             'highLights.startIndex': body.startIndex,
             'highLights.endIndex': body.endIndex
         }
-        if (body.color && !(/^#([0-9a-f]{3}){1,2}$/i).test(body.color)) {
+        if (body.color && !validateColor(body.color)) {
             throw new Error(highLightsControllerResponse.invalidHighLightColor)
         }
         const existingHighLight = await HighLightsModel.findOne(query).lean().exec()
@@ -64,7 +66,7 @@ const createHighLight = async (body: any) => {
 const updateHighLight = async (body: any, id: string) => {
     try {
         const newBody: any = {}
-        if (body.color && !(/^#([0-9a-f]{3}){1,2}$/i).test(body.color)) {
+        if (body.color && !validateColor(body.color)) {
             throw new Error(highLightsControllerResponse.invalidHighLightColor)
         }
         if (body.color) {

@@ -21,17 +21,11 @@ const createHighLight = async (body: any) => {
         const existingHighLight = await HighLightsModel.findOne(query).lean().exec()
         if (existingHighLight) {
             let newBody = {}
-            if (body.color) {
+            if (body.color && !body.textDecoration) {
                 newBody['$set'] = { ...newBody['$set'], 'highLights.$.color': body.color }
             }
-            if (body.textDecoration) {
+            if (body.textDecoration && !body.color) {
                 newBody['$set'] = { ...newBody['$set'], 'highLights.$.textDecoration': body.textDecoration }
-            }
-            if (body.color === null) {
-                newBody['$unset'] = { ...newBody['$unset'], 'highLights.$.color': 1 }
-            }
-            if (body.textDecoration === null) {
-                newBody['$unset'] = { ...newBody['$unset'], 'highLights.$.textDecoration': 1 }
             }
             const data: any = await HighLightsModel.findOneAndUpdate(query, newBody, { new: true }).lean().exec()
             return data

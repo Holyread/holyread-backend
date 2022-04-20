@@ -182,3 +182,5 @@ export const compileHtml = async (source: string, data: any) => {
         return null
     }
 }
+
+export const randomNumberInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;

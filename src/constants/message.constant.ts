@@ -23,7 +23,9 @@ export const responseMessage = {
         sentVerifyEmailFailure: 'Failed to send verification email',
         verifyEmailSuccess: 'verification link already sended on your register email',
         missingSectionParams: 'Missing section params',
-        addShareImage: 'Share image uploaded successfully'
+        addShareImage: 'Share image uploaded successfully',
+        submitQueryError: 'Failed to send your message, please try letter or contact administrator by other way',
+        submitQuerySuccess: 'Your message was sent successfully, Thanks.'
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

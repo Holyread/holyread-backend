@@ -7,6 +7,8 @@ import {
   updateUserAccount,
   updateUserLibrary,
   getUserLibrary,
+  submitFeedback,
+  submitQuery
 } from '../../controllers/customers/users.controller'
 
 const router: Router = express.Router()
@@ -18,5 +20,7 @@ router.put('/change-password', changePassword)
 router.get('/subscription', getUserSubscription)
 router.get('/library', getUserLibrary)
 router.patch('/library', updateUserLibrary)
+router.post('/query', submitQuery)
+router.post('/feedback', submitFeedback)
 
 export default router

@@ -1,6 +1,7 @@
 import { BookSummaryModel, BookAuthorModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
+import { randomNumberInRange } from '../../../lib/utils/utils'
 
 const NODE_ENV = config.NODE_ENV
 
@@ -25,8 +26,8 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort, li
                 title: oneItem.title,
                 author: oneItem.author,
                 overview: oneItem.overview,
-                totalStar: 100,
-                totalReads: 100,
+                totalStar: Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1, 9))),
+                totalReads: randomNumberInRange(10000, 20000),
                 bookMark: isSaved,
                 coverImageBackground: oneItem.coverImageBackground,
                 chapters: library ? oneItem.chapters : undefined,
@@ -47,8 +48,8 @@ const getOneBookSummaryByFilter = async (query: any) => {
             data.author = await BookAuthorModel.findById(data.author).select('_id name about').lean().exec()
         }
         const isSaved = global?.currentUser?.library?.saved?.find(b => String(b) === String(data?._id)) ? true : false
-        data.totalStar = 100
-        data.totalReads = 100
+        data.totalStar = Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1, 9)))
+        data.totalReads = randomNumberInRange(10000, 20000)
         data.bookMark = isSaved
         return data
     } catch (e: any) {

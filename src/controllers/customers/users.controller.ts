@@ -4,9 +4,10 @@ import Boom from '@hapi/boom';
 import usersService from '../../services/customers/users/user.service'
 import bookService from '../../services/customers/book/bookSummary.service'
 import subscriptionService from '../../services/admin/subscriptions/subscriptions.service'
+import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3, encrypt } from '../../lib/utils/utils'
-import { awsBucket } from '../../constants/app.constant'
+import { removeImageToAwsS3, uploadImageToAwsS3, encrypt, compileHtml, sentEmail } from '../../lib/utils/utils'
+import { awsBucket, emailTemplatesTitles } from '../../constants/app.constant'
 import config from '../../../config'
 
 const authControllerResponse = responseMessage.authControllerResponse
@@ -113,7 +114,7 @@ const getShareOptionImageUrl = async (req: Request | any, res: Response, next: N
       try {
             /** Get current user */
             let data: any = Object.assign({}, req.user)
-            
+
             if (req.body.image) {
                   req.body.image = await uploadImageToAwsS3(req.body.image, data.email.substring(0, data.email.lastIndexOf("@")), { ...s3Bucket, documentDirectory: 'users/share-options' })
             }
@@ -237,4 +238,74 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
       }
 }
 
-export { getUserAccount, getShareOptionImageUrl, changePassword, getUserSubscription, updateUserAccount, updateUserLibrary, getUserLibrary }
+const submitQuery = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const { subject, message }: { subject: string, message: string } = req.body;
+            const userObj = Object.assign({}, req.user)
+            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.contactUs })
+            const sub = emailTemplateDetails.subject || 'Contact Us'
+            let html = `<p>Hello Admin,</p><p>You receive a support message from user.</p><p>Email : ${userObj.email}</p><p>Phone Number : ${userObj.contactNumber || ''}</p><p>Subject : ${subject}</p><p>Message : ${message}</p><p>Best regards,</p><p>${userObj.firstName} ${userObj.lastName}</p>`
+
+            if (emailTemplateDetails && emailTemplateDetails.content) {
+                  const contentData = {
+                        username: userObj.firstName + ' ' + userObj.lastName,
+                        email: userObj.email,
+                        phone_number: userObj.contactNumber || '',
+                        subject,
+                        message
+                  }
+                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  if (htmlData) {
+                        html = htmlData
+                  }
+            }
+            const result = await sentEmail(config.SMTP_EMAIL, sub, html);
+            if (!result) {
+                  return next(Boom.badData(authControllerResponse.submitQueryError))
+            }
+            res.status(200).send({ message: authControllerResponse.submitQuerySuccess })
+      } catch (e: any) {
+            next(Boom.badData(e.message))
+      }
+}
+
+const submitFeedback = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const { title, feedback }: { title: string, feedback: string } = req.body;
+            const userObj = Object.assign({}, req.user)
+            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.feedback })
+            const sub = emailTemplateDetails.subject || 'Client Feedback'
+            let html = `<p>You've received a feedback from ${userObj.email}.</p><p>Title : ${title}</p><p>Feedback : ${feedback}</p>`
+
+            if (emailTemplateDetails && emailTemplateDetails.content) {
+                  const contentData = {
+                        email: userObj.email,
+                        title,
+                        feedback
+                  }
+                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  if (htmlData) {
+                        html = htmlData
+                  }
+            }
+            const result = await sentEmail(config.SMTP_EMAIL, sub, html);
+            if (!result) {
+                  return next(Boom.badData(authControllerResponse.submitQueryError))
+            }
+            res.status(200).send({ message: authControllerResponse.submitQuerySuccess })
+      } catch (e: any) {
+            next(Boom.badData(e.message))
+      }
+}
+
+export {
+      getUserAccount,
+      getShareOptionImageUrl,
+      changePassword,
+      getUserSubscription,
+      updateUserAccount,
+      updateUserLibrary,
+      getUserLibrary,
+      submitQuery,
+      submitFeedback
+}

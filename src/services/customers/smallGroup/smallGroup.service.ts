@@ -1,6 +1,7 @@
 import { SmallGroupModel, BookSummaryModel, BookAuthorModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
+import { randomNumberInRange } from '../../../lib/utils/utils'
 
 const NODE_ENV = config.NODE_ENV
 
@@ -51,8 +52,8 @@ const getOneSmallGroupByFilter = async (query: any) => {
                     oneBook.author = authorDetails ? authorDetails : oneBook.author
                 }
                 oneBook.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneBook.coverImage
-                oneBook.totalStar = 100
-                oneBook.totalReads = 100
+                oneBook.totalStar = Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1, 9)))
+                oneBook.totalReads = randomNumberInRange(10000, 20000)
                 return oneBook
             }).filter(ob => ob))
         }

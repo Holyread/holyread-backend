@@ -9,6 +9,7 @@ import readsOfDayService from '../../services/customers/readsOfDay/readsOfDay.se
 import smallGroupService from '../../services/customers/smallGroup/smallGroup.service'
 import { responseMessage } from '../../constants/message.constant'
 import { awsBucket, dataLimit } from '../../constants/app.constant'
+import { randomNumberInRange } from '../../lib/utils/utils'
 import config from '../../../config'
 
 const NODE_ENV = config.NODE_ENV
@@ -114,8 +115,8 @@ const getRecommendedBooks = async (request: Request, response: Response, next: N
                         title: oneBook.book.title,
                         author: oneBook.book.author,
                         overview: oneBook.book.overview,
-                        totalStar: 100,
-                        totalReads: 100
+                        totalStar: Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1,9))),
+                        totalReads: randomNumberInRange(10000, 20000)
                     })
                 } else {
                     --result.count

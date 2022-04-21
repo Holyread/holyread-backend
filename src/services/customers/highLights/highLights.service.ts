@@ -110,7 +110,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
     try {
         const search = filter.search ? filter.search.trim().toLowerCase() : filter.search
         delete filter.search
-        let result: any = await HighLightsModel.find(filter).lean().exec()
+        let result: any = await HighLightsModel.find(filter).sort(sort).lean().exec()
         let newResult = []
         await Promise.all(await result.map(async (item: any) => {
             const bookDetails = await BookSummaryModel.findOne({ _id: item.bookId }).lean().exec()
@@ -151,6 +151,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
         /** filters results by search */
         result = newResult.filter(i => {
             if (!i || !i?.highLights?.length) return false
+            i.highLights = i.highLights.sort((a,b) => (a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0))
             if (!search) {
                 i.highLights = i.highLights.slice(skip, skip + limit)
                 return true

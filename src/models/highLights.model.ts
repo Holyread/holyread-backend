@@ -70,6 +70,12 @@ export const HighLightsSchema = new Schema({
         textDecoration: { type: String },
         text: { type: String }
     }],
+    createdAt: {
+        type: Date, default: () => {
+            return new Date()
+        },
+    },
+    updatedAt: {type: Date},
 }, { strict: 'throw' })
 
 HighLightsSchema.index({ userId: -1, bookId: -1, chapterId: -1 });

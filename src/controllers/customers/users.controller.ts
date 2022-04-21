@@ -90,7 +90,9 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   email: userObj.email,
                   firstName: req.body.firstName || userObj.firstName,
                   lastName: req.body.lastName || userObj.lastName,
-                  subscriptions: req.body.subscriptions || userObj.subscriptions
+                  subscriptions: req.body.subscriptions || userObj.subscriptions,
+                  notificationSetting: (typeof req.body.notificationSetting === 'boolean') ? req.body.notificationSetting : userObj.notificationSetting || false,
+                  emailNotification: (typeof req.body.emailNotification === 'boolean') ? req.body.emailNotification : userObj.emailNotification || false
             }
             if (req.body.image === null) {
                   await removeImageToAwsS3(userObj.image, s3Bucket)

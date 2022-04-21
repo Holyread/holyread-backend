@@ -53,6 +53,7 @@ const createHighLight = async (body: any) => {
             },
             {
                 '$push': { highLights },
+                $setOnInsert: { createdAt: new Date() }
             },
             { upsert: true, new: true }
         ).lean().exec()

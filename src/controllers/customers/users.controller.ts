@@ -158,12 +158,14 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                         }
                         userObj.library.reading.push({
                               bookId: req.body.bookId,
-                              chaptersCompleted: [req.body.chapter]
+                              chaptersCompleted: [req.body.chapter],
+                              updatedAt: new Date()
                         })
                         await usersService.updateUser({ library: userObj.library }, query)
                         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
                   }
                   req.body['$addToSet'] = { 'library.reading.$.chaptersCompleted': req.body.chapter }
+                  req.body['$set'] = { 'library.reading.$.updatedAt': new Date() }
                   query['library.reading.bookId'] = req.body.bookId
                   delete req.body.bookId
                   delete req.body.chapter
@@ -192,33 +194,41 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
             /** Get current user */
             let userObj: any = Object.assign({}, req.user)
             if (bookId) {
-                  const book = userObj && userObj.library && userObj.library.saved.find(id => String(id) === bookId)
+                  const book = userObj?.library?.saved?.find(id => String(id) === bookId)
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data: { library: userObj.library, saved: book ? true : false } })
                   return
             }
-            if (section === 'saved' && userObj.library && userObj.library.saved && userObj.library.saved.length) {
+            if (section === 'saved' && userObj?.library?.saved?.length) {
                   const search: any = { _id: { $in: userObj.library.saved } }
                   if (author) { search.author = author }
                   const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']])
+                  if (data.summaries?.length) {
+                        data.summaries = userObj.library.saved.reverse().map(oi => {
+                              return data.summaries.find(si => String(si._id) === String(oi))
+                        }).filter(i => i)
+                  }
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return
             }
-            if (section === 'completed' && userObj.library && userObj.library.completed && userObj.library.completed.length) {
+            if (section === 'completed' && userObj?.library?.completed?.length) {
                   const search: any = { _id: { $in: userObj.library.completed } }
                   if (author) { search.author = author }
                   const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']])
+                  if (data.summaries?.length) {
+                        data.summaries = userObj.library.completed.reverse().map(oi => {
+                              return data.summaries.find(si => String(si._id) === String(oi))
+                        }).filter(i => i)
+                  }
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return
             }
             if (
                   section === 'reading' &&
-                  userObj.library &&
-                  userObj.library.reading &&
-                  userObj.library.reading.length
+                  userObj?.library?.reading?.length
             ) {
                   /** Sort user reads books by reads _id */
-                  userObj.library.reading = userObj.library.reading.sort((a,b) => (String(a._id) > String(b._id)) ? -1 : ((String(b._id) > String(a._id)) ? 1 : 0))
-                  
+                  userObj.library.reading = userObj.library.reading.sort((a, b) => (String(a._id) > String(b._id)) ? -1 : ((String(b._id) > String(a._id)) ? 1 : 0))
+
                   /** collect user reads books ids those not in completed books list */
                   const bookIds = userObj.library.reading.map(oneBook => {
                         if (
@@ -241,10 +251,14 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                         const summary = data.summaries.find((os: any) => String(os._id) === String(r.bookId))
                         if (summary) {
                               summary.reads = Number((r.chaptersCompleted && r.chaptersCompleted?.length ? (100 * r.chaptersCompleted?.length) / summary?.chapters?.length : 0).toFixed(0))
+                              summary.updatedAt = r.updatedAt
                               delete summary.chapters
                               return summary
                         }
-                  }).filter(s => s)
+                  }).filter(s => s).sort((a, b) =>
+                        (new Date(a.updatedAt).getTime() > new Date(b.updatedAt).getTime())
+                              ? -1
+                              : ((new Date(b.updatedAt).getTime() > new Date(a.updatedAt).getTime()) ? 1 : 0))
 
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return

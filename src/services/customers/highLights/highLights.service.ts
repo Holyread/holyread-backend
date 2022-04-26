@@ -21,13 +21,16 @@ const createHighLight = async (body: any) => {
             throw new Error(highLightsControllerResponse.invalidHighLightColor)
         }
         const existingHighLight = await HighLightsModel.findOne(query).lean().exec()
+        let now = new Date()
         if (existingHighLight) {
-            let newBody = {}
+            let newBody: any = {}
             if (body.color && !body.textDecoration) {
-                newBody['$set'] = { ...newBody['$set'], 'highLights.$.color': body.color }
+                newBody['$set'] = { ...newBody['$set'], 'highLights.$.color': body.color, 'highLights.$.updatedAt': now }
+                newBody.updatedAt = now
             }
             if (body.textDecoration && !body.color) {
-                newBody['$set'] = { ...newBody['$set'], 'highLights.$.textDecoration': body.textDecoration }
+                newBody['$set'] = { ...newBody['$set'], 'highLights.$.textDecoration': body.textDecoration, 'highLights.$.updatedAt': now }
+                newBody.updatedAt = now
             }
             const data: any = await HighLightsModel.findOneAndUpdate(query, newBody, { new: true }).lean().exec()
             return data
@@ -40,7 +43,8 @@ const createHighLight = async (body: any) => {
             'color': body.color,
             'startIndex': body.startIndex,
             'endIndex': body.endIndex,
-            'text': body.text
+            'text': body.text,
+            updatedAt: now
         }
         if (body.textDecoration) {
             highLights.textDecoration = body.textDecoration
@@ -53,7 +57,8 @@ const createHighLight = async (body: any) => {
             },
             {
                 '$push': { highLights },
-                $setOnInsert: { createdAt: new Date() }
+                $setOnInsert: { createdAt: now },
+                updatedAt: now
             },
             { upsert: true, new: true }
         ).lean().exec()
@@ -70,6 +75,7 @@ const updateHighLight = async (body: any, id: string) => {
         if (body.color && !validateColor(body.color)) {
             throw new Error(highLightsControllerResponse.invalidHighLightColor)
         }
+        const now = new Date()
         if (body.color) {
             newBody['$set'] = { ...newBody['$set'], 'highLights.$.color': body.color }
         }
@@ -85,9 +91,12 @@ const updateHighLight = async (body: any, id: string) => {
         if (body.textDecoration === null) {
             newBody['$unset'] = { ...newBody['$unset'], 'highLights.$.textDecoration': 1 }
         }
+        if (Object.keys(newBody).length) {
+            newBody['$set'] = { ...newBody['$set'], 'highLights.$.updatedAt': now }
+        }
         const data: any = await HighLightsModel.updateOne(
             { 'highLights._id': id, userId: body.userId },
-            newBody
+            { ...newBody, updatedAt: now }
         ).lean().exec()
         return data
     } catch (e: any) {
@@ -141,10 +150,13 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     author: authorDetails,
                     overview: bookDetails.overview,
                     highLights: item.highLights,
-                    count: item.highLights && item.highLights.length ? item.highLights.length : 0
+                    count: item.highLights && item.highLights.length ? item.highLights.length : 0,
+                    updatedAt: item.updatedAt
                 })
             } else {
+                const existingUpdatedAt = newResult[existingHighLight].updatedAt
                 newResult[existingHighLight].highLights = newResult[existingHighLight].highLights.concat(item.highLights)
+                newResult[existingHighLight].updatedAt = new Date(existingUpdatedAt).getTime() < new Date(item.updatedAt).getTime() ? item.updatedAt : existingUpdatedAt
                 newResult[existingHighLight].count = newResult[existingHighLight].count + item.highLights.length
             }
         }))
@@ -152,7 +164,11 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
         /** filters results by search */
         result = newResult.filter(i => {
             if (!i || !i?.highLights?.length) return false
-            i.highLights = i.highLights.sort((a,b) => (a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0))
+            i.highLights =
+                i.highLights.sort((a, b) =>
+                    (new Date(a.updatedAt).getTime() > new Date(b.updatedAt).getTime())
+                        ? -1
+                        : ((new Date(b.updatedAt).getTime() > new Date(a.updatedAt).getTime()) ? 1 : 0))
             if (!search) {
                 i.highLights = i.highLights.slice(skip, skip + limit)
                 return true
@@ -187,6 +203,9 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
             }
             return false
         })
+        result = result.sort((a, b) =>
+            (new Date(a.updatedAt).getTime() > new Date(b.updatedAt).getTime())
+                ? -1 : ((new Date(b.updatedAt).getTime() > new Date(a.updatedAt).getTime()) ? 1 : 0))
         const count: any = result.length;
         return { highLightsBooks: limit && !filter.bookId ? result.slice(skip, (skip + limit)) : result, count }
     } catch (e: any) {

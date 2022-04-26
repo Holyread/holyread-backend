@@ -68,7 +68,8 @@ export const HighLightsSchema = new Schema({
         endIndex: { type: Number, required: true },
         note: { type: String },
         textDecoration: { type: String },
-        text: { type: String }
+        text: { type: String },
+        updatedAt: { type: Date }
     }],
     createdAt: {
         type: Date, default: () => {

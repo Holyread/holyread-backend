@@ -144,7 +144,8 @@ export const UserSchema = new Schema({
         completed: [{ type: String }],
         reading: [{
             bookId: { type: String },
-            chaptersCompleted: [{ type: String }]
+            chaptersCompleted: [{ type: String }],
+            updatedAt: { type: Date }
         }]
     },
     smallGroups: [{ type: String }],

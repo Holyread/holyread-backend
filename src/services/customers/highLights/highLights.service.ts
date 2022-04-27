@@ -79,7 +79,7 @@ const updateHighLight = async (body: any, id: string) => {
         if (body.color) {
             newBody['$set'] = { ...newBody['$set'], 'highLights.$.color': body.color }
         }
-        if (body.note) {
+        if (body.note || body.note === '') {
             newBody['$set'] = { ...newBody['$set'], 'highLights.$.note': body.note }
         }
         if (body.textDecoration) {
@@ -136,12 +136,12 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                         _id: chapterDetails._id,
                         name: chapterDetails.name
                     }
+                    oneItem.highLightId = item._id
                 })
             }
 
             if (existingHighLight === -1) {
                 newResult.push({
-                    _id: item._id,
                     bookId: item.bookId,
                     userId: item.userId,
                     title: bookDetails.title,

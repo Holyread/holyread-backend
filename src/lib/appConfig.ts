@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 
 const handleError = async (err: any, req: Request, res: Response, next: NextFunction) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
     if (!err) { return next() }
 
     const errorResponse = Object.assign({ stack: err.stack, errorCode: err.errorCode }, err.output && err.output.payload ? err.output.payload : err)

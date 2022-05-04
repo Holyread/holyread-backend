@@ -36,7 +36,11 @@ export interface IUser extends mongoose.Document {
             chaptersCompleted: [string]
         }],
     },
-    smallGroups?: [string]
+    smallGroups?: [string],
+    oAuth?: {
+        clientId: string,
+        provider: string
+    },
 }
 
 export type createUserType = {
@@ -73,7 +77,11 @@ export type createUserType = {
             chaptersCompleted: [string]
         }]
     },
-    smallGroups?: [string]
+    smallGroups?: [string],
+    oAuth?: {
+        clientId: string,
+        provider: string
+    },
 }
 
 export type getUserType = {
@@ -110,14 +118,18 @@ export type getUserType = {
             chaptersCompleted: [string]
         }]
     },
-    smallGroups?: [string]
+    smallGroups?: [string],
+    oAuth?: {
+        clientId: string,
+        provider: string
+    },
 }
 
 export const UserSchema = new Schema({
     firstName: { type: String },
     lastName: { type: String },
-    email: { type: String, required: true, index: true, validate: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ },
-    password: { type: String, required: true },
+    email: { type: String },
+    password: { type: String },
     subscriptions: { type: String },
     type: { type: String, required: true },
     status: { type: String },
@@ -149,6 +161,10 @@ export const UserSchema = new Schema({
         }]
     },
     smallGroups: [{ type: String }],
+    oAuth: {
+        clientId: String,
+        provider: String
+    },
     createdAt: {
         type: Date, default: () => {
             return new Date()

@@ -37,8 +37,10 @@ export interface IUser extends mongoose.Document {
         }],
     },
     smallGroups?: [string],
-    authProvider?: { type: string },
-    authId?: { type: string },
+    oAuth?: {
+        clientId: string,
+        provider: string
+    },
 }
 
 export type createUserType = {
@@ -76,8 +78,10 @@ export type createUserType = {
         }]
     },
     smallGroups?: [string],
-    authProvider?: { type: string },
-    authId?: { type: string },
+    oAuth?: {
+        clientId: string,
+        provider: string
+    },
 }
 
 export type getUserType = {
@@ -115,8 +119,10 @@ export type getUserType = {
         }]
     },
     smallGroups?: [string],
-    authProvider?: { type: string },
-    authId?: { type: string },
+    oAuth?: {
+        clientId: string,
+        provider: string
+    },
 }
 
 export const UserSchema = new Schema({
@@ -155,8 +161,10 @@ export const UserSchema = new Schema({
         }]
     },
     smallGroups: [{ type: String }],
-    authProvider: { type: String },
-    authId: { type: String },
+    oAuth: {
+        clientId: String,
+        provider: String
+    },
     createdAt: {
         type: Date, default: () => {
             return new Date()

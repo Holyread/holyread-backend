@@ -25,11 +25,8 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const params: { email: string, password: string } = req.body
     const user = await usersService.getOneUserByFilter({ email: params.email, password: encrypt(params.password) })
-    if (!user) {
+    if (!user || user.type === 'Admin') {
       return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
-    }
-    if (user.type === 'Admin') {
-      return next(Boom.badData(authControllerResponse.userAuthorisedAsAdmin))
     }
     if (user && user.status !== 'Active') {
       return next(Boom.badData(authControllerResponse.userNotActivatedError))
@@ -174,20 +171,20 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
   }
 }
 
-/** social Login */
-const socialLogin = async (req: Request, res: any, next: NextFunction) => {
+/** oAuth Login */
+const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
   try {
     const body: any = req.body
-    const query: any = [{ 'authId': body.id, 'authProvider': 'Facebook' }]
+    const query: any = [{ 'oAuth.clientId': body.id, 'oAuth.provider': 'FACEBOOK' }]
     if (body.email) {
       query.push({ email: body.email })
     }
     const user: any = await usersService.getOneUserByFilter({ $or: query })
     if (user && user.email && user.type === 'Admin') {
-      return next(Boom.notFound(authControllerResponse.userAuthorisedAsAdmin))
+      return next(Boom.notFound(authControllerResponse.userNotAuthorizationError))
     }
     if (user) {
-      const token: string = getToken({ email: user.email, 'authId': body.id, id: user._id })
+      const token: string = getToken({ email: user.email, 'oauthClientId': body.id, id: user._id })
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
         data: { _id: user._id, email: user.email, token, type: user.type, userName: user.firstName }
@@ -206,15 +203,16 @@ const socialLogin = async (req: Request, res: any, next: NextFunction) => {
       type: 'User',
       status: 'Active',
       verified: true,
-      'authId': body.id,
-      'authProvider': 'Facebook'
+      oAuth: {
+        clientId: body.id,
+        provider: 'FACEBOOK'
+      }
     }
     if (body.email) {
-      newBody.email = body.email,
-      newBody.password = body.email + "-facebookLogin"
+      newBody.email = body.email
     }
     const data: any = await usersService.createUser(newBody)
-    const token: string = getToken({ email: data.email, 'authId': body.id, id: data._id })
+    const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
       data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: newBody.firstName }
@@ -224,4 +222,4 @@ const socialLogin = async (req: Request, res: any, next: NextFunction) => {
   }
 }
 
-export default { signInUser, verifyUserSignUp, signUpUser, forgotPassoword, verifyPassword, socialLogin }
+export default { signInUser, verifyUserSignUp, signUpUser, forgotPassoword, verifyPassword, oAuthLogin }

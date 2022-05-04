@@ -33,6 +33,7 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             delete userObj.library
             delete userObj.smallGroups
             delete userObj.verificationCode
+            delete userObj.authId
             res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
       } catch (e: any) {
             next(Boom.badData(e.message))
@@ -99,7 +100,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             }
             if (req.body.image && req.body.image.includes('base64')) {
                   await removeImageToAwsS3(userObj.image, s3Bucket)
-                  body.image = await uploadImageToAwsS3(req.body.image, userObj.email.substring(0, userObj.email.lastIndexOf("@")), s3Bucket)
+                  body.image = await uploadImageToAwsS3(req.body.image, 'profile', s3Bucket)
             }
             if (req.body.image && req.body.image.startsWith('http')) {
                   body.image = userObj.image
@@ -114,11 +115,8 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
 /** get share option image url */
 const getShareOptionImageUrl = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            /** Get current user */
-            let data: any = Object.assign({}, req.user)
-
             if (req.body.image) {
-                  req.body.image = await uploadImageToAwsS3(req.body.image, data.email.substring(0, data.email.lastIndexOf("@")), { ...s3Bucket, documentDirectory: 'users/share-options' })
+                  req.body.image = await uploadImageToAwsS3(req.body.image, 'share-image', { ...s3Bucket, documentDirectory: 'users/share-options' })
             }
             const imageUrl: string = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.usersDirectory + '/share-options/' + req.body.image
             return res.status(200).send({ message: authControllerResponse.addShareImage, data: { image: imageUrl } })

@@ -9,7 +9,7 @@ const authControllerResponse = responseMessage.authControllerResponse
 /** Add User */
 const createUser = async (body: any) => {
     try {
-        body.password = encrypt(body.password)
+        if (body.password) body.password = encrypt(body.password)
         if (!body.subscriptions) {
             const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ title: 'Free-Trial' })
             if (subscriptionDetails) {

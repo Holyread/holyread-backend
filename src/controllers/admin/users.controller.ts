@@ -156,7 +156,7 @@ const updateUser = async (req: Request | any, res: Response, next: NextFunction)
         }
         if (req.body.image && req.body.image.includes('base64')) {
             await removeImageToAwsS3(userObj.image, s3Bucket)
-            req.body.image = await uploadImageToAwsS3(req.body.image, userObj.email.substring(0, userObj.email.lastIndexOf("@")), s3Bucket)
+            req.body.image = await uploadImageToAwsS3(req.body.image, 'Profile', s3Bucket)
         }
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = userObj.image

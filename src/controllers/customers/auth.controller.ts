@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
+import axios from 'axios';
+
 import { encrypt, getToken, verifyToken, sentEmail } from '../../lib/utils/utils'
 import usersService from '../../services/admin/users/user.service'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
@@ -25,6 +27,9 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     const user = await usersService.getOneUserByFilter({ email: params.email, password: encrypt(params.password) })
     if (!user) {
       return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
+    }
+    if (user.type === 'Admin') {
+      return next(Boom.badData(authControllerResponse.userAuthorisedAsAdmin))
     }
     if (user && user.status !== 'Active') {
       return next(Boom.badData(authControllerResponse.userNotActivatedError))
@@ -169,4 +174,54 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
   }
 }
 
-export default { signInUser, verifyUserSignUp, signUpUser, forgotPassoword, verifyPassword }
+/** social Login */
+const socialLogin = async (req: Request, res: any, next: NextFunction) => {
+  try {
+    const body: any = req.body
+    const query: any = [{ 'authId': body.id, 'authProvider': 'Facebook' }]
+    if (body.email) {
+      query.push({ email: body.email })
+    }
+    const user: any = await usersService.getOneUserByFilter({ $or: query })
+    if (user && user.email && user.type === 'Admin') {
+      return next(Boom.notFound(authControllerResponse.userAuthorisedAsAdmin))
+    }
+    if (user) {
+      const token: string = getToken({ email: user.email, 'authId': body.id, id: user._id })
+      return res.status(200).json({
+        message: authControllerResponse.loginSuccess,
+        data: { _id: user._id, email: user.email, token, type: user.type, userName: user.firstName }
+      })
+    }
+    if (body.photoUrl) {
+      await axios.get(body.photoUrl, { responseType: 'arraybuffer' }).then(async (response) => {
+        const data = "data:" + response.headers["content-type"] + ";base64," + Buffer.from(response.data).toString('base64');
+        body.photoUrl = await uploadImageToAwsS3(data, `profile`, s3Bucket)
+      })
+    }
+    const newBody: any = {
+      image: body.photoUrl ? body.photoUrl : '',
+      firstName: body.name,
+      lastName: body.name,
+      type: 'User',
+      status: 'Active',
+      verified: true,
+      'authId': body.id,
+      'authProvider': 'Facebook'
+    }
+    if (body.email) {
+      newBody.email = body.email,
+      newBody.password = body.email + "-facebookLogin"
+    }
+    const data: any = await usersService.createUser(newBody)
+    const token: string = getToken({ email: data.email, 'authId': body.id, id: data._id })
+    res.status(200).json({
+      message: authControllerResponse.loginSuccess,
+      data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: newBody.firstName }
+    })
+  } catch (e: any) {
+    next(Boom.badData(e.message))
+  }
+}
+
+export default { signInUser, verifyUserSignUp, signUpUser, forgotPassoword, verifyPassword, socialLogin }

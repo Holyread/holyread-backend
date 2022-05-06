@@ -15,21 +15,21 @@ const bookSummaryControllerResponse = responseMessage.bookSummaryControllerRespo
 const getAllSummaries = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
-        const skip: any = params.skip ? params.skip : dataLimit
-        const limit: any = params.limit ? params.limit : dataLimit
+        const skip: any = params.skip ? params.skip : dataLimit.skip
+        const limit: any = params.limit ? params.limit : dataLimit.limit
         let bookSearchFilter: any = { status: 'Active' }
         let authorSearchFilter: any = {}
         if (params.category) {
             bookSearchFilter.categories = String(params.category)
         }
         if (params.search) {
-            bookSearchFilter.title = await getSearchRegexp(params.search)
+            bookSearchFilter.filter = String(params.search).toLowerCase().trim()
             authorSearchFilter.name = await getSearchRegexp(params.search)
         }
         if (params.author) {
             bookSearchFilter.author = params.author
         }
-        const bookSummariesList: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), bookSearchFilter, [['createdAt', 'DESC']])
+        const bookSummariesList: any = await bookSummaryService.getAllBookSummariesForDiscover(Number(skip), Number(limit), bookSearchFilter, [['createdAt', 'DESC']])
         if (params.author) {
             response.status(200).json({
                 message: bookSummaryControllerResponse.fetchBookSummariesSuccess,

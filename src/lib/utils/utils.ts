@@ -172,7 +172,7 @@ export const getSearchRegexp = async (value) => {
     if (value.toString().startsWith('???')) { value = value.replace('???', '?') }
     if (value.toString().startsWith('[')) { value = value.slice(1) }
     if (value.toString().startsWith('(')) { value = value.slice(1) }
-    const result = { $regex: `.*\\$aus.*` + value.trim() + '.*\\$aus.*', $options: '-i' }
+    const result = { $regex: `.*` + value.trim() + '.*', $options: '-i' }
     return result
 }
 

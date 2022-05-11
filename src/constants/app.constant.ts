@@ -37,6 +37,10 @@ export const dataLimit = {
     skip: 0,
 }
 
+export const originEmails = {
+    contactUs: 'holyreads@mailinator.com'
+}
+
 export const emailTemplatesTitles = {
     customer: {
         registration: 'Customer Registration',

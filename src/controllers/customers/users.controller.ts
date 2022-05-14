@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
 import usersService from '../../services/customers/users/user.service'
+import authService from '../../services/admin/users/user.service'
 import bookService from '../../services/customers/book/bookSummary.service'
 import subscriptionService from '../../services/admin/subscriptions/subscriptions.service'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
@@ -240,10 +241,10 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   /** Prepare query to get users reads book details */
                   const search: any = { _id: { $in: bookIds } }
                   if (author) { search.author = author }
-                  
+
                   /** Get user reads books details by users reads books ids */
                   const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']], true)
-                  
+
                   /** sort summary by latest reads based on user library readings */
                   data.summaries = userObj.library.reading.map(r => {
                         const summary = data.summaries.find((os: any) => String(os._id) === String(r.bookId))
@@ -327,6 +328,81 @@ const submitFeedback = async (req: Request | any, res: Response, next: NextFunct
       }
 }
 
+/** Add User by referral */
+const blessFriend = async (req: any, res: Response, next: NextFunction) => {
+      try {
+            const body = req.body
+            body.email = body.friendEmail
+            delete body.friendEmail
+            const refUser: any = await usersService.getOneUserByFilter({ email: req.user.email })
+            if (!refUser) {
+                  return next(Boom.badData(authControllerResponse.getReferralUserError))
+            }
+            /** Get user from db */
+            const inviteUser: any = await usersService.getOneUserByFilter({ email: body.email })
+            if (inviteUser) {
+                  return next(Boom.badData(authControllerResponse.userAlreadyExistError))
+            }
+            const sendEmailTemplate = await emailTemplateService.getAllEmailTemplates(0, 0, { title: { $in: [emailTemplatesTitles.customer.sendInvitation, emailTemplatesTitles.customer.blessFriend] } }, [])
+            const blessFriendTemplate = sendEmailTemplate.count && sendEmailTemplate.emailTemplates.find(oneTemplate => oneTemplate.title === emailTemplatesTitles.customer.blessFriend)
+            const sendInvitationTemplate = sendEmailTemplate.count && sendEmailTemplate.emailTemplates.find(oneTemplate => oneTemplate.title === emailTemplatesTitles.customer.sendInvitation)
+
+            const blessFriendSubject = blessFriendTemplate?.subject || 'Customer Registration Bless Friend'
+            const sendInvitationSubject = sendInvitationTemplate?.subject || 'Send Invitation'
+
+            let blessFriendHtml = `<p>Dear {{username}},</p><p>Thank you for registered with Holyread.</p><p>Your customer account details are below:</p><p>Email : {{email}}<br>Password: {{password}}</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let sentInvitationHtml = '<p>Dear {{username}}</p><p>You have been registered on Holyread.</p><p>Your customer account details are below:</p><p>Email : {{email}}<br>Password: {{password}}</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>'
+
+            if (blessFriendTemplate && blessFriendTemplate.content) {
+                  const contentData = { email: body.email, password: body.password, username: body.email.substr(0, body.email.indexOf('@')) }
+                  const htmlData = await compileHtml(blessFriendTemplate.content, contentData)
+                  if (htmlData) {
+                        blessFriendHtml = htmlData
+                  }
+            }
+            if (blessFriendTemplate && blessFriendTemplate.content) {
+                  const contentData = { email: body.email, password: body.password, username: body.email.substr(0, body.email.indexOf('@')) }
+                  const htmlData = await compileHtml(blessFriendTemplate.content, contentData)
+                  if (htmlData) {
+                        blessFriendHtml = htmlData
+                  }
+            }
+            if (sendInvitationTemplate && sendInvitationTemplate.content) {
+                  const contentData = { email: body.email, password: body.password, username: refUser.email.substr(0, body.email.indexOf('@')) }
+                  const htmlData = await compileHtml(sendInvitationTemplate.content, contentData)
+                  if (htmlData) {
+                        sentInvitationHtml = htmlData
+                  }
+            }
+            const blessFriendEmailResult = await sentEmail(refUser.email, blessFriendSubject, blessFriendHtml);
+            const sendInvitationResult = await sentEmail(body.email, sendInvitationSubject, sentInvitationHtml);
+            if (!blessFriendEmailResult || !sendInvitationResult) {
+                  return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
+            }
+            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscriptions })
+            if (!subscriptionDetails) {
+                  return next(Boom.badData(authControllerResponse.blessFriendSubscriptionError))
+            }
+            const invitedUserDetails = await authService.createUser({
+                  image: '',
+                  email: body.email,
+                  password: body.password,
+                  type: 'User',
+                  status: 'Active',
+                  verified: true,
+                  verificationCode: '',
+                  subscriptions: subscriptionDetails._id
+            })
+            if (!invitedUserDetails || !invitedUserDetails._id) {
+                  return next(Boom.badData(authControllerResponse.createUserFailed))
+            }
+            res.status(200).send({ message: authControllerResponse.blessFriendSuccess })
+      } catch (e: any) {
+            console.log(e.message)
+            next(Boom.badData(e.message))
+      }
+}
+
 export {
       getUserAccount,
       getShareOptionImageUrl,
@@ -336,5 +412,6 @@ export {
       updateUserLibrary,
       getUserLibrary,
       submitQuery,
-      submitFeedback
+      submitFeedback,
+      blessFriend
 }

@@ -46,7 +46,9 @@ export const emailTemplatesTitles = {
         registration: 'Customer Registration',
         forgotPassword: 'Customer Forgot Password',
         contactUs: 'Contact Us',
-        feedback: 'Client Feedback'
+        feedback: 'Client Feedback',
+        sendInvitation: 'Send Invitation',
+        blessFriend: 'Customer Registration Bless Friend',
     },
     admin: {
         customerRegistration: 'Admin Customer Registration',

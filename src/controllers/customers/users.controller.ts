@@ -8,7 +8,7 @@ import subscriptionService from '../../services/admin/subscriptions/subscription
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
 import { removeImageToAwsS3, uploadImageToAwsS3, encrypt, compileHtml, sentEmail } from '../../lib/utils/utils'
-import { awsBucket, emailTemplatesTitles } from '../../constants/app.constant'
+import { awsBucket, emailTemplatesTitles, originEmails } from '../../constants/app.constant'
 import config from '../../../config'
 
 const authControllerResponse = responseMessage.authControllerResponse
@@ -289,7 +289,7 @@ const submitQuery = async (req: Request | any, res: Response, next: NextFunction
                         html = htmlData
                   }
             }
-            const result = await sentEmail(config.SMTP_EMAIL, sub, html);
+            const result = await sentEmail(originEmails.contactUs, sub, html);
             if (!result) {
                   return next(Boom.badData(authControllerResponse.submitQueryError))
             }
@@ -318,7 +318,7 @@ const submitFeedback = async (req: Request | any, res: Response, next: NextFunct
                         html = htmlData
                   }
             }
-            const result = await sentEmail(config.SMTP_EMAIL, sub, html);
+            const result = await sentEmail(originEmails.contactUs, sub, html);
             if (!result) {
                   return next(Boom.badData(authControllerResponse.submitQueryError))
             }

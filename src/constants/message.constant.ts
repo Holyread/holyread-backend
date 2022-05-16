@@ -14,7 +14,7 @@ export const responseMessage = {
         getUsersSuccess: 'users fetched successfully',
         getUserError: 'User does not exist',
         getReferralUserError: 'Referral User does not exist',
-        userNotAuthorizationError: 'User not authorized',
+        userNotAuthorizationError: 'Incorrect credentials or Wrong password',
         userNotActivatedError: 'User not activated',
         userInvalidPasswordError: 'Password is incorrect',
         passwordUpdateSuccess: 'Password has been changed successfully',

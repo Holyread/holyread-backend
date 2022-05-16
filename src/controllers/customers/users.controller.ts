@@ -391,7 +391,8 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                   status: 'Active',
                   verified: true,
                   verificationCode: '',
-                  subscriptions: subscriptionDetails._id
+                  subscriptions: subscriptionDetails._id,
+                  referralUserId: refUser._id 
             })
             if (!invitedUserDetails || !invitedUserDetails._id) {
                   return next(Boom.badData(authControllerResponse.createUserFailed))

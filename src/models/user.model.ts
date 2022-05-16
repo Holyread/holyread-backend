@@ -41,6 +41,7 @@ export interface IUser extends mongoose.Document {
         clientId: string,
         provider: string
     },
+    referralUserId?: string
 }
 
 export type createUserType = {
@@ -82,6 +83,7 @@ export type createUserType = {
         clientId: string,
         provider: string
     },
+    referralUserId?: string
 }
 
 export type getUserType = {
@@ -123,6 +125,7 @@ export type getUserType = {
         clientId: string,
         provider: string
     },
+    referralUserId?: string
 }
 
 export const UserSchema = new Schema({
@@ -165,6 +168,7 @@ export const UserSchema = new Schema({
         clientId: String,
         provider: String
     },
+    referralUserId: { type: Schema.Types.ObjectId, ref: 'user' },
     createdAt: {
         type: Date, default: () => {
             return new Date()

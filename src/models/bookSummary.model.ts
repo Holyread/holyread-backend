@@ -12,11 +12,12 @@ export interface IBookSummary extends mongoose.Document {
     coverImageBackground?: string,
     popular?: boolean,
     videoFile?: string,
-    audioFile?: string,
+    videoFileSize?: number,
     chapters: [{
         name: string,
         description: string,
-        audioFile: string
+        audioFile: string,
+        size: number
     }],
     status?: 'Active' | 'Deactive'
 }
@@ -32,11 +33,12 @@ export type createBookSummaryType = {
     coverImageBackground?: string,
     popular?: boolean,
     videoFile?: string,
-    audioFile?: string,
+    videoFileSize?: number,
     chapters: [{
         name: string,
         description: string,
-        audioFile: string
+        audioFile: string,
+        size: number
     }],
     status?: 'Active' | 'Deactive'
 }
@@ -53,11 +55,12 @@ export type getBookSummaryType = {
     coverImageBackground?: string,
     popular?: boolean,
     videoFile?: string,
-    audioFile?: string,
+    videoFileSize?: number,
     chapters?: [{
         name: string,
         description: string,
-        audioFile: string
+        audioFile: string,
+        size: number
     }],
     status?: 'Active' | 'Deactive'
 }
@@ -81,12 +84,13 @@ export const BookSummarySchema = new Schema({
     coverImage: { type: String, default: '' },
     coverImageBackground: { type: String },
     popular: { type: Boolean, default: false, index: true },
-    audioFile: { type: String },
     videoFile: { type: String },
+    videoFileSize: { type: Number },
     chapters: [{
         name: { type: String },
         description: { type: String },
-        audioFile: { type: String }
+        audioFile: { type: String },
+        size: { type: Number }
     }],
     createdAt: {
         type: Date, default: () => {

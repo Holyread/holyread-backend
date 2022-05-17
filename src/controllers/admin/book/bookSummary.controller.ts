@@ -5,7 +5,7 @@ import bookCategoryService from '../../../services/admin/book/bookCategory.servi
 import bookSummaryService from '../../../services/admin/book/bookSummary.service'
 import recommendedBookService from '../../../services/admin/book/recommendedBook.service'
 import { responseMessage } from '../../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../../lib/utils/utils'
+import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp, getFileSizeFromBase64 } from '../../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../../constants/app.constant'
 import config from '../../../../config'
 
@@ -40,11 +40,13 @@ const addSummary = async (req: Request, res: Response, next: NextFunction) => {
         if (body.chapters && body.chapters.length) {
             await Promise.all(body.chapters.map(async oneChapter => {
                 if (oneChapter.audioFile) {
+                    oneChapter.size = getFileSizeFromBase64(oneChapter.audioFile)
                     oneChapter.audioFile = await uploadImageToAwsS3(oneChapter.audioFile, oneChapter.name, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' })
                 }
             }));
         }
         if (body.videoFile) {
+            body.videoFileSize = getFileSizeFromBase64(body.videoFile)
             body.videoFile = await uploadImageToAwsS3(body.videoFile, body.title + '-video', { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
         }
         const data = await bookSummaryService.createBookSummary(body)
@@ -194,6 +196,7 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
                     if (chapterdetails && chapterdetails.audioFile) {
                         await removeImageToAwsS3(chapterdetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' })
                     }
+                    oneChapter.size = getFileSizeFromBase64(oneChapter.audioFile)
                     oneChapter.audioFile = await uploadImageToAwsS3(oneChapter.audioFile, oneChapter.name, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' })
                 }
             }));
@@ -208,6 +211,7 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
             if (summaryDetails.videoFile) {
                 await removeImageToAwsS3(summaryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
             }
+            req.body.videoFileSize = getFileSizeFromBase64(req.body.videoFile)
             req.body.videoFile = await uploadImageToAwsS3(req.body.videoFile, summaryDetails.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
         }
         await bookSummaryService.updateBookSummary(req.body, id)

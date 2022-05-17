@@ -112,7 +112,6 @@ export const uploadImageToAwsS3 = async (
         })
         
     } catch (e: any) {
-        console.log('Image Update catch error - > ', e)
         throw new Error(e.message)
     }
 }
@@ -186,11 +185,10 @@ export const compileHtml = async (source: string, data: any) => {
     }
 }
 
-export const bytesToSize = (bytes) => {
-    var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    if (bytes == 0) return '0 Byte';
-    var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)).toString());
-    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i];
-}
-
 export const randomNumberInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
+
+export const getFileSizeFromBase64 = (base64Document: string) => {
+    var stringLength = base64Document.substring(base64Document.indexOf(',') + 1).length;
+    var sizeInBytes = 4 * Math.ceil((stringLength / 3)) * 0.5624896334383812;
+    return sizeInBytes
+}

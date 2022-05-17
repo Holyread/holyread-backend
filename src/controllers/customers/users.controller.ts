@@ -399,7 +399,6 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             }
             res.status(200).send({ message: authControllerResponse.blessFriendSuccess })
       } catch (e: any) {
-            console.log(e.message)
             next(Boom.badData(e.message))
       }
 }

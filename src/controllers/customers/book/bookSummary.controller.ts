@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
+import aws from 'aws-sdk';
 
 import bookSummaryService from '../../../services/customers/book/bookSummary.service'
 import bookAuthorService from '../../../services/admin/book/author.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket, dataLimit } from '../../../constants/app.constant'
-import { getSearchRegexp } from '../../../lib/utils/utils'
+import { bytesToSize, getSearchRegexp } from '../../../lib/utils/utils'
 import config from '../../../../config'
 
 const NODE_ENV = config.NODE_ENV
@@ -56,15 +57,30 @@ const getOneSummary = async (req: Request, res: Response, next: NextFunction) =>
         if (!data) {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
+        const s3 = new aws.S3({
+            secretAccessKey: config.AWS_SECRET,
+            accessKeyId: config.AWS_ACCESSKEY,
+            region: awsBucket.region,
+        })
+        /** Get S3 bucket files contents  */
+        const s3BooksContents = await s3.listObjectsV2({
+            Bucket: 'holyreads-develop',
+            Prefix: 'books'
+        }).promise();
+
         if (data.coverImage) {
             data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
         }
         if (data.videoFile) {
+            const videoFileSize = s3BooksContents.Contents.find(oneContent => oneContent.Key.includes('video/' + data.videoFile))?.Size || 0
+            data.videoFileSize = bytesToSize(videoFileSize)
             data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile
         }
         if (data.chapters && data.chapters.length) {
             data.chapters.forEach(async oneChapter => {
                 if (oneChapter.audioFile) {
+                    const audeoFileSize = s3BooksContents.Contents.find(oneContent => oneContent.Key.includes('audio/' + oneChapter.audioFile))?.Size || 0
+                    oneChapter.audeoFileSize = bytesToSize(audeoFileSize)
                     oneChapter.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + oneChapter.audioFile
                 }
             });

@@ -56,6 +56,7 @@ const getOneSummary = async (req: Request, res: Response, next: NextFunction) =>
         if (!data) {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
+
         if (data.coverImage) {
             data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
         }

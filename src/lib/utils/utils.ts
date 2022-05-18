@@ -112,7 +112,6 @@ export const uploadImageToAwsS3 = async (
         })
         
     } catch (e: any) {
-        console.log('Image Update catch error - > ', e)
         throw new Error(e.message)
     }
 }
@@ -187,3 +186,9 @@ export const compileHtml = async (source: string, data: any) => {
 }
 
 export const randomNumberInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
+
+export const getFileSizeFromBase64 = (base64Document: string) => {
+    var stringLength = base64Document.substring(base64Document.indexOf(',') + 1).length;
+    var sizeInBytes = 4 * Math.ceil((stringLength / 3)) * 0.5624896334383812;
+    return sizeInBytes
+}

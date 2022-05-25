@@ -15,7 +15,7 @@ const getAllRecommendedBooks = async (skip: number, limit, search: object, sort)
                               title: item.book.title,
                               author: item.book.author,
                               overview: item.book.overview,
-                              shortDescription: item.book.shortDescription,
+                              description: item.book.description,
                         }
                   }
                   if (item && item.book && item.book.author) {

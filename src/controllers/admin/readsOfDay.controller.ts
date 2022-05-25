@@ -31,7 +31,6 @@ const addReadOfDay = async (req: Request, res: Response, next: NextFunction) => 
         const data = await readsOfDayService.createReadOfDay({
             title: body.title,
             subTitle: body.subTitle,
-            shortDescription: body.shortDescription,
             description: body.description,
             image: body.image,
             status: body.status || 'Active'
@@ -75,7 +74,6 @@ const getAllReadsOfDay = async (request: Request, response: Response, next: Next
             searchFilter = {
                 $or: [
                     { 'title': await getSearchRegexp(params.search) },
-                    { 'shortDescription': await getSearchRegexp(params.search) },
                     { 'status': await getSearchRegexp(params.search) }
                 ]
             }

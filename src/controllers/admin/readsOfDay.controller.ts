@@ -75,6 +75,7 @@ const getAllReadsOfDay = async (request: Request, response: Response, next: Next
             searchFilter = {
                 $or: [
                     { 'title': await getSearchRegexp(params.search) },
+                    { 'shortDescription': await getSearchRegexp(params.search) },
                     { 'status': await getSearchRegexp(params.search) }
                 ]
             }
@@ -84,9 +85,6 @@ const getAllReadsOfDay = async (request: Request, response: Response, next: Next
         switch (params.column) {
             case 'title':
                 readsOfDaySorting.push(['title', params.order || 'ASC']);
-                break;
-            case 'shortDescription':
-                readsOfDaySorting.push(['shortDescription', params.order || 'ASC']);
                 break;
             case 'createdAt':
                 readsOfDaySorting.push(['createdAt', params.order || 'ASC']);

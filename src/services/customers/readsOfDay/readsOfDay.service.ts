@@ -14,7 +14,7 @@ const getAllReadsOfDays = async (skip: number, limit, search: object, sort) => {
                 _id: item._id,
                 image: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image,
                 title: item.title,
-                subTitle: item.subTitle
+                subTitle: item.subTitle,
             }
         }))
         return { readsOfTheDayList, count }

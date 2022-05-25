@@ -13,7 +13,7 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
         smallgroupsList = await Promise.all(await smallgroupsList.map(async (item) => {
             if (item && item.books && item.books.length) {
                 item.books = await Promise.all(item.books.map(async oneBook => {
-                    const bookDetails = await BookSummaryModel.findById(oneBook).select('coverImage').lean().exec()
+                    const bookDetails = await BookSummaryModel.findById(oneBook).select('coverImage description').lean().exec()
                     if (!bookDetails) {
                         return oneBook
                     }
@@ -43,7 +43,7 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
 /** Get one small group by filter */
 const getOneSmallGroupByFilter = async (query: any) => {
     try {
-        const result: any = await SmallGroupModel.findOne(query).populate('books', 'title overview author coverImage coverImageBackground').lean()
+        const result: any = await SmallGroupModel.findOne(query).populate('books', 'title overview description author coverImage coverImageBackground').lean()
         if (result?.books.length) {
             result.books = await Promise.all(result?.books?.map(async oneBook => {
                 if (!oneBook?._id) return undefined

@@ -4,6 +4,7 @@ mongoose.set('useCreateIndex', true)
 export interface IBookSummary extends mongoose.Document {
     title: string,
     author: string,
+    shortDescription?: string,
     description: string,
     overview: string,
     bookFor: string,
@@ -25,6 +26,7 @@ export interface IBookSummary extends mongoose.Document {
 export type createBookSummaryType = {
     title: string,
     author: string,
+    shortDescription?: string,
     description: string,
     overview: string,
     bookFor: string,
@@ -47,6 +49,7 @@ export type getBookSummaryType = {
     _id?: string,
     title: string,
     author?: string,
+    shortDescription?: string,
     description?: string,
     overview?: string,
     bookFor?: string,
@@ -73,6 +76,7 @@ export const BookSummarySchema = new Schema({
         ref: 'bookAuthor',
         index: true
     },
+    shortDescription: { type: String, default: '' },
     description: { type: String, default: '' },
     overview: { type: String, default: '' },
     bookFor: { type: String, default: '' },

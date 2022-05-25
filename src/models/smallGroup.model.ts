@@ -6,6 +6,7 @@ export interface ISmallGroup extends mongoose.Document {
     title: string,
     books: [string],
     description: string,
+    shortDescription?: string,
     iceBreaker: string,
     introduction: string,
     questions: [{
@@ -19,6 +20,7 @@ export interface ISmallGroup extends mongoose.Document {
 export type createSmallGroupType = {
     title: string,
     books: [string],
+    shortDescription?: string,
     description: string,
     iceBreaker: string,
     introduction: string,
@@ -34,6 +36,7 @@ export type getSmallGroupType = {
     _id?: string,
     title: string,
     books?: [string],
+    shortDescription?: string,
     description?: string,
     iceBreaker?: string,
     introduction?: string,
@@ -53,6 +56,7 @@ export const SmallGroupSchema = new Schema({
         ref: 'bookSummary',
         index: true
     }],
+    shortDescription: { type: String, required: true },
     description: { type: String, required: true },
     status: { type: String, default: 'Active' },
     iceBreaker: { type: String, default: '' },

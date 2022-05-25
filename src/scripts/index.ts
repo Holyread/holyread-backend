@@ -1,3 +1,2 @@
 import './add-admin.script'
-import './add-size-in-book.script'
-
+import './add-short-desc-column.script'

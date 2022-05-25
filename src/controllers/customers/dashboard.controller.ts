@@ -115,6 +115,7 @@ const getRecommendedBooks = async (request: Request, response: Response, next: N
                         title: oneBook.book.title,
                         author: oneBook.book.author,
                         overview: oneBook.book.overview,
+                        shortDescription: oneBook.book.shortDescription,
                         totalStar: Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1,9))),
                         totalReads: randomNumberInRange(10000, 20000)
                     })

@@ -29,6 +29,7 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
                 introduction: item.introduction,
                 title: item.title,
                 description: item.description,
+                shortDescription: item.shortDescription,
                 backgroundColor: item.backgroundColor,
                 books: item.books,
                 bookMark: global?.currentUser?.smallGroups?.find(os => String(os) === String(item._id)) ? true : false
@@ -43,7 +44,7 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
 /** Get one small group by filter */
 const getOneSmallGroupByFilter = async (query: any) => {
     try {
-        const result: any = await SmallGroupModel.findOne(query).populate('books', 'title overview author coverImage coverImageBackground').lean()
+        const result: any = await SmallGroupModel.findOne(query).populate('books', 'title overview shortDescription author coverImage coverImageBackground').lean()
         if (result?.books.length) {
             result.books = await Promise.all(result?.books?.map(async oneBook => {
                 if (!oneBook?._id) return undefined

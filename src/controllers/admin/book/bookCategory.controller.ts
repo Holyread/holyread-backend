@@ -30,6 +30,7 @@ const addCategory = async (req: Request, res: Response, next: NextFunction) => {
         }
         const data = await bookCategoryService.createBookCategory({
             title: body.title,
+            shortDescription: body.shortDescription,
             image: body.image,
             status: body.status
         })

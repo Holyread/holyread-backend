@@ -85,8 +85,8 @@ const getAllSmallGroups = async (request: Request, response: Response, next: Nex
             case 'iceBreaker':
                 smallGroupsSorting.push(['iceBreaker', params.order || 'ASC']);
                 break;
-            case 'description':
-                smallGroupsSorting.push(['description', params.order || 'ASC']);
+            case 'shortDescription':
+                smallGroupsSorting.push(['shortDescription', params.order || 'ASC']);
                 break;
             case 'introduction':
                 smallGroupsSorting.push(['introduction', params.order || 'ASC']);

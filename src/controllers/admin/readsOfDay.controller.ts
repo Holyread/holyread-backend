@@ -31,6 +31,7 @@ const addReadOfDay = async (req: Request, res: Response, next: NextFunction) => 
         const data = await readsOfDayService.createReadOfDay({
             title: body.title,
             subTitle: body.subTitle,
+            shortDescription: body.shortDescription,
             description: body.description,
             image: body.image,
             status: body.status || 'Active'
@@ -83,6 +84,9 @@ const getAllReadsOfDay = async (request: Request, response: Response, next: Next
         switch (params.column) {
             case 'title':
                 readsOfDaySorting.push(['title', params.order || 'ASC']);
+                break;
+            case 'shortDescription':
+                readsOfDaySorting.push(['shortDescription', params.order || 'ASC']);
                 break;
             case 'createdAt':
                 readsOfDaySorting.push(['createdAt', params.order || 'ASC']);

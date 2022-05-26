@@ -88,6 +88,9 @@ export const uploadImageToAwsS3 = async (
             } else if (base64Document.indexOf('data:audio/') > -1) {
                 docExtension = base64Document.substring('data:audio/'.length, base64Document.indexOf(';base64'))
                 pattern = /^data:audio\/\w+;base64,/
+            } else if (base64Document.indexOf('data:application/') > -1) {
+                docExtension = base64Document.substring('data:application/'.length, base64Document.indexOf(';base64'))
+                pattern = /^data:application\/\w+;base64,/
             } else if (base64Document.indexOf('data:image/') > -1) {
                 docExtension = base64Document.substring('data:image/'.length, base64Document.indexOf(';base64'))
             } else {
@@ -138,7 +141,7 @@ export const removeImageToAwsS3 = async (
     }
 }
 
-export const sentEmail = async (receiverEmail: string, subject: string, html: string) => {
+export const sentEmail = async (receiverEmail: string, subject: string, html: string, fileName?: string, fileLink?: string) => {
     const transporter = nodemailer.createTransport(smtpTransport({
         service: 'gmail',
         host: 'smtp.gmail.com',
@@ -148,12 +151,23 @@ export const sentEmail = async (receiverEmail: string, subject: string, html: st
         }
     }));
 
-    const mailOptions = {
+    const mailOptions: any = {
         from: config.SMTP_EMAIL,
         to: receiverEmail,
         subject,
-        html
+        headers: {
+            "X-Laziness-level": 1000,
+            "charset" : 'UTF-8'
+        },
+        html,
     };
+    if (fileLink) {
+        mailOptions.attachments = [{
+            fileName,
+            path: fileLink,
+            contentType: 'application/pdf',
+        }]
+    }
     return new Promise((resolve, reject) => {
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {

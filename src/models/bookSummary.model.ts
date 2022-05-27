@@ -13,6 +13,7 @@ export interface IBookSummary extends mongoose.Document {
     popular?: boolean,
     videoFile?: string,
     videoFileSize?: number,
+    bookReadFile?: string,
     chapters: [{
         name: string,
         description: string,
@@ -34,6 +35,7 @@ export type createBookSummaryType = {
     popular?: boolean,
     videoFile?: string,
     videoFileSize?: number,
+    bookReadFile?: string,
     chapters: [{
         name: string,
         description: string,
@@ -56,6 +58,7 @@ export type getBookSummaryType = {
     popular?: boolean,
     videoFile?: string,
     videoFileSize?: number,
+    bookReadFile?: string,
     chapters?: [{
         name: string,
         description: string,
@@ -86,6 +89,7 @@ export const BookSummarySchema = new Schema({
     popular: { type: Boolean, default: false, index: true },
     videoFile: { type: String },
     videoFileSize: { type: Number },
+    bookReadFile: { type: String },
     chapters: [{
         name: { type: String },
         description: { type: String },

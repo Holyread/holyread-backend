@@ -9,7 +9,6 @@ const NODE_ENV = config.NODE_ENV
 const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, sort, library?: any) => {
     try {
         let result: any = await BookSummaryModel.find({}).sort(sort).lean().exec()
-        // let count: any = await BookSummaryModel.count(search).lean().exec()
         result = await Promise.all(result.map(async oneItem => {
             if (oneItem.author) {
                 oneItem.author = await BookAuthorModel.findById(oneItem.author).lean()
@@ -19,9 +18,9 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                 }
             }
             /** if search author then return if book author not match */
-            if (search?.author && String(oneItem.author) !== search?.author) return null
+            if (search?.author && String(oneItem.author._id) !== String(search?.author)) return null
             /** if search then return if book title or author name not match */
-            if (search.filter && !oneItem?.title?.toLowerCase()?.includes(search.filter) && !oneItem?.author?.name?.toLowerCase().includes(search.filter)) return null
+            if (search.filter && !oneItem?.title?.toLowerCase()?.includes(search.filter) && !oneItem?.author?.name?.toLowerCase().includes(search.filter.trim().toLowerCase())) return null
 
             const isSaved = global?.currentUser?.library?.saved?.find(b => String(b) === String(oneItem?._id)) ? true : false
             return {

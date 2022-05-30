@@ -1,4 +1,4 @@
-import { BookAuthorModel } from '../../../models/index'
+import { BookAuthorModel, BookSummaryModel } from '../../../models/index'
 
 /** Create Author */
 const createAuthor = async (body: any) => {
@@ -38,6 +38,9 @@ const getOneAuthorByFilter = async (query: any) => {
 const getAllAuthors = async (skip: number, limit, search: object, sort) => {
       try {
             const authorsList: any = await BookAuthorModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+            await Promise.all(authorsList.map(async oneAuthor => {
+                  oneAuthor.booksCount = await BookSummaryModel.count({ author: oneAuthor._id }).lean().exec()
+            }))
             const count = await BookAuthorModel.find(search).count()
             return { count, authors: authorsList }
       } catch (e: any) {

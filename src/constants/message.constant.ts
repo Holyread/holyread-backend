@@ -29,7 +29,8 @@ export const responseMessage = {
         addShareImage: 'Share image uploaded successfully',
         submitQueryError: 'Failed to send your message, please try letter or contact administrator by other way',
         submitQuerySuccess: 'Your message was sent successfully, Thanks.',
-        userAuthorisedAsAdmin: 'User authorised as admin, please use another email'
+        userAuthorisedAsAdmin: 'User authorised as admin, please use another email',
+        kindleEmailNotExistError: 'Please add your kindle email address',
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',
@@ -78,7 +79,9 @@ export const responseMessage = {
         fetchBookSummariesSuccess: 'Book summary list fetched successfully',
         createBookSummaryFailure: 'Book summary already added',
         getBookSummaryFailure: 'Failed to fetch book summary details',
-        recommendedBookError: 'Book is locked due to book exist in recommended list'
+        recommendedBookError: 'Book is locked due to book exist in recommended list',
+        sendBookToKindleSuccess: 'Book successfully sended to your kindle',
+        sendBookToKindleEmailFailure: 'Failed to send book on your kindle email',
     },
     dashboardControllerResponse: {
         getDashboardSuccess: 'Dashboard details fetched successfully'

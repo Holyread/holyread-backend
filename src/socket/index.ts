@@ -1,4 +1,3 @@
-// import { fetchMovies, addMovie, updateMovie, deleteMovie } from '../controllers/movie';
 import { fetchNotifications, clearNotifications } from '../controllers/customers/notification.controller';
 
 module.exports = (io) => {

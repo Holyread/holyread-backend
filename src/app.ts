@@ -5,16 +5,17 @@ import bodyParser from 'body-parser'
 import path from 'path'
 import cors from 'cors'
 import Boom from '@hapi/boom'
+import http from 'http'
 
 import customersRoutes from './routes/customers.routes'
 import adminRoutes from './routes/admin.routes'
-
 import appConfig from './lib/appConfig'
 import './models/index'
 import config from '../config'
 import { allowedOrigins } from './constants/app.constant'
 import { responseMessage } from './constants/message.constant'
 
+const io = require('socket.io')();
 const app = express()
 app.use(compression())
 
@@ -26,6 +27,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cookieParser())
 
 require('./scripts')
+require('./socket')(io)
 
 const appControllerResponse = responseMessage.appResponse
 
@@ -39,11 +41,15 @@ app.use('/api/v1/customers', cors(corsOptionsDelegate), customersRoutes)
 app.use('/api/v1/admin', cors(corsOptionsDelegate), adminRoutes)
 app.get('/', async (req: Request, res: Response) => res.sendFile(__dirname + '/views/index.html'))
 app.use(appConfig.handleError)
+app.set('port', config.PORT);
+var server = http.createServer(app);
 
 if (config.NODE_ENV !== 'test') {
-  app.listen(config.PORT, () => console.log(`API listening on ${config.PORT}`))
+  server.listen(config.PORT, () => console.log(`API listening on ${config.PORT}`))
+  io.attach(server); 
 }
 
 export {
-  app
+  app,
+  io
 }

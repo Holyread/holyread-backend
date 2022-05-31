@@ -1,7 +1,10 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
+import { io } from '../../app';
 import usersService from '../../services/customers/users/user.service'
+import notificationsService from '../../services/customers/notifications/notifications.service'
+import { fetchNotifications } from '../../controllers/customers/notification.controller'
 import authService from '../../services/admin/users/user.service'
 import bookService from '../../services/customers/book/bookSummary.service'
 import subscriptionService from '../../services/admin/subscriptions/subscriptions.service'
@@ -108,6 +111,10 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   body.image = userObj.image
             }
             await usersService.updateUser(body, { _id: userObj._id })
+            if (req.body.subscriptions) {
+                  await notificationsService.updateNotification({ userId: userObj._id, title: 'Update Subscription' }, { title: 'Update Subscription', description: 'Subscription updated successfully' })
+                  fetchNotifications(io.sockets, { _id: userObj._id })
+            }
             return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
       } catch (e: any) {
             return next(Boom.badData(e.message))
@@ -393,7 +400,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                   verified: true,
                   verificationCode: '',
                   subscriptions: subscriptionDetails._id,
-                  referralUserId: refUser._id 
+                  referralUserId: refUser._id
             })
             if (!invitedUserDetails || !invitedUserDetails._id) {
                   return next(Boom.badData(authControllerResponse.createUserFailed))

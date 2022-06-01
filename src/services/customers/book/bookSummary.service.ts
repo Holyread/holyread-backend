@@ -17,6 +17,8 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                     name: oneItem.author.name
                 }
             }
+            /** if search category books then return if category books not exist */
+            if (search?.categories && !oneItem.categories.find(oneCate => String(oneCate) === String(search.categories))) return null
             /** if search author then return if book author not match */
             if (search?.author && String(oneItem.author._id) !== String(search?.author)) return null
             /** if search then return if book title or author name not match */

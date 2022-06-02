@@ -1,5 +1,5 @@
 import { encrypt } from '../../../lib/utils/utils'
-import { UserModel } from '../../../models/index'
+import { UserModel, NotificationsModel } from '../../../models/index'
 
 /** Modify User */
 const updateUser = async (body: any, query: object) => {
@@ -18,6 +18,10 @@ const updateUser = async (body: any, query: object) => {
 const getOneUserByFilter = async (query: any) => {
     try {
         const result: any = await UserModel.findOne(query).select('-password').lean().exec()
+        if (result) {
+            const notifications = await NotificationsModel.find({ userId: result._id }).sort([['updatedAt', 'DESC']]).lean().exec()
+            result.notifications = notifications    
+        }
         return result
     } catch (e: any) {
         throw new Error(e)

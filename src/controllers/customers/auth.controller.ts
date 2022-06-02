@@ -10,6 +10,9 @@ import { origins, emailTemplatesTitles } from '../../constants/app.constant'
 import { uploadImageToAwsS3, compileHtml } from '../../lib/utils/utils'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
+import notificationsService from '../../services/customers/notifications/notifications.service';
+import { fetchNotifications } from './notification.controller';
+import { io } from '../../app';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
@@ -112,6 +115,9 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       status: 'Active',
       $unset: { verificationCode: 1 }
     }, user._id)
+    await notificationsService.updateNotification({ userId: user._id, title: 'Wellcome' }, { title: 'Wellcome', description: 'Wellcome to the holyreads' })
+    fetchNotifications(io.sockets, { _id: user._id })
+
     res.status(200).send({ message: authControllerResponse.signUpSuccess })
   } catch (e: any) {
     next(Boom.badData(e.message))

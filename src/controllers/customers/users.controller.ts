@@ -38,6 +38,8 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             delete userObj.smallGroups
             delete userObj.verificationCode
             delete userObj.oAuth
+            const notifications = await notificationsService.getUserNotifications({ userId: userObj._id })
+            userObj.notifications = notifications
             res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
       } catch (e: any) {
             next(Boom.badData(e.message))

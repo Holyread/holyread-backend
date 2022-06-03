@@ -3,8 +3,8 @@ import { NotificationsModel } from '../../../models/index'
 /** Get notifications */
 const getUserNotifications = async (query: object) => {
     try {
-        const nitificationDetails = await NotificationsModel.find(query).sort([['updatedAt', 'DESC']]).lean().exec()
-        return nitificationDetails
+        const notificationDetails = await NotificationsModel.find(query).sort([['updatedAt', 'DESC']]).lean().exec()
+        return notificationDetails
     } catch (e: any) {
         throw new Error(e)
     }

@@ -1,5 +1,15 @@
 import { NotificationsModel } from '../../../models/index'
 
+/** Get notifications */
+const getUserNotifications = async (query: object) => {
+    try {
+        const notificationDetails = await NotificationsModel.find(query).sort([['updatedAt', 'DESC']]).lean().exec()
+        return notificationDetails
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 /** Delete notifications */
 const deleteNotifications = async (query: object) => {
     try {
@@ -20,4 +30,4 @@ const updateNotification = async (query: object, body) => {
     }
 }
 
-export default { deleteNotifications, updateNotification }
+export default { getUserNotifications, deleteNotifications, updateNotification }

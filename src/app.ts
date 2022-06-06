@@ -14,6 +14,7 @@ import './models/index'
 import config from '../config'
 import { allowedOrigins } from './constants/app.constant'
 import { responseMessage } from './constants/message.constant'
+import customerIoAuth from './middleware/customers.io.passport'
 
 const io = require('socket.io')();
 const app = express()
@@ -27,6 +28,8 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cookieParser())
 
 require('./scripts')
+
+io.use(customerIoAuth);
 require('./socket')(io)
 
 const appControllerResponse = responseMessage.appResponse

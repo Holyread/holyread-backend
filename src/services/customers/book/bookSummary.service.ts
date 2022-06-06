@@ -36,6 +36,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                 totalReads: randomNumberInRange(10000, 20000),
                 bookMark: isSaved,
                 coverImageBackground: oneItem.coverImageBackground,
+                categories: oneItem.categories
             }
         }))
         result = result.filter(s => s)
@@ -72,7 +73,8 @@ const getAllBookSummaries = async (skip: number, limit, search: any, sort, libra
                 bookMark: isSaved,
                 coverImageBackground: oneItem.coverImageBackground,
                 chapters: library ? oneItem.chapters : undefined,
-                reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / oneItem?.chapters?.length : 0).toFixed(0))
+                reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / oneItem?.chapters?.length : 0).toFixed(0)),
+                categories: oneItem.categories
             }
         }))
         return { count, summaries: result }

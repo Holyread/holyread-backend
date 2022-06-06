@@ -8,9 +8,8 @@ const fetchNotifications = async (socket, query) => {
 }
 
 const clearNotifications = async (socket, query) => {
-      await notificationServices.deleteNotifications({ userId: socket.user._id }).then(res => {
-            fetchNotifications(socket, query)
-      })
+      await notificationServices.deleteNotifications({ userId: socket.user._id })
+      await fetchNotifications(socket, query)
 }
 
 export {

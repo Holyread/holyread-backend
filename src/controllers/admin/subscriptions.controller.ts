@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service'
+import stripeService from '../../services/stripe'
 import usersService from '../../services/admin/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
 import { getSearchRegexp } from '../../lib/utils/utils'
@@ -17,7 +18,12 @@ const addSubscription = async (req: Request, res: Response, next: NextFunction) 
         if (subscriptionObj) {
             return next(Boom.conflict(subscriptionsControllerResponse.createSubscriptionFailure))
         }
-        const data = await subscriptionsService.createSubscription(body)
+        const createPlan = await stripeService.createPlan(body.title, Number(body.price), 'month')
+        if (!createPlan || !createPlan.id) {
+            return next(Boom.badData(subscriptionsControllerResponse.planCreateError))
+        }
+        const data = await subscriptionsService.createSubscription({ ...body, stripePlanId: createPlan.id })
+        delete data.stripePlanId
         res.status(200).send({
             message: subscriptionsControllerResponse.createSubscriptionSuccess,
             data
@@ -36,6 +42,7 @@ const getOneSubscription = async (req: Request, res: Response, next: NextFunctio
         if (!subscriptionObj) {
             return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
         }
+        delete subscriptionObj.stripePlanId
         res.status(200).send({
             message: subscriptionsControllerResponse.fetchSubscriptionSuccess,
             data: subscriptionObj
@@ -112,7 +119,18 @@ const updateSubscription = async (req: Request, res: Response, next: NextFunctio
         if (!subscriptionObj) {
             return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
         }
+        if (req.body.price && req.body.price !== subscriptionObj.price) {
+            const planDetails = await stripeService.retrievePlan(subscriptionObj.stripePlanId)
+            if (!planDetails) {
+                return next(Boom.notFound(subscriptionsControllerResponse.planFetchError))
+            }
+            const createNewPrice = await stripeService.addPrice(planDetails.product, Number(req.body.price), 'month')
+            if (!createNewPrice.id) {
+                req.body.price = subscriptionObj.price
+            }
+        }
         const data = await subscriptionsService.updateSubscription(req.body, id)
+        delete data.stripePlanId
         return res.status(200).send({ message: subscriptionsControllerResponse.updateSubscriptionSuccess, data })
     } catch (e: any) {
         return next(Boom.badData(e.message))
@@ -126,6 +144,11 @@ const deleteSubcription = async (req: Request, res: Response, next: NextFunction
         const subscriptionUser = await usersService.getOneUserByFilter({ subscriptions: id })
         if (subscriptionUser) {
             return next(Boom.locked(subscriptionsControllerResponse.subscriptionIsInUsedError))
+        }
+        const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: id })
+        const deletePlan = await stripeService.deletePlanById(subscriptionDetails.stripePlanId)
+        if (!deletePlan) {
+            return next(Boom.locked(subscriptionsControllerResponse.planDeleteError))
         }
         await subscriptionsService.deleteSubscription(id)
         return res.status(200).send({ message: subscriptionsControllerResponse.deleteSubscriptionSuccess })

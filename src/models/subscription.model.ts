@@ -7,7 +7,8 @@ export interface ISubscription extends mongoose.Document {
     price: string,
     duration: number,
     description: string,
-    status?: 'Active' | 'Deactive'
+    stripePlanId?: string,
+    status?: 'Active' | 'Deactive',
 }
 
 export type createSubscriptionType = {
@@ -15,7 +16,8 @@ export type createSubscriptionType = {
     price: string,
     duration: number,
     description: string,
-    status?: 'Active' | 'Deactive'
+    stripePlanId?: string,
+    status?: 'Active' | 'Deactive',
 }
 
 export type getSubscriptionType = {
@@ -24,7 +26,8 @@ export type getSubscriptionType = {
     price?: string,
     duration?: number,
     description?: string,
-    status?: 'Active' | 'Deactive'
+    stripePlanId?: string,
+    status?: 'Active' | 'Deactive',
 }
 
 export const SubscriptionsSchema = new Schema({
@@ -33,6 +36,7 @@ export const SubscriptionsSchema = new Schema({
     duration: { type: Number, required: true },
     status: { type: String, default: 'Active' },
     description: { type: String, default: '' },
+    stripePlanId: { type: String },
     createdAt: {
         type: Date, default: () => {
             return new Date()

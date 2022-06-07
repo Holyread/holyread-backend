@@ -12,6 +12,7 @@ const router: Router = express.Router()
 import customerPassport from '../middleware/customers.passport'
 import shareImage from './customers/shareImage.route'
 import subscriptions from './customers/subscriptions.route'
+import notifications from './customers/notifications.route'
 
 router.use('/auth', auth)
 router.use('/users', customerPassport, users)
@@ -23,5 +24,6 @@ router.use('/cms', cms)
 router.use('/faq', faq)
 router.use('/share-image', customerPassport, shareImage)
 router.use('/subscriptions', customerPassport, subscriptions)
+router.use('/notifications', customerPassport, notifications)
 
 export default router

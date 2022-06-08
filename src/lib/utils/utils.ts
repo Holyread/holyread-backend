@@ -81,19 +81,24 @@ export const uploadImageToAwsS3 = async (
             const base64 = base64Document.indexOf(';base64,')
 
             let docExtension: string = ''
-            let pattern = /^data:image\/\w+;base64,/
+            let pattern: any = /^data:image\/\w+;base64,/
             if (base64Document.indexOf('data:video/') > -1) {
                 docExtension = base64Document.substring('data:video/'.length, base64Document.indexOf(';base64'))
                 pattern = /^data:video\/\w+;base64,/
             } else if (base64Document.indexOf('data:audio/') > -1) {
                 docExtension = base64Document.substring('data:audio/'.length, base64Document.indexOf(';base64'))
                 pattern = /^data:audio\/\w+;base64,/
+            } else if (base64Document.indexOf('data:application/epub+zip') > -1) {
+                docExtension = base64Document.substring('data:application/'.length, base64Document.indexOf('+zip;base64'));
+                pattern = 'data:application/epub+zip;base64,'
+
             } else if (base64Document.indexOf('data:application/') > -1) {
                 docExtension = base64Document.substring('data:application/'.length, base64Document.indexOf(';base64'))
                 pattern = /^data:application\/\w+;base64,/
             } else if (base64Document.indexOf('data:image/') > -1) {
                 docExtension = base64Document.substring('data:image/'.length, base64Document.indexOf(';base64'))
-            } else {
+            } 
+            else {
                 return reject(new Error('File type not supported'))
             }
 

@@ -1,10 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
-import pdf from 'html-pdf';
-import { uploadImageToAwsS3 } from '../../../lib/utils/utils'
 
 import bookSummaryService from '../../../services/customers/book/bookSummary.service'
-import adminBookSummaryService from '../../../services/admin/book/bookSummary.service'
 import bookAuthorService from '../../../services/admin/book/author.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket, dataLimit } from '../../../constants/app.constant'
@@ -14,12 +11,6 @@ import config from '../../../../config'
 const NODE_ENV = config.NODE_ENV
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
 const authControllerResponse = responseMessage.authControllerResponse
-
-const s3Bucket = {
-    region: awsBucket.region,
-    bucketName: awsBucket[NODE_ENV].bucketName,
-    documentDirectory: `${awsBucket.bookDirectory}`,
-}
 
 /** Get all book summary by for discover */
 const getAllSummaries = async (request: Request, response: Response, next: NextFunction) => {
@@ -70,6 +61,9 @@ const getOneSummary = async (req: Request, res: Response, next: NextFunction) =>
         if (data.coverImage) {
             data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
         }
+        if (data.bookReadFile) {
+            data.bookReadFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/reads/' + data.bookReadFile
+        }
         if (data.videoFile) {
             data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile
         }
@@ -98,46 +92,15 @@ const sendSummaryToKindle = async (req: any, res: Response, next: NextFunction) 
         if (!data) {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
-
-        let html = `<style>img {'width': '100px'; hight: '60px';}</style><div style="textAlign: 'center';"><p><h3>Title: ${data.title}</h3></p><br /><p><h5><b>Author: ${data.author.name}</b></h5></p></div><br /><br />`
-        if (data.coverImage && !data.bookReadFile) {
-            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
-            html = html + `<div style="textAlign: 'center'; width='100vw'; height='40vh'"><img src=${data.coverImage} style='width="30%"; height="30%"'></img></div><br /><br />`
+        if (!data.bookReadFile) {
+            return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryDocFailure))
         }
-        if (data.videoFile) {
-            data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile
+        const fileLink = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/reads/' + data.bookReadFile
+        const sentEmailRes = await sentEmail(req.user.kindleEmail, 'Convert', 'Sent book to kindle', data.bookReadFile, fileLink)
+        if (!sentEmailRes) {
+            return next(Boom.badRequest(bookSummaryControllerResponse.sendBookToKindleEmailFailure))
         }
-        if (data.chapters && data.chapters.length) {
-            data.chapters.forEach(async (oneChapter, index) => {
-                if (oneChapter.audioFile) {
-                    oneChapter.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + oneChapter.audioFile
-                }
-                if (!data.bookReadFile) {
-                    html = html + `
-                    <div style="page-break-before:always">&nbsp;</div><div style="textAlign: 'center'; width='100vw';"><p style="font-size:14px;"><b>Chapter ${index} : </b>  ${oneChapter.name}</p><br /><br /><p style="font-size:14px;"><b>Description ${index} :</b> <br />${oneChapter.description}</p><br /></div><br /><br />`
-                }
-            });
-        }
-        if (data.bookReadFile) {
-            const fileLink = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/reads/' + data.bookReadFile
-            const sentEmailRes = await sentEmail(req.user.kindleEmail, 'Convert', 'Sent book to kindle', data.bookReadFile, fileLink)
-            if (!sentEmailRes) {
-                return next(Boom.badRequest(bookSummaryControllerResponse.sendBookToKindleEmailFailure))
-            }
-            return res.status(200).send({ message: bookSummaryControllerResponse.sendBookToKindleSuccess })
-        }
-        await pdf.create(html).toBuffer(async (err, buffer) => {
-            if (err) return next(Boom.badData(err.message))
-            const base64Doc = 'data:application/pdf;base64,' + buffer.toString('base64')
-            const fileName: any = await uploadImageToAwsS3(base64Doc, data.title.trim().replace(/ /g, '-'), { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/reads' })
-            await adminBookSummaryService.updateBookSummary({ bookReadFile: fileName }, data._id)
-            const fileLink = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/reads/' + fileName
-            const sentEmailRes = await sentEmail(req.user.kindleEmail, 'Convert', 'Sent book to kindle', fileName, fileLink)
-            if (!sentEmailRes) {
-                return next(Boom.badRequest(bookSummaryControllerResponse.sendBookToKindleEmailFailure))
-            }
-            res.status(200).send({ message: bookSummaryControllerResponse.sendBookToKindleSuccess })
-        });
+        return res.status(200).send({ message: bookSummaryControllerResponse.sendBookToKindleSuccess })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }

@@ -16,6 +16,9 @@ const createBookSummary = async (body: any) => {
         if (result.coverImage) {
             result.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + result.coverImage
         }
+        if (result.bookReadFile) {
+            result.bookReadFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/reads/' + result.bookReadFile
+        }
         if (result.videoFile) {
             result.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + result.videoFile
         }
@@ -43,6 +46,9 @@ const updateBookSummary = async (body: any, id: string) => {
         if (data) {
             if (data.coverImage) {
                 data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
+            }
+            if (data.bookReadFile) {
+                data.bookReadFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/reads/' + data.bookReadFile
             }
             if (data.videoFile) {
                 data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile

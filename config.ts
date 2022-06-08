@@ -8,7 +8,8 @@ interface IConfig {
     AWS_SECRET: string,
     AWS_ACCESSKEY: string,
     SMTP_EMAIL: string,
-    SMTP_SECRET: string
+    SMTP_SECRET: string,
+    STRIPE_SECRET: string
 }
 
 const config: IConfig = {
@@ -19,6 +20,7 @@ const config: IConfig = {
     AWS_ACCESSKEY: process.env.AWS_ACCESSKEY,
     SMTP_EMAIL: process.env.SMTP_EMAIL,
     SMTP_SECRET: process.env.SMTP_SECRET,
+    STRIPE_SECRET: process.env.STRIPE_SECRET
 }
 
 export default config

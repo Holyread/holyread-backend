@@ -19,8 +19,8 @@ const getOneUserByFilter = async (query: any) => {
     try {
         const result: any = await UserModel.findOne(query).select('-password').lean().exec()
         if (result) {
-            const notifications = await NotificationsModel.find({ userId: result._id }).sort([['updatedAt', 'DESC']]).lean().exec()
-            result.notifications = notifications    
+            const notificationDetails: any = await NotificationsModel.findOne({ userId: result._id }).lean().exec()
+            result.notifications = await notificationDetails?.notification?.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()) || []
         }
         return result
     } catch (e: any) {

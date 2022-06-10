@@ -82,6 +82,7 @@ export const responseMessage = {
         fetchBookSummariesSuccess: 'Book summary list fetched successfully',
         createBookSummaryFailure: 'Book summary already added',
         getBookSummaryFailure: 'Failed to fetch book summary details',
+        getBookSummaryDocFailure: 'Book reading file missing',
         recommendedBookError: 'Book is locked due to book exist in recommended list',
         sendBookToKindleSuccess: 'Book successfully sended to your kindle',
         sendBookToKindleEmailFailure: 'Failed to send book on your kindle email',

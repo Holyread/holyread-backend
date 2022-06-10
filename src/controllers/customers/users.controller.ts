@@ -54,7 +54,7 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
                   return next(Boom.notFound(authControllerResponse.userInvalidPasswordError))
             }
             await usersService.updateUser({ password: newPassword }, { _id: userObj._id })
-            await notificationsService.updateNotification({ userId: userObj._id, title: 'Change Password' }, { title: 'Change Password', description: 'Password Changed Successfully' })
+            await notificationsService.updateNotification({ userId: userObj._id, 'notification.title': 'Change Password', type: 'setting' }, { '$set': { 'notification.title': 'Change Password', 'notification.description': 'Password Changed Successfully' } })
             fetchNotifications(io.sockets, { _id: userObj._id })
             res.status(200).send({ message: authControllerResponse.passwordUpdateSuccess })
       } catch (e: any) {
@@ -102,7 +102,9 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   subscriptions: req.body.subscriptions || userObj.subscriptions,
                   notificationSetting: (typeof req.body.notificationSetting === 'boolean') ? req.body.notificationSetting : userObj.notificationSetting || false,
                   emailNotification: (typeof req.body.emailNotification === 'boolean') ? req.body.emailNotification : userObj.emailNotification || false,
-                  kindleEmail: req.body.kindleEmail || ''
+            }
+            if (req.body.kindleEmail) {
+                  body.kindleEmail = req.body.kindleEmail
             }
             if (req.body.image === null) {
                   await removeImageToAwsS3(userObj.image, s3Bucket)
@@ -116,13 +118,13 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             }
             await usersService.updateUser(body, { _id: userObj._id })
             if (req.body.subscriptions) {
-                  await notificationsService.updateNotification({ userId: userObj._id, title: 'Update Subscription' }, { title: 'Update Subscription', description: 'Subscription updated successfully' })
+                  await notificationsService.updateNotification({ userId: userObj._id, 'notification.title': 'Update Subscription', type: 'setting' }, { '$set': { 'notification.title': 'Update Subscription', 'notification.description': 'Subscription updated successfully', type: 'setting' } })
                   fetchNotifications(io.sockets, { _id: userObj._id })
             }
             if (req.body.kindleEmail) {
                   const title = userObj.kindleEmail ? 'Update Kindle Email' : 'Add Kindle Email'
                   const description = userObj.kindleEmail ? 'Kindle email updated' : 'Kindle email Added'
-                  await notificationsService.updateNotification({ userId: userObj._id, title }, { title, description })
+                  await notificationsService.updateNotification({ userId: userObj._id, 'notification.title': title, type: 'setting' }, { '$set': { 'notification.title': title, 'notification.description': description, type: 'setting' } })
                   fetchNotifications(io.sockets, { _id: userObj._id })
             }
             return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })

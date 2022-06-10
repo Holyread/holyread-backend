@@ -22,8 +22,8 @@ const updateUserNotification = async (req: Request | any, res: Response | any, n
       try {
             /** Get current user */
             let userObj: any = Object.assign({}, req.user)
-            const query = { title: req.body.title, userId: userObj._id }
-            await notificationServices.updateNotification(query, { title: req.body.title, description: req.body.description })
+            const query = { 'notification.type': req.body.type, 'notification.title': req.body.title, userId: userObj._id }
+            await notificationServices.updateNotification(query, { '$set': { 'notification.$.title': req.body.title, 'notification.$.description': req.body.description, 'notification.$.type': req.body.type }})
             return res.status(200).send({ message: notificationsControllerResponse.updateNotificationSuccess })
       } catch (e: any) {
             return next(Boom.badData(e.message))

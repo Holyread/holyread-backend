@@ -13,7 +13,7 @@ export default async (socket: any, next: NextFunction): Promise<any> => {
         console.log('User not authorized')
         return next(new Error('User not authorized'));
     }
-    const notificationsDetails = await NotificationsModel.find({ userId: userDetails._id }).sort([['updatedAt', 'DESC']]).lean().exec()
+    const notificationsDetails = await NotificationsModel.find({ userId: userDetails._id }).sort([['createdAt', 'DESC']]).lean().exec()
     userDetails.notifications = notificationsDetails
     socket.user = userDetails
     next();

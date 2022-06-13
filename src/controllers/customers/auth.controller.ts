@@ -115,7 +115,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       status: 'Active',
       $unset: { verificationCode: 1 }
     }, user._id)
-    await notificationsService.updateNotification({ userId: user._id, title: 'Welcome' }, { title: 'Welcome', description: 'Welcome to the holyreads' })
+    await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title: 'Welcome', description: 'Welcome to the holyreads' }})
     fetchNotifications(io.sockets, { _id: user._id })
 
     res.status(200).send({ message: authControllerResponse.signUpSuccess })

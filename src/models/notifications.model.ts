@@ -4,26 +4,25 @@ mongoose.set('useCreateIndex', true)
 
 export interface INotifications extends mongoose.Document {
     notification: {
-        type: string,
-        title?: string,
-        description?: string,
+        title: string,
+        description: string,
     },
-    userId?: string
+    type: string,
+    userId: string
 }
 
 export const NotificationsSchema = new Schema({
     notification: {
-        title: { type: String },
-        description: { type: String },
+        title: { type: String, required: true },
+        description: { type: String, required: true },
     },
-    type: { type: String },
-    userId: { type: Schema.Types.ObjectId, ref: 'user' },
+    type: { type: String, required: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'user', required: true, index: true },
     createdAt: {
         type: Date, default: () => {
             return new Date()
         },
-    },
-    updatedAt: {type: Date},
+    }
 }, {strict: 'throw'})
 
 export const NotificationsModel = mongoose.model<INotifications>('notifications', NotificationsSchema)

@@ -1,10 +1,10 @@
 import express, { Router } from 'express'
 import {
-  updateUserNotification
+  createUserNotification
 } from '../../controllers/customers/notification.controller'
 
 const router: Router = express.Router()
 
-router.patch('/', updateUserNotification)
+router.post('/', createUserNotification)
 
 export default router

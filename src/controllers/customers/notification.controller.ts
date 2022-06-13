@@ -17,14 +17,11 @@ const clearNotifications = async (socket, query) => {
       await fetchNotifications(socket, query)
 }
 
-/** Update user notifications details */
-const updateUserNotification = async (req: Request | any, res: Response | any, next: NextFunction) => {
+/** create user notification */
+const createUserNotification = async (req: Request | any, res: Response | any, next: NextFunction) => {
       try {
-            /** Get current user */
-            let userObj: any = Object.assign({}, req.user)
-            const query = { 'type': req.body.type, 'notification.title': req.body.title, userId: userObj._id }
-            await notificationServices.updateNotification(query, { '$set': { 'notification.title': req.body.title, 'notification.description': req.body.description }})
-            return res.status(200).send({ message: notificationsControllerResponse.updateNotificationSuccess })
+            await notificationServices.createNotification({ notification: { title: req.body.title, description: req.body.description }, type: req.body.type, userId: req.user._id })
+            return res.status(200).send({ message: notificationsControllerResponse.createNotificationSuccess })
       } catch (e: any) {
             return next(Boom.badData(e.message))
       }
@@ -33,5 +30,5 @@ const updateUserNotification = async (req: Request | any, res: Response | any, n
 export {
       fetchNotifications,
       clearNotifications,
-      updateUserNotification
+      createUserNotification
 }

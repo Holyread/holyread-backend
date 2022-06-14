@@ -8,8 +8,8 @@ const stripe = require('stripe')(config.STRIPE_SECRET);
 const createSession = async (userId, planId, subscription) => {
       try {
             const session = await stripe.checkout.sessions.create({
-                  success_url: origins[NODE_ENV] + '/pages/settings' + '?userid=' + userId + '&payment=true&subscription=' + subscription,
-                  cancel_url: origins[NODE_ENV] + '/pages/settings?payment=false',
+                  success_url: origins[NODE_ENV] + '/pages/settings' + '?userid=' + userId + '&status=success&subscription=' + subscription,
+                  cancel_url: origins[NODE_ENV] + '/pages/settings?status=failed',
                   'payment_method_types': ['card'],
                   mode: 'subscription',
                   line_items: [

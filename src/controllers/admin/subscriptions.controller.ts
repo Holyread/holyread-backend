@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service'
-import stripeService from '../../services/stripe'
+import stripeService from '../../services/stripe/plan'
 import usersService from '../../services/admin/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
 import { getSearchRegexp } from '../../lib/utils/utils'

@@ -9,7 +9,8 @@ import {
   getUserLibrary,
   submitFeedback,
   submitQuery,
-  blessFriend
+  blessFriend,
+  createSession
 } from '../../controllers/customers/users.controller'
 
 const router: Router = express.Router()
@@ -24,5 +25,6 @@ router.get('/library', getUserLibrary)
 router.patch('/library', updateUserLibrary)
 router.post('/query', submitQuery)
 router.post('/feedback', submitFeedback)
+router.post('/checkout', createSession)
 
 export default router

@@ -63,7 +63,12 @@ export const responseMessage = {
         subscriptionIsInUsedError: 'Subscription plan is active in user account',
         planCreateError: 'Failed to create plan',
         planFetchError: 'Failed to fetch plan details',
-        planDeleteError: 'Failed to delete plan'
+        planDeleteError: 'Failed to delete plan',
+        checkoutError: 'Faild to proceed checkout',
+        createCheckoutSuccess: 'Checkout session created succefully',
+        subscriptionUserMissMatchError: 'You are eligible for self subscription only',
+        checkoutDetailsMissing: 'Unable to get user checkout session details',
+        paymentStatusPending: 'Payment status is pending or missing for requested subscription'
     },
     bookCategoryControllerResponse: {
         createBookCategorySuccess: 'Book category added successfully',

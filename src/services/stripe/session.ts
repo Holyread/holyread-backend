@@ -1,12 +1,15 @@
 import config from '../../../config'
+import { origins } from '../../constants/app.constant'
+
+const NODE_ENV = config.NODE_ENV
 
 const stripe = require('stripe')(config.STRIPE_SECRET);
 
 const createSession = async (userId, planId, subscription) => {
       try {
             const session = await stripe.checkout.sessions.create({
-                  success_url: 'https://localhost:4200/pages/settings' + '?userid=' + userId + '&payment=true&subscription=' + subscription,
-                  cancel_url: 'https://localhost:4200/pages/settings?payment=true',
+                  success_url: origins[NODE_ENV] + '/pages/settings' + '?userid=' + userId + '&payment=true&subscription=' + subscription,
+                  cancel_url: origins[NODE_ENV] + '/pages/settings?payment=false',
                   'payment_method_types': ['card'],
                   mode: 'subscription',
                   line_items: [

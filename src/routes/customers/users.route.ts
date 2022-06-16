@@ -9,7 +9,7 @@ import {
   getUserLibrary,
   submitFeedback,
   submitQuery,
-  blessFriend,
+  blessFriend
 } from '../../controllers/customers/users.controller'
 
 const router: Router = express.Router()

@@ -116,6 +116,15 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             if (req.body.image && req.body.image.startsWith('http')) {
                   body.image = userObj.image
             }
+            if (req.body.pushNotifications && req.body.pushNotifications.deviceId && req.body.pushNotifications.token) {
+                  body.pushNotifications = req.user.pushNotifications || []
+                  const pushNotifcationIndex = body.pushNotifications.findIndex(item => item.deviceId === req.body.pushNotifications.deviceId)
+                  if (pushNotifcationIndex > -1) {
+                        body.pushNotifications[pushNotifcationIndex].token = req.body.pushNotifications.token
+                  } else {
+                        body.pushNotifications.push({ deviceId: req.body.pushNotifications.deviceId, token: req.body.pushNotifications.token })
+                  }
+            }
             await usersService.updateUser(body, { _id: userObj._id })
             if (req.body.subscriptions) {
                   await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: 'Update Subscription', description: 'Subscription updated successfully' }})
@@ -423,24 +432,6 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
       }
 }
 
-/** Push notification for user */
-const pushNotification = async (req: any, res: Response, next: NextFunction) => {
-      try {
-            const body = req.body
-            let notifications = req.user.pushNotifications || []
-            const pushNotifcationIndex = notifications.findIndex(item => item.deviceId === body.deviceId)
-            if (pushNotifcationIndex > -1) {
-                  notifications[pushNotifcationIndex].token = body.token
-            } else {
-                  notifications.push({ deviceId: body.deviceId, token: body.token })
-            }
-            await usersService.updateUser({ pushNotifications: notifications }, { _id: req.user._id })
-            res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
-      } catch (e: any) {
-            next(Boom.badData(e.message))
-      }
-}
-
 export {
       getUserAccount,
       getShareOptionImageUrl,
@@ -451,6 +442,5 @@ export {
       getUserLibrary,
       submitQuery,
       submitFeedback,
-      blessFriend,
-      pushNotification
+      blessFriend
 }

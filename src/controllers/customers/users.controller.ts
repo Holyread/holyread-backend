@@ -423,6 +423,24 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
       }
 }
 
+/** Push notification for user */
+const pushNotification = async (req: any, res: Response, next: NextFunction) => {
+      try {
+            const body = req.body
+            let notifications = req.user.pushNotifications || []
+            const pushNotifcationIndex = notifications.findIndex(item => item.deviceId === body.deviceId)
+            if (pushNotifcationIndex > -1) {
+                  notifications[pushNotifcationIndex].token = body.token
+            } else {
+                  notifications.push({ deviceId: body.deviceId, token: body.token })
+            }
+            await usersService.updateUser({ pushNotifications: notifications }, { _id: req.user._id })
+            res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
+      } catch (e: any) {
+            next(Boom.badData(e.message))
+      }
+}
+
 export {
       getUserAccount,
       getShareOptionImageUrl,
@@ -433,5 +451,6 @@ export {
       getUserLibrary,
       submitQuery,
       submitFeedback,
-      blessFriend
+      blessFriend,
+      pushNotification
 }

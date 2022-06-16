@@ -28,6 +28,10 @@ export interface IUser extends mongoose.Document {
     iosAppLink?: string,
     androidAppLink?: string,
     maxDevicesLogin?: string,
+    pushTokens?: [{
+        deviceId: string,
+        token: string
+    }],
     library?: {
         saved?: [string],
         completed?: [string],
@@ -71,6 +75,10 @@ export type createUserType = {
     iosAppLink?: string,
     androidAppLink?: string,
     maxDevicesLogin?: string,
+    pushTokens?: [{
+        deviceId: string,
+        token: string
+    }],
     library?: {
         saved?: [string],
         completed?: [string],
@@ -114,6 +122,10 @@ export type getUserType = {
     iosAppLink?: string,
     androidAppLink?: string,
     maxDevicesLogin?: string,
+    pushTokens?: [{
+        deviceId: string,
+        token: string
+    }],
     library?: {
         saved?: [string],
         completed?: [string],
@@ -157,6 +169,10 @@ export const UserSchema = new Schema({
     iosAppLink: { type: String },
     androidAppLink: { type: String },
     maxDevicesLogin: { type: String },
+    pushTokens: [{
+        deviceId: String,
+        token: String
+    }],
     library: {
         saved: [{ type: String }],
         completed: [{ type: String }],

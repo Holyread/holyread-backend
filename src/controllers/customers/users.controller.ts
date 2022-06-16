@@ -116,6 +116,15 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             if (req.body.image && req.body.image.startsWith('http')) {
                   body.image = userObj.image
             }
+            if (req.body.pushTokens && req.body.pushTokens.deviceId && req.body.pushTokens.token) {
+                  body.pushTokens = req.user.pushTokens || []
+                  const pushNotifcationIndex = body.pushTokens.findIndex(item => item.deviceId === req.body.pushTokens.deviceId)
+                  if (pushNotifcationIndex > -1) {
+                        body.pushTokens[pushNotifcationIndex].token = req.body.pushTokens.token
+                  } else {
+                        body.pushTokens.push({ deviceId: req.body.pushTokens.deviceId, token: req.body.pushTokens.token })
+                  }
+            }
             await usersService.updateUser(body, { _id: userObj._id })
             if (req.body.subscriptions) {
                   await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: 'Update Subscription', description: 'Subscription updated successfully' }})

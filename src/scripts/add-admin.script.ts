@@ -1,5 +1,5 @@
 import { UserModel } from '../models/index'
-import { getToken, encrypt } from '../lib/utils/utils'
+import { encrypt } from '../lib/utils/utils'
 import { uploadImageToAwsS3 } from '../lib/utils/utils'
 import { awsBucket } from '../constants/app.constant'
 import config from '../../config'
@@ -34,10 +34,8 @@ const createAdminBody = {
                   body.image = await uploadImageToAwsS3(body.image, body.firstName, s3Bucket)
             }
             body.type = 'Admin'
-            const result = await UserModel.create(body)
-            const token: string = getToken({ email: result.email, id: result._id })
+            await UserModel.create(body)
             console.log('Admin created successfully')
-            return { _id: result._id, email: result.email, token }
       } catch (e: any) {
             console.log('Add admin script execution failed - ', e)
       }

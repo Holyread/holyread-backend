@@ -9,6 +9,7 @@ import authService from '../../services/admin/users/user.service'
 import bookService from '../../services/customers/book/bookSummary.service'
 import subscriptionService from '../../services/admin/subscriptions/subscriptions.service'
 import stripeSessionService from '../../services/stripe/session'
+import stripeSubscriptionService from '../../services/stripe/subscription'
 import stripePlanService from '../../services/stripe/plan'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
@@ -471,6 +472,25 @@ const createSession = async (req: any, res: Response, next: NextFunction) => {
       }
 }
 
+/** Add User by referral */
+const getToken = async (req: any, res: Response, next: NextFunction) => {
+      try {
+            const data = await stripeSubscriptionService.retrieveToken(req.body.token)
+            res.status(200).send({ message: subscriptionsControllerResponse.createSubscriptionSuccess, data })
+      } catch (e: any) {
+            next(Boom.badData(e.message))
+      }
+}
+
+const createPaymentIntent = async (req: any, res: Response, next: NextFunction) => {
+      try {
+            const data = await stripeSubscriptionService.createPaymentIntent()
+            res.status(200).send({ message: subscriptionsControllerResponse.createSubscriptionSuccess, data: {clientSecret: data } })
+      } catch (e: any) {
+            next(Boom.badData(e.message))
+      }
+}
+
 export {
       getUserAccount,
       getShareOptionImageUrl,
@@ -482,5 +502,7 @@ export {
       submitQuery,
       submitFeedback,
       blessFriend,
-      createSession
+      createSession,
+      getToken,
+      createPaymentIntent
 }

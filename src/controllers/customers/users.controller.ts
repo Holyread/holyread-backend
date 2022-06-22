@@ -40,7 +40,7 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             delete userObj.smallGroups
             delete userObj.verificationCode
             delete userObj.oAuth
-            delete userObj.stripeSessionId
+            delete userObj.stripeChargeId
             const notifications = await notificationsService.getUserNotifications({ userId: userObj._id })
             userObj.notifications = notifications
             res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
@@ -434,7 +434,10 @@ const createCharge = async (req: any, res: Response, next: NextFunction) => {
                   return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }
             const data = await stripeSubscriptionService.createCharge(req.body.token, Number(subscriptionDetails.price))
-            await userService.updateUser({ subscriptions: req.body.subscription,  }, userObj._id)
+            await userService.updateUser({ subscriptions: req.body.subscription, stripeChargeId: data.id }, userObj._id)
+            if (data.status !== 'succeeded') {
+                  return next(Boom.notFound(authControllerResponse.paymentStatusPending))
+            }
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
             const sub = emailTemplateDetails.subject || 'Subscription'
             let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
@@ -458,7 +461,7 @@ const createCharge = async (req: any, res: Response, next: NextFunction) => {
             if (!result) {
                   return next(Boom.notFound(authControllerResponse.sentSubscriptionEmailFilure))
             }
-            res.status(200).send({ message: subscriptionsControllerResponse.createSubscriptionSuccess, data })
+            res.status(200).send({ message: subscriptionsControllerResponse.createSubscriptionSuccess })
       } catch (e: any) {
             next(Boom.badData(e.message))
       }

@@ -29,6 +29,7 @@ export const responseMessage = {
         missingSectionParams: 'Missing section params',
         addShareImage: 'Share image uploaded successfully',
         submitQueryError: 'Failed to send your message, please try letter or contact administrator by other way',
+        paymentStatusPending: 'Payment status is pending, please contact administrator',
         submitQuerySuccess: 'Your message was sent successfully, Thanks.',
         userAuthorisedAsAdmin: 'User authorised as admin, please use another email',
         kindleEmailNotExistError: 'Please add your kindle email address',

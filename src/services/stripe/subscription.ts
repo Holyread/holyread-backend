@@ -11,42 +11,21 @@ const retrieveSubscription = async (id: string) => {
       }
 }
 
-const retrieveToken = async (id: string) => {
+const createCharge = async (id: string, amount: number) => {
       try {
-            // const token = await stripe.tokens.retrieve(id);
-            const token = await stripe.tokens.create({
-                  card: {
-                        number: '4242424242424242',
-                        exp_month: 6,
-                        exp_year: 2023,
-                        cvc: '314',
-                  },
-            });
             const charge = await stripe.charges.create({
-                  amount: 500,
+                  amount: amount * 100,
                   currency: 'usd',
-                  source: token.id,
+                  source: id,
                   capture: false,
-                });
-            return { token, charge }
+            });
+            return charge
       } catch (error: any) {
             throw new Error(error)
       }
 }
 
-const createPaymentIntent = async () => {
-      const paymentIntent = await stripe.paymentIntents.create({
-            amount: 50,
-            currency: "usd",
-            automatic_payment_methods: {
-                  enabled: true,
-            },
-      });
-      return paymentIntent.client_secret
-}
-
 export default {
       retrieveSubscription,
-      retrieveToken,
-      createPaymentIntent
+      createCharge
 }

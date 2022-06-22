@@ -8,9 +8,7 @@ import { fetchNotifications } from '../../controllers/customers/notification.con
 import authService from '../../services/admin/users/user.service'
 import bookService from '../../services/customers/book/bookSummary.service'
 import subscriptionService from '../../services/admin/subscriptions/subscriptions.service'
-import stripeSessionService from '../../services/stripe/session'
 import stripeSubscriptionService from '../../services/stripe/subscription'
-import stripePlanService from '../../services/stripe/plan'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
 import { removeImageToAwsS3, uploadImageToAwsS3, encrypt, compileHtml, sentEmail } from '../../lib/utils/utils'
@@ -101,28 +99,6 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   notificationSetting: (typeof req.body.notificationSetting === 'boolean') ? req.body.notificationSetting : userObj.notificationSetting || false,
                   emailNotification: (typeof req.body.emailNotification === 'boolean') ? req.body.emailNotification : userObj.emailNotification || false,
             }
-            if (req.body.subscriptions) {
-                  const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: req.body.subscriptions })
-                  if (!subscriptionDetails || !req.body.userId || !subscriptionDetails.stripePlanId) {
-                        return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
-                  }
-                  if (String(req.body.userId) !== String(userObj._id)) {
-                        return next(Boom.notFound(subscriptionsControllerResponse.subscriptionUserMissMatchError))
-                  }
-                  const userDetails = await userService.getOneUserByFilter({ _id: userObj._id })
-                  if (!userDetails.stripeSessionId) {
-                        return next(Boom.notFound(subscriptionsControllerResponse.checkoutDetailsMissing))
-                  }
-                  const sessionDetails = await stripeSessionService.retrieveSession(userObj.stripeSessionId)
-                  if (!sessionDetails || sessionDetails.payment_status !== 'paid') {
-                        return next(Boom.notFound(subscriptionsControllerResponse.paymentStatusPending))
-                  }
-                  const subscriptionPlanDetails = await stripePlanService.retrievePlan(subscriptionDetails.stripePlanId)
-                  if (!subscriptionPlanDetails || subscriptionPlanDetails.amount !== sessionDetails.amount_total) {
-                        return next(Boom.notFound(subscriptionsControllerResponse.planFetchError))
-                  }
-                  body.subscriptions = req.body.subscriptions
-            }
   
             if (req.body.kindleEmail) {
                   body.kindleEmail = req.body.kindleEmail
@@ -147,10 +123,6 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   }
             }
             await usersService.updateUser(body, { _id: userObj._id })
-            if (req.body.subscriptions) {
-                  await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: 'Update Subscription', description: 'Subscription updated successfully' }})
-                  fetchNotifications(io.sockets, { _id: userObj._id })
-            }
             if (req.body.kindleEmail) {
                   const title = userObj.kindleEmail ? 'Update Kindle Email' : 'Add Kindle Email'
                   const description = userObj.kindleEmail ? 'Kindle email updated' : 'Kindle email Added'
@@ -453,39 +425,40 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
       }
 }
 
-/** Add User by referral */
-const createSession = async (req: any, res: Response, next: NextFunction) => {
+/** Create subscription charges */
+const createCharge = async (req: any, res: Response, next: NextFunction) => {
       try {
+            const userObj = req.user
             const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: req.body.subscription })
-            if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
+            if (!subscriptionDetails) {
                   return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }
-            const session = await stripeSessionService.createSession(req.user._id, subscriptionDetails.stripePlanId, subscriptionDetails._id)
-            const createdSession = await stripeSessionService.retrieveSession(session.id)
-            if (!createdSession) {
-                  return next(Boom.notFound(subscriptionsControllerResponse.checkoutError))
+            const data = await stripeSubscriptionService.createCharge(req.body.token, Number(subscriptionDetails.price))
+            await userService.updateUser({ subscriptions: req.body.subscription,  }, userObj._id)
+            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
+            const sub = emailTemplateDetails.subject || 'Subscription'
+            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+
+            if (emailTemplateDetails && emailTemplateDetails.content) {
+                  const contentData = {
+                        username: userObj.email.split('@')[0],
+                        subscription_title: subscriptionDetails.title,
+                        subscription_details: subscriptionDetails.duration,
+                        subscription_duration: subscriptionDetails.title
+                  }
+                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  if (htmlData) {
+                        html = htmlData
+                  }
             }
-            await userService.updateUser({ stripeSessionId: createdSession.id }, req.user._id)
-            res.status(200).send({ message: subscriptionsControllerResponse.createCheckoutSuccess, data: { ...session } })
-      } catch (e: any) {
-            next(Boom.badData(e.message))
-      }
-}
+            await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: 'Update Subscription', description: 'Subscription updated successfully' }})
+            fetchNotifications(io.sockets, { _id: userObj._id })
 
-/** Add User by referral */
-const getToken = async (req: any, res: Response, next: NextFunction) => {
-      try {
-            const data = await stripeSubscriptionService.retrieveToken(req.body.token)
+            const result = await sentEmail(userObj.email, sub, html);
+            if (!result) {
+                  return next(Boom.notFound(authControllerResponse.sentSubscriptionEmailFilure))
+            }
             res.status(200).send({ message: subscriptionsControllerResponse.createSubscriptionSuccess, data })
-      } catch (e: any) {
-            next(Boom.badData(e.message))
-      }
-}
-
-const createPaymentIntent = async (req: any, res: Response, next: NextFunction) => {
-      try {
-            const data = await stripeSubscriptionService.createPaymentIntent()
-            res.status(200).send({ message: subscriptionsControllerResponse.createSubscriptionSuccess, data: {clientSecret: data } })
       } catch (e: any) {
             next(Boom.badData(e.message))
       }
@@ -502,7 +475,5 @@ export {
       submitQuery,
       submitFeedback,
       blessFriend,
-      createSession,
-      getToken,
-      createPaymentIntent
+      createCharge
 }

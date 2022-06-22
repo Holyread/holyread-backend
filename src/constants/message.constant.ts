@@ -25,6 +25,7 @@ export const responseMessage = {
         blessFriendSubscriptionError: 'Bless friend subscription details missing or not found',
         sentVerifyEmailFailure: 'Failed to send verification email',
         verifyEmailSuccess: 'verification link already sended on your register email',
+        sentSubscriptionEmailFilure: 'Failed to sent subscription plan details on email',
         missingSectionParams: 'Missing section params',
         addShareImage: 'Share image uploaded successfully',
         submitQueryError: 'Failed to send your message, please try letter or contact administrator by other way',
@@ -64,11 +65,6 @@ export const responseMessage = {
         planCreateError: 'Failed to create plan',
         planFetchError: 'Failed to fetch plan details',
         planDeleteError: 'Failed to delete plan',
-        checkoutError: 'Faild to proceed checkout',
-        createCheckoutSuccess: 'Checkout session created succefully',
-        subscriptionUserMissMatchError: 'You are eligible for self subscription only',
-        checkoutDetailsMissing: 'Unable to get user checkout session details',
-        paymentStatusPending: 'Payment status is pending or missing for requested subscription'
     },
     bookCategoryControllerResponse: {
         createBookCategorySuccess: 'Book category added successfully',

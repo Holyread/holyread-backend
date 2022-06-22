@@ -10,9 +10,7 @@ import {
   submitFeedback,
   submitQuery,
   blessFriend,
-  createSession,
-  getToken,
-  createPaymentIntent
+  createCharge,
 } from '../../controllers/customers/users.controller'
 
 const router: Router = express.Router()
@@ -27,8 +25,6 @@ router.get('/library', getUserLibrary)
 router.patch('/library', updateUserLibrary)
 router.post('/query', submitQuery)
 router.post('/feedback', submitFeedback)
-router.post('/checkout', createSession)
-router.post('/charge', getToken)
-router.post('/payment-intent', createPaymentIntent)
+router.post('/charge', createCharge)
 
 export default router

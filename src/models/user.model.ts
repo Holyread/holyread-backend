@@ -47,7 +47,7 @@ export interface IUser extends mongoose.Document {
     },
     referralUserId?: string,
     kindleEmail?: string,
-    stripeSessionId?: string
+    stripeChargeId?: string
 }
 
 export type createUserType = {
@@ -95,7 +95,7 @@ export type createUserType = {
     },
     referralUserId?: string,
     kindleEmail?: string,
-    stripeSessionId?: string,
+    stripeChargeId?: string,
 }
 
 export type getUserType = {
@@ -143,7 +143,7 @@ export type getUserType = {
     },
     referralUserId?: string,
     kindleEmail?: string,
-    stripeSessionId?: string
+    stripeChargeId?: string
 }
 
 export const UserSchema = new Schema({
@@ -192,7 +192,7 @@ export const UserSchema = new Schema({
     },
     referralUserId: { type: Schema.Types.ObjectId, ref: 'user' },
     kindleEmail: { type: String },
-    stripeSessionId: { type: String },
+    stripeChargeId: { type: String },
     createdAt: {
         type: Date, default: () => {
             return new Date()

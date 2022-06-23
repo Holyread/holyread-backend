@@ -10,7 +10,7 @@ import {
   submitFeedback,
   submitQuery,
   blessFriend,
-  createCharge,
+  subscribePlan,
 } from '../../controllers/customers/users.controller'
 
 const router: Router = express.Router()
@@ -25,6 +25,6 @@ router.get('/library', getUserLibrary)
 router.patch('/library', updateUserLibrary)
 router.post('/query', submitQuery)
 router.post('/feedback', submitFeedback)
-router.post('/charge', createCharge)
+router.post('/subscribe', subscribePlan)
 
 export default router

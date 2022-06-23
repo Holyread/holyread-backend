@@ -11,8 +11,8 @@ const createPlan = async (title: string, price: number, interval: string) => {
                   product: { name: title }
             })
             return planDetails
-      } catch (error) {
-            return false
+      } catch (error: any) {
+            throw new Error(error)
       }
 }
 
@@ -20,8 +20,8 @@ const retrievePlan = async (planId: string) => {
       try {
             const planDetails = await stripe.plans.retrieve(planId);
             return planDetails
-      } catch (error) {
-            return false
+      } catch (error: any) {
+            throw new Error(error)
       }
 }
 
@@ -29,8 +29,8 @@ const deletePlanById = async (planId: string) => {
       try {
             const { deleted } = await stripe.plans.del(planId);
             return deleted
-      } catch (error) {
-            return false
+      } catch (error: any) {
+            throw new Error(error)
       }
 }
 
@@ -43,8 +43,8 @@ const addPrice = async (productId: string, price: number, interval: string) => {
                   product: productId,
             });
             return productPrice
-      } catch (error) {
-            return false
+      } catch (error: any) {
+            throw new Error(error)
       }
 }
 

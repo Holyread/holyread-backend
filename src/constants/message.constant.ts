@@ -25,9 +25,11 @@ export const responseMessage = {
         blessFriendSubscriptionError: 'Bless friend subscription details missing or not found',
         sentVerifyEmailFailure: 'Failed to send verification email',
         verifyEmailSuccess: 'verification link already sended on your register email',
+        sentSubscriptionEmailFilure: 'Failed to sent subscription plan details on email',
         missingSectionParams: 'Missing section params',
         addShareImage: 'Share image uploaded successfully',
         submitQueryError: 'Failed to send your message, please try letter or contact administrator by other way',
+        paymentStatusPending: 'Payment status is pending, please contact administrator',
         submitQuerySuccess: 'Your message was sent successfully, Thanks.',
         userAuthorisedAsAdmin: 'User authorised as admin, please use another email',
         kindleEmailNotExistError: 'Please add your kindle email address',
@@ -63,7 +65,7 @@ export const responseMessage = {
         subscriptionIsInUsedError: 'Subscription plan is active in user account',
         planCreateError: 'Failed to create plan',
         planFetchError: 'Failed to fetch plan details',
-        planDeleteError: 'Failed to delete plan'
+        planDeleteError: 'Failed to delete plan',
     },
     bookCategoryControllerResponse: {
         createBookCategorySuccess: 'Book category added successfully',

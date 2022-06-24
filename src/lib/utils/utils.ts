@@ -4,8 +4,10 @@ import aws from 'aws-sdk';
 import nodemailer from 'nodemailer';
 import smtpTransport from 'nodemailer-smtp-transport';
 import handlebars from 'handlebars'
+import firebaseAdmin from 'firebase-admin';
 
 import config from '../../../config'
+import { fireStoreConfig } from '../../constants/app.constant'
 
 const algorithm = 'aes-256-cbc';
 const key = '2b7e151628aed2a6abf7158809cf4f3c';
@@ -162,7 +164,7 @@ export const sentEmail = async (receiverEmail: string, subject: string, html: st
         subject,
         headers: {
             "X-Laziness-level": 1000,
-            "charset" : 'UTF-8'
+            "charset": 'UTF-8'
         },
         html,
     };
@@ -210,4 +212,20 @@ export const getFileSizeFromBase64 = (base64Document: string) => {
     var stringLength = base64Document.substring(base64Document.indexOf(',') + 1).length;
     var sizeInBytes = 4 * Math.ceil((stringLength / 3)) * 0.5624896334383812;
     return sizeInBytes
+}
+
+export const pushNotification = async (tokens: string, title: string, description: string) => {
+    firebaseAdmin.initializeApp({
+        credential: firebaseAdmin.credential.cert(fireStoreConfig as any),
+    });
+    firebaseAdmin.messaging().sendToDevice(tokens, { notification: { title, body: description }}).then(response => {
+        response.results.forEach((result, index) => {
+            const error = result.error;
+            if (error) {
+                console.error('Failure sending notification to', error);
+            } else {
+                console.log('Sucessfully sent Notification to', result);
+            }
+        });
+    })
 }

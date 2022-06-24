@@ -57,7 +57,7 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             }
             await usersService.updateUser({ password: newPassword }, { _id: userObj._id })
             const notificationTitle = 'Change Password'
-            const notificationDescription = 'Subscription updated successfully'
+            const notificationDescription = 'Password Changed Successfully'
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription }})
             fetchNotifications(io.sockets, { _id: userObj._id })
             res.status(200).send({ message: authControllerResponse.passwordUpdateSuccess })

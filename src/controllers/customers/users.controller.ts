@@ -458,9 +458,6 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   },
                   { _id: userObj._id }
             )
-            if (sbscription.status !== 'active') {
-                  return next(Boom.notFound(subscriptionsControllerResponse.subscriptionStatusInActive))
-            }
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
             const sub = emailTemplateDetails.subject || 'Subscription'
             let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`

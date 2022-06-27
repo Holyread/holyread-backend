@@ -3,6 +3,7 @@ import notificationServices from '../../services/customers/notifications/notific
 import { NextFunction } from 'express'
 import { responseMessage } from '../../constants/message.constant'
 import Boom from '@hapi/boom';
+import { pushNotification } from '../../lib/utils/utils';
 
 const notificationsControllerResponse = responseMessage.notificationsControllerResponse
 
@@ -21,7 +22,12 @@ const clearNotifications = async (socket, query) => {
 const createUserNotification = async (req: Request | any, res: Response | any, next: NextFunction) => {
       try {
             await notificationServices.createNotification({ notification: { title: req.body.title, description: req.body.description }, type: req.body.type, userId: req.user._id })
-            return res.status(200).send({ message: notificationsControllerResponse.createNotificationSuccess })
+            res.status(200).send({ message: notificationsControllerResponse.createNotificationSuccess })
+            /** Push notification */
+            if (req.user.pushTokens.length && req.user.pushNotification) {
+                  const tokens = req.user.pushTokens.map(i => i.token)
+                  pushNotification(tokens, req.body.title, req.body.description)
+            }
       } catch (e: any) {
             return next(Boom.badData(e.message))
       }

@@ -63,6 +63,7 @@ export const responseMessage = {
         createSubscriptionFailure: 'Subscription already added',
         getSubscriptionFailure: 'Failed to fetch subscription details',
         subscriptionIsInUsedError: 'Subscription plan is active in user account',
+        subscriptionStatusInActive: 'Subscription status is not active, Please contact administrator',
         planCreateError: 'Failed to create plan',
         planFetchError: 'Failed to fetch plan details',
         planDeleteError: 'Failed to delete plan',

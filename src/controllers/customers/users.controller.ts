@@ -449,7 +449,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   userObj.stripeCustomerId = customer.id
                   await usersService.updateUser({ stripeCustomerId: customer.id }, { _id: userObj._id })
             }
-            const sbscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripeCustomerId)
+            const sbscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripeCustomerId, req.body.paymentMethod)
             await usersService.updateUser(
                   {
                         stripePlanId: subscriptionDetails.stripePlanId,
@@ -458,6 +458,9 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   },
                   { _id: userObj._id }
             )
+            if (sbscription.status !== 'active') {
+                  return next(Boom.notFound(subscriptionsControllerResponse.subscriptionStatusInActive))
+            }
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
             const sub = emailTemplateDetails.subject || 'Subscription'
             let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
@@ -486,7 +489,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             res.status(200).send({
                   message: subscriptionsControllerResponse.createSubscriptionSuccess,
                   data: {
-                        clientSecret: sbscription.latest_invoice.payment_intent.client_secret,
+                        sbscriptionStatus: sbscription.status,
                         customerEmail: userObj.email
                   }
             })

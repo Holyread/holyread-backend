@@ -43,8 +43,13 @@ const createCustomer = async (email: string, source: string) => {
 }
 
 
-const createSubscription = async (planId: string, customerId: string) => {
+const createSubscription = async (planId: string, customerId: string, paymentMethod: string) => {
       try {
+            await clearPaymentMethods(customerId)
+            await stripe.paymentMethods.attach(
+                  paymentMethod,
+                  { customer: customerId }
+            );
             const subscription = await stripe.subscriptions.create({
                   customer: customerId,
                   items: [
@@ -52,11 +57,23 @@ const createSubscription = async (planId: string, customerId: string) => {
                   ],
                   payment_behavior: 'default_incomplete',
                   expand: ['latest_invoice.payment_intent'],
+                  trial_period_days: 5
             });
             return subscription
       } catch (error: any) {
             throw new Error(error)
       }
+}
+
+const clearPaymentMethods = async (customerId) => {
+      const paymentMethods = await stripe.customers.listPaymentMethods(
+            customerId,
+            { type: 'card' }
+      );
+      if (!paymentMethods.data.length) return
+      await Promise.all(paymentMethods.data.map(async (i: any) => {
+            await stripe.paymentMethods.detach(i.id);
+      }))
 }
 
 export default {

@@ -7,7 +7,7 @@ export default async (socket: any, next: NextFunction): Promise<any> => {
         console.log('User not authorized')
         return next(new Error('User not authorized'));
     }
-    const details = await verifyToken(socket.handshake.query.token)
+    const details:  any = await verifyToken(socket.handshake.query.token)
     const userDetails: any = await UserModel.findOne({ $or: [{ email: details?.email }, { 'oAuth.clientId': details.oauthClientId }], _id: details.id, type: 'User' }).lean().exec()
     if (!userDetails) {
         console.log('User not authorized')

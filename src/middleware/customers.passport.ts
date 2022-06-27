@@ -9,7 +9,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
         next(Boom.badRequest('Missing access token'));
     } else {
         try {
-            const details = await verifyToken(accessToken)
+            const details: any = await verifyToken(accessToken)
             const userDetails = await UserModel.findOne({ $or: [{ email: details?.email }, { 'oAuth.clientId': details.oauthClientId }], _id: details.id, type: 'User' }).lean().exec()
             if (!userDetails) {
                 next(Boom.badRequest('User not authorized'));

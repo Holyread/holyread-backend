@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 import axios from 'axios';
 
-import { encrypt, getToken, verifyToken, sentEmail } from '../../lib/utils/utils'
+import { encrypt, getToken, verifyToken, sentEmail, pushNotification } from '../../lib/utils/utils'
 import usersService from '../../services/admin/users/user.service'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
@@ -115,10 +115,16 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       status: 'Active',
       $unset: { verificationCode: 1 }
     }, user._id)
-    await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title: 'Welcome', description: 'Welcome to the holyreads' }})
+    const title = 'Welcome';
+    const description = 'Welcome to the holyreads';
+    await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title, description } })
     fetchNotifications(io.sockets, { _id: user._id })
-
     res.status(200).send({ message: authControllerResponse.signUpSuccess })
+    /** Push notification */
+    if (user && user.pushTokens && user.pushTokens.length && user.pushNotification) {
+      const tokens = user.pushTokens.map(i => i.token)
+      pushNotification(tokens, title, description)
+    }
   } catch (e: any) {
     next(Boom.badData(e.message))
   }

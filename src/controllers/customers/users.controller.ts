@@ -11,7 +11,7 @@ import subscriptionService from '../../services/admin/subscriptions/subscription
 import stripeSubscriptionService from '../../services/stripe/subscription'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3, encrypt, compileHtml, sentEmail } from '../../lib/utils/utils'
+import { removeImageToAwsS3, uploadImageToAwsS3, encrypt, compileHtml, sentEmail, pushNotification } from '../../lib/utils/utils'
 import { awsBucket, emailTemplatesTitles, originEmails } from '../../constants/app.constant'
 import config from '../../../config'
 
@@ -56,9 +56,16 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
                   return next(Boom.notFound(authControllerResponse.userInvalidPasswordError))
             }
             await usersService.updateUser({ password: newPassword }, { _id: userObj._id })
-            await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: 'Change Password', description: 'Password Changed Successfully' }})
+            const notificationTitle = 'Change Password'
+            const notificationDescription = 'Password Changed Successfully'
+            await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription }})
             fetchNotifications(io.sockets, { _id: userObj._id })
             res.status(200).send({ message: authControllerResponse.passwordUpdateSuccess })
+            /** Push notification */
+            if (userObj?.pushTokens?.length && userObj.pushNotification) {
+                  const tokens = userObj.pushTokens.map(i => i.token)
+                  pushNotification(tokens, notificationTitle, notificationDescription)
+            }
       } catch (e: any) {
             next(Boom.badData(e.message))
       }
@@ -95,7 +102,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   email: userObj.email,
                   firstName: req.body.firstName || userObj.firstName,
                   lastName: req.body.lastName || userObj.lastName,
-                  notificationSetting: (typeof req.body.notificationSetting === 'boolean') ? req.body.notificationSetting : userObj.notificationSetting || false,
+                  pushNotification: (typeof req.body.pushNotification === 'boolean') ? req.body.pushNotification : userObj.pushNotification || false,
                   emailNotification: (typeof req.body.emailNotification === 'boolean') ? req.body.emailNotification : userObj.emailNotification || false,
             }
   
@@ -127,6 +134,11 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   const description = userObj.kindleEmail ? 'Kindle email updated' : 'Kindle email Added'
                   await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title, description }})
                   fetchNotifications(io.sockets, { _id: userObj._id })
+                  /** Push notification */
+                  if (userObj.pushTokens.length && userObj.pushNotification) {
+                        const tokens = userObj.pushTokens.map(i => i.token)
+                        pushNotification(tokens, title, description)
+                  }
             }
             return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
       } catch (e: any) {
@@ -462,7 +474,9 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         html = htmlData
                   }
             }
-            await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: 'Update Subscription', description: 'Subscription updated successfully' }})
+            const notificationTitle = 'Update Subscription'
+            const notificationDescription = 'Subscription updated successfully'
+            await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription }})
             fetchNotifications(io.sockets, { _id: userObj._id })
 
             const result = await sentEmail(userObj.email, sub, html);
@@ -476,6 +490,11 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         customerEmail: userObj.email
                   }
             })
+            /** Push notification */
+            if (req.user.pushTokens.length && userObj.pushNotification) {
+                  const tokens = req.user.pushTokens.map(i => i.token)
+                  pushNotification(tokens, notificationTitle, notificationDescription)
+            }
       } catch (e: any) {
             next(Boom.badData(e.message))
       }

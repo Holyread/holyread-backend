@@ -62,7 +62,7 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             fetchNotifications(io.sockets, { _id: userObj._id })
             res.status(200).send({ message: authControllerResponse.passwordUpdateSuccess })
             /** Push notification */
-            if (userObj.pushTokens.length) {
+            if (userObj?.pushTokens?.length && userObj.pushNotification) {
                   const tokens = userObj.pushTokens.map(i => i.token)
                   pushNotification(tokens, notificationTitle, notificationDescription)
             }
@@ -102,7 +102,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   email: userObj.email,
                   firstName: req.body.firstName || userObj.firstName,
                   lastName: req.body.lastName || userObj.lastName,
-                  notificationSetting: (typeof req.body.notificationSetting === 'boolean') ? req.body.notificationSetting : userObj.notificationSetting || false,
+                  pushNotification: (typeof req.body.pushNotification === 'boolean') ? req.body.pushNotification : userObj.pushNotification || false,
                   emailNotification: (typeof req.body.emailNotification === 'boolean') ? req.body.emailNotification : userObj.emailNotification || false,
             }
   
@@ -135,7 +135,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title, description }})
                   fetchNotifications(io.sockets, { _id: userObj._id })
                   /** Push notification */
-                  if (userObj.pushTokens.length) {
+                  if (userObj.pushTokens.length && userObj.pushNotification) {
                         const tokens = userObj.pushTokens.map(i => i.token)
                         pushNotification(tokens, title, description)
                   }
@@ -491,7 +491,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   }
             })
             /** Push notification */
-            if (req.user.pushTokens.length) {
+            if (req.user.pushTokens.length && userObj.pushNotification) {
                   const tokens = req.user.pushTokens.map(i => i.token)
                   pushNotification(tokens, notificationTitle, notificationDescription)
             }

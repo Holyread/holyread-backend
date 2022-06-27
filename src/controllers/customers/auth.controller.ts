@@ -121,7 +121,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     fetchNotifications(io.sockets, { _id: user._id })
     res.status(200).send({ message: authControllerResponse.signUpSuccess })
     /** Push notification */
-    if (user && user.pushTokens && user.pushTokens.length) {
+    if (user && user.pushTokens && user.pushTokens.length && user.pushNotification) {
       const tokens = user.pushTokens.map(i => i.token)
       pushNotification(tokens, title, description)
     }

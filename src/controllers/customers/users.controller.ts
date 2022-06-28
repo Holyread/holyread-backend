@@ -449,7 +449,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   userObj.stripeCustomerId = customer.id
                   await usersService.updateUser({ stripeCustomerId: customer.id }, { _id: userObj._id })
             }
-            const sbscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripeCustomerId)
+            const sbscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripeCustomerId, req.body.paymentMethod)
             await usersService.updateUser(
                   {
                         stripePlanId: subscriptionDetails.stripePlanId,
@@ -486,7 +486,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             res.status(200).send({
                   message: subscriptionsControllerResponse.createSubscriptionSuccess,
                   data: {
-                        clientSecret: sbscription.latest_invoice.payment_intent.client_secret,
+                        sbscriptionStatus: sbscription.status,
                         customerEmail: userObj.email
                   }
             })

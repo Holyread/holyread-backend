@@ -187,7 +187,7 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
 const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
   try {
     const body: any = req.body
-    const query: any = [{ 'oAuth.clientId': body.id, 'oAuth.provider': 'FACEBOOK' }]
+    const query: any = [{ 'oAuth.clientId': body.id, 'oAuth.provider': body.provider }]
     if (body.email) {
       query.push({ email: body.email })
     }
@@ -210,14 +210,14 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     }
     const newBody: any = {
       image: body.photoUrl ? body.photoUrl : '',
-      firstName: body.name,
-      lastName: body.name,
+      firstName: body.firstName || body.name,
+      lastName: body.lastName || body.name,
       type: 'User',
       status: 'Active',
       verified: true,
       oAuth: {
         clientId: body.id,
-        provider: 'FACEBOOK'
+        provider: body.provider
       }
     }
     if (body.email) {

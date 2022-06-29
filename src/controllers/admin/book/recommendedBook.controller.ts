@@ -14,7 +14,7 @@ const bookSummaryControllerResponse = responseMessage.bookSummaryControllerRespo
 const addRecommendedBook = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
-        const bookDetails = await bookSummaryService.getOneBookSummaryByFilter({ _id: body.book })
+        const bookDetails = await bookSummaryService.getOneBookSummaryByFilter({ _id: String(body.book) })
         if (!bookDetails) {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }

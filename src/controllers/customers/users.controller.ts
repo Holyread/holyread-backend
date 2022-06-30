@@ -60,6 +60,10 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             const notificationDescription = 'Password Changed Successfully'
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription }})
             fetchNotifications(io.sockets, { _id: userObj._id })
+            const sub = 'Password Changed Success'
+            let html = `<p>Hello ${userObj.split('@')[0]}</p><p>Your password changed successfully</p>`
+
+            await sentEmail(originEmails.contactUs, sub, html);
             res.status(200).send({ message: authControllerResponse.passwordUpdateSuccess })
             /** Push notification */
             if (userObj?.pushTokens?.length && userObj.pushNotification) {

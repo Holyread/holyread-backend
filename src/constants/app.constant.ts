@@ -49,7 +49,8 @@ export const emailTemplatesTitles = {
         feedback: 'Client Feedback',
         sendInvitation: 'Send Invitation',
         blessFriend: 'Customer Registration Bless Friend',
-        chooseSubscription: 'Choose Subscription'
+        chooseSubscription: 'Choose Subscription',
+        changePassword: 'Change Password'
     },
     admin: {
         customerRegistration: 'Admin Customer Registration',

@@ -60,8 +60,20 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             const notificationDescription = 'Password Changed Successfully'
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription }})
             fetchNotifications(io.sockets, { _id: userObj._id })
-            const sub = 'Password Changed Success'
-            let html = `<p>Hello ${userObj.email.split('@')[0]}</p><p>Your password changed successfully</p>`
+            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.changePassword })
+
+            const sub = emailTemplateDetails.subject || 'Change Password'
+            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have requested a password change on Holyread that succeed.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+
+            if (emailTemplateDetails && emailTemplateDetails.content) {
+                  const contentData = {
+                        username: userObj.firstName + ' ' + userObj.lastName,
+                  }
+                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  if (htmlData) {
+                        html = htmlData
+                  }
+            }
 
             await sentEmail(userObj.email, sub, html);
             res.status(200).send({ message: authControllerResponse.passwordUpdateSuccess })

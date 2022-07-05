@@ -98,7 +98,7 @@ const getReadsOfTheDay = async (request: Request, response: Response, next: Next
 }
 
 /** Get recommended books for dashboard */
-const getRecommendedBooks = async (request: Request, response: Response, next: NextFunction) => {
+const getRecommendedBooks = async (request: any, response: Response, next: NextFunction) => {
     try {
         const params: any = request.query
         const skip: any = params.skip ? params.skip : dataLimit.skip
@@ -108,6 +108,7 @@ const getRecommendedBooks = async (request: Request, response: Response, next: N
         if (result && result.recommendedBooks && result.recommendedBooks.length) {
             result.recommendedBooks.map((oneBook: any) => {
                 if (oneBook && oneBook.book && oneBook.book._id) {
+                    const isSaved = request.user.library?.saved?.find(b => String(b) === String(oneBook.book._id)) ? true : false
                     recommendedBooks.push({
                         _id: oneBook.book._id,
                         coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneBook.book.coverImage,
@@ -117,7 +118,8 @@ const getRecommendedBooks = async (request: Request, response: Response, next: N
                         overview: oneBook.book.overview,
                         description: oneBook.book.description,
                         totalStar: Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1,9))),
-                        totalReads: randomNumberInRange(10000, 20000)
+                        totalReads: randomNumberInRange(10000, 20000),
+                        isSaved
                     })
                 } else {
                     --result.count

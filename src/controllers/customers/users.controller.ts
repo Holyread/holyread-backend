@@ -48,6 +48,17 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
       }
 }
 
+/**  Get one user by id */
+const getBlessFriend = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            /** Get current user */
+            let userObj: any = await usersService.getOneUserByFilter({ email: req.params.email })
+            res.status(200).send({ message: authControllerResponse.getUserSuccess, data: { email: userObj?.email || null } })
+      } catch (e: any) {
+            next(Boom.badData(e.message))
+      }
+}
+
 const changePassword = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
             const { password, newPassword }: { password: string, newPassword: string } = req.body;
@@ -392,6 +403,29 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             if (inviteUser) {
                   return next(Boom.badData(authControllerResponse.userAlreadyExistError))
             }
+            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscriptions })
+            if (!subscriptionDetails) {
+                  return next(Boom.badData(authControllerResponse.blessFriendSubscriptionError))
+            }
+            const customer = await stripeSubscriptionService.createCustomer(body.email, req.body.token)                  
+            const sbscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id, req.body.paymentMethod)
+            const invitedUserDetails = await authService.createUser({
+                  image: '',
+                  email: body.email,
+                  password: body.password,
+                  type: 'User',
+                  status: 'Active',
+                  verified: true,
+                  verificationCode: '',
+                  subscriptions: subscriptionDetails._id,
+                  referralUserId: refUser._id,
+                  stripeCustomerId: customer.id,
+                  stripePlanId: subscriptionDetails.stripePlanId,
+                  stripeSubscriptionId: sbscription.id,
+            })
+            if (!invitedUserDetails || !invitedUserDetails._id) {
+                  return next(Boom.badData(authControllerResponse.createUserFailed))
+            }
             const sendEmailTemplate = await emailTemplateService.getAllEmailTemplates(0, 0, { title: { $in: [emailTemplatesTitles.customer.sendInvitation, emailTemplatesTitles.customer.blessFriend] } }, [])
             const blessFriendTemplate = sendEmailTemplate.count && sendEmailTemplate.emailTemplates.find(oneTemplate => oneTemplate.title === emailTemplatesTitles.customer.blessFriend)
             const sendInvitationTemplate = sendEmailTemplate.count && sendEmailTemplate.emailTemplates.find(oneTemplate => oneTemplate.title === emailTemplatesTitles.customer.sendInvitation)
@@ -403,21 +437,14 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             let sentInvitationHtml = '<p>Dear {{username}}</p><p>You have been registered on Holyread.</p><p>Your customer account details are below:</p><p>Email : {{email}}<br>Password: {{password}}</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>'
 
             if (blessFriendTemplate && blessFriendTemplate.content) {
-                  const contentData = { email: body.email, password: body.password, username: refUser.email.substr(0, body.email.indexOf('@')) }
-                  const htmlData = await compileHtml(blessFriendTemplate.content, contentData)
-                  if (htmlData) {
-                        blessFriendHtml = htmlData
-                  }
-            }
-            if (blessFriendTemplate && blessFriendTemplate.content) {
-                  const contentData = { email: body.email, password: body.password, username: body.email.substr(0, body.email.indexOf('@')) }
+                  const contentData = { email: body.email, password: body.password, username: refUser.email.substr(0, refUser.email.indexOf('@')) }
                   const htmlData = await compileHtml(blessFriendTemplate.content, contentData)
                   if (htmlData) {
                         blessFriendHtml = htmlData
                   }
             }
             if (sendInvitationTemplate && sendInvitationTemplate.content) {
-                  const contentData = { email: body.email, password: body.password, username: refUser.email.substr(0, body.email.indexOf('@')) }
+                  const contentData = { email: body.email, password: body.password, username: body.email.substr(0, body.email.indexOf('@')) }
                   const htmlData = await compileHtml(sendInvitationTemplate.content, contentData)
                   if (htmlData) {
                         sentInvitationHtml = htmlData
@@ -428,24 +455,32 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             if (!blessFriendEmailResult || !sendInvitationResult) {
                   return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
             }
-            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscriptions })
-            if (!subscriptionDetails) {
-                  return next(Boom.badData(authControllerResponse.blessFriendSubscriptionError))
+            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
+            const sub = emailTemplateDetails.subject || 'Subscription'
+            let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+
+            if (emailTemplateDetails && emailTemplateDetails.content) {
+                  const contentData = {
+                        username: body.email.split('@')[0],
+                        subscription_title: subscriptionDetails.title,
+                        subscription_details: subscriptionDetails.duration,
+                        subscription_duration: subscriptionDetails.title
+                  }
+                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  if (htmlData) {
+                        html = htmlData
+                  }
             }
-            const invitedUserDetails = await authService.createUser({
-                  image: '',
-                  email: body.email,
-                  password: body.password,
-                  type: 'User',
-                  status: 'Active',
-                  verified: true,
-                  verificationCode: '',
-                  subscriptions: subscriptionDetails._id,
-                  referralUserId: refUser._id
-            })
-            if (!invitedUserDetails || !invitedUserDetails._id) {
-                  return next(Boom.badData(authControllerResponse.createUserFailed))
+            const result = await sentEmail(body.email, sub, html);
+            if (!result) {
+                  return next(Boom.notFound(authControllerResponse.sentSubscriptionEmailFilure))
             }
+            const notificationTitle = 'Subscription Gift'
+            const notificationDescription = 'Subscription Gift Added Successfully'
+            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription }})
+            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: 'Welcome', description: 'Welcome to the holyreads' }})
+            fetchNotifications(io.sockets, { _id: invitedUserDetails._id })
+
             res.status(200).send({ message: authControllerResponse.blessFriendSuccess })
       } catch (e: any) {
             next(Boom.badData(e.message))
@@ -518,6 +553,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
 
 export {
       getUserAccount,
+      getBlessFriend,
       getShareOptionImageUrl,
       changePassword,
       getUserSubscription,

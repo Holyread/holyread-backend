@@ -136,7 +136,7 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
                 summarySorting.push(['createdAt', params.order || 'ASC']);
                 break;
             default:
-                summarySorting.push(['title', 'DESC']);
+                summarySorting.push(['title', 'ASC'])
                 break;
         }
         if (params.status && params.status === 'NewlyAdded') {

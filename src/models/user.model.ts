@@ -1,4 +1,4 @@
-import mongoose, {Schema} from 'mongoose'
+import mongoose, { Schema } from 'mongoose'
 
 mongoose.set('useCreateIndex', true)
 
@@ -49,10 +49,11 @@ export interface IUser extends mongoose.Document {
     kindleEmail?: string,
     inAppToken?: String,
     lastPaymentDate?: Date,
-    stripePaymentId?: string,
-    stripeSubscriptionId?: string,
-    stripeCustomerId?: string,
-    stripePlanId?: string,
+    stripe: {
+        subscriptionId?: string,
+        customerId?: string,
+        planId?: string,
+    },
 }
 
 export type createUserType = {
@@ -102,10 +103,11 @@ export type createUserType = {
     kindleEmail?: string,
     inAppToken?: String,
     lastPaymentDate?: Date,
-    stripePaymentId?: string,
-    stripeSubscriptionId?: string,
-    stripeCustomerId?: string,
-    stripePlanId?: string,
+    stripe: {
+        subscriptionId?: string,
+        customerId?: string,
+        planId?: string,
+    },
 }
 
 export type getUserType = {
@@ -155,10 +157,11 @@ export type getUserType = {
     kindleEmail?: string,
     inAppToken?: String,
     lastPaymentDate?: Date,
-    stripePaymentId?: string,
-    stripeSubscriptionId?: string,
-    stripeCustomerId?: string,
-    stripePlanId?: string,
+    stripe: {
+        subscriptionId?: string,
+        customerId?: string,
+        planId?: string,
+    },
 }
 
 export const UserSchema = new Schema({
@@ -207,10 +210,11 @@ export const UserSchema = new Schema({
     },
     referralUserId: { type: Schema.Types.ObjectId, ref: 'user' },
     kindleEmail: { type: String },
-    stripePaymentId: { type: String },
-    stripeSubscriptionId: { type: String },
-    stripeCustomerId: { type: String },
-    stripePlanId: { type: String },
+    stripe: {
+        subscriptionId: { type: String },
+        customerId: { type: String },
+        planId: { type: String },
+    },
     inAppToken: { type: String }, // subscription token created from the app
     lastPaymentDate: { type: Date }, // subscription last payment date from the app
     createdAt: {
@@ -218,7 +222,7 @@ export const UserSchema = new Schema({
             return new Date()
         },
     },
-    updatedAt: {type: Date},
-}, {strict: 'throw'})
+    updatedAt: { type: Date },
+}, { strict: 'throw' })
 
 export const UserModel = mongoose.model<IUser>('user', UserSchema)

@@ -495,18 +495,24 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             if (!subscriptionDetails) {
                   return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }
-            if (!userObj.stripeCustomerId) {
+            if (!userObj.stripeCustomerId && !req.body.inAppToken) {
                   const customer = await stripeSubscriptionService.createCustomer(userObj.email, req.body.token)
                   userObj.stripeCustomerId = customer.id
                   await usersService.updateUser({ stripeCustomerId: customer.id }, { _id: userObj._id })
             }
-            const sbscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripeCustomerId, req.body.paymentMethod)
+            const sbscription = !req.body.inAppToken && await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripeCustomerId, req.body.paymentMethod)
+            /** app subscription includes the inAppToken */
+            let body = req.body.inAppToken ? {
+                  lastPaymentDate: req.body.lastPaymentDate,
+                  subscriptions: req.body.subscription,
+                  inAppToken: req.body.inAppToken
+            } : {
+                  stripePlanId: subscriptionDetails.stripePlanId,
+                  stripeSubscriptionId: sbscription.id,
+                  subscriptions: subscriptionDetails._id
+            }
             await usersService.updateUser(
-                  {
-                        stripePlanId: subscriptionDetails.stripePlanId,
-                        stripeSubscriptionId: sbscription.id,
-                        subscriptions: subscriptionDetails._id
-                  },
+                  body,
                   { _id: userObj._id }
             )
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
@@ -525,8 +531,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         html = htmlData
                   }
             }
-            const notificationTitle = 'Update Subscription'
-            const notificationDescription = 'Subscription updated successfully'
+            const notificationTitle = req.body.inAppToken && !userObj.inAppToken ? 'Subscription Created' : 'Subscription Updated'
+            const notificationDescription = req.body.inAppToken && !userObj.inAppToken ? 'Subscription created successfully' : 'Subscription updated successfully'
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription }})
             fetchNotifications(io.sockets, { _id: userObj._id })
 
@@ -536,10 +542,10 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             }
             res.status(200).send({
                   message: subscriptionsControllerResponse.createSubscriptionSuccess,
-                  data: {
+                  data: !req.body.inAppToken ? {
                         sbscriptionStatus: sbscription.status,
                         customerEmail: userObj.email
-                  }
+                  } : { subscriptions: subscriptionDetails._id }
             })
             /** Push notification */
             if (req.user.pushTokens.length && userObj.pushNotification) {

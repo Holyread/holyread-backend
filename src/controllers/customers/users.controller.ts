@@ -498,21 +498,26 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             if (!subscriptionDetails) {
                   return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }
-            if (!userObj.stripe.customerId && !req.body.inAppToken) {
-                  const customer = await stripeSubscriptionService.createCustomer(userObj.email, req.body.token)
-                  userObj.stripe.customerId = customer.id
-                  await usersService.updateUser({ 'stripe.customerId': customer.id }, { _id: userObj._id })
-            }
-            const sbscription = !req.body.inAppToken && await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod)
-            /** app subscription includes the inAppToken */
-            let body = req.body.inAppToken ? {
-                  lastPaymentDate: req.body.lastPaymentDate,
-                  subscriptions: req.body.subscription,
-                  inAppToken: req.body.inAppToken
-            } : {
-                  'stripe.planId': subscriptionDetails.stripePlanId,
-                  'stripe.subscriptionId': sbscription.id,
-                  subscriptions: subscriptionDetails._id
+            let body = {};
+            let subscription;
+            if (req.body.inAppToken) {
+                  body = {
+                        subscriptions: req.body.subscription,
+                        inAppToken: req.body.inAppToken
+                  }
+            } else {
+                  if (!userObj.stripe.customerId) {
+                        const customer = await stripeSubscriptionService.createCustomer(userObj.email, req.body.token)
+                        userObj.stripe.customerId = customer.id
+                        await usersService.updateUser({ 'stripe.customerId': customer.id }, { _id: userObj._id })
+                  }
+                  subscription = !req.body.inAppToken && await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod)
+                  /** app subscription includes the inAppToken */
+                  body = {
+                        'stripe.planId': subscriptionDetails.stripePlanId,
+                        'stripe.subscriptionId': subscription.id,
+                        subscriptions: subscriptionDetails._id
+                  }
             }
             await usersService.updateUser(
                   body,
@@ -546,7 +551,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             res.status(200).send({
                   message: subscriptionsControllerResponse.createSubscriptionSuccess,
                   data: !req.body.inAppToken ? {
-                        sbscriptionStatus: sbscription.status,
+                        subscriptionStatus: subscription.status,
                         customerEmail: userObj.email
                   } : { subscriptions: subscriptionDetails._id }
             })

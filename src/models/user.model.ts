@@ -48,7 +48,6 @@ export interface IUser extends mongoose.Document {
     referralUserId?: string,
     kindleEmail?: string,
     inAppToken?: String,
-    lastPaymentDate?: Date,
     stripe: {
         subscriptionId?: string,
         customerId?: string,
@@ -102,7 +101,6 @@ export type createUserType = {
     referralUserId?: string,
     kindleEmail?: string,
     inAppToken?: String,
-    lastPaymentDate?: Date,
     stripe: {
         subscriptionId?: string,
         customerId?: string,
@@ -156,7 +154,6 @@ export type getUserType = {
     referralUserId?: string,
     kindleEmail?: string,
     inAppToken?: String,
-    lastPaymentDate?: Date,
     stripe: {
         subscriptionId?: string,
         customerId?: string,
@@ -216,7 +213,6 @@ export const UserSchema = new Schema({
         planId: { type: String },
     },
     inAppToken: { type: String }, // subscription token created from the app
-    lastPaymentDate: { type: Date }, // subscription last payment date from the app
     createdAt: {
         type: Date, default: () => {
             return new Date()

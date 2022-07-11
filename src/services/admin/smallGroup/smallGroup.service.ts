@@ -1,7 +1,10 @@
 import { SmallGroupModel } from '../../../models/index'
 import { responseMessage } from '../../../constants/message.constant'
+import { awsBucket } from '../../../constants/app.constant'
+import config from '../../../../config'
 
 const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
+const NODE_ENV = config.NODE_ENV
 
 /** Add small group */
 const createSmallGroup = async (body: any) => {
@@ -9,6 +12,9 @@ const createSmallGroup = async (body: any) => {
         const result = await SmallGroupModel.create(body)
         if (!result) {
             throw new Error(smallGroupControllerResponse.createSmallGroupFailure)
+        }
+        if (result.coverImage) {
+            result.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + result.coverImage
         }
         return result
     } catch (e: any) {
@@ -24,6 +30,9 @@ const updateSmallGroup = async (body: any, id: string) => {
             { ...body, updatedAt: new Date() },
             { new: true }
         )
+        if (data && data.coverImage) {
+            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + data.coverImage
+        }
         return data
     } catch (e: any) {
         throw new Error(e)
@@ -45,6 +54,13 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
     try {
         const result = await SmallGroupModel.find(search).populate('books', 'title').skip(skip).limit(limit).sort(sort).lean()
         const count = await SmallGroupModel.find(search).count()
+        if (result.length) {
+            await Promise.all(result.map(item => {
+                if (item && item.coverImage) {
+                    item.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + item.coverImage
+                }
+            }))
+        }
         return { count, smallGroups: result }
     } catch (e: any) {
         throw new Error(e)

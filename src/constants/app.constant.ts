@@ -23,6 +23,7 @@ export const awsBucket = {
     expertCuratedDirectory: 'expertCurated',
     testimonialDirectory: 'testimonial',
     shareImageDirectory: 'shareImage',
+    smallGroupDirectory: 'smallGroup',
     readsOfDayDirectory: 'readsOfDay',
     region: 'us-east-1',
 }

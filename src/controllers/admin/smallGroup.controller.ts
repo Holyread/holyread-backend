@@ -60,7 +60,7 @@ const getOneSmallGroup = async (req: Request, res: Response, next: NextFunction)
             });
         }
         if (data.coverImage) {
-            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/  ' + data.coverImage
+            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + data.coverImage
         }
         res.status(200).send({ message: smallGroupControllerResponse.fetchSmallGroupSuccess, data })
     } catch (e: any) {

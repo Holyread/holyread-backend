@@ -7,7 +7,6 @@ import handlebars from 'handlebars'
 import firebaseAdmin from 'firebase-admin';
 
 import config from '../../../config'
-import { fireStoreConfig } from '../../constants/app.constant'
 
 const algorithm = 'aes-256-cbc';
 const key = '2b7e151628aed2a6abf7158809cf4f3c';
@@ -215,9 +214,6 @@ export const getFileSizeFromBase64 = (base64Document: string) => {
 }
 
 export const pushNotification = async (tokens: string, title: string, description: string) => {
-    firebaseAdmin.initializeApp({
-        credential: firebaseAdmin.credential.cert(fireStoreConfig as any),
-    });
     firebaseAdmin.messaging().sendToDevice(tokens, { notification: { title, body: description }}).then(response => {
         response.results.forEach((result, index) => {
             const error = result.error;

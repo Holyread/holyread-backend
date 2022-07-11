@@ -6,13 +6,14 @@ import path from 'path'
 import cors from 'cors'
 import Boom from '@hapi/boom'
 import http from 'http'
+import firebaseAdmin from 'firebase-admin';
 
 import customersRoutes from './routes/customers.routes'
 import adminRoutes from './routes/admin.routes'
 import appConfig from './lib/appConfig'
 import './models/index'
 import config from '../config'
-import { allowedOrigins } from './constants/app.constant'
+import { allowedOrigins, fireStoreConfig } from './constants/app.constant'
 import { responseMessage } from './constants/message.constant'
 import customerIoAuth from './middleware/customers.io.passport'
 
@@ -51,7 +52,9 @@ if (config.NODE_ENV !== 'test') {
   server.listen(config.PORT, () => console.log(`API listening on ${config.PORT}`))
   io.attach(server); 
 }
-
+firebaseAdmin.initializeApp({
+  credential: firebaseAdmin.credential.cert(fireStoreConfig as any),
+});
 export {
   app,
   io

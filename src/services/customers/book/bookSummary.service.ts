@@ -87,6 +87,8 @@ const getAllBookSummaries = async (skip: number, limit, search: any, sort, libra
 const getOneBookSummaryByFilter = async (query: any) => {
     try {
         const data: any = await BookSummaryModel.findOne(query).lean()
+        if (!data) return data;
+        const libBookChapters = global?.currentUser?.library?.reading?.find(item => String(item.bookId) === String(data._id))?.chaptersCompleted
         if (data.author) {
             data.author = await BookAuthorModel.findById(data.author).select('_id name about').lean().exec()
         }
@@ -94,6 +96,7 @@ const getOneBookSummaryByFilter = async (query: any) => {
         data.totalStar = Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1, 9)))
         data.totalReads = randomNumberInRange(10000, 20000)
         data.bookMark = isSaved
+        data.reads = Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / data?.chapters?.length : 0).toFixed(0))
         return data
     } catch (e: any) {
         throw new Error(e)

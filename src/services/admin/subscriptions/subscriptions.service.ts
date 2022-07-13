@@ -48,7 +48,6 @@ const getAllSubscriptions = async (skip: number, limit, search: object, sort) =>
             const subscriptionsList: any = await SubscriptionsModel.find(search).select('-stripePlanId').skip(skip).limit(limit).sort(sort).lean()
             subscriptionsList.forEach(item => {
                   item.status === 'Active' ? item.status = true : item.status = false
-                  item.duration = `${item.duration} days`
             })
             const count = await SubscriptionsModel.find(search).count()
             return { count, subscriptions: subscriptionsList }

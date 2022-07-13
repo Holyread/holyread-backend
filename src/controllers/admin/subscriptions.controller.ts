@@ -18,7 +18,14 @@ const addSubscription = async (req: Request, res: Response, next: NextFunction) 
         if (subscriptionObj) {
             return next(Boom.conflict(subscriptionsControllerResponse.createSubscriptionFailure))
         }
-        const createPlan = await stripeService.createPlan(body.title, Number(body.price), 'month')
+        let intervalCount = 1
+        let duration = body.duration
+        if (body.duration === 'Half-Year') {
+            intervalCount = 6
+            duration = 'Month'
+            body.intervalCount = 6
+        }
+        const createPlan = await stripeService.createPlan(body.title, Number(body.price), duration, intervalCount)
         if (!createPlan || !createPlan.id) {
             return next(Boom.badData(subscriptionsControllerResponse.planCreateError))
         }
@@ -124,7 +131,7 @@ const updateSubscription = async (req: Request, res: Response, next: NextFunctio
             if (!planDetails) {
                 return next(Boom.notFound(subscriptionsControllerResponse.planFetchError))
             }
-            const createNewPrice = await stripeService.addPrice(planDetails.product, Number(req.body.price), 'month')
+            const createNewPrice = await stripeService.addPrice(planDetails.product, Number(req.body.price), subscriptionObj.duration, subscriptionObj.intervalCount)
             if (!createNewPrice.id) {
                 req.body.price = subscriptionObj.price
             }

@@ -506,9 +506,9 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         inAppToken: req.body.inAppToken
                   }
             } else {
-                  if (!userObj.stripe.customerId) {
+                  if (!userObj.stripe || !userObj.stripe.customerId) {
                         const customer = await stripeSubscriptionService.createCustomer(userObj.email, req.body.token)
-                        if (!userObj?.stripe) { userObj.stripe = {} }
+                        if (!userObj.stripe) { userObj.stripe = {} }
                         userObj.stripe.customerId = customer.id
                         await usersService.updateUser({ 'stripe.customerId': customer.id }, { _id: userObj._id })
                   }

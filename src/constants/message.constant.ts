@@ -201,6 +201,7 @@ export const responseMessage = {
         getSettingFailure: 'Failed to fetch setting details',
     },
     notificationsControllerResponse: {
-        createNotificationSuccess: 'Notification created successfully'
+        createNotificationSuccess: 'Notification created successfully',
+        deleteNotificationSuccess: 'Notification deleted successfully'
     },
 }

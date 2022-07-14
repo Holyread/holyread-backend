@@ -47,9 +47,9 @@ const addPrice = async (productId: string, price: number, interval: string, inte
             }
             if (!productPrice) {
                   productPrice = await stripe.prices.create({
-                        unit_amount: price * 100,
+                        unit_amount: Number((price * 100).toFixed(2)),
                         currency: 'usd',
-                        recurring: { interval, interval_count: intervalCount },
+                        recurring: { interval: interval.toLowerCase(), interval_count: intervalCount },
                         product: productId,
                   });
             }

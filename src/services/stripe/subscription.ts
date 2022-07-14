@@ -11,10 +11,10 @@ const retrieveSubscription = async (id: string) => {
       }
 }
 
-const createCustomer = async (email: string, source: string) => {
+const createCustomer = async (email: string, source?: string) => {
       try {
             const name = email.split('@')[0]
-            const customer = await stripe.customers.create({
+            const body: any = {
                   email,
                   name,
                   shipping: {
@@ -35,21 +35,26 @@ const createCustomer = async (email: string, source: string) => {
                         state: 'CA',
                   },
                   source
-            });
+            }
+            if (source) {
+                  body.source = source
+            }
+            const customer = await stripe.customers.create(body);
             return customer
       } catch (error: any) {
             throw new Error(error)
       }
 }
 
-
-const createSubscription = async (planId: string, customerId: string, paymentMethod: string) => {
+const createSubscription = async (planId: string, customerId: string, paymentMethod?: string) => {
       try {
-            await clearPaymentMethods(customerId)
-            await stripe.paymentMethods.attach(
-                  paymentMethod,
-                  { customer: customerId }
-            );
+            if (paymentMethod) {
+                  await clearPaymentMethods(customerId)
+                  await stripe.paymentMethods.attach(
+                        paymentMethod,
+                        { customer: customerId }
+                  );
+            }
             const subscription = await stripe.subscriptions.create({
                   customer: customerId,
                   items: [

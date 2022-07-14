@@ -11,11 +11,14 @@ import { uploadImageToAwsS3, compileHtml } from '../../lib/utils/utils'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
+import stripeSubscriptionService from '../../services/stripe/subscription';
 import { fetchNotifications } from './notification.controller';
 import { io } from '../../app';
+import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
+const subscriptionsControllerResponse = responseMessage.subscriptionsControllerResponse
 const NODE_ENV = config.NODE_ENV
 const s3Bucket = {
   region: awsBucket.region,
@@ -110,20 +113,57 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     if (!user) {
       return next(Boom.badData(authControllerResponse.getUserError))
     }
+    const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
+    if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
+      return next(Boom.badData(subscriptionsControllerResponse.getSubscriptionFailure))
+    }
+    const customer = await stripeSubscriptionService.createCustomer(email)
+    const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
+
     await usersService.updateUser({
       verified: true,
       status: 'Active',
-      $unset: { verificationCode: 1 }
+      $unset: { verificationCode: 1 },
+      'stripe.planId': subscriptionDetails.stripePlanId,
+      'stripe.subscriptionId': subscription.id,
+      'stripe.customerId': customer.id,
+      subscriptions: subscriptionDetails._id,
     }, user._id)
+
+    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
+    const sub = emailTemplateDetails.subject || 'Subscription'
+    let html = `<p>Dear ${email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for 30 days on ${subscriptionDetails.duration} basis.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+
+    if (emailTemplateDetails && emailTemplateDetails.content) {
+      const contentData = {
+        username: email.split('@')[0],
+        subscription_title: subscriptionDetails.title,
+        subscription_details: subscriptionDetails.duration,
+        subscription_duration: subscriptionDetails.title
+      }
+      const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+      if (htmlData) {
+        html = htmlData
+      }
+    }
+
+    const result = await sentEmail(user.email, sub, html);
+    if (!result) {
+      return next(Boom.notFound(authControllerResponse.sentSubscriptionEmailFilure))
+    }
     const title = 'Welcome';
     const description = 'Welcome to the holyreads';
     await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title, description } })
+    const createSubscriptionTitle = 'Subscription Created'
+    const createSubscriptionDesc = 'Subscription created successfully'
+    await notificationsService.createNotification({ userId: user._id, type: 'setting', notification: { title: createSubscriptionTitle, description: createSubscriptionDesc } })
     fetchNotifications(io.sockets, { _id: user._id })
     res.status(200).send({ message: authControllerResponse.signUpSuccess })
     /** Push notification */
     if (user && user.pushTokens && user.pushTokens.length && user.pushNotification) {
       const tokens = user.pushTokens.map(i => i.token)
       pushNotification(tokens, title, description)
+      pushNotification(tokens, createSubscriptionTitle, createSubscriptionDesc)
     }
   } catch (e: any) {
     next(Boom.badData(e.message))

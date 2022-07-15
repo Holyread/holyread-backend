@@ -5,7 +5,7 @@ const stripe = require('stripe')(config.STRIPE_SECRET);
 const createPlan = async (title: string, price: number, interval: string, intervalCount: number) => {
       try {
             const body: any = {
-                  amount: price * 100,
+                  amount: Number((price * 100).toFixed(2)),
                   currency: 'usd',
                   interval: interval.toLowerCase(),
                   product: { name: title }

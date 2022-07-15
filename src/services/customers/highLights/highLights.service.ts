@@ -14,8 +14,10 @@ const createHighLight = async (body: any) => {
             userId: body.userId,
             chapterId: body.chapterId,
             bookId: body.bookId,
-            'highLights.startIndex': body.startIndex,
-            'highLights.endIndex': body.endIndex
+            'highLights.startIndex': body.startIndex
+        }
+        if (body.startIndex !== body.endIndex) {
+            body['highLights.endIndex'] = body.endIndex
         }
         if (body.color && !validateColor(body.color)) {
             throw new Error(highLightsControllerResponse.invalidHighLightColor)
@@ -23,7 +25,16 @@ const createHighLight = async (body: any) => {
         const existingHighLight = await HighLightsModel.findOne(query).lean().exec()
         let now = new Date()
         if (existingHighLight) {
-            let newBody: any = {}
+            let newBody: any = {
+                '$set': {
+                    'highLights.$.startIndex': body.startIndex,
+                    'highLights.$.endIndex': body.endIndex,
+                    'highLights.$.text': body.text,
+                }
+            }
+            if (body.note) {
+                newBody.note = body.note
+            }
             if (body.color && !body.textDecoration) {
                 newBody['$set'] = { ...newBody['$set'], 'highLights.$.color': body.color, 'highLights.$.updatedAt': now }
                 newBody.updatedAt = now

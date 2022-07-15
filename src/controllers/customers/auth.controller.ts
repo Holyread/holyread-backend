@@ -160,10 +160,10 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     fetchNotifications(io.sockets, { _id: user._id })
     res.status(200).send({ message: authControllerResponse.signUpSuccess })
     /** Push notification */
-    if (user && user.pushTokens && user.pushTokens.length && user?.notifications?.push) {
+    if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
       const tokens = user.pushTokens.map(i => i.token)
       pushNotification(tokens, title, description)
-      if (user?.notifications?.subscriptions)
+      if (user?.notification?.subscriptions)
         pushNotification(tokens, createSubscriptionTitle, createSubscriptionDesc)
     }
   } catch (e: any) {

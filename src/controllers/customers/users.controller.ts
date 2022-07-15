@@ -90,7 +90,7 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             await sentEmail(userObj.email, sub, html);
             res.status(200).send({ message: authControllerResponse.passwordUpdateSuccess })
             /** Push notification */
-            if (userObj?.pushTokens?.length && userObj.pushNotification) {
+            if (userObj?.pushTokens?.length && userObj?.notification?.push) {
                   const tokens = userObj.pushTokens.map(i => i.token)
                   pushNotification(tokens, notificationTitle, notificationDescription)
             }
@@ -130,8 +130,13 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   email: userObj.email,
                   firstName: req.body.firstName || userObj.firstName,
                   lastName: req.body.lastName || userObj.lastName,
-                  pushNotification: (typeof req.body.pushNotification === 'boolean') ? req.body.pushNotification : userObj.pushNotification || false,
-                  emailNotification: (typeof req.body.emailNotification === 'boolean') ? req.body.emailNotification : userObj.emailNotification || false,
+                  notification: {
+                        push: (req.body.notification && typeof req.body.notification.push === 'boolean') ? req.body.notification.push : req.body.notification.push || false,
+                        email: (req.body.notification && typeof req.body.notification.email === 'boolean') ? req.body.notification.email : req.body.notification.email || false,
+                        inApp: (req.body.notification && typeof req.body.notification.inApp === 'boolean') ? req.body.notification.inApp : req.body.notification.inApp || false,
+                        promotionsAndSales: (req.body.notification && typeof req.body.notification.promotionsAndSales === 'boolean') ? req.body.notification.promotionsAndSales : req.body.notification.promotionsAndSales || false,
+                        subscriptions: (req.body.notification && typeof req.body.notification.subscriptions === 'boolean') ? req.body.notification.subscriptions : req.body.notification.subscriptions || false,
+                  }
             }
   
             if (req.body.kindleEmail) {
@@ -149,9 +154,9 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             }
             if (req.body.pushTokens && req.body.pushTokens.deviceId && req.body.pushTokens.token) {
                   body.pushTokens = req.user.pushTokens || []
-                  const pushNotifcationIndex = body.pushTokens.findIndex(item => item.deviceId === req.body.pushTokens.deviceId)
-                  if (pushNotifcationIndex > -1) {
-                        body.pushTokens[pushNotifcationIndex].token = req.body.pushTokens.token
+                  const pushNotificationIndex = body.pushTokens.findIndex(item => item.deviceId === req.body.pushTokens.deviceId)
+                  if (pushNotificationIndex > -1) {
+                        body.pushTokens[pushNotificationIndex].token = req.body.pushTokens.token
                   } else {
                         body.pushTokens.push({ deviceId: req.body.pushTokens.deviceId, token: req.body.pushTokens.token })
                   }
@@ -163,7 +168,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title, description }})
                   fetchNotifications(io.sockets, { _id: userObj._id })
                   /** Push notification */
-                  if (userObj.pushTokens.length && userObj.pushNotification) {
+                  if (userObj.pushTokens.length && userObj?.notification?.push) {
                         const tokens = userObj.pushTokens.map(i => i.token)
                         pushNotification(tokens, title, description)
                   }
@@ -557,7 +562,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   } : { subscriptions: subscriptionDetails._id }
             })
             /** Push notification */
-            if (req.user.pushTokens.length && userObj.pushNotification) {
+            if (req.user.pushTokens.length && userObj?.notification?.push && userObj?.notification?.subscriptions) {
                   const tokens = req.user.pushTokens.map(i => i.token)
                   pushNotification(tokens, notificationTitle, notificationDescription)
             }

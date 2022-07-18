@@ -131,11 +131,11 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   firstName: req.body.firstName || userObj.firstName,
                   lastName: req.body.lastName || userObj.lastName,
                   notification: {
-                        push: (req.body.notification && typeof req.body.notification.push === 'boolean') ? req.body.notification.push : req.body.notification.push || false,
-                        email: (req.body.notification && typeof req.body.notification.email === 'boolean') ? req.body.notification.email : req.body.notification.email || false,
-                        inApp: (req.body.notification && typeof req.body.notification.inApp === 'boolean') ? req.body.notification.inApp : req.body.notification.inApp || false,
-                        promotionsAndSales: (req.body.notification && typeof req.body.notification.promotionsAndSales === 'boolean') ? req.body.notification.promotionsAndSales : req.body.notification.promotionsAndSales || false,
-                        subscriptions: (req.body.notification && typeof req.body.notification.subscriptions === 'boolean') ? req.body.notification.subscriptions : req.body.notification.subscriptions || false,
+                        push: (req.body?.notification && typeof req.body?.notification?.push === 'boolean') ? req.body?.notification?.push : req.body?.notification?.push || false,
+                        email: (req.body?.notification && typeof req.body?.notification?.email === 'boolean') ? req.body?.notification?.email : req.body?.notification?.email || false,
+                        inApp: (req.body?.notification && typeof req.body?.notification?.inApp === 'boolean') ? req.body?.notification?.inApp : req.body?.notification?.inApp || false,
+                        promotionsAndSales: (req.body?.notification && typeof req.body?.notification?.promotionsAndSales === 'boolean') ? req.body?.notification?.promotionsAndSales : req.body?.notification?.promotionsAndSales || false,
+                        subscriptions: (req.body?.notification && typeof req.body?.notification?.subscriptions === 'boolean') ? req.body?.notification?.subscriptions : req.body?.notification?.subscriptions || false,
                   }
             }
   

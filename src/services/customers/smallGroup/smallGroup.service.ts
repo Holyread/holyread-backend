@@ -29,6 +29,7 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
                 introduction: item.introduction,
                 title: item.title,
                 description: item.description,
+                coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + item.coverImage,
                 backgroundColor: item.backgroundColor,
                 books: item.books,
                 bookMark: global?.currentUser?.smallGroups?.find(os => String(os) === String(item._id)) ? true : false
@@ -44,6 +45,7 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
 const getOneSmallGroupByFilter = async (query: any) => {
     try {
         const result: any = await SmallGroupModel.findOne(query).populate('books', 'title overview description author coverImage coverImageBackground').lean()
+        result.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + result.coverImage
         if (result?.books.length) {
             result.books = await Promise.all(result?.books?.map(async oneBook => {
                 if (!oneBook?._id) return undefined

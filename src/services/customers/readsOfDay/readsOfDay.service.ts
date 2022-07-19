@@ -7,7 +7,7 @@ const NODE_ENV = config.NODE_ENV
 /** Get all read of day for app */
 const getAllReadsOfDays = async (skip: number, limit, search: object, sort) => {
     try { 
-        let readsOfTheDayList: any = await ReadsOfDayModel.find(search).select('title image subTitle').skip(skip).limit(limit).sort(sort).lean()
+        let readsOfTheDayList: any = await ReadsOfDayModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         let count: any = await ReadsOfDayModel.count(search).lean().exec()
         readsOfTheDayList = await Promise.all(readsOfTheDayList.map(async (item: any) => {
             return {

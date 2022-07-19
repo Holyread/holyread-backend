@@ -140,7 +140,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
             const bookDetails = await BookSummaryModel.findOne({ _id: item.bookId }).lean().exec()
             if (!bookDetails) return
             const chapterDetails: any = bookDetails.chapters.find((oneChapter: any) => String(oneChapter._id) === String(item.chapterId))
-            const authorDetails = await BookAuthorModel.findOne({ _id: bookDetails.author }).select('name').lean().exec()
+            const authorDetails = await BookAuthorModel.findOne({ _id: bookDetails.author }).lean().exec()
             const existingHighLight = newResult.findIndex(o => String(o.bookId) === String(item.bookId))
 
             if (filter.bookId) {
@@ -161,7 +161,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     title: bookDetails.title,
                     coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + bookDetails.coverImage,
                     coverImageBackground: bookDetails.coverImageBackground,
-                    author: authorDetails,
+                    author: { name: authorDetails?.name || '', _id: authorDetails?._id },
                     overview: bookDetails.overview,
                     highLights: item.highLights,
                     count: item.highLights && item.highLights.length ? item.highLights.length : 0,
@@ -177,6 +177,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
 
         /** filters results by search */
         result = newResult.filter(i => {
+            /** if book have not highlights then should not return */
             if (!i || !i?.highLights?.length) return false
             i.highLights =
                 i.highLights.sort((a, b) =>

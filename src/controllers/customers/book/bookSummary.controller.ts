@@ -51,9 +51,8 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
 /**  Get one book summary by id */
 const getOneSummary = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.params.id
         /** Get summary from db */
-        const data: any = await bookSummaryService.getOneBookSummaryByFilter({ _id: id })
+        const data: any = await bookSummaryService.getOneBookSummaryByFilter({ _id: req.params.id })
         if (!data) {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
@@ -67,7 +66,7 @@ const getOneSummary = async (req: Request, res: Response, next: NextFunction) =>
         if (data.videoFile) {
             data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile
         }
-        if (data.chapters && data.chapters.length) {
+        if (data?.chapters?.length) {
             data.chapters.forEach(async oneChapter => {
                 if (oneChapter.audioFile) {
                     oneChapter.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + oneChapter.audioFile

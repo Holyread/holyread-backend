@@ -54,13 +54,17 @@ const createSubscription = async (planId: string, customerId: string, paymentMet
                         paymentMethod,
                         { customer: customerId }
                   );
+                  await stripe.customers.update(customerId, {
+                        invoice_settings: {
+                              default_payment_method: paymentMethod,
+                        },
+                  });
             }
             const subscription = await stripe.subscriptions.create({
                   customer: customerId,
                   items: [
                         { price: planId },
                   ],
-                  payment_behavior: 'default_incomplete',
                   expand: ['latest_invoice.payment_intent'],
                   trial_period_days: 5
             });

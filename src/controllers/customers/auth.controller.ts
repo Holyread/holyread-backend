@@ -251,8 +251,8 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     }
     const newBody: any = {
       image: body.photoUrl ? body.photoUrl : '',
-      firstName: body.firstName || body.name || '',
-      lastName: body.lastName || body.name || '',
+      firstName: body.firstName || body.name.split(' ')[0] || '',
+      lastName: body.lastName || body.name.split(' ')[1] || '',
       type: 'User',
       status: 'Active',
       verified: true,

@@ -9,7 +9,9 @@ interface IConfig {
     AWS_ACCESSKEY: string,
     SMTP_EMAIL: string,
     SMTP_SECRET: string,
-    STRIPE_SECRET: string
+    KINDLE_SMTP_EMAIL: string,
+    KINDLE_SMTP_SECRET: string,
+    STRIPE_SECRET: string,
 }
 
 const config: IConfig = {
@@ -20,7 +22,9 @@ const config: IConfig = {
     AWS_ACCESSKEY: process.env.AWS_ACCESSKEY,
     SMTP_EMAIL: process.env.SMTP_EMAIL,
     SMTP_SECRET: process.env.SMTP_SECRET,
-    STRIPE_SECRET: process.env.STRIPE_SECRET
+    KINDLE_SMTP_EMAIL: process.env.KINDLE_SMTP_EMAIL,
+    KINDLE_SMTP_SECRET: process.env.KINDLE_SMTP_SECRET,
+    STRIPE_SECRET: process.env.STRIPE_SECRET,
 }
 
 export default config

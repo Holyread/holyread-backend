@@ -95,7 +95,7 @@ const sendSummaryToKindle = async (req: any, res: Response, next: NextFunction) 
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryDocFailure))
         }
         const fileLink = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/reads/' + data.bookReadFile
-        const sentEmailRes = await sentEmail(req.user.kindleEmail, 'Convert', 'Sent book to kindle', data.bookReadFile, fileLink)
+        const sentEmailRes = await sentEmail(req.user.kindleEmail, 'Convert', 'Sent book to kindle', data.bookReadFile, fileLink, true)
         if (!sentEmailRes) {
             return next(Boom.badRequest(bookSummaryControllerResponse.sendBookToKindleEmailFailure))
         }

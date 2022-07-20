@@ -147,18 +147,18 @@ export const removeImageToAwsS3 = async (
     }
 }
 
-export const sentEmail = async (receiverEmail: string, subject: string, html: string, fileName?: string, fileLink?: string) => {
+export const sentEmail = async (receiverEmail: string, subject: string, html: string, fileName?: string, fileLink?: string, sentToKindle?: any) => {
     const transporter = nodemailer.createTransport(smtpTransport({
         service: 'gmail',
         host: 'smtp.gmail.com',
         auth: {
-            user: config.SMTP_EMAIL,
-            pass: config.SMTP_SECRET
+            user: sentToKindle ? config.KINDLE_SMTP_EMAIL : config.SMTP_EMAIL,
+            pass: sentToKindle ? config.KINDLE_SMTP_SECRET : config.SMTP_SECRET
         }
     }));
 
     const mailOptions: any = {
-        from: config.SMTP_EMAIL,
+        from: sentToKindle ? config.KINDLE_SMTP_EMAIL : config.SMTP_EMAIL,
         to: receiverEmail,
         subject,
         headers: {

@@ -228,8 +228,12 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
 const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
   try {
     const body: any = req.body
-    const user: any = await usersService.getOneUserByFilter({ 'oAuth.clientId': body.id, 'oAuth.provider': body.provider })
-    if (user && user.type === 'Admin') {
+    const query: any = [{ 'oAuth.clientId': body.id, 'oAuth.provider': body.provider }]
+    if (body.email) {
+      query.push({ email: body.email })
+    }
+    const user: any = await usersService.getOneUserByFilter({ $or: query })
+    if (user && user.email && user.type === 'Admin') {
       return next(Boom.notFound(authControllerResponse.userNotAuthorizationError))
     }
     if (user) {

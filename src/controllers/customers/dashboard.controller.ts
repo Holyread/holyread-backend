@@ -109,6 +109,7 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
             result.recommendedBooks.map((oneBook: any) => {
                 if (oneBook && oneBook.book && oneBook.book._id) {
                     const isSaved = request.user.library?.saved?.find(b => String(b) === String(oneBook.book._id)) ? true : false
+                    const libBookChapters = request.user?.library?.reading?.find(item => String(item.bookId) === String(oneBook.book._id))?.chaptersCompleted
                     recommendedBooks.push({
                         _id: oneBook.book._id,
                         coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneBook.book.coverImage,
@@ -119,6 +120,7 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
                         description: oneBook.book.description,
                         totalStar: Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1,9))),
                         totalReads: randomNumberInRange(10000, 20000),
+                        reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / oneBook.book?.chapters?.length : 0).toFixed(0)),
                         isSaved
                     })
                 } else {

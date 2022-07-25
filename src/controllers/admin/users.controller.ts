@@ -3,11 +3,15 @@ import Boom from '@hapi/boom';
 
 import usersService from '../../services/admin/users/user.service'
 import subscriptionService from '../../services/admin/subscriptions/subscriptions.service'
+import stripeSubscriptionService from '../../services/stripe/subscription'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
 import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp, sentEmail, compileHtml } from '../../lib/utils/utils'
 import { awsBucket, dataTable, emailTemplatesTitles } from '../../constants/app.constant'
 import config from '../../../config'
+import notificationsService from '../../services/customers/notifications/notifications.service';
+import { io } from '../../app';
+import { fetchNotifications } from '../customers/notification.controller';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
@@ -38,7 +42,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         let html = `<p>Your temporary password is: <b>${password}</b></p>`
 
         if (emailTemplateDetails && emailTemplateDetails.content) {
-            const contentData = { email: body.email, password, username: body.firstName + ' ' + body.lastName  }
+            const contentData = { email: body.email, password, username: body.firstName + ' ' + body.lastName }
             const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
             if (htmlData) {
                 html = htmlData
@@ -48,13 +52,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         if (!result) {
             return next(Boom.badData(adminControllerResponse.sentEmailFailure))
         }
-        if (body.subscriptions) {
-            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscriptions })
-            if (!subscriptionDetails) {
-                return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
-            }
-        }
-        const data = await usersService.createUser({
+        const newBody: any = {
             firstName: body.firstName,
             lastName: body.lastName,
             email: body.email,
@@ -62,9 +60,46 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             image: body.image,
             type: 'User',
             status: 'Active',
-            verified: true,
-            subscriptions: body.subscriptions
-        })
+            verified: true
+        }
+        const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscriptions })
+        if (body.subscriptions) {
+            if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
+                return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
+            }
+            const customer = await stripeSubscriptionService.createCustomer(body.email as any)
+            const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
+            newBody['stripe.planId'] = subscriptionDetails.stripePlanId
+            newBody['stripe.subscriptionId'] = subscription.id
+            newBody['stripe.customerId'] = customer.id
+            newBody.subscriptions = subscriptionDetails._id
+        }
+
+
+
+        const data = await usersService.createUser(newBody)
+        if (body.subscriptions) {
+            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
+        const sub = emailTemplateDetails.subject || 'Subscription'
+        let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for 30 days on ${subscriptionDetails.duration} basis.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+
+        if (emailTemplateDetails && emailTemplateDetails.content) {
+            const contentData = {
+                username: body.email.split('@')[0],
+                subscription_title: subscriptionDetails.title,
+                subscription_details: subscriptionDetails.duration,
+                subscription_duration: subscriptionDetails.title
+            }
+            const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+            if (htmlData) {
+                html = htmlData
+            }
+        }
+            const result = await sentEmail(data.email, sub, html);
+            if (!result) {
+                return next(Boom.notFound(authControllerResponse.sentSubscriptionEmailFilure))
+            }
+        }
         res.status(200).send({
             message: adminControllerResponse.addUserSuccess,
             data: {
@@ -72,6 +107,13 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
                 email: data.email
             }
         })
+        const title = 'Welcome';
+        const description = 'Welcome to the holyreads';
+        await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
+        const createSubscriptionTitle = 'Subscription Created'
+        const createSubscriptionDesc = 'Subscription created successfully'
+        await notificationsService.createNotification({ userId: data._id, type: 'setting', notification: { title: createSubscriptionTitle, description: createSubscriptionDesc } })
+        fetchNotifications(io.sockets, { _id: data._id })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }
@@ -161,11 +203,20 @@ const updateUser = async (req: Request | any, res: Response, next: NextFunction)
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = userObj.image
         }
-        if (req.body.subscriptions) {
+        if (req.body.subscriptions && String(req.body.subscriptions) !== String(userObj.subscriptions)) {
             const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: req.body.subscriptions })
             if (!subscriptionDetails) {
                 return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }
+            if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
+                return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
+            }
+            const customer = userObj.stripe.customerId || await stripeSubscriptionService.createCustomer(req.body.email as any)
+            const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
+            req.body['stripe.planId'] = subscriptionDetails.stripePlanId
+            req.body['stripe.subscriptionId'] = subscription.id
+            req.body['stripe.customerId'] = customer.id
+            req.body.subscriptions = subscriptionDetails._id
         }
         req.body.email = userObj.email
         await usersService.updateUser(req.body, req.params.userId)
@@ -182,6 +233,9 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
         const userObj: any = await usersService.getOneUserByFilter({ _id: id })
         if (userObj && userObj.image) {
             await removeImageToAwsS3(userObj.image, s3Bucket)
+        }
+        if (userObj?.stripe?.subscriptionId) {
+            await stripeSubscriptionService.cancelSubscription(userObj.stripe.subscriptionId)
         }
         await usersService.deleteUser(id)
         return res.status(200).send({ message: authControllerResponse.deleteUserSuccess })

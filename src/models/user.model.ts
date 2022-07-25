@@ -59,6 +59,7 @@ export interface IUser extends mongoose.Document {
         customerId?: string,
         planId?: string,
     },
+    devices: string
 }
 
 export type createUserType = {
@@ -118,6 +119,7 @@ export type createUserType = {
         customerId?: string,
         planId?: string,
     },
+    devices: [string]
 }
 
 export type getUserType = {
@@ -177,6 +179,7 @@ export type getUserType = {
         customerId?: string,
         planId?: string,
     },
+    devices: [string]
 }
 
 export const UserSchema = new Schema({
@@ -237,6 +240,7 @@ export const UserSchema = new Schema({
         planId: { type: String },
     },
     inAppToken: { type: String }, // subscription token created from the app
+    devices: [{ type: String }],
     createdAt: {
         type: Date, default: () => {
             return new Date()

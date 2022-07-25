@@ -52,7 +52,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = req.body
     /** Get user from db */
-    const user: any = await usersService.getOneUserByFilter({ email: req.body.email })
+    const user: any = await usersService.getOneUserByFilter({ email: body.email })
     if (user && !user.verified) {
       return res.status(200).send({ message: authControllerResponse.verifyEmailSuccess })
     }
@@ -90,6 +90,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       image: body.image ? body.image : '',
       email: body.email,
       password: body.password,
+      devices: req.body.device ? [req.body.device.toLowerCase] : [],
       type: 'User',
       status: 'Deactive',
       verified: false,
@@ -264,12 +265,60 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     if (body.email) {
       newBody.email = body.email
     }
+    const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
+    if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
+      return next(Boom.badData(subscriptionsControllerResponse.getSubscriptionFailure))
+    }
+    const customer = await stripeSubscriptionService.createCustomer(body.email as any)
+    const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
+    newBody['stripe.planId'] = subscriptionDetails.stripePlanId
+    newBody['stripe.subscriptionId'] = subscription.id
+    newBody['stripe.customerId'] = customer.id
+    newBody.subscriptions = subscriptionDetails._id
+
     const data: any = await usersService.createUser(newBody)
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
+    if (body.email) {
+      const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
+      const sub = emailTemplateDetails.subject || 'Subscription'
+      let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for 30 days on ${subscriptionDetails.duration} basis.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+  
+      if (emailTemplateDetails && emailTemplateDetails.content) {
+        const contentData = {
+          username: body.email.split('@')[0],
+          subscription_title: subscriptionDetails.title,
+          subscription_details: subscriptionDetails.duration,
+          subscription_duration: subscriptionDetails.title
+        }
+        const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+        if (htmlData) {
+          html = htmlData
+        }
+      }
+      const result = await sentEmail(data.email, sub, html);
+      if (!result) {
+        return next(Boom.notFound(authControllerResponse.sentSubscriptionEmailFilure))
+      }
+    }
+    const title = 'Welcome';
+    const description = 'Welcome to the holyreads';
+    await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
+    const createSubscriptionTitle = 'Subscription Created'
+    const createSubscriptionDesc = 'Subscription created successfully'
+    await notificationsService.createNotification({ userId: data._id, type: 'setting', notification: { title: createSubscriptionTitle, description: createSubscriptionDesc } })
+    fetchNotifications(io.sockets, { _id: data._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
       data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: newBody.firstName }
     })
+    /** Push notification */
+    if (data && data.pushTokens && data.pushTokens.length && data?.notification?.push) {
+      const tokens = data.pushTokens.map(i => i.token)
+      pushNotification(tokens, title, description)
+      if (data?.notification?.subscriptions)
+        pushNotification(tokens, createSubscriptionTitle, createSubscriptionDesc)
+    }
+    
   } catch (e: any) {
     next(Boom.badData(e.message))
   }

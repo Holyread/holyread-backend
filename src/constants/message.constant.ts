@@ -82,6 +82,7 @@ export const responseMessage = {
         updateBookSummarySuccess: 'Book summary updated successfully',
         deleteBookSummarySuccess: 'Book summary deleted successfully',
         fetchBookSummarySuccess: 'Book summary details fetched successfully',
+        chapterNotExist: 'Book summary does not includes this chapter',
         fetchBookSummariesSuccess: 'Book summary list fetched successfully',
         createBookSummaryFailure: 'Book summary already added',
         getBookSummaryFailure: 'Failed to fetch book summary details',

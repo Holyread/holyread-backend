@@ -102,10 +102,21 @@ const getOneBookSummaryByFilter = async (query: any) => {
     }
 }
 
+/** Get book summary */
+const findBook = async (query: any) => {
+    try {
+        const data: any = await BookSummaryModel.findOne(query).lean().exec()
+        return data
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 export default {
     getAllBookSummaries,
     getAllBookSummariesForDiscover,
-    getOneBookSummaryByFilter
+    getOneBookSummaryByFilter,
+    findBook
 }
 
 /*

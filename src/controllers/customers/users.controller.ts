@@ -216,6 +216,10 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   delete req.body.saved
             }
             if (section === 'reading') {
+                  const bookSummary = await bookService.findBook({ _id: req.body.bookId, "chapters._id": req.body.chapter })
+                  if (!bookSummary) {
+                        return next(Boom.notFound(bookSummaryControllerResponse.chapterNotExist))
+                  }
                   const readingObj = userObj.library?.reading?.find(oneRead => oneRead.bookId === req.body.bookId)
                   if (!readingObj) {
                         if (!userObj.library?.reading) {

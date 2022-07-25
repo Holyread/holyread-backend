@@ -11,11 +11,10 @@ const retrieveSubscription = async (id: string) => {
       }
 }
 
-const createCustomer = async (email: string, source?: string) => {
+const createCustomer = async (email?: string, source?: string) => {
       try {
             const name = email.split('@')[0]
             const body: any = {
-                  email,
                   name,
                   shipping: {
                         address: {
@@ -35,6 +34,9 @@ const createCustomer = async (email: string, source?: string) => {
                         state: 'CA',
                   },
                   source
+            }
+            if (email) {
+                  body.email = email
             }
             if (source) {
                   body.source = source
@@ -85,8 +87,13 @@ const clearPaymentMethods = async (customerId) => {
       }))
 }
 
+const cancelSubscription = async (subscriptionId: string) => {
+      await stripe.subscriptions.del(subscriptionId);
+}
+
 export default {
       retrieveSubscription,
       createSubscription,
-      createCustomer
+      createCustomer,
+      cancelSubscription
 }

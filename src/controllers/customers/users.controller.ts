@@ -272,11 +272,11 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
             if (section === 'saved' && userObj?.library?.saved?.length) {
                   const search: any = { _id: { $in: userObj.library.saved } }
                   if (author) { search.author = author }
-                  const data = await bookService.getAllBookSummaries(Number(skip), Number(limit), search, [['createdAt', sort || 'DESC']])
+                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']])
                   if (data.summaries?.length) {
                         data.summaries = userObj.library.saved.reverse().map(oi => {
                               return data.summaries.find(si => String(si._id) === String(oi))
-                        }).filter(i => i)
+                        }).filter(i => i).slice(skip, skip + limit)
                   }
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return
@@ -284,11 +284,11 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
             if (section === 'completed' && userObj?.library?.completed?.length) {
                   const search: any = { _id: { $in: userObj.library.completed } }
                   if (author) { search.author = author }
-                  const data = await bookService.getAllBookSummaries(Number(skip), Number(limit), search, [['createdAt', sort || 'DESC']])
+                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']])
                   if (data.summaries?.length) {
                         data.summaries = userObj.library.completed.reverse().map(oi => {
                               return data.summaries.find(si => String(si._id) === String(oi))
-                        }).filter(i => i)
+                        }).filter(i => i).slice(skip, skip + limit)
                   }
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return
@@ -315,7 +315,7 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   if (author) { search.author = author }
 
                   /** Get user reads books details by users reads books ids */
-                  const data = await bookService.getAllBookSummaries(Number(skip), Number(limit), search, [['createdAt', sort || 'DESC']], true)
+                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']], true)
 
                   /** sort summary by latest reads based on user library readings */
                   data.summaries = userObj.library.reading.map(r => {
@@ -329,7 +329,7 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   }).filter(s => s).sort((a, b) =>
                         (new Date(a.updatedAt).getTime() > new Date(b.updatedAt).getTime())
                               ? -1
-                              : ((new Date(b.updatedAt).getTime() > new Date(a.updatedAt).getTime()) ? 1 : 0))
+                              : ((new Date(b.updatedAt).getTime() > new Date(a.updatedAt).getTime()) ? 1 : 0)).slice(skip, skip + limit)
 
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return

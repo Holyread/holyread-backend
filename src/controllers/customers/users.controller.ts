@@ -11,7 +11,7 @@ import subscriptionService from '../../services/admin/subscriptions/subscription
 import stripeSubscriptionService from '../../services/stripe/subscription'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3, encrypt, compileHtml, sentEmail, pushNotification } from '../../lib/utils/utils'
+import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNotification } from '../../lib/utils/utils'
 import { awsBucket, dataLimit, emailTemplatesTitles, originEmails } from '../../constants/app.constant'
 import config from '../../../config'
 
@@ -143,11 +143,11 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   body.kindleEmail = req.body.kindleEmail
             }
             if (req.body.image === null) {
-                  await removeImageToAwsS3(userObj.image, s3Bucket)
+                  await removeS3File(userObj.image, s3Bucket)
             }
             if (req.body.image && req.body.image.includes('base64')) {
-                  await removeImageToAwsS3(userObj.image, s3Bucket)
-                  body.image = await uploadImageToAwsS3(req.body.image, 'profile', s3Bucket)
+                  await removeS3File(userObj.image, s3Bucket)
+                  body.image = await uploadFileToS3(req.body.image, 'profile', s3Bucket)
             }
             if (req.body.image && req.body.image.startsWith('http')) {
                   body.image = userObj.image
@@ -183,7 +183,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
 const getShareOptionImageUrl = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
             if (req.body.image) {
-                  req.body.image = await uploadImageToAwsS3(req.body.image, 'share-image', { ...s3Bucket, documentDirectory: 'users/share-options' })
+                  req.body.image = await uploadFileToS3(req.body.image, 'share-image', { ...s3Bucket, documentDirectory: 'users/share-options' })
             }
             const imageUrl: string = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.usersDirectory + '/share-options/' + req.body.image
             return res.status(200).send({ message: authControllerResponse.addShareImage, data: { image: imageUrl } })

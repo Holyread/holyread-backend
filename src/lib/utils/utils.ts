@@ -64,7 +64,7 @@ export const isBase64 = async (v: any, opts: any) => {
     }
 }
 
-export const uploadImageToAwsS3 = async (
+export const uploadFileToS3 = async (
     base64Document: string,
     documentName: string,
     aWSBucket: { region: string, bucketName: string, documentDirectory: string }
@@ -125,7 +125,7 @@ export const uploadImageToAwsS3 = async (
     }
 }
 
-export const removeImageToAwsS3 = async (
+export const removeS3File = async (
     documentName: string,
     aWSBucket: { region: string, bucketName: string, documentDirectory: string }
 ) => {

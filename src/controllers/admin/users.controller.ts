@@ -6,7 +6,7 @@ import subscriptionService from '../../services/admin/subscriptions/subscription
 import stripeSubscriptionService from '../../services/stripe/subscription'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp, sentEmail, compileHtml } from '../../lib/utils/utils'
+import { removeS3File, uploadFileToS3, getSearchRegexp, sentEmail, compileHtml } from '../../lib/utils/utils'
 import { awsBucket, dataTable, emailTemplatesTitles } from '../../constants/app.constant'
 import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
@@ -34,7 +34,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             return next(Boom.badData(authControllerResponse.userAlreadyExistError))
         }
         if (body.image) {
-            body.image = await uploadImageToAwsS3(body.image, body.email.substring(0, body.email.lastIndexOf("@")), s3Bucket)
+            body.image = await uploadFileToS3(body.image, body.email.substring(0, body.email.lastIndexOf("@")), s3Bucket)
         }
         const password = (Math.random() + 1).toString(36).substring(2)
         const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.customerRegistration })
@@ -194,11 +194,11 @@ const updateUser = async (req: Request | any, res: Response, next: NextFunction)
             return next(Boom.notFound(authControllerResponse.getUserError))
         }
         if (req.body.image === null) {
-            await removeImageToAwsS3(userObj.image, s3Bucket)
+            await removeS3File(userObj.image, s3Bucket)
         }
         if (req.body.image && req.body.image.includes('base64')) {
-            await removeImageToAwsS3(userObj.image, s3Bucket)
-            req.body.image = await uploadImageToAwsS3(req.body.image, 'Profile', s3Bucket)
+            await removeS3File(userObj.image, s3Bucket)
+            req.body.image = await uploadFileToS3(req.body.image, 'Profile', s3Bucket)
         }
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = userObj.image
@@ -232,7 +232,7 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
         const id: any = req.params.userId
         const userObj: any = await usersService.getOneUserByFilter({ _id: id })
         if (userObj && userObj.image) {
-            await removeImageToAwsS3(userObj.image, s3Bucket)
+            await removeS3File(userObj.image, s3Bucket)
         }
         if (userObj?.stripe?.subscriptionId) {
             await stripeSubscriptionService.cancelSubscription(userObj.stripe.subscriptionId)

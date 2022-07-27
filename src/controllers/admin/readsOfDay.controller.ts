@@ -26,7 +26,8 @@ const addReadOfDay = async (req: Request, res: Response, next: NextFunction) => 
             return next(Boom.badData(readsOfDayControllerResponse.createReadOfDayFailure))
         }
         if (body.image) {
-            body.image = await uploadFileToS3(body.image, body.title, s3Bucket)
+            const s3File: any = await uploadFileToS3(body.image, body.title, s3Bucket)
+            body.image = s3File.name
         }
         const data = await readsOfDayService.createReadOfDay({
             title: body.title,
@@ -113,7 +114,8 @@ const updateReadOfDay = async (req: Request, res: Response, next: NextFunction) 
         }
         if (req.body.image && req.body.image.includes('base64')) {
             await removeS3File(readOfDayDetails.image, s3Bucket)
-            req.body.image = await uploadFileToS3(req.body.image, readOfDayDetails.title, s3Bucket)
+            const s3File: any = await uploadFileToS3(req.body.image, readOfDayDetails.title, s3Bucket)
+            req.body.image = s3File.name
         }
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = readOfDayDetails.image

@@ -26,7 +26,8 @@ const addExpertCurated = async (req: Request, res: Response, next: NextFunction)
             return next(Boom.badData(expertCuratedControllerResponse.createExpertCuratedFailure))
         }
         if (body.image) {
-            body.image = await uploadFileToS3(body.image, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
+            const s3File: any = await uploadFileToS3(body.image, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
+            body.image = s3File.name
         }
 
         const data = await expertCuratedService.createExpertCurated(body)
@@ -112,7 +113,8 @@ const updateExpertCurated = async (req: Request, res: Response, next: NextFuncti
         }
         if (req.body.image && req.body.image.includes('base64')) {
             await removeS3File(expertCuratedDetail.image, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
-            req.body.image = await uploadFileToS3(req.body.image, expertCuratedDetail.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
+            const s3File: any = await uploadFileToS3(req.body.image, expertCuratedDetail.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
+            req.body.image = s3File.name
         }
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = expertCuratedDetail.image

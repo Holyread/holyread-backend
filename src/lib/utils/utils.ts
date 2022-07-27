@@ -187,11 +187,7 @@ export const sentEmail = async (receiverEmail: string, subject: string, html: st
 }
 
 export const getSearchRegexp = async (value) => {
-    if (value.toString().startsWith('+')) { return value.slice(1) }
-    if (value.toString().startsWith('???')) { value = value.replace('???', '?') }
-    if (value.toString().startsWith('[')) { value = value.slice(1) }
-    if (value.toString().startsWith('(')) { value = value.slice(1) }
-    const result = { $regex: `.*` + value.trim() + '.*', $options: '-i' }
+    const result = { $regex: `.*` + value.toLowerCase().trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '.*', $options: '-i' }
     return result
 }
 

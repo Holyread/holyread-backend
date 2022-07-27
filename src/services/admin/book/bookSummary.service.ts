@@ -1,4 +1,4 @@
-import { BookSummaryModel, BookAuthorModel, HighLightsModel } from '../../../models/index'
+import { BookSummaryModel, BookAuthorModel, HighLightsModel, BookCategoryModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
@@ -81,17 +81,18 @@ const getOneBookSummaryByFilter = async (query: any) => {
 const getAllBookSummaries = async (skip: number, limit, search: object, sort) => {
     try {
         let authorsList: any;
+        let categories: any
         if (search['$or']) {
-            authorsList = await BookAuthorModel.find({
-                $or: [
-                    { 'name': search['$or'][0].title },
-                    { 'about': search['$or'][0].title }
-                ]
-            }).select('_id').lean().exec();
+            authorsList = await BookAuthorModel.find({ 'name': search['$or'][0].title }).select('_id').lean().exec();
+            categories = await BookCategoryModel.find({ 'title': search['$or'][1].category }).select('_id').lean().exec();
         }
         if (authorsList && authorsList.length) {
             const authorIds = authorsList.map(oneAuthor => oneAuthor._id)
             search['$or'].push({ 'author': { '$in': authorIds } })
+        }
+        if (categories && categories.length) {
+            const categoryIds = categories.map(oneCategory => oneCategory._id)
+            search['$or'].push({ 'categories': { '$in': categoryIds } })
         }
         const result: any = await BookSummaryModel.find(search).populate('author', 'name').populate('categories', 'title').skip(skip).limit(limit).sort(sort).lean().exec()
         const count: number = await BookSummaryModel.find(search).count().lean().exec()

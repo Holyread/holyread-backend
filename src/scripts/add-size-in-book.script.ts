@@ -14,10 +14,7 @@ import { awsBucket } from '../constants/app.constant';
                   region: awsBucket.region,
             })
             /** Get S3 bucket files contents  */
-            const s3BooksContents = await s3.listObjectsV2({
-                  Bucket: 'holyreads-develop',
-                  Prefix: 'books'
-            }).promise();
+            
             const query = {
                   '$or': [
                         { 'videoFileSize': { '$exists': false } },
@@ -29,10 +26,18 @@ import { awsBucket } from '../constants/app.constant';
             await Promise.all(sizeLessBookList.map(async (oneBook) => {
                   try {
                         if (oneBook.videoFile && !oneBook.videoFileSize) {
+                              const s3BooksContents = await s3.listObjects({
+                                    Bucket: 'holyreads-develop',
+                                    Prefix: `books/video/${oneBook.videoFile}`
+                              }).promise();
                               oneBook.videoFileSize = s3BooksContents.Contents.find(oneContent => oneContent.Key.includes('video/' + oneBook.videoFile))?.Size || 0
                         }
                         await Promise.all(oneBook.chapters.map(async (oneChapter) => {
-                              if (oneChapter.audioFile && !oneChapter.size) {
+                              if (oneChapter.audioFile && oneChapter.size <= 0) {
+                                    const s3BooksContents = await s3.listObjects({
+                                          Bucket: 'holyreads-develop',
+                                          Prefix: `books/audio/${oneChapter.audioFile}`
+                                    }).promise();
                                     oneChapter.size = s3BooksContents.Contents.find(oneContent => oneContent.Key.includes('audio/' + oneChapter.audioFile))?.Size || 0
                               }
                         }))

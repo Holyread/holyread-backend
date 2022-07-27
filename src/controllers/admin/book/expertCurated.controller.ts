@@ -3,7 +3,7 @@ import Boom from '@hapi/boom';
 
 import expertCuratedService from '../../../services/admin/book/expertCurated.service'
 import { responseMessage } from '../../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../../lib/utils/utils'
+import { removeS3File, uploadFileToS3, getSearchRegexp } from '../../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../../constants/app.constant'
 import config from '../../../../config'
 
@@ -26,7 +26,7 @@ const addExpertCurated = async (req: Request, res: Response, next: NextFunction)
             return next(Boom.badData(expertCuratedControllerResponse.createExpertCuratedFailure))
         }
         if (body.image) {
-            body.image = await uploadImageToAwsS3(body.image, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
+            body.image = await uploadFileToS3(body.image, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
         }
 
         const data = await expertCuratedService.createExpertCurated(body)
@@ -108,11 +108,11 @@ const updateExpertCurated = async (req: Request, res: Response, next: NextFuncti
             return next(Boom.notFound(expertCuratedControllerResponse.getExpertCuratedFailure))
         }
         if (req.body.image === null) {
-            await removeImageToAwsS3(expertCuratedDetail.image, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
+            await removeS3File(expertCuratedDetail.image, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
         }
         if (req.body.image && req.body.image.includes('base64')) {
-            await removeImageToAwsS3(expertCuratedDetail.image, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
-            req.body.image = await uploadImageToAwsS3(req.body.image, expertCuratedDetail.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
+            await removeS3File(expertCuratedDetail.image, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
+            req.body.image = await uploadFileToS3(req.body.image, expertCuratedDetail.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
         }
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = expertCuratedDetail.image
@@ -131,7 +131,7 @@ const deleteExpertCurated = async (req: Request, res: Response, next: NextFuncti
         const id: any = req.params.id
         const expertCuratedDetail: any = await expertCuratedService.getOneExpertCuratedByFilter({ _id: id })
         if (expertCuratedDetail && expertCuratedDetail.image) {
-            await removeImageToAwsS3(expertCuratedDetail.image, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
+            await removeS3File(expertCuratedDetail.image, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
         }
         await expertCuratedService.deleteExpertCurated(id)
         return res.status(200).send({ message: expertCuratedControllerResponse.deleteExpertCuratedSuccess })

@@ -3,7 +3,7 @@ import Boom from '@hapi/boom';
 
 import usersService from '../../services/admin/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3, encrypt } from '../../lib/utils/utils'
+import { removeS3File, uploadFileToS3, encrypt } from '../../lib/utils/utils'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
 
@@ -39,11 +39,11 @@ const updateAdmin = async (req: Request | any, res: Response, next: NextFunction
         const data: any = req.user
         req.body.email = data.email
         if (req.body.image === null) {
-            await removeImageToAwsS3(data.image, s3Bucket)
+            await removeS3File(data.image, s3Bucket)
         }
         if (req.body.image && req.body.image.includes('base64')) {
-            await removeImageToAwsS3(data.image, s3Bucket)
-            req.body.image = await uploadImageToAwsS3(req.body.image, data.firstName || data.email.substring(0, data.email.lastIndexOf("@")), s3Bucket)
+            await removeS3File(data.image, s3Bucket)
+            req.body.image = await uploadFileToS3(req.body.image, data.firstName || data.email.substring(0, data.email.lastIndexOf("@")), s3Bucket)
         }
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = data.image

@@ -3,7 +3,7 @@ import Boom from '@hapi/boom';
 
 import readsOfDayService from '../../services/admin/readsOfDay/readsOfDay.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../lib/utils/utils'
+import { removeS3File, uploadFileToS3, getSearchRegexp } from '../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../constants/app.constant'
 import config from '../../../config'
 
@@ -26,7 +26,7 @@ const addReadOfDay = async (req: Request, res: Response, next: NextFunction) => 
             return next(Boom.badData(readsOfDayControllerResponse.createReadOfDayFailure))
         }
         if (body.image) {
-            body.image = await uploadImageToAwsS3(body.image, body.title, s3Bucket)
+            body.image = await uploadFileToS3(body.image, body.title, s3Bucket)
         }
         const data = await readsOfDayService.createReadOfDay({
             title: body.title,
@@ -109,11 +109,11 @@ const updateReadOfDay = async (req: Request, res: Response, next: NextFunction) 
             return next(Boom.notFound(readsOfDayControllerResponse.getReadOfDayFailure))
         }
         if (req.body.image === null) {
-            await removeImageToAwsS3(readOfDayDetails.image, s3Bucket)
+            await removeS3File(readOfDayDetails.image, s3Bucket)
         }
         if (req.body.image && req.body.image.includes('base64')) {
-            await removeImageToAwsS3(readOfDayDetails.image, s3Bucket)
-            req.body.image = await uploadImageToAwsS3(req.body.image, readOfDayDetails.title, s3Bucket)
+            await removeS3File(readOfDayDetails.image, s3Bucket)
+            req.body.image = await uploadFileToS3(req.body.image, readOfDayDetails.title, s3Bucket)
         }
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = readOfDayDetails.image
@@ -131,7 +131,7 @@ const deleteReadOfDay = async (req: Request, res: Response, next: NextFunction) 
         const id: any = req.params.id
         const readOfDayDetails: any = await readsOfDayService.getOneReadOfDayByFilter({ _id: id })
         if (readOfDayDetails && readOfDayDetails.image) {
-            await removeImageToAwsS3(readOfDayDetails.image, s3Bucket)
+            await removeS3File(readOfDayDetails.image, s3Bucket)
         }
         await readsOfDayService.deleteReadOfDay(id)
         return res.status(200).send({ message: readsOfDayControllerResponse.deleteReadOfDaySuccess })

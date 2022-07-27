@@ -7,7 +7,7 @@ import usersService from '../../services/admin/users/user.service'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
 import { origins, emailTemplatesTitles } from '../../constants/app.constant'
-import { uploadImageToAwsS3, compileHtml } from '../../lib/utils/utils'
+import { uploadFileToS3, compileHtml } from '../../lib/utils/utils'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
@@ -84,7 +84,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       return res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
     }
     if (body.image) {
-      body.image = await uploadImageToAwsS3(body.image, `user-${verificationCode}`, s3Bucket)
+      body.image = await uploadFileToS3(body.image, `user-${verificationCode}`, s3Bucket)
     }
     await usersService.createUser({
       image: body.image ? body.image : '',
@@ -247,7 +247,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     if (body.photoUrl) {
       await axios.get(body.photoUrl, { responseType: 'arraybuffer' }).then(async (response) => {
         const data = "data:" + response.headers["content-type"] + ";base64," + Buffer.from(response.data).toString('base64');
-        body.photoUrl = await uploadImageToAwsS3(data, `profile`, s3Bucket)
+        body.photoUrl = await uploadFileToS3(data, `profile`, s3Bucket)
       })
     }
     const newBody: any = {

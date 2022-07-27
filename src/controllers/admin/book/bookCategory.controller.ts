@@ -3,7 +3,7 @@ import Boom from '@hapi/boom';
 
 import bookCategoryService from '../../../services/admin/book/bookCategory.service'
 import { responseMessage } from '../../../constants/message.constant'
-import { removeImageToAwsS3, uploadImageToAwsS3, getSearchRegexp } from '../../../lib/utils/utils'
+import { removeS3File, uploadFileToS3, getSearchRegexp } from '../../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../../constants/app.constant'
 import config from '../../../../config'
 
@@ -26,7 +26,7 @@ const addCategory = async (req: Request, res: Response, next: NextFunction) => {
             return next(Boom.badData(bookCategoryControllerResponse.createBookCategoryFailure))
         }
         if (body.image) {
-            body.image = await uploadImageToAwsS3(body.image, body.title, s3Bucket)
+            body.image = await uploadFileToS3(body.image, body.title, s3Bucket)
         }
         const data = await bookCategoryService.createBookCategory({
             title: body.title,
@@ -117,11 +117,11 @@ const updateCateogry = async (req: Request, res: Response, next: NextFunction) =
             return next(Boom.notFound(bookCategoryControllerResponse.getBookCategoryFailure))
         }
         if (req.body.image === null) {
-            await removeImageToAwsS3(categoryDetails.image, s3Bucket)
+            await removeS3File(categoryDetails.image, s3Bucket)
         }
         if (req.body.image && req.body.image.includes('base64')) {
-            await removeImageToAwsS3(categoryDetails.image, s3Bucket)
-            req.body.image = await uploadImageToAwsS3(req.body.image, categoryDetails.title, s3Bucket)
+            await removeS3File(categoryDetails.image, s3Bucket)
+            req.body.image = await uploadFileToS3(req.body.image, categoryDetails.title, s3Bucket)
         }
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = categoryDetails.image
@@ -139,7 +139,7 @@ const deleteCategory = async (req: Request, res: Response, next: NextFunction) =
         const id: any = req.params.id
         const bookCategoryDetails: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
         if (bookCategoryDetails && bookCategoryDetails.image) {
-            await removeImageToAwsS3(bookCategoryDetails.image, s3Bucket)
+            await removeS3File(bookCategoryDetails.image, s3Bucket)
         }
         await bookCategoryService.deleteBookCategory(id)
         return res.status(200).send({ message: bookCategoryControllerResponse.deleteBookCategorySuccess })

@@ -114,11 +114,6 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
                 $or: [
                     { 'title': await getSearchRegexp(params.search) },
                     { 'status': await getSearchRegexp(params.search) },
-                    { 'description': await getSearchRegexp(params.search) },
-                    { 'overview': await getSearchRegexp(params.search) },
-                    { 'bookFor': await getSearchRegexp(params.search) },
-                    { 'chapters.name': await getSearchRegexp(params.search) },
-                    { 'author.name': await getSearchRegexp(params.search) }
                 ]
             }
         }

@@ -26,7 +26,8 @@ const addCategory = async (req: Request, res: Response, next: NextFunction) => {
             return next(Boom.badData(bookCategoryControllerResponse.createBookCategoryFailure))
         }
         if (body.image) {
-            body.image = await uploadFileToS3(body.image, body.title, s3Bucket)
+            const s3File: any = await uploadFileToS3(body.image, body.title, s3Bucket)
+            body.image = s3File.name
         }
         const data = await bookCategoryService.createBookCategory({
             title: body.title,
@@ -121,7 +122,8 @@ const updateCateogry = async (req: Request, res: Response, next: NextFunction) =
         }
         if (req.body.image && req.body.image.includes('base64')) {
             await removeS3File(categoryDetails.image, s3Bucket)
-            req.body.image = await uploadFileToS3(req.body.image, categoryDetails.title, s3Bucket)
+            const s3File: any = await uploadFileToS3(req.body.image, categoryDetails.title, s3Bucket)
+            req.body.image = s3File.name
         }
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = categoryDetails.image

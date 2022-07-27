@@ -21,7 +21,8 @@ const addShareImage = async (req: Request, res: Response, next: NextFunction) =>
     try {
         const body = req.body
         if (body.image) {
-            body.image = await uploadFileToS3(body.image, body.fontColor, s3Bucket)
+            const s3File: any = await uploadFileToS3(body.image, body.fontColor, s3Bucket)
+            body.image = s3File.name
         }
         const data = await shareImageService.createShareImage({
             fontSize: body.fontSize,
@@ -112,7 +113,8 @@ const updateShareImage = async (req: Request, res: Response, next: NextFunction)
         }
         if (req.body.image && req.body.image.includes('base64')) {
             await removeS3File(shareImageDetails.image, s3Bucket)
-            req.body.image = await uploadFileToS3(req.body.image, shareImageDetails.fontColor + shareImageDetails.fontSize, s3Bucket)
+            const s3File: any = await uploadFileToS3(req.body.image, shareImageDetails.fontColor + shareImageDetails.fontSize, s3Bucket)
+            req.body.image = s3File.name
         }
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = shareImageDetails.image

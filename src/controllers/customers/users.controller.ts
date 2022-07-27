@@ -147,7 +147,8 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             }
             if (req.body.image && req.body.image.includes('base64')) {
                   await removeS3File(userObj.image, s3Bucket)
-                  body.image = await uploadFileToS3(req.body.image, 'profile', s3Bucket)
+                  const s3File: any = await uploadFileToS3(req.body.image, 'profile', s3Bucket)
+                  body.image = s3File.name
             }
             if (req.body.image && req.body.image.startsWith('http')) {
                   body.image = userObj.image
@@ -183,7 +184,8 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
 const getShareOptionImageUrl = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
             if (req.body.image) {
-                  req.body.image = await uploadFileToS3(req.body.image, 'share-image', { ...s3Bucket, documentDirectory: 'users/share-options' })
+                  const s3File: any = await uploadFileToS3(req.body.image, 'share-image', { ...s3Bucket, documentDirectory: 'users/share-options' })
+                  req.body.image = s3File.name
             }
             const imageUrl: string = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.usersDirectory + '/share-options/' + req.body.image
             return res.status(200).send({ message: authControllerResponse.addShareImage, data: { image: imageUrl } })

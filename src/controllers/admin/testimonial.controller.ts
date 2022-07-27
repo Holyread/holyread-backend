@@ -26,7 +26,8 @@ const addTestimonial = async (req: Request, res: Response, next: NextFunction) =
             return next(Boom.badData(testimonialControllerResponse.createTestimonialFailure))
         }
         if (body.image) {
-            body.image = await uploadFileToS3(body.image, body.name, s3Bucket)
+            const s3File: any = await uploadFileToS3(body.image, body.name, s3Bucket)
+            body.image = s3File.name
         }
         const data = await testimonialService.createTestimonial({
             name: body.name,
@@ -112,7 +113,8 @@ const updateTestimonial = async (req: Request, res: Response, next: NextFunction
         }
         if (req.body.image && req.body.image.includes('base64')) {
             await removeS3File(testimonialDetails.image, s3Bucket)
-            req.body.image = await uploadFileToS3(req.body.image, testimonialDetails.name, s3Bucket)
+            const s3File: any = await uploadFileToS3(req.body.image, testimonialDetails.name, s3Bucket)
+            req.body.image = s3File.name
         }
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = testimonialDetails.image

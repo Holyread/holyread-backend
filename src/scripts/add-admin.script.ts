@@ -1,6 +1,6 @@
 import { UserModel } from '../models/index'
 import { encrypt } from '../lib/utils/utils'
-import { uploadImageToAwsS3 } from '../lib/utils/utils'
+import { uploadFileToS3 } from '../lib/utils/utils'
 import { awsBucket } from '../constants/app.constant'
 import config from '../../config'
 
@@ -31,7 +31,8 @@ const createAdminBody = {
             }
             body.password = encrypt(body.password)
             if (body.image) {
-                  body.image = await uploadImageToAwsS3(body.image, body.firstName, s3Bucket)
+                  const s3File: any = await uploadFileToS3(body.image, body.firstName, s3Bucket)
+                  body.image = s3File.name
             }
             body.type = 'Admin'
             await UserModel.create(body)

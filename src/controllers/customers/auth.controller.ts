@@ -84,7 +84,8 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       return res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
     }
     if (body.image) {
-      body.image = await uploadFileToS3(body.image, `user-${verificationCode}`, s3Bucket)
+      const s3File: any = await uploadFileToS3(body.image, `user-${verificationCode}`, s3Bucket)
+      body.image = s3File.name
     }
     await usersService.createUser({
       image: body.image ? body.image : '',
@@ -247,7 +248,8 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     if (body.photoUrl) {
       await axios.get(body.photoUrl, { responseType: 'arraybuffer' }).then(async (response) => {
         const data = "data:" + response.headers["content-type"] + ";base64," + Buffer.from(response.data).toString('base64');
-        body.photoUrl = await uploadFileToS3(data, `profile`, s3Bucket)
+        const s3File: any = await uploadFileToS3(data, `profile`, s3Bucket)
+        body.photoUrl = s3File.name
       })
     }
     const newBody: any = {

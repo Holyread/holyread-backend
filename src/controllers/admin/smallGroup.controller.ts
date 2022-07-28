@@ -31,7 +31,8 @@ const addSmallGroup = async (req: Request, res: Response, next: NextFunction) =>
             }))
         }
         if (body.coverImage) {
-            body.coverImage = await uploadFileToS3(body.coverImage, body.title, s3Bucket)
+            const s3File: any = await uploadFileToS3(body.coverImage, body.title, s3Bucket)
+            body.coverImage = s3File.name
         }
         const data = await smallGroupService.createSmallGroup(body)
         res.status(200).send({
@@ -131,7 +132,8 @@ const updateSmallGroup = async (req: Request, res: Response, next: NextFunction)
         }
         if (req.body.coverImage && req.body.coverImage.includes('base64')) {
             await removeS3File(smallGroupDetails.coverImage, s3Bucket)
-            req.body.coverImage = await uploadFileToS3(req.body.coverImage, smallGroupDetails.title, s3Bucket)
+            const s3File: any = await uploadFileToS3(req.body.coverImage, smallGroupDetails.title, s3Bucket)
+            req.body.coverImage = s3File.name
         }
         if (req.body.coverImage && req.body.coverImage.startsWith('http')) {
             req.body.coverImage = smallGroupDetails.coverImage

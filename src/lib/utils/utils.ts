@@ -106,9 +106,9 @@ export const uploadFileToS3 = async (
             docContentType = base64Document.substring('data:'.length, base64)
             const buffer = Buffer.from(base64Document.replace(pattern, ''), 'base64')
             const regex = /[^A-Z0-9]+/ig
-            const fileName: string = documentName.replace(regex, '_') + '_' + new Date().getTime() + '.' + docExtension
+            const name: string = documentName.replace(regex, '_') + '_' + new Date().getTime() + '.' + docExtension
             const option = {
-                Key: fileName,
+                Key: name,
                 Body: buffer,
                 ContentEncoding: 'base64',
                 ContentType: docContentType,
@@ -116,10 +116,10 @@ export const uploadFileToS3 = async (
             }
             s3.putObject(option, (s3err, result: any) => {
                 if (s3err) reject('Error while uploading file')
-                resolve(fileName)
+                const size = Buffer.byteLength(buffer)
+                resolve({ name, size })
             })
         })
-        
     } catch (e: any) {
         throw new Error(e.message)
     }
@@ -187,11 +187,7 @@ export const sentEmail = async (receiverEmail: string, subject: string, html: st
 }
 
 export const getSearchRegexp = async (value) => {
-    if (value.toString().startsWith('+')) { return value.slice(1) }
-    if (value.toString().startsWith('???')) { value = value.replace('???', '?') }
-    if (value.toString().startsWith('[')) { value = value.slice(1) }
-    if (value.toString().startsWith('(')) { value = value.slice(1) }
-    const result = { $regex: `.*` + value.trim() + '.*', $options: '-i' }
+    const result = { $regex: `.*` + value.toLowerCase().trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '.*', $options: '-i' }
     return result
 }
 
@@ -206,12 +202,6 @@ export const compileHtml = async (source: string, data: any) => {
 }
 
 export const randomNumberInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
-
-export const getFileSizeFromBase64 = (base64Document: string) => {
-    var stringLength = base64Document.substring(base64Document.indexOf(',') + 1).length;
-    var sizeInBytes = 4 * Math.ceil((stringLength / 3)) * 0.5624896334383812;
-    return sizeInBytes
-}
 
 export const pushNotification = async (tokens: string, title: string, description: string) => {
     firebaseAdmin.messaging().sendToDevice(tokens, { notification: { title, body: description }}).then(response => {

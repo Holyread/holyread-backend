@@ -9,6 +9,7 @@ import http from 'http'
 import firebaseAdmin from 'firebase-admin';
 
 import customersRoutes from './routes/customers.routes'
+import websiteRoutes from './routes/website.routes'
 import adminRoutes from './routes/admin.routes'
 import appConfig from './lib/appConfig'
 import './models/index'
@@ -43,6 +44,7 @@ export const corsOptionsDelegate = async (req, callback) => {
 
 app.use('/api/v1/customers', cors(corsOptionsDelegate), customersRoutes)
 app.use('/api/v1/admin', cors(corsOptionsDelegate), adminRoutes)
+app.use('/api/v1/website', cors(corsOptionsDelegate), websiteRoutes)
 app.get('/', async (req: Request, res: Response) => res.sendFile(__dirname + '/views/index.html'))
 app.use(appConfig.handleError)
 app.set('port', config.PORT);

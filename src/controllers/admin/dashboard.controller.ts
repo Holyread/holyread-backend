@@ -11,6 +11,9 @@ const dashboardControllerResponse = responseMessage.dashboardControllerResponse
 const getDashboard = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const getUsersList = await usersService.getAllUsers(0, 0, {}, [])
+        const androidUsers = getUsersList.users.filter(user => user.device === 'android')
+        const iosUsers = getUsersList.users.filter(user => user.device === 'ios')
+        const webUsers = getUsersList.users.filter(user => user.device === 'web')
         const bookSummaryList: any = await bookSummaryService.getAllBookSummaries(0, 0, {}, [])
         let audioCount: number = 0
         let videoCount: number = 0
@@ -28,7 +31,7 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
         })
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
-            data: { users: { count: getUsersList.count }, audio: { count: audioCount }, video: { count: videoCount } }
+            data: { users: { count: getUsersList.count, androidCount: androidUsers?.length, iosCount: iosUsers?.length, webCount: webUsers?.length }, audio: { count: audioCount }, video: { count: videoCount } }
         })
     } catch (e: any) {
         next(Boom.badData(e.message))

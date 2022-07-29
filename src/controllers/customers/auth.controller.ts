@@ -91,7 +91,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       image: body.image ? body.image : '',
       email: body.email,
       password: body.password,
-      devices: req.body.device ? [req.body.device.toLowerCase] : [],
+      device: req.body.device,
       type: 'User',
       status: 'Deactive',
       verified: false,
@@ -254,15 +254,16 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     }
     const newBody: any = {
       image: body.photoUrl ? body.photoUrl : '',
-      firstName: body.firstName || body.name.split(' ')[0] || '',
-      lastName: body.lastName || body.name.split(' ')[1] || '',
+      firstName: body.firstName || body?.name?.split(' ')[0] || '',
+      lastName: body.lastName || body?.name?.split(' ')[1] || '',
       type: 'User',
       status: 'Active',
       verified: true,
       oAuth: {
         clientId: body.id,
         provider: body.provider
-      }
+      },
+      device: body?.device?.toLowerCase() || ''
     }
     if (body.email) {
       newBody.email = body.email
@@ -311,7 +312,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     fetchNotifications(io.sockets, { _id: data._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
-      data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: newBody.firstName }
+      data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: body.email.split('@')[0] }
     })
     /** Push notification */
     if (data && data.pushTokens && data.pushTokens.length && data?.notification?.push) {

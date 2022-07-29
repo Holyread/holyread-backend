@@ -61,7 +61,8 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             image: body.image,
             type: 'User',
             status: 'Active',
-            verified: true
+            verified: true,
+            device: 'web'
         }
         const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscriptions })
         if (body.subscriptions) {
@@ -221,6 +222,7 @@ const updateUser = async (req: Request | any, res: Response, next: NextFunction)
             req.body.subscriptions = subscriptionDetails._id
         }
         req.body.email = userObj.email
+        req.body.device = userObj.device || ''
         await usersService.updateUser(req.body, req.params.userId)
         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
     } catch (e: any) {

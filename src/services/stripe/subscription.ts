@@ -13,7 +13,7 @@ const retrieveSubscription = async (id: string) => {
 
 const createCustomer = async (email?: string, source?: string) => {
       try {
-            const name = email.split('@')[0]
+            const name = email?.split('@')[0] || ''
             const body: any = {
                   name,
                   shipping: {

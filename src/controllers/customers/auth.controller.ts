@@ -312,7 +312,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     fetchNotifications(io.sockets, { _id: data._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
-      data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: body.email.split('@')[0] }
+      data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: body?.email?.split('@')[0] || newBody.firstName || '' }
     })
     /** Push notification */
     if (data && data.pushTokens && data.pushTokens.length && data?.notification?.push) {

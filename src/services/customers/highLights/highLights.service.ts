@@ -185,19 +185,19 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                         ? -1
                         : ((new Date(b.updatedAt).getTime() > new Date(a.updatedAt).getTime()) ? 1 : 0))
             if (!search) {
-                i.highLights = i.highLights.slice(skip, skip + limit)
+                i.highLights = i.highLights.slice(skip, limit ? skip + limit : i.highLights.length)
                 return true
             }
             else if (i.title.toLowerCase().includes(search)) {
-                i.highLights = i.highLights.slice(skip, skip + limit)
+                i.highLights = i.highLights.slice(skip, limit ? skip + limit : i.highLights.length)
                 return true
             }
             else if (i.author && i.author.name.toLowerCase().includes(search)) {
-                i.highLights = i.highLights.slice(skip, skip + limit)
+                i.highLights = i.highLights.slice(skip, limit ? skip + limit : i.highLights.length)
                 return true
             }
             else if (filter.bookId && i.highLights.find(o => o.chapter.name.toLowerCase().includes(search))) {
-                i.highLights = i.highLights.slice(skip, skip + limit)
+                i.highLights = i.highLights.slice(skip, limit ? skip + limit : i.highLights.length)
                 return true
             }
             else if (filter.bookId) {
@@ -213,7 +213,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     ) ? true : false
                 })
                 i.count = i.highLights.length
-                i.highLights = i.highLights.slice(skip, skip + limit)
+                i.highLights = i.highLights.slice(skip, limit ? skip + limit : i.highLights.length)
                 return i.highLights.length ? true : false
             }
             return false

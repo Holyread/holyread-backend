@@ -31,7 +31,7 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
         })
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
-            data: { users: { count: getUsersList.count, androidCount: androidUsers?.length, iosCount: iosUsers?.length, webCount: webUsers?.length }, audio: { count: audioCount }, video: { count: videoCount } }
+            data: { users: { count: getUsersList.count, androidCount: androidUsers?.length, iosCount: iosUsers?.length, webCount: webUsers?.length }, audio: { count: audioCount }, video: { count: videoCount }, book: { count: bookSummaryList.count } }
         })
     } catch (e: any) {
         next(Boom.badData(e.message))

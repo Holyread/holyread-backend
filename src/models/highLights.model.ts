@@ -49,12 +49,10 @@ export const HighLightsSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'bookSummary',
         required: true,
-        index: true
     },
     chapterId: {
         type: Schema.Types.ObjectId,
         required: true,
-        index: true
     },
     userId: {
         type: Schema.Types.ObjectId,
@@ -79,6 +77,7 @@ export const HighLightsSchema = new Schema({
     updatedAt: {type: Date},
 }, { strict: 'throw' })
 
+HighLightsSchema.index({ userId: -1, bookId: -1 });
 HighLightsSchema.index({ userId: -1, bookId: -1, chapterId: -1 });
 
 export const HighLightsModel = mongoose.model<IHighLights>('highLights', HighLightsSchema)

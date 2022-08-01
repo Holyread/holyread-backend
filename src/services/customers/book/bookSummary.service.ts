@@ -6,16 +6,13 @@ import { randomNumberInRange } from '../../../lib/utils/utils'
 const NODE_ENV = config.NODE_ENV
 
 /** Get all book summaries with filter by author id or author name, book title or all */
-const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, sort, library?: any) => {
+const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, sort) => {
     try {
-        let result: any = await BookSummaryModel.find({}).sort(sort).lean().exec()
+        let result: any = await BookSummaryModel.find({}).select('-chapters').lean()
+        const authors = await BookAuthorModel.find({}).select('name').lean()
         result = await Promise.all(result.map(async oneItem => {
             if (oneItem.author) {
-                oneItem.author = await BookAuthorModel.findById(oneItem.author).lean()
-                oneItem.author = {
-                    _id: oneItem.author._id,
-                    name: oneItem.author.name
-                }
+                oneItem.author = authors.find(oneAuthor => String(oneAuthor._id) === String(oneItem.author))
             }
             /** if search category books then return if category books not exist */
             if (search?.categories && !oneItem.categories.find(oneCate => String(oneCate) === String(search.categories))) return null

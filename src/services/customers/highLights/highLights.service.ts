@@ -136,20 +136,18 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
             return { highLightsBooks: [{ count: 0, highlights: [] }] }
         }
         let newResult = []
+        const books = await BookSummaryModel.find({}).select('title overview coverImageBackground coverImage author chapters.name chapters._id').lean().exec()
+        const authors = await BookAuthorModel.find({}).select('name').lean().exec()
         await Promise.all(await result.map(async (item: any) => {
-            const bookDetails = await BookSummaryModel.findOne({ _id: item.bookId }).lean().exec()
+            const bookDetails = books.find(oneBook => String(oneBook._id) === String(item.bookId))
             if (!bookDetails) return
             const chapterDetails: any = bookDetails.chapters.find((oneChapter: any) => String(oneChapter._id) === String(item.chapterId))
-            const authorDetails = await BookAuthorModel.findOne({ _id: bookDetails.author }).lean().exec()
+            const authorDetails = authors.find(oneAuthor =>  String(oneAuthor._id) == String(bookDetails.author))
             const existingHighLight = newResult.findIndex(o => String(o.bookId) === String(item.bookId))
 
             if (filter.bookId) {
                 item.highLights.map(oneItem => {
-                    delete chapterDetails.audioFile
-                    oneItem.chapter = {
-                        _id: chapterDetails._id,
-                        name: chapterDetails.name
-                    }
+                    oneItem.chapter = chapterDetails
                     oneItem.highLightId = item._id
                 })
             }
@@ -161,7 +159,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     title: bookDetails.title,
                     coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + bookDetails.coverImage,
                     coverImageBackground: bookDetails.coverImageBackground,
-                    author: { name: authorDetails?.name || '', _id: authorDetails?._id },
+                    author: authorDetails,
                     overview: bookDetails.overview,
                     highLights: item.highLights,
                     count: item.highLights && item.highLights.length ? item.highLights.length : 0,

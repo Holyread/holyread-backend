@@ -265,7 +265,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
 /**  Get one user library by library id */
 const getUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const { section, sort, author, bookId } = req.query as any
+            let { section, sort = 'DESC', author, bookId } = req.query as any
             const skip = req.query.skip || dataLimit.skip
             const limit = req.query.limit || dataLimit.limit
             /** Get current user */
@@ -278,9 +278,10 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
             if (section === 'saved' && userObj?.library?.saved?.length) {
                   const search: any = { _id: { $in: userObj.library.saved } }
                   if (author) { search.author = author }
-                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']])
+                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort]])
                   if (data.summaries?.length) {
-                        data.summaries = userObj.library.saved.reverse().map(oi => {
+                        userObj.library.saved = sort.toLowerCase() === 'desc' ? userObj.library.saved.reverse() : userObj.library.saved
+                        data.summaries = userObj.library.saved.map(oi => {
                               return data.summaries.find(si => String(si._id) === String(oi))
                         }).filter(i => i).slice(skip, skip + limit)
                   }
@@ -290,9 +291,10 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
             if (section === 'completed' && userObj?.library?.completed?.length) {
                   const search: any = { _id: { $in: userObj.library.completed } }
                   if (author) { search.author = author }
-                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']])
+                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort]])
                   if (data.summaries?.length) {
-                        data.summaries = userObj.library.completed.reverse().map(oi => {
+                        userObj.library.completed = sort.toLowerCase() === 'desc' ? userObj.library.completed.reverse() : userObj.library.completed
+                        data.summaries = userObj.library.completed.map(oi => {
                               return data.summaries.find(si => String(si._id) === String(oi))
                         }).filter(i => i).slice(skip, skip + limit)
                   }
@@ -321,8 +323,7 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   if (author) { search.author = author }
 
                   /** Get user reads books details by users reads books ids */
-                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']], true)
-
+                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort]], true)
                   /** sort summary by latest reads based on user library readings */
                   data.summaries = userObj.library.reading.map(r => {
                         const summary = data.summaries.find((os: any) => String(os._id) === String(r.bookId))
@@ -334,8 +335,8 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                         }
                   }).filter(s => s).sort((a, b) =>
                         (new Date(a.updatedAt).getTime() > new Date(b.updatedAt).getTime())
-                              ? -1
-                              : ((new Date(b.updatedAt).getTime() > new Date(a.updatedAt).getTime()) ? 1 : 0)).slice(skip, skip + limit)
+                              ? sort.toLowerCase() === 'asc' ? 1 : -1
+                              : ((new Date(b.updatedAt).getTime() > new Date(a.updatedAt).getTime()) ? sort.toLowerCase() === 'asc' ? -1 : 1 : 0)).slice(skip, skip + limit)
 
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return

@@ -73,8 +73,9 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
         html = htmlData
       }
     }
-    const result = await sentEmail(body.email, subject, html);
-    if (!result) {
+    /** Disable sent email temporary */
+    const result = false && await sentEmail(body.email, subject, html);
+    if (!result && false) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
     }
     if (user && !user.verificationCode) {
@@ -281,7 +282,8 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
 
     const data: any = await usersService.createUser(newBody)
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
-    if (body.email) {
+    /** Disable sent email temporary */
+    if (body.email && false) {
       const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
       const sub = emailTemplateDetails.subject || 'Subscription'
       let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for 30 days on ${subscriptionDetails.duration} basis.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`

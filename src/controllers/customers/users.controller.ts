@@ -265,7 +265,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
 /**  Get one user library by library id */
 const getUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            let { section, sort = 'DESC', author, bookId } = req.query as any
+            const { section, sort = 'DESC', author, bookId } = req.query as any
             const skip = req.query.skip || dataLimit.skip
             const limit = req.query.limit || dataLimit.limit
             /** Get current user */

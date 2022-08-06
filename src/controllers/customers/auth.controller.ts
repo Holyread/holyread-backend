@@ -74,8 +74,8 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       }
     }
     /** Disable sent email temporary */
-    const result = false && await sentEmail(body.email, subject, html);
-    if (!result && false) {
+    const result = await sentEmail(body.email, subject, html);
+    if (!result) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
     }
     if (user && !user.verificationCode) {
@@ -137,7 +137,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     const sub = emailTemplateDetails.subject || 'Subscription'
     let html = `<p>Dear ${email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for 30 days on ${subscriptionDetails.duration} basis.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
-    if (emailTemplateDetails && emailTemplateDetails.content) {
+    if (false && emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = {
         username: email.split('@')[0],
         subscription_title: subscriptionDetails.title,
@@ -150,8 +150,8 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       }
     }
 
-    const result = await sentEmail(user.email, sub, html);
-    if (!result) {
+    const result = false && await sentEmail(user.email, sub, html);
+    if (false && !result) {
       return next(Boom.notFound(authControllerResponse.sentSubscriptionEmailFilure))
     }
     const title = 'Welcome';

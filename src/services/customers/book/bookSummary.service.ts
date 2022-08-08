@@ -2,7 +2,6 @@ import { BookSummaryModel, BookAuthorModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { randomNumberInRange } from '../../../lib/utils/utils'
-import usersService from '../users/user.service'
 
 const NODE_ENV = config.NODE_ENV
 
@@ -110,58 +109,11 @@ const findBook = async (query: any) => {
     }
 }
 
-const getMostPopularBooks = async (skip: number, limit: number) => {
-    try {
-        const users = await usersService.getAllUsers({ 'library.reading.0': { '$exists': true } })
-        let mostPopular = []
-        let books = await BookSummaryModel.find({}).select('-chapters').lean().exec()
-        await Promise.all(users.map(async oneUser => {
-            await Promise.all(oneUser.library.reading.map(async oneBook => {
-                const bookDetails = books.find(i => String(i._id) === String(oneBook.bookId))
-                if (bookDetails) {
-                    const existingIndex = mostPopular.findIndex(i => String(i.book._id) === String(oneBook.bookId))
-                    const reads = 0 && Number((oneBook.chaptersCompleted?.length ? (100 * oneBook.chaptersCompleted?.length) / bookDetails?.chapters?.length : 0).toFixed(0))
-                    if (existingIndex >= 0) {
-                        mostPopular[existingIndex].reads += reads || 1
-                    } else {
-                        mostPopular.push({ book: bookDetails, reads: 1 })
-                    }
-                }
-            }))
-        }))
-        const authors = mostPopular.length && await BookAuthorModel.find({}).select('name').lean()
-        mostPopular = mostPopular.sort((a, b) => { return b.reads - a.reads }).slice(skip, skip + limit);
-        mostPopular = await Promise.all(mostPopular.map(async oneItem => {
-            const isSaved = global?.currentUser?.library?.saved?.find(b => String(b) === String(oneItem?._id)) ? true : false
-            if (oneItem.book.author) {
-                oneItem.book.author = authors.find(oneAuthor => String(oneAuthor._id) === String(oneItem.author))
-            }
-            return {
-                _id: oneItem.book._id,
-                coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneItem.book.coverImage,
-                title: oneItem.book.title,
-                description: oneItem.book.description,
-                author: oneItem.book.author,
-                overview: oneItem.book.overview,
-                totalStar: Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1, 9))),
-                totalReads: randomNumberInRange(10000, 20000),
-                bookMark: isSaved,
-                coverImageBackground: oneItem.book.coverImageBackground,
-                categories: oneItem.book.categories
-            }
-        }))
-        return mostPopular
-    } catch (e: any) {
-        throw new Error(e)
-    }
-}
-
 export default {
     getAllBookSummaries,
     getAllBookSummariesForDiscover,
     getOneBookSummaryByFilter,
-    findBook,
-    getMostPopularBooks
+    findBook
 }
 
 /*

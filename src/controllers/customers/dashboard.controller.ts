@@ -53,10 +53,12 @@ const getPopularBooks = async (request: Request, response: Response, next: NextF
         const params: any = request.query
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        const mostPopular = await bookSummaryService.getMostPopularBooks(Number(skip), Number(limit))
+        const mostPopular: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), { popular: true }, [['createdAt', 'DESC']])
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
-            data: { mostPopular }
+            data: {
+                mostPopular
+            }
         })
     } catch (e: any) {
         next(Boom.badData(e.message))

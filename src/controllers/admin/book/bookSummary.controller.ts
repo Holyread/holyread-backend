@@ -204,9 +204,11 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
                 const chapterdetails = summaryDetails.chapters.find(item => String(item._id) === String(oneChapter._id))
                 if (oneChapter.audioFile === null && chapterdetails && chapterdetails.audioFile) {
                     await removeS3File(chapterdetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' })
+                    oneChapter.size = 0
                 }
                 if (oneChapter.audioFile && oneChapter.audioFile.startsWith('http')) {
                     oneChapter.audioFile = chapterdetails && chapterdetails.audioFile ? chapterdetails.audioFile : ''
+                    oneChapter.size = chapterdetails.size || 0
                     return
                 }
                 if (oneChapter.audioFile && oneChapter.audioFile.includes('base64')) {

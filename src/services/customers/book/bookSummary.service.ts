@@ -114,9 +114,10 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
     try {
         const users = await usersService.getAllUsers({ 'library.reading.0': { '$exists': true } })
         let mostPopular = []
+        let books = await BookSummaryModel.find({}).select('-chapters').lean().exec()
         await Promise.all(users.map(async oneUser => {
             await Promise.all(oneUser.library.reading.map(async oneBook => {
-                const bookDetails = await findBook({ _id: oneBook.bookId })
+                const bookDetails = books.find(i => String(i._id) === String(oneBook.bookId))
                 if (bookDetails) {
                     const existingIndex = mostPopular.findIndex(i => String(i.book._id) === String(oneBook.bookId))
                     const reads = 0 && Number((oneBook.chaptersCompleted?.length ? (100 * oneBook.chaptersCompleted?.length) / bookDetails?.chapters?.length : 0).toFixed(0))
@@ -146,7 +147,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                 totalReads: randomNumberInRange(10000, 20000),
                 bookMark: isSaved,
                 coverImageBackground: oneItem.book.coverImageBackground,
-                categories: oneItem.book.categories,
+                categories: oneItem.book.categories
             }
         }))
         return mostPopular

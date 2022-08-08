@@ -132,9 +132,9 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
         const authors = mostPopular.length && await BookAuthorModel.find({}).select('name').lean()
         mostPopular = mostPopular.sort((a, b) => { return b.reads - a.reads }).slice(skip, skip + limit);
         mostPopular = await Promise.all(mostPopular.map(async oneItem => {
-            const isSaved = global?.currentUser?.library?.saved?.find(b => String(b) === String(oneItem?._id)) ? true : false
+            const isSaved = global?.currentUser?.library?.saved?.find(b => String(b) === String(oneItem?.book?._id)) ? true : false
             if (oneItem.book.author) {
-                oneItem.book.author = authors.find(oneAuthor => String(oneAuthor._id) === String(oneItem.author))
+                oneItem.book.author = authors.find(oneAuthor => String(oneAuthor._id) === String(oneItem?.book?.author))
             }
             return {
                 _id: oneItem.book._id,

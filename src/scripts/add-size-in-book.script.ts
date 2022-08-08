@@ -33,7 +33,7 @@ import { awsBucket } from '../constants/app.constant';
                               oneBook.videoFileSize = s3BooksContents.Contents.find(oneContent => oneContent.Key.includes('video/' + oneBook.videoFile))?.Size || 0
                         }
                         await Promise.all(oneBook.chapters.map(async (oneChapter) => {
-                              if (oneChapter.audioFile && oneChapter.size <= 0) {
+                              if (oneChapter.audioFile && !oneChapter.size) {
                                     const s3BooksContents = await s3.listObjects({
                                           Bucket: 'holyreads-develop',
                                           Prefix: `books/audio/${oneChapter.audioFile}`

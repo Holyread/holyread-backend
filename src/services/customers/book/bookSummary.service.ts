@@ -119,11 +119,11 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                 const bookDetails = await findBook({ _id: oneBook.bookId })
                 if (bookDetails) {
                     const existingIndex = mostPopular.findIndex(i => String(i.book._id) === String(oneBook.bookId))
-                    const reads = Number((oneBook.chaptersCompleted?.length ? (100 * oneBook.chaptersCompleted?.length) / bookDetails?.chapters?.length : 0).toFixed(0))
+                    const reads = 0 && Number((oneBook.chaptersCompleted?.length ? (100 * oneBook.chaptersCompleted?.length) / bookDetails?.chapters?.length : 0).toFixed(0))
                     if (existingIndex >= 0) {
-                        mostPopular[existingIndex].reads += reads
+                        mostPopular[existingIndex].reads += reads || 1
                     } else {
-                        mostPopular.push({ book: bookDetails, reads })
+                        mostPopular.push({ book: bookDetails, reads: 1 })
                     }
                 }
             }))

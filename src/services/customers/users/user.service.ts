@@ -28,4 +28,14 @@ const getOneUserByFilter = async (query: any) => {
     }
 }
 
-export default { updateUser, getOneUserByFilter }
+/** Remove User */
+const deleteUser = async (id: string) => {
+    try {
+        await UserModel.findOneAndDelete({ _id: id })
+        return true
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+export default { updateUser, getOneUserByFilter, deleteUser }

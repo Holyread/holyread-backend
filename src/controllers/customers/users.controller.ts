@@ -583,6 +583,21 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
       }
 }
 
+/** Remove User */
+const deleteUser = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const userObj: any = req.user
+            if (userObj?.stripe?.subscriptionId) {
+                  await stripeSubscriptionService.cancelSubscription(userObj.stripe.subscriptionId)
+            }
+            await notificationsService.deleteNotifications({ userId: userObj._id })
+            await usersService.deleteUser(userObj._id)
+            return res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
+      } catch (e: any) {
+            return next(Boom.badData(e.message))
+      }
+}
+
 export {
       getUserAccount,
       getBlessFriend,
@@ -595,5 +610,6 @@ export {
       submitQuery,
       submitFeedback,
       blessFriend,
-      subscribePlan
+      subscribePlan,
+      deleteUser
 }

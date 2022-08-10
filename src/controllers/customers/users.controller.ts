@@ -442,6 +442,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                         planId: subscriptionDetails.stripePlanId,
                         subscriptionId: sbscription.id,
                   },
+                  device: body.device
             })
             if (!invitedUserDetails || !invitedUserDetails._id) {
                   return next(Boom.badData(authControllerResponse.createUserFailed))

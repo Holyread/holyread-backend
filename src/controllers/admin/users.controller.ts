@@ -241,6 +241,7 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
         if (userObj?.stripe?.subscriptionId) {
             await stripeSubscriptionService.cancelSubscription(userObj.stripe.subscriptionId)
         }
+        await notificationsService.deleteNotifications({ userId: id })
         await usersService.deleteUser(id)
         return res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
     } catch (e: any) {

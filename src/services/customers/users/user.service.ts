@@ -28,6 +28,16 @@ const getOneUserByFilter = async (query: any) => {
     }
 }
 
+/** Get all Users */
+const getAllUsers = async (search: object) => {
+    try {
+        const users = await UserModel.find({ ...search, type: 'User' }).lean()
+        return users
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 /** Remove User */
 const deleteUser = async (id: string) => {
     try {
@@ -38,4 +48,4 @@ const deleteUser = async (id: string) => {
     }
 }
 
-export default { updateUser, getOneUserByFilter, deleteUser }
+export default { updateUser, getOneUserByFilter, getAllUsers, deleteUser }

@@ -14,6 +14,7 @@ import { responseMessage } from '../../constants/message.constant'
 import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNotification } from '../../lib/utils/utils'
 import { awsBucket, dataLimit, emailTemplatesTitles, originEmails } from '../../constants/app.constant'
 import config from '../../../config'
+import ratingService from '../../services/customers/book/rating.service';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -406,6 +407,17 @@ const submitFeedback = async (req: Request | any, res: Response, next: NextFunct
       }
 }
 
+const updateRating = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const { star, description, bookId }: { star: number, description: string, bookId: string } = req.body;
+            const userObj = Object.assign({}, req.user)
+            await ratingService.updateRating({ star, description, bookId, userId: userObj._id });
+            res.status(200).send({ message: authControllerResponse.bookRatingSuccess })
+      } catch (e: any) {
+            next(Boom.badData(e.message))
+      }
+}
+
 /** Add User by referral */
 const blessFriend = async (req: any, res: Response, next: NextFunction) => {
       try {
@@ -595,5 +607,6 @@ export {
       submitQuery,
       submitFeedback,
       blessFriend,
-      subscribePlan
+      subscribePlan,
+      updateRating
 }

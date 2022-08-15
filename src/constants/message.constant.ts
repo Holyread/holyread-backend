@@ -31,6 +31,7 @@ export const responseMessage = {
         submitQueryError: 'Failed to send your message, please try letter or contact administrator by other way',
         paymentStatusPending: 'Payment status is pending, please contact administrator',
         submitQuerySuccess: 'Your message was sent successfully, Thanks.',
+        bookRatingSuccess: 'Thanks for rate this book 🙂',
         userAuthorisedAsAdmin: 'User authorised as admin, please use another email',
         kindleEmailNotExistError: 'Please add your kindle email address',
     },
@@ -90,6 +91,7 @@ export const responseMessage = {
         recommendedBookError: 'Book is locked due to book exist in recommended list',
         sendBookToKindleSuccess: 'Book successfully sended to your kindle',
         sendBookToKindleEmailFailure: 'Failed to send book on your kindle email',
+        getBookRatingsSuccess: 'Book ratings fetched successfully'
     },
     dashboardControllerResponse: {
         getDashboardSuccess: 'Dashboard details fetched successfully'

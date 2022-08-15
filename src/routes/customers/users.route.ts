@@ -13,6 +13,7 @@ import {
   blessFriend,
   subscribePlan,
   updateRating,
+  deleteUser
 } from '../../controllers/customers/users.controller'
 
 const router: Router = express.Router()
@@ -30,5 +31,6 @@ router.post('/query', submitQuery)
 router.post('/feedback', submitFeedback)
 router.post('/subscribe', subscribePlan)
 router.patch('/rate', updateRating)
+router.delete('/', deleteUser)
 
 export default router

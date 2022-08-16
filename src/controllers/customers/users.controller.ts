@@ -624,6 +624,6 @@ export {
       submitFeedback,
       blessFriend,
       subscribePlan,
-      updateRating
+      updateRating,
       deleteUser
 }

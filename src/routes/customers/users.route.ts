@@ -12,6 +12,7 @@ import {
   submitQuery,
   blessFriend,
   subscribePlan,
+  updateRating,
   deleteUser
 } from '../../controllers/customers/users.controller'
 
@@ -29,6 +30,7 @@ router.patch('/library', updateUserLibrary)
 router.post('/query', submitQuery)
 router.post('/feedback', submitFeedback)
 router.post('/subscribe', subscribePlan)
+router.patch('/rate', updateRating)
 router.delete('/', deleteUser)
 
 export default router

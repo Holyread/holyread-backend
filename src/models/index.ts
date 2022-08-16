@@ -17,6 +17,7 @@ import { FaqModel } from './faq.model'
 import { EmailTemplateModel } from './emailTemplate.model'
 import { SettingModel } from './setting.model'
 import { NotificationsModel } from './notifications.model'
+import { RatingModel } from './rating.model'
 
 const NODE_ENV = config.NODE_ENV
 const option = { useNewUrlParser: true, useUnifiedTopology: true }
@@ -49,5 +50,6 @@ export {
   FaqModel,
   EmailTemplateModel,
   SettingModel,
-  NotificationsModel
+  NotificationsModel,
+  RatingModel
 }

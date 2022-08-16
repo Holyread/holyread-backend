@@ -231,6 +231,9 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
 const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
   try {
     const body: any = req.body
+    if (!body.provider || !body.id) {
+      return next(Boom.notFound(authControllerResponse.userNotAuthorizationError))
+    }
     const query: any = [{ 'oAuth.clientId': body.id, 'oAuth.provider': body.provider }]
     if (body.email) {
       query.push({ email: body.email })

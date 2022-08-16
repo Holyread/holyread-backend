@@ -33,6 +33,7 @@ const getAllRatings = async (skip: number, limit, search: any, sort: { column: s
                   }
             }))
             const count = ratings.length;
+            /** Feat avarage ratings */
             ratings = ratings.map(item => {
                   let stars = 0
                   let users = 0
@@ -47,6 +48,7 @@ const getAllRatings = async (skip: number, limit, search: any, sort: { column: s
                   item.ratings = users
                   return item
             }).filter(i => i)
+            /** sort books by star or sorting column */
             ratings = ratings.sort((a, b) => {
                   if (a[sort.column] < b[sort.column]) {
                         return sort.order.toLowerCase() === 'asc' ? -1 : 1;

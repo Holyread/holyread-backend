@@ -51,7 +51,9 @@ export const emailTemplatesTitles = {
         sendInvitation: 'Send Invitation',
         blessFriend: 'Customer Registration Bless Friend',
         chooseSubscription: 'Choose Subscription',
-        changePassword: 'Change Password'
+        changePassword: 'Change Password',
+        emailLoginVerification: 'Customer Email Login Verification',
+        emailLoginEnabled: 'Customer Email Login Enabled'
     },
     admin: {
         customerRegistration: 'Admin Customer Registration',

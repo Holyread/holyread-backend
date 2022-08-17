@@ -47,10 +47,10 @@ export interface IUser extends mongoose.Document {
         }],
     },
     smallGroups?: [string],
-    oAuth?: {
+    oAuth?: [{
         clientId: string,
         provider: string
-    },
+    }],
     referralUserId?: string,
     kindleEmail?: string,
     inAppToken?: String,
@@ -107,10 +107,10 @@ export type createUserType = {
         }]
     },
     smallGroups?: [string],
-    oAuth?: {
+    oAuth?: [{
         clientId: string,
         provider: string
-    },
+    }],
     referralUserId?: string,
     kindleEmail?: string,
     inAppToken?: String,
@@ -167,10 +167,10 @@ export type getUserType = {
         }]
     },
     smallGroups?: [string],
-    oAuth?: {
+    oAuth?: [{
         clientId: string,
         provider: string
-    },
+    }],
     referralUserId?: string,
     kindleEmail?: string,
     inAppToken?: String,
@@ -185,7 +185,7 @@ export type getUserType = {
 export const UserSchema = new Schema({
     firstName: { type: String },
     lastName: { type: String },
-    email: { type: String },
+    email: { type: String, required: true, index: true, validate: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ },
     password: { type: String },
     subscriptions: { type: String },
     type: { type: String, required: true },
@@ -228,10 +228,10 @@ export const UserSchema = new Schema({
         }]
     },
     smallGroups: [{ type: String }],
-    oAuth: {
+    oAuth: [{
         clientId: String,
         provider: String
-    },
+    }],
     referralUserId: { type: Schema.Types.ObjectId, ref: 'user' },
     kindleEmail: { type: String },
     stripe: {

@@ -11,8 +11,8 @@ import subscriptionService from '../../services/admin/subscriptions/subscription
 import stripeSubscriptionService from '../../services/stripe/subscription'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNotification } from '../../lib/utils/utils'
-import { awsBucket, dataLimit, emailTemplatesTitles, originEmails } from '../../constants/app.constant'
+import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNotification, verifyToken, getToken, decrypt } from '../../lib/utils/utils'
+import { awsBucket, dataLimit, emailTemplatesTitles, originEmails, origins } from '../../constants/app.constant'
 import config from '../../../config'
 import ratingService from '../../services/customers/book/rating.service';
 
@@ -71,7 +71,7 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             await usersService.updateUser({ password: newPassword }, { _id: userObj._id })
             const notificationTitle = 'Change Password'
             const notificationDescription = 'Password Changed Successfully'
-            await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription }})
+            await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
             fetchNotifications(io.sockets, { _id: userObj._id })
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.changePassword })
 
@@ -94,6 +94,103 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             if (userObj?.pushTokens?.length && userObj?.notification?.push) {
                   const tokens = userObj.pushTokens.map(i => i.token)
                   pushNotification(tokens, notificationTitle, notificationDescription)
+            }
+      } catch (e: any) {
+            next(Boom.badData(e.message))
+      }
+}
+
+const emailLogin = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const { email, password }: { email: string, password: string } = req.body;
+            const userObj = Object.assign({}, req.user)
+            const emailUser = await usersService.getOneUserByFilter({ email, _id: { '$ne': userObj._id } })
+            if (emailUser) {
+                  return next(Boom.notFound(authControllerResponse.emailAlreadyUsedError))
+            }
+            if (userObj.email && userObj.email && userObj.password && userObj.email === email) {
+                  return res.status(200).send({ message: authControllerResponse.emailLoginEnabledSuccess })
+            }
+            const verificationCode = Math.floor(1000 + Math.random() * 9000)
+            const token: string = getToken({ code: String(verificationCode), email, password: encrypt(password), _id: userObj._id })
+            const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
+            
+            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailLoginVerification })
+            const sub = emailTemplateDetails.subject || 'Customer Email Login Verification'
+            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email login.</p><p>Please click <a href="${link}">Here</a> to verify your new email login.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+
+            if (emailTemplateDetails && emailTemplateDetails.content) {
+                  const contentData = {
+                        username: email.split('@')[0],
+                        link
+                  }
+                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  if (htmlData) {
+                        html = htmlData
+                  }
+            }
+
+            const result = await sentEmail(email, sub, html);
+            if (!result) {
+                  return next(Boom.notFound(authControllerResponse.sentVerifyEmailFailure))
+            }
+            await usersService.updateUser({ verificationCode }, { _id: userObj._id })
+            res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
+      } catch (e: any) {
+            next(Boom.badData(e.message))
+      }
+}
+
+/** Verify Email Login */
+const verifyEmailLogin = async (req: Request, res: Response, next: NextFunction) => {
+      try {
+            const token = req.query.token as string
+            const decryptToken: any = verifyToken(token)
+            const code = decryptToken.code
+            const email = decryptToken.email
+            const password = decryptToken.password
+            const _id = decryptToken._id
+            /** Get user from db */
+            const user: any = await usersService.getOneUserByFilter({ verificationCode: code, _id })
+            if (!user) {
+                  return next(Boom.badData(authControllerResponse.getUserError))
+            }
+
+            await usersService.updateUser({
+                  verified: true,
+                  status: 'Active',
+                  $unset: { verificationCode: 1 },
+                  email,
+                  password: decrypt(password)
+            }, { _id: user._id })
+
+            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailLoginEnabled })
+            const sub = emailTemplateDetails.subject || 'Customer Email Login Enabled'
+            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email login that succeed.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+
+            if (emailTemplateDetails && emailTemplateDetails.content) {
+                  const contentData = {
+                        username: email.split('@')[0]
+                  }
+                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  if (htmlData) {
+                        html = htmlData
+                  }
+            }
+
+            const result = await sentEmail(email, sub, html);
+            if (!result) {
+                  return next(Boom.notFound(authControllerResponse.sentVerifyEmailFailure))
+            }
+            const title = 'Email login enabled';
+            const description = 'Now you can access holyreads by using your email and password';
+            await notificationsService.createNotification({ userId: user._id, type: 'setting', notification: { title, description } })
+            fetchNotifications(io.sockets, { _id: user._id })
+            res.status(200).send({ message: authControllerResponse.emailLoginEnabledSuccess })
+            /** Push notification */
+            if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
+                  const tokens = user.pushTokens.map(i => i.token)
+                  pushNotification(tokens, title, description)
             }
       } catch (e: any) {
             next(Boom.badData(e.message))
@@ -139,7 +236,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                         subscriptions: (req.body?.notification && typeof req.body?.notification?.subscriptions === 'boolean') ? req.body?.notification?.subscriptions : req.body?.notification?.subscriptions || false,
                   }
             }
-  
+
             if (req.body.kindleEmail) {
                   body.kindleEmail = req.body.kindleEmail
             }
@@ -162,6 +259,19 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   } else {
                         body.pushTokens.push({ deviceId: req.body.pushTokens.deviceId, token: req.body.pushTokens.token })
                   }
+            }
+            if (req.body.id && req.body.provider) {
+                  const oAuth = userObj.oAuth || []
+                  const index = oAuth.findIndex(i => i.provider === req.body.provider)
+                  index < 0 ? oAuth.push({ provider: req.body.provider, clientId: req.body.id }) : oAuth[index].clientId = req.body.id
+                  body.oAuth = oAuth
+            }
+            if (req.body.provider && req.body.action === 'unlink') {
+                  const oAuth = userObj.oAuth || []
+                  if (oAuth.length === 1 && oAuth.find(i => i.provider === req.body.provider) && (!userObj.password || !userObj.email)) {
+                        return next(Boom.badData(authControllerResponse.missingEmailLoginError))
+                  }
+                  body.oAuth = oAuth.filter(i => i.provider !== req.body.provider)
             }
             await usersService.updateUser(body, { _id: userObj._id })
             if (req.body.kindleEmail) {
@@ -437,7 +547,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             if (!subscriptionDetails) {
                   return next(Boom.badData(authControllerResponse.blessFriendSubscriptionError))
             }
-            const customer = await stripeSubscriptionService.createCustomer(body.email, req.body.token)                  
+            const customer = await stripeSubscriptionService.createCustomer(body.email, req.body.token)
             const sbscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id, req.body.paymentMethod)
             const invitedUserDetails = await authService.createUser({
                   image: '',
@@ -510,8 +620,8 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             }
             const notificationTitle = 'Subscription Gift'
             const notificationDescription = 'Subscription Gift Added Successfully'
-            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription }})
-            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: 'Welcome', description: 'Welcome to the holyreads' }})
+            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
+            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: 'Welcome', description: 'Welcome to the holyreads' } })
             fetchNotifications(io.sockets, { _id: invitedUserDetails._id })
 
             res.status(200).send({ message: authControllerResponse.blessFriendSuccess })
@@ -572,7 +682,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             }
             const notificationTitle = req.body.inAppToken && !userObj.inAppToken ? 'Subscription Created' : 'Subscription Updated'
             const notificationDescription = req.body.inAppToken && !userObj.inAppToken ? 'Subscription created successfully' : 'Subscription updated successfully'
-            await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription }})
+            await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
             fetchNotifications(io.sockets, { _id: userObj._id })
 
             const result = await sentEmail(userObj.email, sub, html);
@@ -625,5 +735,7 @@ export {
       blessFriend,
       subscribePlan,
       updateRating,
-      deleteUser
+      deleteUser,
+      emailLogin,
+      verifyEmailLogin
 }

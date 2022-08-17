@@ -223,7 +223,7 @@ const updateUser = async (req: Request | any, res: Response, next: NextFunction)
         }
         req.body.email = userObj.email
         req.body.device = userObj.device || ''
-        await usersService.updateUser(req.body, req.params.userId)
+        await usersService.updateUser(req.body, { _id: req.params.userId })
         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
     } catch (e: any) {
         return next(Boom.badData(e.message))

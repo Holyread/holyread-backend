@@ -13,7 +13,9 @@ import {
   blessFriend,
   subscribePlan,
   updateRating,
-  deleteUser
+  deleteUser,
+  emailLogin,
+  verifyEmailLogin
 } from '../../controllers/customers/users.controller'
 
 const router: Router = express.Router()
@@ -24,6 +26,7 @@ router.put('/', updateUserAccount)
 router.post('/share-options-image', getShareOptionImageUrl)
 router.post('/bless-friend', blessFriend)
 router.put('/change-password', changePassword)
+router.put('/change-password', changePassword)
 router.get('/subscription', getUserSubscription)
 router.get('/library', getUserLibrary)
 router.patch('/library', updateUserLibrary)
@@ -32,5 +35,7 @@ router.post('/feedback', submitFeedback)
 router.post('/subscribe', subscribePlan)
 router.patch('/rate', updateRating)
 router.delete('/', deleteUser)
+router.post('/email-login', emailLogin)
+router.post('/email-login/verify', verifyEmailLogin)
 
 export default router

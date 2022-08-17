@@ -7,7 +7,7 @@ const getAllSubscriptions = async (search) => {
             const defaultSubscription = subscriptions.find(item => item.duration === 'Month')
             subscriptions.forEach(item => {
                   let oneMonthPrice = item.price
-                  if (item.duration === 'Half-Year') oneMonthPrice = item.price / 6
+                  if (item.duration === 'Half – Year') oneMonthPrice = item.price / 6
                   if (item.duration === 'Year') oneMonthPrice = item.price / 12
                   item.save = ((defaultSubscription.price - oneMonthPrice)/defaultSubscription.price * 100).toFixed(0)
             })

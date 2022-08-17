@@ -100,7 +100,7 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
       }
 }
 
-const emailLogin = async (req: Request | any, res: Response, next: NextFunction) => {
+const emailAuth = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
             const { email, password }: { email: string, password: string } = req.body;
             if (!email || !password) {
@@ -112,15 +112,15 @@ const emailLogin = async (req: Request | any, res: Response, next: NextFunction)
                   return next(Boom.notFound(authControllerResponse.emailAlreadyUsedError))
             }
             if (userObj.email && userObj.email && userObj.password && userObj.email === email) {
-                  return res.status(200).send({ message: authControllerResponse.emailLoginExist })
+                  return res.status(200).send({ message: authControllerResponse.emailAuthExist })
             }
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
             const token: string = getToken({ code: String(verificationCode), email, password: encrypt(password), _id: userObj._id })
             const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
             
-            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailLoginVerification })
-            const sub = emailTemplateDetails.subject || 'Customer Email Login Verification'
-            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email login.</p><p>Please click <a href="${link}">Here</a> to verify your new email login.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthVerification })
+            const sub = emailTemplateDetails.subject || 'Customer Email Auth Verification'
+            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth.</p><p>Please click <a href="${link}">Here</a> to verify your new email auth.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
@@ -144,8 +144,8 @@ const emailLogin = async (req: Request | any, res: Response, next: NextFunction)
       }
 }
 
-/** Verify Email Login */
-const verifyEmailLogin = async (req: Request, res: Response, next: NextFunction) => {
+/** Verify Email Auth */
+const verifyEmailAuth = async (req: Request, res: Response, next: NextFunction) => {
       try {
             const token = req.query.token as string
             const decryptToken: any = verifyToken(token)
@@ -167,9 +167,9 @@ const verifyEmailLogin = async (req: Request, res: Response, next: NextFunction)
                   password: decrypt(password)
             }, { _id: user._id })
 
-            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailLoginEnabled })
-            const sub = emailTemplateDetails.subject || 'Customer Email Login Enabled'
-            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email login that succeed.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthEnabled })
+            const sub = emailTemplateDetails.subject || 'Customer Email Auth Enabled'
+            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth that succeed.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
@@ -185,11 +185,11 @@ const verifyEmailLogin = async (req: Request, res: Response, next: NextFunction)
             if (!result) {
                   return next(Boom.notFound(authControllerResponse.sentVerifyEmailFailure))
             }
-            const title = 'Email login enabled';
+            const title = 'Email auth enabled';
             const description = 'Now you can access holyreads by using your email and password';
             await notificationsService.createNotification({ userId: user._id, type: 'setting', notification: { title, description } })
             fetchNotifications(io.sockets, { _id: user._id })
-            res.status(200).send({ message: authControllerResponse.emailLoginEnabledSuccess })
+            res.status(200).send({ message: authControllerResponse.emailAuthEnabledSuccess })
             /** Push notification */
             if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
                   const tokens = user.pushTokens.map(i => i.token)
@@ -272,7 +272,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             if (req.body.provider && req.body.action === 'unlink') {
                   const oAuth = userObj.oAuth || []
                   if (oAuth.length === 1 && oAuth.find(i => i.provider === req.body.provider) && (!userObj.password || !userObj.email)) {
-                        return next(Boom.badData(authControllerResponse.missingEmailLoginError))
+                        return next(Boom.badData(authControllerResponse.missingEmailAuthError))
                   }
                   body.oAuth = oAuth.filter(i => i.provider !== req.body.provider)
             }
@@ -739,6 +739,6 @@ export {
       subscribePlan,
       updateRating,
       deleteUser,
-      emailLogin,
-      verifyEmailLogin
+      emailAuth,
+      verifyEmailAuth
 }

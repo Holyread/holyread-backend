@@ -116,7 +116,7 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
             }
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
             const token: string = getToken({ code: String(verificationCode), email, password: encrypt(password), _id: userObj._id })
-            const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
+            const link: string = `${origins[NODE_ENV]}/account/verify-user?email-auth=true&token=${token}`
             
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthVerification })
             const sub = emailTemplateDetails.subject || 'Customer Email Auth Verification'

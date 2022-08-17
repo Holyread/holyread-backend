@@ -76,7 +76,7 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.changePassword })
 
             const sub = emailTemplateDetails.subject || 'Change Password'
-            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have requested a password change on Holyread that succeed.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have requested a password change on Holyread that succeed.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
@@ -120,7 +120,7 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
             
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthVerification })
             const sub = emailTemplateDetails.subject || 'Customer Email Auth Verification'
-            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth.</p><p>Please click <a href="${link}">Here</a> to verify your new email auth.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth.</p><p>Please click <a href="${link}">Here</a> to verify your new email auth.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
@@ -169,7 +169,7 @@ const verifyEmailAuth = async (req: Request, res: Response, next: NextFunction) 
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthEnabled })
             const sub = emailTemplateDetails.subject || 'Customer Email Auth Enabled'
-            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth that succeed.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth that succeed.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
@@ -579,8 +579,8 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             const blessFriendSubject = blessFriendTemplate?.subject || 'Customer Registration Bless Friend'
             const sendInvitationSubject = sendInvitationTemplate?.subject || 'Send Invitation'
 
-            let blessFriendHtml = `<p>Dear {{username}},</p><p>Thank you for registered with Holyread.</p><p>Your customer account details are below:</p><p>Email : {{email}}<br>Password: {{password}}</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
-            let sentInvitationHtml = '<p>Dear {{username}}</p><p>You have been registered on Holyread.</p><p>Your customer account details are below:</p><p>Email : {{email}}<br>Password: {{password}}</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>'
+            let blessFriendHtml = `<p>Dear {{username}},</p><p>Thank you for registered with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : {{email}}<br>Password: {{password}}</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let sentInvitationHtml = '<p>Dear {{username}}</p><p>You have been registered on Holy Reads.</p><p>Your customer account details are below:</p><p>Email : {{email}}<br>Password: {{password}}</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>'
 
             if (blessFriendTemplate && blessFriendTemplate.content) {
                   const contentData = { email: body.email, password: body.password, username: refUser.email.substr(0, refUser.email.indexOf('@')) }
@@ -603,7 +603,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             }
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
             const sub = emailTemplateDetails.subject || 'Subscription'
-            let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
@@ -624,7 +624,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             const notificationTitle = 'Subscription Gift'
             const notificationDescription = 'Subscription Gift Added Successfully'
             await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
-            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: 'Welcome', description: 'Welcome to the holyreads' } })
+            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: 'Welcome to Holyreads', description: 'Enjoy best summaries audio and video' } })
             fetchNotifications(io.sockets, { _id: invitedUserDetails._id })
 
             res.status(200).send({ message: authControllerResponse.blessFriendSuccess })
@@ -669,7 +669,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             )
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
             const sub = emailTemplateDetails.subject || 'Subscription'
-            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {

@@ -131,8 +131,8 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       subscriptions: subscriptionDetails._id,
     }, { _id: user._id })
 
-    const title = 'Welcome';
-    const description = 'Welcome to the holyreads';
+    const title = 'Welcome to Holyreads';
+    const description = 'Enjoy best summaries audio and video';
     await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title, description } })
 
     res.status(200).send({ message: authControllerResponse.signUpSuccess })
@@ -263,8 +263,8 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
 
     const data: any = await usersService.createUser(newBody)
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
-    const title = 'Welcome';
-    const description = 'Welcome to the holyreads';
+    const title = 'Welcome to Holyreads';
+    const description = 'Enjoy best summaries audio and video';
 
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
     res.status(200).json({

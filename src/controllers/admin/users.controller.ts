@@ -83,7 +83,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         if (body.subscriptions) {
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
         const sub = emailTemplateDetails.subject || 'Subscription'
-        let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for 30 days on ${subscriptionDetails.duration} basis.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+        let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for 30 days on ${subscriptionDetails.duration} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
         if (emailTemplateDetails && emailTemplateDetails.content) {
             const contentData = {
@@ -109,8 +109,8 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
                 email: data.email
             }
         })
-        const title = 'Welcome';
-        const description = 'Welcome to the holyreads';
+        const title = 'Welcome to Holyreads';
+        const description = 'Enjoy best summaries audio and video';
         await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
         const createSubscriptionTitle = 'Subscription Created'
         const createSubscriptionDesc = 'Subscription created successfully'

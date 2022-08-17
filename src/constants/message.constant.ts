@@ -15,6 +15,7 @@ export const responseMessage = {
         getUserError: 'User does not exist',
         getReferralUserError: 'Referral User does not exist',
         userNotAuthorizationError: 'Incorrect credentials or Wrong password',
+        missingEmailOrPasswordError: 'Email or password is missing',
         missingEmailError: 'Email is required',
         emailAlreadyUsedError: 'Email already used',
         missingoAuthKeyError: 'Client id or provider missing',
@@ -38,7 +39,8 @@ export const responseMessage = {
         bookRatingSuccess: 'Thanks for rate this book 🙂',
         userAuthorisedAsAdmin: 'User authorised as admin, please use another email',
         kindleEmailNotExistError: 'Please add your kindle email address',
-        emailLoginEnabledSuccess: 'Your email login enabled'
+        emailLoginEnabledSuccess: 'Your email login enabled',
+        emailLoginExist: 'Your email login already enabled',
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

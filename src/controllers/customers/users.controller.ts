@@ -103,13 +103,16 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
 const emailLogin = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
             const { email, password }: { email: string, password: string } = req.body;
+            if (!email || !password) {
+                  return next(Boom.notFound(authControllerResponse.missingEmailOrPasswordError))
+            }
             const userObj = Object.assign({}, req.user)
             const emailUser = await usersService.getOneUserByFilter({ email, _id: { '$ne': userObj._id } })
             if (emailUser) {
                   return next(Boom.notFound(authControllerResponse.emailAlreadyUsedError))
             }
             if (userObj.email && userObj.email && userObj.password && userObj.email === email) {
-                  return res.status(200).send({ message: authControllerResponse.emailLoginEnabledSuccess })
+                  return res.status(200).send({ message: authControllerResponse.emailLoginExist })
             }
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
             const token: string = getToken({ code: String(verificationCode), email, password: encrypt(password), _id: userObj._id })

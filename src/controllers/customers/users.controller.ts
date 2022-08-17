@@ -236,7 +236,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                         subscriptions: (req.body?.notification && typeof req.body?.notification?.subscriptions === 'boolean') ? req.body?.notification?.subscriptions : req.body?.notification?.subscriptions || false,
                   }
             }
-
+  
             if (req.body.kindleEmail) {
                   body.kindleEmail = req.body.kindleEmail
             }

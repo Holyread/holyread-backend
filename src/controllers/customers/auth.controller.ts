@@ -61,8 +61,8 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     const token: string = getToken({ code: String(verificationCode), email: body.email })
     const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
-    const subject = emailTemplateDetails?.subject || 'Verification Mail'
-    let html = `<p>Please click this link for verify account - <a href="${link}" alt='verification link'>link</a><p>`
+    const subject = emailTemplateDetails?.subject || 'Account Verification'
+    let html = `<p>Dear ${body.email.split('@')[0]},</p><p>Thank you for registering with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${body.email}</p><p>Please click <a href="${link}">Here</a> to verify your registration.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { email: body.email, password: body.password, username: body.email.substr(0, body.email.indexOf('@')), link }
@@ -90,7 +90,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       image: body.image ? body.image : '',
       email: body.email,
       password: body.password,
-      device: req.body.device,
+      device: body.device,
       type: 'User',
       status: 'Deactive',
       verified: false,
@@ -241,10 +241,10 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       type: 'User',
       status: 'Active',
       verified: true,
-      oAuth: {
+      oAuth: [{
         clientId: body.id,
         provider: body.provider
-      },
+      }],
       device: body?.device?.toLowerCase() || '',
       email: body.email
     }

@@ -39,7 +39,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         }
         const password = (Math.random() + 1).toString(36).substring(2)
         const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.customerRegistration })
-        const subject = emailTemplateDetails.subject || 'Customer Registration'
+        const subject = emailTemplateDetails.subject || 'Account Verification'
         let html = `<p>Your temporary password is: <b>${password}</b></p>`
 
         if (emailTemplateDetails && emailTemplateDetails.content) {
@@ -83,7 +83,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         if (body.subscriptions) {
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
         const sub = emailTemplateDetails.subject || 'Subscription'
-        let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for 30 days on ${subscriptionDetails.duration} basis.</p><p>Should you have any queries or if any of your details change, please contact us.</p><p>Best regards,<br>Holyread</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+        let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for 30 days on ${subscriptionDetails.duration} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
         if (emailTemplateDetails && emailTemplateDetails.content) {
             const contentData = {
@@ -109,8 +109,8 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
                 email: data.email
             }
         })
-        const title = 'Welcome';
-        const description = 'Welcome to the holyreads';
+        const title = 'Welcome to Holyreads';
+        const description = 'Enjoy best summaries audio and video';
         await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
         const createSubscriptionTitle = 'Subscription Created'
         const createSubscriptionDesc = 'Subscription created successfully'
@@ -150,9 +150,9 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
         if (params.search) {
             searchFilter = {
                 $or: [
+                    { 'email': await getSearchRegexp(params.search) },
                     { 'firstName': await getSearchRegexp(params.search) },
                     { 'lastName': await getSearchRegexp(params.search) },
-                    { 'email': await getSearchRegexp(params.search) },
                     { 'status': await getSearchRegexp(params.search) }
                 ]
             }
@@ -223,7 +223,7 @@ const updateUser = async (req: Request | any, res: Response, next: NextFunction)
         }
         req.body.email = userObj.email
         req.body.device = userObj.device || ''
-        await usersService.updateUser(req.body, req.params.userId)
+        await usersService.updateUser(req.body, { _id: req.params.userId })
         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
     } catch (e: any) {
         return next(Boom.badData(e.message))

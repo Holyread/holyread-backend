@@ -15,7 +15,7 @@ import subscriptions from './customers/subscriptions.route'
 import notifications from './customers/notifications.route'
 
 router.use('/auth', auth)
-router.use('/users', customerPassport, users)
+router.use('/users', users)
 router.use('/dashboard', customerPassport, dashboard)
 router.use('/book-summary', customerPassport, bookSummary)
 router.use('/high-lights', customerPassport, highLight)

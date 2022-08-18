@@ -28,12 +28,12 @@ const createUser = async (body: any) => {
 }
 
 /** Modify User */
-const updateUser = async (body: any, id: string) => {
+const updateUser = async (body: any, query: object) => {
     try {
         if (body.password) {
             body.password = encrypt(body.password)
         }
-        const data: any = await UserModel.findOneAndUpdate({ _id: id }, { ...body, updatedAt: new Date() }, { new: true })
+        const data: any = await UserModel.findOneAndUpdate(query, { ...body, updatedAt: new Date() }, { new: true })
         return data
     } catch (e: any) {
         throw new Error(e)

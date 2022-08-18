@@ -1,7 +1,7 @@
 export const allowedOrigins = {
     test: ['*'],
     local: ['https://localhost:4200', 'http://localhost:4200'],
-    development: ['https://localhost:4200', 'http://localhost:4200', 'https://dev-admin.holyreads.com', 'https://dev-customer.holyreads.com', 'https://holyreads.crawlapps.com', 'https://www.holyreads.com'],
+    development: ['https://localhost:4200', 'http://localhost:4200', 'https://dev-admin.holyreads.com', 'https://dev-customer.holyreads.com', 'https://www.holyreads.com'],
     staging: [''],
     production: [''],
 }
@@ -51,7 +51,9 @@ export const emailTemplatesTitles = {
         sendInvitation: 'Send Invitation',
         blessFriend: 'Customer Registration Bless Friend',
         chooseSubscription: 'Choose Subscription',
-        changePassword: 'Change Password'
+        changePassword: 'Change Password',
+        emailAuthVerification: 'Customer Email Auth Verification',
+        emailAuthEnabled: 'Customer Email Auth Enabled'
     },
     admin: {
         customerRegistration: 'Admin Customer Registration',

@@ -24,7 +24,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     let html = `<p>Your verification code is: <b>${verificationCode}</b></p>`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
-      const contentData = { username: user.firstName + ' ' + user.lastName, otp: verificationCode }
+      const contentData = { username: user.email.split('@')[0], otp: verificationCode }
       const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
       if (htmlData) {
         html = htmlData
@@ -34,7 +34,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     if (!result) {
       return next(Boom.badData(adminControllerResponse.sentEmailFailure))
     }
-    const updatedUserDetails: any = await usersService.updateUser({ verificationCode }, user._id)
+    const updatedUserDetails: any = await usersService.updateUser({ verificationCode }, { _id: user._id })
     if (!updatedUserDetails || updatedUserDetails.verificationCode !== String(verificationCode)) {
       return next(Boom.badData(adminControllerResponse.updateCodeFailure))
     }
@@ -59,7 +59,7 @@ const resendSignInOtp = async (req: Request, res: Response, next: NextFunction) 
     let html = `<p>Your verification code is: <b>${user.verificationCode}</b></p>`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
-      const contentData = { username: user.firstName + ' ' + user.lastName, otp: user.verificationCode }
+      const contentData = { username: user.email.split('@')[0], otp: user.verificationCode }
       const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
       if (htmlData) {
         html = htmlData
@@ -120,7 +120,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     if (!result) {
       return next(Boom.badData(adminControllerResponse.updateCodeFailure))
     }
-    await usersService.updateUser({ verificationCode }, user._id)
+    await usersService.updateUser({ verificationCode }, { _id: user._id })
     res.status(200).send({
       message: adminControllerResponse.sendCodeSuccess
     })
@@ -141,7 +141,7 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
     if (!userObj) {
       return next(Boom.notFound(adminControllerResponse.updateCodeFailure))
     }
-    await usersService.updateUser({ password: newPassword, $unset: { verificationCode: 1 } }, userObj._id)
+    await usersService.updateUser({ password: newPassword, $unset: { verificationCode: 1 } }, { _id: userObj._id })
     res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
   } catch (e: any) {
     next(Boom.badData(e.message))

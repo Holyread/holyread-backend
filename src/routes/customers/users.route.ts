@@ -1,4 +1,6 @@
 import express, { Router } from 'express'
+
+import customerPassport from '../../middleware/customers.passport'
 import {
   getUserAccount,
   getBlessFriend,
@@ -13,24 +15,28 @@ import {
   blessFriend,
   subscribePlan,
   updateRating,
-  deleteUser
+  deleteUser,
+  emailAuth,
+  verifyEmailAuth
 } from '../../controllers/customers/users.controller'
 
 const router: Router = express.Router()
 
-router.get('/', getUserAccount)
-router.get('/bless-friend/:email', getBlessFriend)
-router.put('/', updateUserAccount)
-router.post('/share-options-image', getShareOptionImageUrl)
-router.post('/bless-friend', blessFriend)
-router.put('/change-password', changePassword)
-router.get('/subscription', getUserSubscription)
-router.get('/library', getUserLibrary)
-router.patch('/library', updateUserLibrary)
-router.post('/query', submitQuery)
-router.post('/feedback', submitFeedback)
-router.post('/subscribe', subscribePlan)
-router.patch('/rate', updateRating)
-router.delete('/', deleteUser)
+router.get('/', customerPassport, getUserAccount)
+router.get('/bless-friend/:email', customerPassport, getBlessFriend)
+router.put('/', customerPassport, updateUserAccount)
+router.post('/share-options-image', customerPassport, getShareOptionImageUrl)
+router.post('/bless-friend', customerPassport, blessFriend)
+router.put('/change-password', customerPassport, changePassword)
+router.get('/subscription', customerPassport, getUserSubscription)
+router.get('/library', customerPassport, getUserLibrary)
+router.patch('/library', customerPassport, updateUserLibrary)
+router.post('/query', customerPassport, submitQuery)
+router.post('/feedback', customerPassport, submitFeedback)
+router.post('/subscribe', customerPassport, subscribePlan)
+router.patch('/rate', customerPassport, updateRating)
+router.delete('/', customerPassport, deleteUser)
+router.post('/email-auth', customerPassport, emailAuth)
+router.post('/email-auth/verify', verifyEmailAuth)
 
 export default router

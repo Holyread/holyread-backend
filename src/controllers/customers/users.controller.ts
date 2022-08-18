@@ -80,7 +80,7 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
-                        username: userObj.firstName + ' ' + userObj.lastName,
+                        username: userObj.email.split('@')[0],
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
                   if (htmlData) {
@@ -466,11 +466,11 @@ const submitQuery = async (req: Request | any, res: Response, next: NextFunction
             const userObj = Object.assign({}, req.user)
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.contactUs })
             const sub = emailTemplateDetails.subject || 'Contact Us'
-            let html = `<p>Hello Admin,</p><p>You receive a support message from user.</p><p>Email : ${userObj.email}</p><p>Phone Number : ${userObj.contactNumber || ''}</p><p>Subject : ${subject}</p><p>Message : ${message}</p><p>Best regards,</p><p>${userObj.firstName} ${userObj.lastName}</p>`
+            let html = `<p>Hello Admin,</p><p>You receive a support message from user.</p><p>Email : ${userObj.email}</p><p>Phone Number : ${userObj.contactNumber || ''}</p><p>Subject : ${subject}</p><p>Message : ${message}</p><p>Best regards,</p><p>${userObj.email.split('@')[0]}</p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
-                        username: userObj.firstName + ' ' + userObj.lastName,
+                        username: userObj.email.split('@')[0],
                         email: userObj.email,
                         phone_number: userObj.contactNumber || '',
                         subject,

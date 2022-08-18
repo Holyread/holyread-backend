@@ -226,7 +226,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       const token: string = getToken({ email: user.email, 'oauthClientId': body.id, id: user._id })
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
-        data: { _id: user._id, email: user.email, token, type: user.type, userName: user.firstName }
+        data: { _id: user._id, email: user.email, token, type: user.type, userName: user?.email?.split('@')[0] || '' }
       })
     }
     if (body.photoUrl) {
@@ -238,8 +238,6 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     }
     const newBody: any = {
       image: body.photoUrl ? body.photoUrl : '',
-      firstName: body.firstName || body?.name?.split(' ')[0] || '',
-      lastName: body.lastName || body?.name?.split(' ')[1] || '',
       type: 'User',
       status: 'Active',
       verified: true,
@@ -269,7 +267,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
-      data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: body?.email?.split('@')[0] || newBody.firstName || '' }
+      data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: body?.email?.split('@')[0] || '' }
     })
 
     /** Push notification */

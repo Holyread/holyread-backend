@@ -150,9 +150,9 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
         if (params.search) {
             searchFilter = {
                 $or: [
+                    { 'email': await getSearchRegexp(params.search) },
                     { 'firstName': await getSearchRegexp(params.search) },
                     { 'lastName': await getSearchRegexp(params.search) },
-                    { 'email': await getSearchRegexp(params.search) },
                     { 'status': await getSearchRegexp(params.search) }
                 ]
             }

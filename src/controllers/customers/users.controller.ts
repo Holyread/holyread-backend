@@ -39,7 +39,6 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             delete userObj.library
             delete userObj.smallGroups
             delete userObj.verificationCode
-            delete userObj.oAuth
             delete userObj.stripe
             delete userObj.inAppToken
             const notifications = await notificationsService.getUserNotifications({ userId: userObj._id })

@@ -111,7 +111,7 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
             if (emailUser) {
                   return next(Boom.notFound(authControllerResponse.emailAlreadyUsedError))
             }
-            if (userObj.email && userObj.email && userObj.password && userObj.email === email) {
+            if (userObj.email && userObj.password && userObj.email === email) {
                   return res.status(200).send({ message: authControllerResponse.emailAuthExist })
             }
             const verificationCode = Math.floor(1000 + Math.random() * 9000)

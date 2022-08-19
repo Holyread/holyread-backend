@@ -15,6 +15,7 @@ const getAllRatings = async (skip: number, limit, search: any, sort: { column: s
                   if (!oneRating) {
                         return
                   }
+                  oneRating.star = Math.trunc(oneRating.star || 0)
                   const index = ratings.findIndex(oneRes => String(oneRes.bookId) === String(oneRating.bookId))
                   if (index >= 0) {
                         ratings[index].ratings[oneRating.star] = (ratings[index].ratings[oneRating.star] || 0) + 1
@@ -76,6 +77,7 @@ const getBookRatings = async (skip: number, limit, search: any, sort: { column: 
                   if (!oneRating) {
                         return null
                   }
+                  oneRating.star = Math.trunc(oneRating.star || 0)
                   const user = users.find(oneUser => String(oneUser._id) === String(oneRating.userId))
                   const item = {
                         bookId: oneRating.bookId,

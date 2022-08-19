@@ -3,6 +3,7 @@ import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { randomNumberInRange } from '../../../lib/utils/utils'
 import usersService from '../users/user.service'
+import ratingService from './rating.service'
 
 const NODE_ENV = config.NODE_ENV
 
@@ -30,14 +31,18 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                 description: oneItem.description,
                 author: oneItem.author,
                 overview: oneItem.overview,
-                totalStar: Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1, 9))),
                 totalReads: randomNumberInRange(10000, 20000),
                 bookMark: isSaved,
                 coverImageBackground: oneItem.coverImageBackground,
                 categories: oneItem.categories
             }
         }))
-        result = result.filter(s => s)
+        result = result.filter(s => s).slice(skip, skip + limit)
+        const ratings = await ratingService.getBooksRatings(result.map(i => i && i._id).filter(i => i) as [string], global.currentUser._id)
+        result.map(i => {
+            i.totalStar = ratings[String(i._id)]?.averageStar || 3,
+            i.isRate = !!ratings[String(i._id)]?.isRate
+        })
         return { count: result.length, summaries: result.slice(skip, skip + limit) }
     } catch (e: any) {
         throw new Error(e)
@@ -49,6 +54,7 @@ const getAllBookSummaries = async (skip: number, limit, search: any, sort, libra
     try {
         let result: any = await BookSummaryModel.find(search).skip(skip).limit(limit).sort(sort).lean().exec()
         let count: any = await BookSummaryModel.count(search).lean().exec()
+        const ratings = await ratingService.getBooksRatings(result.map(i => i && i._id).filter(i => i) as [string], global.currentUser._id)
         result = await Promise.all(result.map(async oneItem => {
             if (oneItem.author) {
                 oneItem.author = await BookAuthorModel.findById(oneItem.author).lean()
@@ -66,13 +72,14 @@ const getAllBookSummaries = async (skip: number, limit, search: any, sort, libra
                 author: oneItem.author,
                 overview: oneItem.overview,
                 description: oneItem.description,
-                totalStar: Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1, 9))),
                 totalReads: randomNumberInRange(10000, 20000),
                 bookMark: isSaved,
                 coverImageBackground: oneItem.coverImageBackground,
                 chapters: library ? oneItem.chapters : undefined,
                 reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / oneItem?.chapters?.length : 0).toFixed(0)),
-                categories: oneItem.categories
+                categories: oneItem.categories,
+                totalStar: ratings[String(oneItem._id)]?.averageStar || 3,
+                isRate: !!ratings[String(oneItem._id)]?.isRate
             }
         }))
         return { count, summaries: result }
@@ -86,11 +93,13 @@ const getOneBookSummaryByFilter = async (query: any) => {
     try {
         const data: any = await BookSummaryModel.findOne(query).lean().exec()
         if (!data) return data;
+        const ratings = await ratingService.getBooksRatings([String(data._id)], global.currentUser._id)
         const libBookChapters = global?.currentUser?.library?.reading?.find(item => String(item.bookId) === String(data._id))?.chaptersCompleted
         if (data.author) {
             data.author = await BookAuthorModel.findOne({ _id: data.author }).lean().exec()
         }
-        data.totalStar = Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1, 9)))
+        data.totalStar = ratings[String(data._id)]?.averageStar || 3,
+        data.isRate = !!ratings[String(data._id)]?.isRate
         data.totalReads = randomNumberInRange(10000, 20000)
         data.bookMark = global?.currentUser?.library?.saved?.find(b => String(b) === String(data?._id)) ? true : false
         data.reads = Number((libBookChapters?.length ? (100 * libBookChapters?.length) / data?.chapters?.length : 0).toFixed(0))
@@ -132,6 +141,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
         const authors = summaries.length && await BookAuthorModel.find({}).select('name').lean()
         const count = summaries.length;
         summaries = summaries.sort((a, b) => { return b.reads - a.reads }).slice(skip, skip + limit);
+        const ratings = await ratingService.getBooksRatings(summaries.map(i => i.book && i.book._id).filter(i => i) as [string], global.currentUser._id)
         
         summaries = await Promise.all(summaries.map(async oneItem => {
             const isSaved = global?.currentUser?.library?.saved?.find(b => String(b) === String(oneItem?.book?._id)) ? true : false
@@ -146,12 +156,13 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                 description: oneItem.book.description,
                 author: oneItem.book.author,
                 overview: oneItem.book.overview,
-                totalStar: Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1, 9))),
+                totalStar: ratings[String(oneItem.book._id)]?.averageStar || 3,
+                isRate: !!ratings[String(oneItem.book._id)]?.isRate,
                 totalReads: randomNumberInRange(10000, 20000),
                 bookMark: isSaved,
                 coverImageBackground: oneItem.book.coverImageBackground,
                 categories: oneItem.book.categories,
-                reads: Number((libBookChapters?.length ? (100 * libBookChapters?.length) / oneItem.book?.chapters?.length : 0).toFixed(0))
+                reads: Number((libBookChapters?.length ? (100 * libBookChapters?.length) / oneItem.book?.chapters?.length : 0).toFixed(0)),
             }
         }))
         return { summaries, count }

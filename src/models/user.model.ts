@@ -230,7 +230,8 @@ export const UserSchema = new Schema({
     smallGroups: [{ type: String }],
     oAuth: [{
         clientId: String,
-        provider: String
+        provider: String,
+        email: String
     }],
     referralUserId: { type: Schema.Types.ObjectId, ref: 'user' },
     kindleEmail: { type: String },

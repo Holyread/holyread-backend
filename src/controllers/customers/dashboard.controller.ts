@@ -6,6 +6,7 @@ import bookCategoryService from '../../services/customers/book/bookCategory.serv
 import expertCuratedService from '../../services/customers/book/expertCurated.service'
 import recommendedBookService from '../../services/customers/book/recommendedBook.service'
 import readsOfDayService from '../../services/customers/readsOfDay/readsOfDay.service'
+import ratingService from '../../services/customers/book/rating.service'
 import smallGroupService from '../../services/customers/smallGroup/smallGroup.service'
 import { responseMessage } from '../../constants/message.constant'
 import { awsBucket, dataLimit } from '../../constants/app.constant'
@@ -104,7 +105,8 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
         const result = await recommendedBookService.getAllRecommendedBooks(Number(skip), Number(limit), {}, [])
         const recommendedBooks = []
         if (result && result.recommendedBooks && result.recommendedBooks.length) {
-            result.recommendedBooks.map((oneBook: any) => {
+            const ratings = await ratingService.getBooksRatings(result.recommendedBooks.map(i => i.book && i.book._id).filter(i => i) as [string], request.user._id)
+            result.recommendedBooks.map(async (oneBook: any) => {
                 if (oneBook && oneBook.book && oneBook.book._id) {
                     const bookMark = request.user.library?.saved?.find(b => String(b) === String(oneBook.book._id)) ? true : false
                     const libBookChapters = request.user?.library?.reading?.find(item => String(item.bookId) === String(oneBook.book._id))?.chaptersCompleted
@@ -116,10 +118,11 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
                         author: oneBook.book.author,
                         overview: oneBook.book.overview,
                         description: oneBook.book.description,
-                        totalStar: Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1,9))),
                         totalReads: randomNumberInRange(10000, 20000),
                         reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / oneBook.book?.chapters?.length : 0).toFixed(0)),
-                        bookMark
+                        bookMark,
+                        totalStar: ratings[String(oneBook.book._id)]?.averageStar || 3,
+                        isRate: !!ratings[String(oneBook.book._id)]?.isRate
                     })
                 } else {
                     --result.count

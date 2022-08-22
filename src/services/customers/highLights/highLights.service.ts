@@ -243,10 +243,22 @@ const deleteHighLight = async (userId: string, id: string, highLightId: string) 
     }
 }
 
+
+/** Remove high lights */
+const deleteHighLights = async (query: Object) => {
+    try {
+        await HighLightsModel.deleteMany(query)
+        return true
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 export default {
     createHighLight,
     updateHighLight,
     getHighLightByFilter,
     getHighLightsByFilter,
-    deleteHighLight
+    deleteHighLight,
+    deleteHighLights
 }

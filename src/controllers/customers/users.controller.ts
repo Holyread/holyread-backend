@@ -11,10 +11,11 @@ import subscriptionService from '../../services/admin/subscriptions/subscription
 import stripeSubscriptionService from '../../services/stripe/subscription'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNotification, verifyToken, getToken, decrypt } from '../../lib/utils/utils'
+import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNotification, verifyToken, getToken, decrypt, sortArrayObject } from '../../lib/utils/utils'
 import { awsBucket, dataLimit, emailTemplatesTitles, originEmails, origins } from '../../constants/app.constant'
 import config from '../../../config'
 import ratingService from '../../services/customers/book/rating.service';
+import highLightsService from '../../services/customers/highLights/highLights.service';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -110,7 +111,7 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
             if (emailUser) {
                   return next(Boom.notFound(authControllerResponse.emailAlreadyUsedError))
             }
-            if (userObj.email && userObj.email && userObj.password && userObj.email === email) {
+            if (userObj.email && userObj.password && userObj.email === email) {
                   return res.status(200).send({ message: authControllerResponse.emailAuthExist })
             }
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
@@ -378,7 +379,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
 /**  Get one user library by library id */
 const getUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const { section, sort, author, bookId } = req.query as any
+            const { section, sort, author, bookId, star } = req.query as any
             const skip = req.query.skip || dataLimit.skip
             const limit = req.query.limit || dataLimit.limit
             /** Get current user */
@@ -391,11 +392,14 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
             if (section === 'saved' && userObj?.library?.saved?.length) {
                   const search: any = { _id: { $in: userObj.library.saved } }
                   if (author) { search.author = author }
+                  if (star) { search.star = Number(star) }
                   const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']])
                   if (data.summaries?.length) {
                         data.summaries = userObj.library.saved.reverse().map(oi => {
                               return data.summaries.find(si => String(si._id) === String(oi))
-                        }).filter(i => i).slice(skip, skip + limit)
+                        }).filter(i => i)
+                        if (sort) data.summaries = sortArrayObject(data.summaries, 'title', sort.toLowerCase())
+                        data.summaries = data.summaries.slice(skip, skip + limit)
                   }
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return
@@ -403,11 +407,14 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
             if (section === 'completed' && userObj?.library?.completed?.length) {
                   const search: any = { _id: { $in: userObj.library.completed } }
                   if (author) { search.author = author }
+                  if (star) { search.star = Number(star) }
                   const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']])
                   if (data.summaries?.length) {
                         data.summaries = userObj.library.completed.reverse().map(oi => {
                               return data.summaries.find(si => String(si._id) === String(oi))
-                        }).filter(i => i).slice(skip, skip + limit)
+                        }).filter(i => i)
+                        if (sort) data.summaries = sortArrayObject(data.summaries, 'title', sort.toLowerCase())
+                        data.summaries = data.summaries.slice(skip, skip + limit)
                   }
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return
@@ -445,11 +452,11 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                               delete summary.chapters
                               return summary
                         }
-                  }).filter(s => s).sort((a, b) =>
-                        (new Date(a.updatedAt).getTime() > new Date(b.updatedAt).getTime())
-                              ? -1
-                              : ((new Date(b.updatedAt).getTime() > new Date(a.updatedAt).getTime()) ? 1 : 0)).slice(skip, skip + limit)
+                  }).filter(s => s)
 
+                  if (sort) data.summaries = sortArrayObject(data.summaries, 'title', sort.toLowerCase())
+                  else data.summaries = sortArrayObject(data.summaries, 'updatedAt', 'desc')
+                  data.summaries = data.summaries.slice(skip, skip + limit)
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return
             }
@@ -712,12 +719,20 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
 const deleteUser = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
             const userObj: any = req.user
+            await usersService.deleteUser(userObj._id)
+            res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
+            if (userObj && userObj.image) {
+                  await removeS3File(userObj.image, s3Bucket)
+            }
             if (userObj?.stripe?.subscriptionId) {
                   await stripeSubscriptionService.cancelSubscription(userObj.stripe.subscriptionId)
             }
-            await notificationsService.deleteNotifications({ userId: userObj._id })
-            await usersService.deleteUser(userObj._id)
-            return res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
+            /** Delete user notifications */
+            const deleteNotifications = notificationsService.deleteNotifications({ userId: userObj._id })
+            /** Delete user books ratings */
+            const deleteRatings = ratingService.deleteRatings({ userId: userObj._id })
+            const deleteHighlights = highLightsService.deleteHighLights({ userId: userObj._id })
+            await Promise.all([deleteNotifications, deleteRatings, deleteHighlights])
       } catch (e: any) {
             return next(Boom.badData(e.message))
       }

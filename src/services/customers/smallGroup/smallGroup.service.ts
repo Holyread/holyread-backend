@@ -2,6 +2,7 @@ import { SmallGroupModel, BookSummaryModel, BookAuthorModel } from '../../../mod
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { randomNumberInRange } from '../../../lib/utils/utils'
+import ratingService from '../book/rating.service'
 
 const NODE_ENV = config.NODE_ENV
 
@@ -54,10 +55,14 @@ const getOneSmallGroupByFilter = async (query: any) => {
                     oneBook.author = authorDetails ? authorDetails : oneBook.author
                 }
                 oneBook.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneBook.coverImage
-                oneBook.totalStar = Number(randomNumberInRange(3, 4) + '.' + (randomNumberInRange(1, 9)))
                 oneBook.totalReads = randomNumberInRange(10000, 20000)
                 return oneBook
             }).filter(ob => ob))
+            const ratings = await ratingService.getBooksRatings(result.books.map(i => i && i._id).filter(i => i) as [string], global.currentUser._id)
+            result.books.map(i => {
+                i.totalStar = ratings[String(i._id)]?.averageStar || 3,
+                i.isRate = !!ratings[String(i._id)]?.isRate
+            })
         }
         return result
     } catch (e: any) {

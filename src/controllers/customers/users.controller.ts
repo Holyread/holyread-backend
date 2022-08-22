@@ -266,7 +266,10 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             if (req.body.id && req.body.provider) {
                   const oAuth = userObj.oAuth || []
                   const index = oAuth.findIndex(i => i.provider === req.body.provider)
-                  index < 0 ? oAuth.push({ provider: req.body.provider, clientId: req.body.id }) : oAuth[index].clientId = req.body.id
+                  if (index < 0) oAuth.push({ provider: req.body.provider, clientId: req.body.id, email: req.body.oAuthEmail || '' })
+                  else {
+                        oAuth[index] = { ...oAuth[index], clientId: req.body.id, email: req.body.oAuthEmail || oAuth[index].email || '' }
+                  }
                   body.oAuth = oAuth
             }
             if (req.body.provider && req.body.action === 'unlink') {
@@ -573,7 +576,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                         planId: subscriptionDetails.stripePlanId,
                         subscriptionId: sbscription.id,
                   },
-                  device: body.device
+                  device: body.device || 'web'
             })
             if (!invitedUserDetails || !invitedUserDetails._id) {
                   return next(Boom.badData(authControllerResponse.createUserFailed))

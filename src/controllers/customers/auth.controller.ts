@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
-import axios from 'axios';
 
 import { encrypt, getToken, verifyToken, sentEmail, pushNotification } from '../../lib/utils/utils'
 import usersService from '../../services/admin/users/user.service'
@@ -205,78 +204,20 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
 const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
   try {
     const body: any = req.body
-    if (!body.email) {
-      return next(Boom.notFound(authControllerResponse.missingEmailError))
-    }
     if (!body.id || !body.provider) {
       return next(Boom.notFound(authControllerResponse.missingoAuthKeyError))
     }
-    const query: any = { email: body.email }
+    const query: any = { 'oAuth.clientId': body.id, 'oAuth.provider': body.provider }
     const user: any = await usersService.getOneUserByFilter(query)
-    if (user && user.email && user.type === 'Admin') {
+    /** unauthorised if user missing or type is admin */
+    if (!user || (user && user?.type === 'Admin')) {
       return next(Boom.notFound(authControllerResponse.userNotAuthorizationError))
     }
-    if (user) {
-      const oAuth = user.oAuth || []
-      const index = oAuth.findIndex(i => i.provider === body.provider)
-      /** Update or add oAuth client id  */
-      index < 0 ? oAuth.push({ provider: body.provider, clientId: body.id }) : oAuth[index].clientId = body.id
-      await usersService.updateUser({ oAuth }, { email: body.email })
-
-      const token: string = getToken({ email: user.email, 'oauthClientId': body.id, id: user._id })
-      return res.status(200).json({
-        message: authControllerResponse.loginSuccess,
-        data: { _id: user._id, email: user.email, token, type: user.type, userName: user?.email?.split('@')[0] || '' }
-      })
-    }
-    if (body.photoUrl) {
-      await axios.get(body.photoUrl, { responseType: 'arraybuffer' }).then(async (response) => {
-        const data = "data:" + response.headers["content-type"] + ";base64," + Buffer.from(response.data).toString('base64');
-        const s3File: any = await uploadFileToS3(data, `profile`, s3Bucket)
-        body.photoUrl = s3File.name
-      })
-    }
-    const newBody: any = {
-      image: body.photoUrl ? body.photoUrl : '',
-      type: 'User',
-      status: 'Active',
-      verified: true,
-      oAuth: [{
-        clientId: body.id,
-        provider: body.provider
-      }],
-      device: body?.device?.toLowerCase() || '',
-      email: body.email
-    }
-    const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
-    if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-      return next(Boom.badData(subscriptionsControllerResponse.getSubscriptionFailure))
-    }
-    const customer = await stripeSubscriptionService.createCustomer(body.email as any)
-    const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
-    newBody['stripe.planId'] = subscriptionDetails.stripePlanId
-    newBody['stripe.subscriptionId'] = subscription.id
-    newBody['stripe.customerId'] = customer.id
-    newBody.subscriptions = subscriptionDetails._id
-
-    const data: any = await usersService.createUser(newBody)
-    const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
-    const title = 'Welcome to Holyreads';
-    const description = 'Enjoy best summaries audio and video';
-
-    await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
-    res.status(200).json({
+    const token: string = getToken({ email: user.email, 'oauthClientId': body.id, id: user._id })
+    return res.status(200).json({
       message: authControllerResponse.loginSuccess,
-      data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: body?.email?.split('@')[0] || '' }
+      data: { _id: user._id, email: user.email, token, type: user.type, userName: user?.email?.split('@')[0] || '' }
     })
-
-    /** Push notification */
-    if (data && data.pushTokens && data.pushTokens.length && data?.notification?.push) {
-      const tokens = data.pushTokens.map(i => i.token)
-      pushNotification(tokens, title, description)
-      if (data?.notification?.subscriptions)
-        pushNotification(tokens, 'Subscription Created', 'Subscription created successfully')
-    }
 
   } catch (e: any) {
     next(Boom.badData(e.message))

@@ -15,6 +15,7 @@ import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNoti
 import { awsBucket, dataLimit, emailTemplatesTitles, originEmails, origins } from '../../constants/app.constant'
 import config from '../../../config'
 import ratingService from '../../services/customers/book/rating.service';
+import highLightsService from '../../services/customers/highLights/highLights.service';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -713,12 +714,20 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
 const deleteUser = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
             const userObj: any = req.user
+            await usersService.deleteUser(userObj._id)
+            res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
+            if (userObj && userObj.image) {
+                  await removeS3File(userObj.image, s3Bucket)
+            }
             if (userObj?.stripe?.subscriptionId) {
                   await stripeSubscriptionService.cancelSubscription(userObj.stripe.subscriptionId)
             }
-            await notificationsService.deleteNotifications({ userId: userObj._id })
-            await usersService.deleteUser(userObj._id)
-            return res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
+            /** Delete user notifications */
+            const deleteNotifications = notificationsService.deleteNotifications({ userId: userObj._id })
+            /** Delete user books ratings */
+            const deleteRatings = ratingService.deleteRatings({ userId: userObj._id })
+            const deleteHighlights = highLightsService.deleteHighLights({ userId: userObj._id })
+            await Promise.all([deleteNotifications, deleteRatings, deleteHighlights])
       } catch (e: any) {
             return next(Boom.badData(e.message))
       }

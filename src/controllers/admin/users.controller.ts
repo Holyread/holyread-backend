@@ -12,6 +12,8 @@ import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
 import { io } from '../../app';
 import { fetchNotifications } from '../customers/notification.controller';
+import ratingService from '../../services/customers/book/rating.service';
+import highLightsService from '../../services/customers/highLights/highLights.service';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
@@ -235,15 +237,20 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
     try {
         const id: any = req.params.userId
         const userObj: any = await usersService.getOneUserByFilter({ _id: id })
+        await usersService.deleteUser(id)
+        res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
         if (userObj && userObj.image) {
             await removeS3File(userObj.image, s3Bucket)
         }
         if (userObj?.stripe?.subscriptionId) {
             await stripeSubscriptionService.cancelSubscription(userObj.stripe.subscriptionId)
         }
-        await notificationsService.deleteNotifications({ userId: id })
-        await usersService.deleteUser(id)
-        return res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
+        /** Delete user notifications */
+        const deleteNotifications = notificationsService.deleteNotifications({ userId: userObj._id })
+        /** Delete user books ratings */
+        const deleteRatings = ratingService.deleteRatings({ userId: userObj._id })
+        const deleteHighlights = highLightsService.deleteHighLights({ userId: userObj._id })
+        await Promise.all([deleteNotifications, deleteRatings, deleteHighlights])
     } catch (e: any) {
         return next(Boom.badData(e.message))
     }

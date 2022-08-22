@@ -50,18 +50,15 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
 }
 
 /** Get user library book summaries */
-const getAllBookSummaries = async (skip: number, limit, search: any, sort, library?: any) => {
+const getAllBookSummaries = async (skip: number, limit: number, search: any, sort, library?: any) => {
     try {
-        let result: any = await BookSummaryModel.find(search).skip(skip).limit(limit).sort(sort).lean().exec()
+        let result: any = await BookSummaryModel.find(search).select('title author overview description coverImage coverImageBackground categories chapters.name chapters.size').skip(skip).limit(limit).sort(sort).lean().exec()
         let count: any = await BookSummaryModel.count(search).lean().exec()
         const ratings = await ratingService.getBooksRatings(result.map(i => i && i._id).filter(i => i) as [string], global.currentUser._id)
+        const authors = await BookAuthorModel.find({}).select('name').lean().exec()
         result = await Promise.all(result.map(async oneItem => {
             if (oneItem.author) {
-                oneItem.author = await BookAuthorModel.findById(oneItem.author).lean()
-                oneItem.author = {
-                    _id: oneItem.author._id,
-                    name: oneItem.author.name
-                }
+                oneItem.author = authors.find(i => String(i._id) === String(oneItem.author))
             }
             const isSaved = global?.currentUser?.library?.saved?.find(b => String(b) === String(oneItem?._id)) ? true : false
             const libBookChapters = global?.currentUser?.library?.reading?.find(item => String(item.bookId) === String(oneItem._id))?.chaptersCompleted

@@ -37,7 +37,18 @@ const getBooksRatings = async (bookIds: [string], userId: string) => {
       }
 }
 
+/** Get book ratings */
+const deleteRatings = async (query: Object) => {
+      try {
+            await RatingModel.deleteMany(query)
+            return true
+      } catch (e: any) {
+            throw new Error(e)
+      }
+}
+
 export default {
       updateRating,
-      getBooksRatings
+      getBooksRatings,
+      deleteRatings
 }

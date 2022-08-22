@@ -10,6 +10,8 @@ const NODE_ENV = config.NODE_ENV
 /** Get all book summaries with filter by author id or author name, book title or all */
 const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, sort) => {
     try {
+        const star = search.star;
+        delete search.star;
         let result: any = await BookSummaryModel.find({}).select('-chapters').lean()
         const authors = await BookAuthorModel.find({}).select('name').lean()
         result = await Promise.all(result.map(async oneItem => {
@@ -39,10 +41,12 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
         }))
         result = result.filter(s => s).slice(skip, skip + limit)
         const ratings = await ratingService.getBooksRatings(result.map(i => i && i._id).filter(i => i) as [string], global.currentUser._id)
-        result.map(i => {
+        result = result.map(i => {
             i.totalStar = ratings[String(i._id)]?.averageStar || 3,
             i.isRate = !!ratings[String(i._id)]?.isRate
-        })
+            if (star && star !== Math.trunc(i.totalStar)) return false
+            return i
+        }).filter(i => i)
         return { count: result.length, summaries: result.slice(skip, skip + limit) }
     } catch (e: any) {
         throw new Error(e)
@@ -52,6 +56,8 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
 /** Get user library book summaries */
 const getAllBookSummaries = async (skip: number, limit: number, search: any, sort, library?: any) => {
     try {
+        const star = search.star
+        delete search.star
         let result: any = await BookSummaryModel.find(search).select('title author overview description coverImage coverImageBackground categories chapters.name chapters.size').skip(skip).limit(limit).sort(sort).lean().exec()
         let count: any = await BookSummaryModel.count(search).lean().exec()
         const ratings = await ratingService.getBooksRatings(result.map(i => i && i._id).filter(i => i) as [string], global.currentUser._id)
@@ -62,6 +68,11 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
             }
             const isSaved = global?.currentUser?.library?.saved?.find(b => String(b) === String(oneItem?._id)) ? true : false
             const libBookChapters = global?.currentUser?.library?.reading?.find(item => String(item.bookId) === String(oneItem._id))?.chaptersCompleted
+            const totalStar = ratings[String(oneItem._id)]?.averageStar || 3
+            if (star && star !== Math.trunc(totalStar)) {
+                --count;
+                return false
+            }
             return {
                 _id: oneItem._id,
                 coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneItem.coverImage,
@@ -75,11 +86,11 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                 chapters: library ? oneItem.chapters : undefined,
                 reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / oneItem?.chapters?.length : 0).toFixed(0)),
                 categories: oneItem.categories,
-                totalStar: ratings[String(oneItem._id)]?.averageStar || 3,
+                totalStar,
                 isRate: !!ratings[String(oneItem._id)]?.isRate
             }
         }))
-        return { count, summaries: result }
+        return { count, summaries: result.filter(i => i) }
     } catch (e: any) {
         throw new Error(e)
     }

@@ -11,7 +11,7 @@ import subscriptionService from '../../services/admin/subscriptions/subscription
 import stripeSubscriptionService from '../../services/stripe/subscription'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNotification, verifyToken, getToken, decrypt } from '../../lib/utils/utils'
+import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNotification, verifyToken, getToken, decrypt, sortArrayObject } from '../../lib/utils/utils'
 import { awsBucket, dataLimit, emailTemplatesTitles, originEmails, origins } from '../../constants/app.constant'
 import config from '../../../config'
 import ratingService from '../../services/customers/book/rating.service';
@@ -380,7 +380,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
 /**  Get one user library by library id */
 const getUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const { section, sort, author, bookId } = req.query as any
+            const { section, sort, author, bookId, star } = req.query as any
             const skip = req.query.skip || dataLimit.skip
             const limit = req.query.limit || dataLimit.limit
             /** Get current user */
@@ -393,11 +393,14 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
             if (section === 'saved' && userObj?.library?.saved?.length) {
                   const search: any = { _id: { $in: userObj.library.saved } }
                   if (author) { search.author = author }
+                  if (star) { search.star = Number(star) }
                   const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']])
                   if (data.summaries?.length) {
                         data.summaries = userObj.library.saved.reverse().map(oi => {
                               return data.summaries.find(si => String(si._id) === String(oi))
-                        }).filter(i => i).slice(skip, skip + limit)
+                        }).filter(i => i)
+                        if (sort) data.summaries = sortArrayObject(data.summaries, 'title', sort.toLowerCase())
+                        data.summaries = data.summaries.slice(skip, skip + limit)
                   }
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return
@@ -405,11 +408,14 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
             if (section === 'completed' && userObj?.library?.completed?.length) {
                   const search: any = { _id: { $in: userObj.library.completed } }
                   if (author) { search.author = author }
+                  if (star) { search.star = Number(star) }
                   const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']])
                   if (data.summaries?.length) {
                         data.summaries = userObj.library.completed.reverse().map(oi => {
                               return data.summaries.find(si => String(si._id) === String(oi))
-                        }).filter(i => i).slice(skip, skip + limit)
+                        }).filter(i => i)
+                        if (sort) data.summaries = sortArrayObject(data.summaries, 'title', sort.toLowerCase())
+                        data.summaries = data.summaries.slice(skip, skip + limit)
                   }
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return
@@ -447,11 +453,11 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                               delete summary.chapters
                               return summary
                         }
-                  }).filter(s => s).sort((a, b) =>
-                        (new Date(a.updatedAt).getTime() > new Date(b.updatedAt).getTime())
-                              ? -1
-                              : ((new Date(b.updatedAt).getTime() > new Date(a.updatedAt).getTime()) ? 1 : 0)).slice(skip, skip + limit)
+                  }).filter(s => s)
 
+                  if (sort) data.summaries = sortArrayObject(data.summaries, 'title', sort.toLowerCase())
+                  else data.summaries = sortArrayObject(data.summaries, 'updatedAt', 'desc')
+                  data.summaries = data.summaries.slice(skip, skip + limit)
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
                   return
             }

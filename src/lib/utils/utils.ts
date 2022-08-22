@@ -215,3 +215,20 @@ export const pushNotification = async (tokens: string, title: string, descriptio
         });
     })
 }
+
+/** Sort an array object */
+export const sortArrayObject = (list: [object], key: string, order: 'asc' | 'desc') => {
+    return list.sort((a,b) => {
+        if (['updatedAt', 'createdAt'].includes(key)) {
+            a[key] = new Date(a[key]).getTime()
+            b[key] = new Date(b[key]).getTime()
+        }
+        if (a[key] < b[key]) {
+              return order === 'asc' ? -1 : 1;
+        }
+        if (a[key] > b[key]) {
+            return order === 'desc' ? -1 : 1;
+        }
+        return 0;
+    })
+}

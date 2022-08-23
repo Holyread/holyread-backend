@@ -242,9 +242,24 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       return next(Boom.conflict(authControllerResponse.userAlreadyExistError))
     }
     const emailUser: any = await usersService.getOneUserByFilter({ email: body.email })
-    /** throw and avoid duplicates email records */
     if (emailUser) {
-      return next(Boom.conflict(authControllerResponse.emailAlreadyUsedError))
+      emailUser.oAuth = !emailUser.oAuth ? [] : emailUser.oAuth
+      const i = emailUser.oAuth.findIndex(i => i.provider === body.provider)
+      if (i < 0) {
+        emailUser.oAuth.push({
+          email: body.email,
+          provider: body.provider,
+          clientId: body.id
+        })
+      } else {
+        emailUser.oAuth[i] = { ...emailUser.oAuth[i], email: body.email }
+      }
+      await usersService.updateUser({ oAuth: emailUser.oAuth }, { _id: emailUser._id })
+      const token: string = getToken({ email: emailUser.email, 'oauthClientId': body.id, id: emailUser._id })
+      return res.status(200).json({
+        message: authControllerResponse.loginSuccess,
+        data: { _id: emailUser._id, email: emailUser.email || '', token, type: emailUser.type, userName: emailUser.email.split('@')[0] || '' }
+      })
     }
     if (body.photoUrl) {
       await axios.get(body.photoUrl, { responseType: 'arraybuffer' }).then(async (response) => {
@@ -269,16 +284,14 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       email: body.email
     }
 
-    const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
-    if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-      return next(Boom.badData(subscriptionsControllerResponse.getSubscriptionFailure))
+    if (body.subscriptions && body.inAppToken) {
+      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscriptios })
+      if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
+        return next(Boom.badData(subscriptionsControllerResponse.getSubscriptionFailure))
+      }
+      newBody.subscriptions = subscriptionDetails._id
+      newBody.inAppToken = body.inAppToken
     }
-    const customer = await stripeSubscriptionService.createCustomer(body.email as any)
-    const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
-    newBody['stripe.planId'] = subscriptionDetails.stripePlanId
-    newBody['stripe.subscriptionId'] = subscription.id
-    newBody['stripe.customerId'] = customer.id
-    newBody.subscriptions = subscriptionDetails._id
 
     const data: any = await usersService.createUser(newBody)
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
@@ -320,13 +333,21 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       return next(Boom.notFound(authControllerResponse.userNotAuthorizationError))
     }
     const emailUser: any = await usersService.getOneUserByFilter({ email: body.email })
-    const isEmailConflicts = emailUser && String(emailUser._id) !== String(user?._id) ? true : false 
+    const isEmailConflicts = emailUser && String(emailUser._id) !== String(user?._id) ? true : false
     if (user) {
       user.oAuth = !user.oAuth ? [] : user.oAuth
-      const i = user.oAuth.find(i => i.provider === body.provider)
-      user.oAuth[i] = { ...user.oAuth[i], email: body.email }
+      const i = user.oAuth.findIndex(i => i.provider === body.provider)
       user.email = !user.email && !isEmailConflicts ? body.email : user.email
-      await usersService.updateUser({ _id: user._id }, { oauth: user.oAuth, email: user.email })
+      if (i < 0) {
+        user.oAuth.push({
+          email: body.email,
+          provider: body.provider,
+          clientId: body.id
+        })
+      } else {
+        user.oAuth[i] = { ...user.oAuth[i], email: user.email }
+      }
+      await usersService.updateUser({ oAuth: user.oAuth, email: user.email }, { _id: user._id })
       const token: string = getToken({ email: user.email, 'oauthClientId': body.id, id: user._id })
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
@@ -335,13 +356,21 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     }
     if (emailUser) {
       emailUser.oAuth = !emailUser.oAuth ? [] : emailUser.oAuth
-      const i = emailUser.oAuth.find(i => i.provider === body.provider)
-      emailUser.oAuth[i] = { ...emailUser.oAuth[i], email: body.email }
-      await usersService.updateUser({ _id: emailUser._id }, { oauth: emailUser.oAuth })
+      const i = emailUser.oAuth.findIndex(i => i.provider === body.provider)
+      if (i < 0) {
+        emailUser.oAuth.push({
+          email: body.email,
+          provider: body.provider,
+          clientId: body.id
+        })
+      } else {
+        emailUser.oAuth[i] = { ...emailUser.oAuth[i], email: body.email }
+      }
+      await usersService.updateUser({ oAuth: emailUser.oAuth }, { _id: emailUser._id })
       const token: string = getToken({ email: emailUser.email, 'oauthClientId': body.id, id: emailUser._id })
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
-        data: { _id: emailUser._id, email: emailUser.email, token, type: emailUser.type, userName: user?.email?.split('@')[0] || '' }
+        data: { _id: emailUser._id, email: emailUser.email, token, type: emailUser.type, userName: emailUser?.email?.split('@')[0] || '' }
       })
     }
     if (body.photoUrl) {

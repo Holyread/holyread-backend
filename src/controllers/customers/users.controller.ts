@@ -288,11 +288,11 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             if (req.body.kindleEmail) {
                   const title = userObj.kindleEmail ? 'Update Kindle Email' : 'Add Kindle Email'
                   const description = userObj.kindleEmail ? 'Kindle email updated' : 'Kindle email Added'
-                  /**
-                   * Disable kindle notification
-                   * await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title, description }})
-                   * fetchNotifications(io.sockets, { _id: userObj._id })
-                   */
+                  
+                  //   Disable kindle notification
+                    await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title, description }})
+                    fetchNotifications(io.sockets, { _id: userObj._id })
+                   
 
                   /** Push notification */
                   if (userObj.pushTokens.length && userObj?.notification?.push) {

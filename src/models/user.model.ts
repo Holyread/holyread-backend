@@ -49,7 +49,9 @@ export interface IUser extends mongoose.Document {
     smallGroups?: [string],
     oAuth?: [{
         clientId: string,
-        provider: string
+        provider: string,
+        email: String,
+        default: Boolean
     }],
     referralUserId?: string,
     kindleEmail?: string,
@@ -109,7 +111,9 @@ export type createUserType = {
     smallGroups?: [string],
     oAuth?: [{
         clientId: string,
-        provider: string
+        provider: string,
+        email: String,
+        default: Boolean
     }],
     referralUserId?: string,
     kindleEmail?: string,
@@ -169,7 +173,9 @@ export type getUserType = {
     smallGroups?: [string],
     oAuth?: [{
         clientId: string,
-        provider: string
+        provider: string,
+        email: String,
+        default: Boolean
     }],
     referralUserId?: string,
     kindleEmail?: string,
@@ -231,7 +237,8 @@ export const UserSchema = new Schema({
     oAuth: [{
         clientId: String,
         provider: String,
-        email: String
+        email: String,
+        default: Boolean
     }],
     referralUserId: { type: Schema.Types.ObjectId, ref: 'user' },
     kindleEmail: { type: String },

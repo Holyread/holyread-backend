@@ -16,6 +16,7 @@ import { awsBucket, dataLimit, emailTemplatesTitles, originEmails, origins } fro
 import config from '../../../config'
 import ratingService from '../../services/customers/book/rating.service';
 import highLightsService from '../../services/customers/highLights/highLights.service';
+import userService from '../../services/customers/users/user.service';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -264,6 +265,10 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   }
             }
             if (req.body.id && req.body.provider) {
+                  const userConflicts = await userService.getOneUserByFilter({ 'oAuth.clientId': req.body.id, _id: { '$ne': userObj._id } })
+                  if (userConflicts) {
+                        return next(Boom.badData(authControllerResponse.socialLinkError))
+                  }
                   const oAuth = userObj.oAuth || []
                   const index = oAuth.findIndex(i => i.provider === req.body.provider)
                   if (index < 0) oAuth.push({ provider: req.body.provider, clientId: req.body.id, email: req.body.oAuthEmail || '' })
@@ -283,11 +288,11 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             if (req.body.kindleEmail) {
                   const title = userObj.kindleEmail ? 'Update Kindle Email' : 'Add Kindle Email'
                   const description = userObj.kindleEmail ? 'Kindle email updated' : 'Kindle email Added'
-                  /**
-                   * Disable kindle notification
-                   * await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title, description }})
-                   * fetchNotifications(io.sockets, { _id: userObj._id })
-                   */
+                  
+                  //   Disable kindle notification
+                    await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title, description }})
+                    fetchNotifications(io.sockets, { _id: userObj._id })
+                   
 
                   /** Push notification */
                   if (userObj.pushTokens.length && userObj?.notification?.push) {

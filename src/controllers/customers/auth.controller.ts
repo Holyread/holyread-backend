@@ -210,9 +210,13 @@ const appOAuthSignIn = async (req: Request, res: any, next: NextFunction) => {
     }
     const query: any = { 'oAuth.clientId': body.id, 'oAuth.provider': body.provider }
     const user: any = await usersService.getOneUserByFilter(query)
-    /** unauthorised if user missing or type is admin */
+    /** unauthorised if user missing */
     if (!user || (user && user?.type === 'Admin')) {
       return next(Boom.notFound(authControllerResponse.userNotAuthorizationError))
+    }
+    /** unauthorised if user type is admin */
+    if (!user) {
+      return next(Boom.notFound(authControllerResponse.missingSocialAccountError))
     }
     const token: string = getToken({ email: user.email, 'oauthClientId': body.id, id: user._id })
     return res.status(200).json({

@@ -16,6 +16,7 @@ import { awsBucket, dataLimit, emailTemplatesTitles, originEmails, origins } fro
 import config from '../../../config'
 import ratingService from '../../services/customers/book/rating.service';
 import highLightsService from '../../services/customers/highLights/highLights.service';
+import userService from '../../services/customers/users/user.service';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -264,6 +265,10 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   }
             }
             if (req.body.id && req.body.provider) {
+                  const userConflicts = await userService.getOneUserByFilter({ 'oAuth.clientId': req.body.id, _id: { '$ne': userObj._id } })
+                  if (userConflicts) {
+                        return next(Boom.badData(authControllerResponse.socialLinkError))
+                  }
                   const oAuth = userObj.oAuth || []
                   const index = oAuth.findIndex(i => i.provider === req.body.provider)
                   if (index < 0) oAuth.push({ provider: req.body.provider, clientId: req.body.id, email: req.body.oAuthEmail || '' })

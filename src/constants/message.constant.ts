@@ -15,6 +15,7 @@ export const responseMessage = {
         getUserError: 'User does not exist',
         getReferralUserError: 'Referral User does not exist',
         userNotAuthorizationError: 'Incorrect credentials or Wrong password',
+        missingSocialAccountError: 'Social account not linked. Add social account in app settings',
         missingEmailOrPasswordError: 'Email or password is missing',
         missingEmailError: 'Email is required',
         emailAlreadyUsedError: 'Email already used',

@@ -291,7 +291,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       email: body.email
     }
     if (body.subscriptions && body.inAppToken) {
-      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscriptios })
+      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscriptions })
       if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
         return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
       }

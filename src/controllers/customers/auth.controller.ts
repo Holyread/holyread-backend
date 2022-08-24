@@ -30,10 +30,10 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     const params: { email: string, password: string } = req.body
     const user = await usersService.getOneUserByFilter({ email: params.email, password: encrypt(params.password) })
     if (!user || user.type === 'Admin') {
-      return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
+      return next(Boom.unauthorized(authControllerResponse.userNotAuthorizationError))
     }
     if (user && user.status !== 'Active') {
-      return next(Boom.badData(authControllerResponse.userNotActivatedError))
+      return next(Boom.notAcceptable(authControllerResponse.userNotActivatedError))
     }
     const token: string = getToken({ email: user.email, id: user._id })
     res.status(200).json({
@@ -55,7 +55,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       return res.status(200).send({ message: authControllerResponse.verifyEmailSuccess })
     }
     if (user && user.verified) {
-      return next(Boom.badData(authControllerResponse.userAlreadyExistError))
+      return next(Boom.conflict(authControllerResponse.userAlreadyExistError))
     }
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const token: string = getToken({ code: String(verificationCode), email: body.email })
@@ -112,11 +112,11 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     /** Get user from db */
     const user: any = await usersService.getOneUserByFilter({ verificationCode: code, email })
     if (!user) {
-      return next(Boom.badData(authControllerResponse.getUserError))
+      return next(Boom.notFound(authControllerResponse.getUserError))
     }
     const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
     if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-      return next(Boom.badData(subscriptionsControllerResponse.getSubscriptionFailure))
+      return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
     }
     const customer = await stripeSubscriptionService.createCustomer(email)
     const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
@@ -155,7 +155,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     /** Get user from db */
     const user: any = await usersService.getOneUserByFilter({ email, type: 'User' })
     if (!user) {
-      return next(Boom.badData(authControllerResponse.getUserError))
+      return next(Boom.notFound(authControllerResponse.getUserError))
     }
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.forgotPassword })
@@ -187,7 +187,7 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
   try {
     const { newPassword, code }: any = req.body
     if (!newPassword) {
-      return next(Boom.notFound(adminControllerResponse.passwordMissingError))
+      return next(Boom.badData(adminControllerResponse.passwordMissingError))
     }
     /** Get user from db */
     const userObj: any = await usersService.getOneUserByFilter({ verificationCode: code, type: 'User' })
@@ -210,11 +210,11 @@ const appOAuthSignIn = async (req: Request, res: any, next: NextFunction) => {
     }
     const query: any = { 'oAuth.clientId': body.id, 'oAuth.provider': body.provider }
     const user: any = await usersService.getOneUserByFilter(query)
-    /** unauthorised if user missing */
-    if (!user || (user && user?.type === 'Admin')) {
-      return next(Boom.notFound(authControllerResponse.userNotAuthorizationError))
-    }
     /** unauthorised if user type is admin */
+    if (user?.type === 'Admin') {
+      return next(Boom.unauthorized(authControllerResponse.userNotAuthorizationError))
+    }
+    /** unauthorised if user missing */
     if (!user) {
       return next(Boom.notFound(authControllerResponse.missingSocialAccountError))
     }
@@ -242,22 +242,25 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
 
     const query: any = { 'oAuth.clientId': body.id, 'oAuth.provider': body.provider }
     const user: any = await usersService.getOneUserByFilter(query)
-    if (user || user?.type === 'Admin') {
+    /** User shoulde not create if oauth client exist */
+    if (user) {
       return next(Boom.conflict(authControllerResponse.userAlreadyExistError))
     }
     const emailUser: any = await usersService.getOneUserByFilter({ email: body.email })
+
+    /** if emailuser exist then link oauth */
     if (emailUser) {
       emailUser.oAuth = !emailUser.oAuth ? [] : emailUser.oAuth
-      const i = emailUser.oAuth.findIndex(i => i.provider === body.provider)
-      if (i < 0) {
+      const index = emailUser.oAuth.findIndex(i => i.provider === body.provider);
+      (index < 0) ?
         emailUser.oAuth.push({
           email: body.email,
           provider: body.provider,
-          clientId: body.id
+          clientId: body.id,
+          default: emailUser?.oAuth?.length ? false : true
         })
-      } else {
-        emailUser.oAuth[i] = { ...emailUser.oAuth[i], email: body.email }
-      }
+        :
+        emailUser.oAuth[index] = { ...emailUser.oAuth[index], email: body.email }
       await usersService.updateUser({ oAuth: emailUser.oAuth }, { _id: emailUser._id })
       const token: string = getToken({ email: emailUser.email, 'oauthClientId': body.id, id: emailUser._id })
       return res.status(200).json({
@@ -287,16 +290,15 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       device: body?.device?.toLowerCase() || '',
       email: body.email
     }
-
     if (body.subscriptions && body.inAppToken) {
       const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscriptios })
       if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-        return next(Boom.badData(subscriptionsControllerResponse.getSubscriptionFailure))
+        return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
       }
       newBody.subscriptions = subscriptionDetails._id
       newBody.inAppToken = body.inAppToken
     }
-
+    /** Create new user using social login */
     const data: any = await usersService.createUser(newBody)
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
     const title = 'Welcome to Holyreads';
@@ -314,7 +316,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       /** sent wellcome notification in app */
       pushNotification(tokens, title, description)
       if (data?.notification?.subscriptions)
-        pushNotification(tokens, 'Trial subscription', '5 day trial subscription has been activated!')
+        pushNotification(tokens, 'Holyreads Trial Subscription', '5 days trial subscription has been activated!')
     }
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -334,23 +336,15 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     const query: any = { 'oAuth.clientId': body.id, 'oAuth.provider': body.provider }
     const user: any = await usersService.getOneUserByFilter(query)
     if (user?.type === 'Admin') {
-      return next(Boom.notFound(authControllerResponse.userNotAuthorizationError))
+      return next(Boom.unauthorized(authControllerResponse.userNotAuthorizationError))
     }
     const emailUser: any = await usersService.getOneUserByFilter({ email: body.email })
     const isEmailConflicts = emailUser && String(emailUser._id) !== String(user?._id) ? true : false
     if (user) {
-      user.oAuth = !user.oAuth ? [] : user.oAuth
-      const i = user.oAuth.findIndex(i => i.provider === body.provider)
       user.email = !user.email && !isEmailConflicts ? body.email : user.email
-      if (i < 0) {
-        user.oAuth.push({
-          email: body.email,
-          provider: body.provider,
-          clientId: body.id
-        })
-      } else {
-        user.oAuth[i] = { ...user.oAuth[i], email: user.email }
-      }
+      const index = emailUser.oAuth.findIndex(i => i.provider === body.provider)
+      /** set email if email does not exist */
+      user.oAuth[index] = { ...user.oAuth[index], email: user.email }
       await usersService.updateUser({ oAuth: user.oAuth, email: user.email }, { _id: user._id })
       const token: string = getToken({ email: user.email, 'oauthClientId': body.id, id: user._id })
       return res.status(200).json({
@@ -358,18 +352,17 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
         data: { _id: user._id, email: user.email, token, type: user.type, userName: user?.email?.split('@')[0] || '' }
       })
     }
+    /** if emailuser exist then link oauth */
     if (emailUser) {
-      emailUser.oAuth = !emailUser.oAuth ? [] : emailUser.oAuth
-      const i = emailUser.oAuth.findIndex(i => i.provider === body.provider)
-      if (i < 0) {
-        emailUser.oAuth.push({
+      emailUser.oAuth = emailUser?.oAuth?.length ? emailUser.oAuth : []
+      const index = emailUser.oAuth.findIndex(i => i.provider === body.provider);
+      (index < 0) ? emailUser.oAuth.push({
           email: body.email,
           provider: body.provider,
-          clientId: body.id
+          clientId: body.id,
+          default: emailUser?.oAuth?.length ? false : true
         })
-      } else {
-        emailUser.oAuth[i] = { ...emailUser.oAuth[i], email: body.email }
-      }
+        : emailUser.oAuth[index] = { ...emailUser.oAuth[index], email: body.email }
       await usersService.updateUser({ oAuth: emailUser.oAuth }, { _id: emailUser._id })
       const token: string = getToken({ email: emailUser.email, 'oauthClientId': body.id, id: emailUser._id })
       return res.status(200).json({
@@ -400,9 +393,10 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     }
     const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
     if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-      return next(Boom.badData(subscriptionsControllerResponse.getSubscriptionFailure))
+      return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
     }
     const customer = await stripeSubscriptionService.createCustomer(body.email as any)
+    /** Create trial subscription */
     const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
     newBody['stripe.planId'] = subscriptionDetails.stripePlanId
     newBody['stripe.subscriptionId'] = subscription.id
@@ -425,7 +419,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       const tokens = data.pushTokens.map(i => i.token)
       pushNotification(tokens, title, description)
       if (data?.notification?.subscriptions)
-        pushNotification(tokens, 'Subscription Created', 'Subscription created successfully')
+        pushNotification(tokens, 'Holyreads Trial Subscription', '5 days trial subscription has been activated!')
     }
 
   } catch (e: any) {

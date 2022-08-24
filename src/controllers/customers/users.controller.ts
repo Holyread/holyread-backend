@@ -67,7 +67,7 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             const { password, newPassword }: { password: string, newPassword: string } = req.body;
             const userObj = Object.assign({}, req.user)
             if (userObj?.password !== encrypt(password)) {
-                  return next(Boom.notFound(authControllerResponse.userInvalidPasswordError))
+                  return next(Boom.badData(authControllerResponse.userInvalidPasswordError))
             }
             await usersService.updateUser({ password: newPassword }, { _id: userObj._id })
             const notificationTitle = 'Change Password'
@@ -110,7 +110,7 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
             const userObj = Object.assign({}, req.user)
             const emailUser = await usersService.getOneUserByFilter({ email, _id: { '$ne': userObj._id } })
             if (emailUser) {
-                  return next(Boom.notFound(authControllerResponse.emailAlreadyUsedError))
+                  return next(Boom.conflict(authControllerResponse.emailAlreadyUsedError))
             }
             if (userObj.email && userObj.password && userObj.email === email) {
                   return res.status(200).send({ message: authControllerResponse.emailAuthExist })
@@ -136,7 +136,7 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
 
             const result = await sentEmail(email, sub, html);
             if (!result) {
-                  return next(Boom.notFound(authControllerResponse.sentVerifyEmailFailure))
+                  return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
             }
             await usersService.updateUser({ verificationCode }, { _id: userObj._id })
             res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
@@ -157,7 +157,7 @@ const verifyEmailAuth = async (req: Request, res: Response, next: NextFunction) 
             /** Get user from db */
             const user: any = await usersService.getOneUserByFilter({ verificationCode: code, _id })
             if (!user) {
-                  return next(Boom.badData(authControllerResponse.getUserError))
+                  return next(Boom.notFound(authControllerResponse.getUserError))
             }
 
             await usersService.updateUser({
@@ -265,9 +265,9 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   }
             }
             if (req.body.id && req.body.provider) {
-                  const userConflicts = await userService.getOneUserByFilter({ 'oAuth.clientId': req.body.id, _id: { '$ne': userObj._id } })
+                  const userConflicts = await userService.getOneUserByFilter({ 'oAuth.clientId': req.body.id, _id: { '$ne': String(userObj._id) } })
                   if (userConflicts) {
-                        return next(Boom.badData(authControllerResponse.socialLinkError))
+                        return next(Boom.conflict(authControllerResponse.socialLinkError))
                   }
                   const oAuth = userObj.oAuth || []
                   const index = oAuth.findIndex(i => i.provider === req.body.provider)
@@ -280,7 +280,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             if (req.body.provider && req.body.action === 'unlink') {
                   const oAuth = userObj.oAuth || []
                   if (oAuth.length === 1 && oAuth.find(i => i.provider === req.body.provider) && (!userObj.password || !userObj.email)) {
-                        return next(Boom.badData(authControllerResponse.missingEmailAuthError))
+                        return next(Boom.notFound(authControllerResponse.missingEmailAuthError))
                   }
                   body.oAuth = oAuth.filter(i => i.provider !== req.body.provider)
             }
@@ -553,16 +553,16 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             delete body.friendEmail
             const refUser: any = await usersService.getOneUserByFilter({ email: req.user.email })
             if (!refUser) {
-                  return next(Boom.badData(authControllerResponse.getReferralUserError))
+                  return next(Boom.notFound(authControllerResponse.getReferralUserError))
             }
             /** Get user from db */
             const inviteUser: any = await usersService.getOneUserByFilter({ email: body.email })
             if (inviteUser) {
-                  return next(Boom.badData(authControllerResponse.userAlreadyExistError))
+                  return next(Boom.conflict(authControllerResponse.userAlreadyExistError))
             }
             const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscriptions })
             if (!subscriptionDetails) {
-                  return next(Boom.badData(authControllerResponse.blessFriendSubscriptionError))
+                  return next(Boom.notFound(authControllerResponse.blessFriendSubscriptionError))
             }
             const customer = await stripeSubscriptionService.createCustomer(body.email, req.body.token)
             const sbscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id, req.body.paymentMethod)
@@ -584,7 +584,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                   device: body.device || 'web'
             })
             if (!invitedUserDetails || !invitedUserDetails._id) {
-                  return next(Boom.badData(authControllerResponse.createUserFailed))
+                  return next(Boom.notFound(authControllerResponse.createUserFailed))
             }
             const sendEmailTemplate = await emailTemplateService.getAllEmailTemplates(0, 0, { title: { $in: [emailTemplatesTitles.customer.sendInvitation, emailTemplatesTitles.customer.blessFriend] } }, [])
             const blessFriendTemplate = sendEmailTemplate.count && sendEmailTemplate.emailTemplates.find(oneTemplate => oneTemplate.title === emailTemplatesTitles.customer.blessFriend)
@@ -633,7 +633,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             }
             const result = await sentEmail(body.email, sub, html);
             if (!result) {
-                  return next(Boom.notFound(authControllerResponse.sentSubscriptionEmailFilure))
+                  return next(Boom.badData(authControllerResponse.sentSubscriptionEmailFilure))
             }
             const notificationTitle = 'Subscription Gift'
             const notificationDescription = 'Subscription Gift Added Successfully'
@@ -704,7 +704,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
 
             const result = await sentEmail(userObj.email, sub, html);
             if (!result) {
-                  return next(Boom.notFound(authControllerResponse.sentSubscriptionEmailFilure))
+                  return next(Boom.badData(authControllerResponse.sentSubscriptionEmailFilure))
             }
             res.status(200).send({
                   message: subscriptionsControllerResponse.createSubscriptionSuccess,

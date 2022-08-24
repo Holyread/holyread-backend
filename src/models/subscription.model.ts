@@ -20,6 +20,7 @@ export type createSubscriptionType = {
     description: string,
     stripePlanId?: string,
     status?: 'Active' | 'Deactive',
+    saves?: number
 }
 
 export type getSubscriptionType = {
@@ -31,11 +32,13 @@ export type getSubscriptionType = {
     description?: string,
     stripePlanId?: string,
     status?: 'Active' | 'Deactive',
+    saves?: number
 }
 
 export const SubscriptionsSchema = new Schema({
     title: { type: String, required: true, index: true },
     price: { type: String, required: true, index: true },
+    saves: { type: String, required: true, index: true, default: 0 },
     duration: { type: String, required: true },
     intervalCount: { type: Number, default: 1 },
     status: { type: String, default: 'Active' },

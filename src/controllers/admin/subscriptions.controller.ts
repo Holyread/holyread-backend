@@ -72,6 +72,7 @@ const getAllSubscriptions = async (request: Request, response: Response, next: N
                 $or: [
                     { title: await getSearchRegexp(params.search) },
                     { price: params.search },
+                    { saves: params.search },
                     { status: await getSearchRegexp(params.search) },
                     { duration: params.search },
                 ]

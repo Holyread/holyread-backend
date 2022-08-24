@@ -20,7 +20,7 @@ const addSubscription = async (req: Request, res: Response, next: NextFunction) 
         }
         let intervalCount = 1
         let duration = body.duration
-        if (body.duration === '6 Months') {
+        if (body.duration === 'Half Year') {
             intervalCount = 6
             duration = 'Month'
             body.intervalCount = 6

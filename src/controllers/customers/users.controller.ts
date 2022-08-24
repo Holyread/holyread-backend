@@ -37,6 +37,7 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             if (userObj.image) {
                   userObj.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + userObj.image
             }
+            userObj.isEmailLinked = !!userObj.password
             delete userObj.password
             delete userObj.library
             delete userObj.smallGroups

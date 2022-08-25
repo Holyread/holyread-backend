@@ -44,7 +44,6 @@
   },
   "dependencies": {
     "@hapi/boom": "^9.1.2",
-    "@mailchimp/mailchimp_marketing": "^3.0.72",
     "@types/boom": "^7.3.0",
     "analytics-node": "^4.0.1",
     "async": "^3.2.0",

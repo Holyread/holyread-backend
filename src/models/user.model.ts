@@ -55,7 +55,7 @@ export interface IUser extends mongoose.Document {
     }],
     referralUserId?: string,
     kindleEmail?: string,
-    inAppToken?: String,
+    inAppSubscription?: Object,
     stripe: {
         subscriptionId?: string,
         customerId?: string,
@@ -117,7 +117,7 @@ export type createUserType = {
     }],
     referralUserId?: string,
     kindleEmail?: string,
-    inAppToken?: String,
+    inAppSubscription?: Object,
     stripe: {
         subscriptionId?: string,
         customerId?: string,
@@ -179,7 +179,7 @@ export type getUserType = {
     }],
     referralUserId?: string,
     kindleEmail?: string,
-    inAppToken?: String,
+    inAppSubscription?: Object,
     stripe: {
         subscriptionId?: string,
         customerId?: string,
@@ -247,7 +247,7 @@ export const UserSchema = new Schema({
         customerId: { type: String },
         planId: { type: String },
     },
-    inAppToken: { type: String }, // subscription token created from the app
+    inAppSubscription: { type: Object },
     device: { type: String, required: true },
     createdAt: {
         type: Date, default: () => {

@@ -23,7 +23,7 @@ router.use('/expert-curated', expertCurated)
 router.use('/cms', cms)
 router.use('/faq', faq)
 router.use('/share-image', customerPassport, shareImage)
-router.use('/subscriptions', customerPassport, subscriptions)
+router.use('/subscriptions', subscriptions)
 router.use('/notifications', customerPassport, notifications)
 
 export default router

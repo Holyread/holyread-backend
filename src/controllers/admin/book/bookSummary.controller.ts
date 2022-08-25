@@ -5,7 +5,7 @@ import bookCategoryService from '../../../services/admin/book/bookCategory.servi
 import bookSummaryService from '../../../services/admin/book/bookSummary.service'
 import recommendedBookService from '../../../services/admin/book/recommendedBook.service'
 import { responseMessage } from '../../../constants/message.constant'
-import { removeS3File, uploadFileToS3, getSearchRegexp } from '../../../lib/utils/utils'
+import { removeS3File, uploadFileToS3, getSearchRegexp, randomNumberInRange } from '../../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../../constants/app.constant'
 import config from '../../../../config'
 import userService from '../../../services/admin/users/user.service';
@@ -65,7 +65,7 @@ const addSummary = async (req: Request, res: Response, next: NextFunction) => {
         })
         const user = await userService.getOneUserByFilter({ email: 'bot@holyreads.com' })
         if (user) {
-            await ratingService.updateRating({ bookId: data._id, star: 6, description: '', userId: user._id })
+            await ratingService.updateRating({ bookId: data._id, star: Number(`${randomNumberInRange(3,5)}.${randomNumberInRange(1,5)}`), description: '', userId: user._id })
         }
     } catch (e: any) {
         next(Boom.badData(e.message))

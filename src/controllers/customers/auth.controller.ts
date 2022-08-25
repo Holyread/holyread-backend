@@ -290,13 +290,13 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       device: body?.device?.toLowerCase() || '',
       email: body.email
     }
-    if (body.subscriptions && body.inAppToken) {
+    if (body.subscriptions && body.inAppSubscription) {
       const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscriptions })
       if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
         return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
       }
       newBody.subscriptions = subscriptionDetails._id
-      newBody.inAppToken = body.inAppToken
+      newBody.inAppSubscription = body.inAppSubscription
     }
     /** Create new user using social login */
     const data: any = await usersService.createUser(newBody)

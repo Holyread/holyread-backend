@@ -42,7 +42,7 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             delete userObj.smallGroups
             delete userObj.verificationCode
             delete userObj.stripe
-            delete userObj.inAppToken
+            delete userObj.inAppSubscription
             const notifications = await notificationsService.getUserNotifications({ userId: userObj._id })
             userObj.notifications = notifications
             res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
@@ -657,10 +657,10 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             }
             let body = {};
             let subscription;
-            if (req.body.inAppToken) {
+            if (req.body.inAppSubscription) {
                   body = {
                         subscriptions: req.body.subscription,
-                        inAppToken: req.body.inAppToken
+                        inAppSubscription: req.body.inAppSubscription
                   }
             } else {
                   if (!userObj.stripe || !userObj.stripe.customerId) {
@@ -669,8 +669,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         userObj.stripe.customerId = customer.id
                         await usersService.updateUser({ 'stripe.customerId': customer.id }, { _id: userObj._id })
                   }
-                  subscription = !req.body.inAppToken && await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod)
-                  /** app subscription includes the inAppToken */
+                  subscription = !req.body.inAppSubscription && await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod)
+                  /** app subscription includes the inAppSubscription */
                   body = {
                         'stripe.planId': subscriptionDetails.stripePlanId,
                         'stripe.subscriptionId': subscription.id,
@@ -697,8 +697,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         html = htmlData
                   }
             }
-            const notificationTitle = req.body.inAppToken && !userObj.inAppToken ? 'Subscription Created' : 'Subscription Updated'
-            const notificationDescription = req.body.inAppToken && !userObj.inAppToken ? 'Subscription created successfully' : 'Subscription updated successfully'
+            const notificationTitle = req.body.inAppSubscription && !userObj.inAppSubscription ? 'Subscription Created' : 'Subscription Updated'
+            const notificationDescription = req.body.inAppSubscription && !userObj.inAppSubscription ? 'Subscription created successfully' : 'Subscription updated successfully'
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
             fetchNotifications(io.sockets, { _id: userObj._id })
 
@@ -708,7 +708,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             }
             res.status(200).send({
                   message: subscriptionsControllerResponse.createSubscriptionSuccess,
-                  data: !req.body.inAppToken ? {
+                  data: !req.body.inAppSubscription ? {
                         subscriptionStatus: subscription.status,
                         customerEmail: userObj.email
                   } : { subscriptions: subscriptionDetails._id }

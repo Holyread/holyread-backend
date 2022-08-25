@@ -142,8 +142,8 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
         planId: subscriptionDetails.stripePlanId,
         subscriptionId: subscription.id,
         customerId: customer.id,
-        subscriptions: subscriptionDetails._id,
       }
+      body.subscriptions = subscriptionDetails._id
     }
 
     await usersService.updateUser(body, { _id: user._id })

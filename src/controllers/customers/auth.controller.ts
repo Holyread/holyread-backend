@@ -57,6 +57,12 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     if (user && user.verified) {
       return next(Boom.conflict(authControllerResponse.userAlreadyExistError))
     }
+    if (body.subscriptions && body.inAppSubscription) {
+      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscriptions })
+      if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
+        return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
+      }
+    }
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const token: string = getToken({ code: String(verificationCode), email: body.email })
     const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
@@ -71,7 +77,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
         html = htmlData
       }
     }
-    /** Disable sent email temporary */
+    /** sent email for account verification */
     const result = await sentEmail(body.email, subject, html);
     if (!result) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
@@ -86,7 +92,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       const s3File: any = await uploadFileToS3(body.image, `user-${verificationCode}`, s3Bucket)
       body.image = s3File.name
     }
-    await usersService.createUser({
+    const data: any = {
       image: body.image ? body.image : '',
       email: body.email,
       password: body.password,
@@ -95,7 +101,13 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       status: 'Deactive',
       verified: false,
       verificationCode
-    })
+    }
+    /** Store In app subscription */
+    if (body.inAppSubscription && body.subscriptions) {
+      data.inAppSubscription = body.inAppSubscription
+      data.subscriptions = body.subscriptions
+    }
+    await usersService.createUser(data)
     res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -114,22 +126,27 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     if (!user) {
       return next(Boom.notFound(authControllerResponse.getUserError))
     }
-    const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
-    if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-      return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
-    }
-    const customer = await stripeSubscriptionService.createCustomer(email)
-    const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
-
-    await usersService.updateUser({
+    let body: any = {
       verified: true,
       status: 'Active',
-      $unset: { verificationCode: 1 },
-      'stripe.planId': subscriptionDetails.stripePlanId,
-      'stripe.subscriptionId': subscription.id,
-      'stripe.customerId': customer.id,
-      subscriptions: subscriptionDetails._id,
-    }, { _id: user._id })
+      $unset: { verificationCode: 1 }
+    }
+    if (!user.inAppSubscription && !user.subscriptions) {
+      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
+      if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
+        return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
+      }
+      const customer = await stripeSubscriptionService.createCustomer(email)
+      const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
+      body.stripe = {
+        planId: subscriptionDetails.stripePlanId,
+        subscriptionId: subscription.id,
+        customerId: customer.id,
+        subscriptions: subscriptionDetails._id,
+      }
+    }
+
+    await usersService.updateUser(body, { _id: user._id })
 
     const title = 'Welcome to Holyreads';
     const description = 'Enjoy best summaries audio and video';
@@ -140,8 +157,8 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
       const tokens = user.pushTokens.map(i => i.token)
       pushNotification(tokens, title, description)
-      if (user?.notification?.subscriptions)
-        pushNotification(tokens, 'Subscription Created', 'Subscription created successfully')
+      if (user?.notification?.subscriptions && !user.inAppSubscription && !user.subscriptions)
+        pushNotification(tokens, 'Holyreads Trial Subscription', 'Holyreads Subscription has been activated with 5 days trial period')
     }
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -316,7 +333,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       /** sent wellcome notification in app */
       pushNotification(tokens, title, description)
       if (data?.notification?.subscriptions)
-        pushNotification(tokens, 'Holyreads Trial Subscription', '5 days trial subscription has been activated!')
+        pushNotification(tokens, 'Holyreads Subscription', 'Holyreads subscription has been activated!')
     }
   } catch (e: any) {
     next(Boom.badData(e.message))

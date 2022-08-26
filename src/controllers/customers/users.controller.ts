@@ -43,7 +43,6 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             delete userObj.smallGroups
             delete userObj.verificationCode
             delete userObj.stripe
-            delete userObj.inAppSubscription
             const notifications = await notificationsService.getUserNotifications({ userId: userObj._id })
             userObj.notifications = notifications
             res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })

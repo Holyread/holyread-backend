@@ -51,6 +51,8 @@ export const emailTemplatesTitles = {
         sendInvitation: 'Send Invitation',
         blessFriend: 'Customer Registration Bless Friend',
         chooseSubscription: 'Choose Subscription',
+        subscriptionCancelled: 'Subscription Cancelled',
+        subscriptionActivated: 'Subscription Activated',
         changePassword: 'Change Password',
         emailAuthVerification: 'Customer Email Auth Verification',
         emailAuthEnabled: 'Customer Email Auth Enabled'

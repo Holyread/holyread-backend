@@ -284,23 +284,51 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   }
                   body.oAuth = oAuth.filter(i => i.provider !== req.body.provider)
             }
+            const isAppSubscriptionStatus = ['Cancelled', 'Active'].includes(req.body.inAppSubscription?.status) && !!userObj?.inAppSubscriptionStatus && !!req.body.inAppSubscription?.status !== userObj?.inAppSubscriptionStatus
+            /** update in App subscription status */
+            if (isAppSubscriptionStatus) {
+                  body.inAppSubscriptionStatus = req.body.inAppSubscription?.status
+            }
             await usersService.updateUser(body, { _id: userObj._id })
-            if (req.body.kindleEmail) {
-                  const title = userObj.kindleEmail ? 'Update Kindle Email' : 'Add Kindle Email'
-                  const description = userObj.kindleEmail ? 'Kindle email updated' : 'Kindle email Added'
-                  
-                  //   Disable kindle notification
-                    await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title, description }})
-                    fetchNotifications(io.sockets, { _id: userObj._id })
-                   
+            /** sent email for subscription status updated */
+            const notificationTitle = 'Holyreads Subscription'
+            const notificationDescription = emailTemplatesTitles.customer.subscriptionActivated ? 'Subscription activated' : 'Subscription cancelled'
+            if (isAppSubscriptionStatus) {
+                  const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: req.body.inAppSubscription.status === 'Active' ? emailTemplatesTitles.customer.subscriptionActivated : emailTemplatesTitles.customer.subscriptionCancelled })
+                  const sub = emailTemplateDetails.subject || `Holyreads Subscription ${req.body.inAppSubscription.status}`
+                  let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have ${req.body.inAppSubscription.status} the subscription.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
-                  /** Push notification */
-                  if (userObj.pushTokens.length && userObj?.notification?.push) {
-                        const tokens = userObj.pushTokens.map(i => i.token)
-                        pushNotification(tokens, title, description)
+                  if (emailTemplateDetails && emailTemplateDetails.content) {
+                        const contentData = {
+                              username: userObj.email.split('@')[0]
+                        }
+                        const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                        if (htmlData) {
+                              html = htmlData
+                        }
+                  }
+
+                  await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
+                  fetchNotifications(io.sockets, { _id: userObj._id })
+
+                  const result = await sentEmail(userObj.email, sub, html);
+                  if (!result) {
+                        return next(Boom.badData(authControllerResponse.sentSubscriptionEmailFilure))
                   }
             }
-            return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
+            res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
+            const kindleTitle = userObj.kindleEmail ? 'Update Kindle Email' : 'Add Kindle Email'
+            const kindleDescription = userObj.kindleEmail ? 'Kindle email updated' : 'Kindle email Added'
+            if (req.body.kindleEmail) {
+                  await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: kindleTitle, description: kindleDescription } })
+                  fetchNotifications(io.sockets, { _id: userObj._id })
+            }
+            /** Push notification */
+            if (userObj.pushTokens.length && userObj?.notification?.push) {
+                  const tokens = userObj.pushTokens.map(i => i.token)
+                  req.body.kindleEmail && pushNotification(tokens, kindleTitle, kindleDescription)
+                  isAppSubscriptionStatus && userObj?.notification?.subscriptions && pushNotification(tokens, notificationTitle, notificationDescription)
+            }
       } catch (e: any) {
             return next(Boom.badData(e.message))
       }
@@ -660,7 +688,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             if (req.body.inAppSubscription) {
                   body = {
                         subscriptions: req.body.subscription,
-                        inAppSubscription: req.body.inAppSubscription
+                        inAppSubscription: req.body.inAppSubscription,
+                        inAppSubscriptionStatus: 'Active'
                   }
             } else {
                   if (!userObj.stripe || !userObj.stripe.customerId) {
@@ -669,8 +698,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         userObj.stripe.customerId = customer.id
                         await usersService.updateUser({ 'stripe.customerId': customer.id }, { _id: userObj._id })
                   }
-                  subscription = !req.body.inAppSubscription && await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod)
-                  /** app subscription includes the inAppSubscription */
+                  subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod)
+                  /** add stripe details into body */
                   body = {
                         'stripe.planId': subscriptionDetails.stripePlanId,
                         'stripe.subscriptionId': subscription.id,
@@ -697,8 +726,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         html = htmlData
                   }
             }
-            const notificationTitle = req.body.inAppSubscription && !userObj.inAppSubscription ? 'Subscription Created' : 'Subscription Updated'
-            const notificationDescription = req.body.inAppSubscription && !userObj.inAppSubscription ? 'Subscription created successfully' : 'Subscription updated successfully'
+            const notificationTitle = 'Holyreads Subscription'
+            const notificationDescription = req.body.inAppSubscription && !userObj.inAppSubscription ? 'Subscription activated successfully' : 'Subscription upgraded successfully'
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
             fetchNotifications(io.sockets, { _id: userObj._id })
 

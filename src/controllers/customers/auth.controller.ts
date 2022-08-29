@@ -105,6 +105,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     /** Store In app subscription */
     if (body.inAppSubscription && body.subscriptions) {
       data.inAppSubscription = body.inAppSubscription
+      data.inAppSubscriptionStatus = 'Active'
       data.subscriptions = body.subscriptions
     }
     await usersService.createUser(data)
@@ -314,6 +315,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       }
       newBody.subscriptions = subscriptionDetails._id
       newBody.inAppSubscription = body.inAppSubscription
+      newBody.inAppSubscriptionStatus = 'Active'
     }
     /** Create new user using social login */
     const data: any = await usersService.createUser(newBody)

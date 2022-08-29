@@ -56,6 +56,7 @@ export interface IUser extends mongoose.Document {
     referralUserId?: string,
     kindleEmail?: string,
     inAppSubscription?: Object,
+    inAppSubscriptionStatus?: 'Cancelled' | 'Active',
     stripe: {
         subscriptionId?: string,
         customerId?: string,
@@ -118,6 +119,7 @@ export type createUserType = {
     referralUserId?: string,
     kindleEmail?: string,
     inAppSubscription?: Object,
+    inAppSubscriptionStatus?: 'Cancelled' | 'Active',
     stripe: {
         subscriptionId?: string,
         customerId?: string,
@@ -180,6 +182,7 @@ export type getUserType = {
     referralUserId?: string,
     kindleEmail?: string,
     inAppSubscription?: Object,
+    inAppSubscriptionStatus?: 'Cancelled' | 'Active',
     stripe: {
         subscriptionId?: string,
         customerId?: string,
@@ -194,8 +197,8 @@ export const UserSchema = new Schema({
     email: { type: String, required: true, index: true, validate: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ },
     password: { type: String },
     subscriptions: { type: String },
-    type: { type: String, required: true },
-    status: { type: String },
+    type: { type: String, required: true, enum: ['User', 'Admin'] },
+    status: { type: String, enum: ['Active', 'Deactive'] },
     verified: { type: Boolean },
     image: { type: String },
     verificationCode: { type: String },
@@ -248,6 +251,7 @@ export const UserSchema = new Schema({
         planId: { type: String },
     },
     inAppSubscription: { type: Object },
+    inAppSubscriptionStatus: { type: String, enum: ['Cancelled', 'Active'] },
     device: { type: String, required: true },
     createdAt: {
         type: Date, default: () => {

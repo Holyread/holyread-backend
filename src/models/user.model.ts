@@ -203,12 +203,12 @@ export const UserSchema = new Schema({
     image: { type: String },
     verificationCode: { type: String },
     notification: {
-        email: { type: Boolean },
-        push: { type: Boolean },
-        inApp: { type: Boolean },
-        downloads: { type: Boolean },
-        promotionsAndSales: { type: Boolean },
-        subscriptions: { type: Boolean }
+        email: { type: Boolean, default: true },
+        push: { type: Boolean, default: true },
+        inApp: { type: Boolean, default: true },
+        downloads: { type: Boolean, default: true },
+        promotionsAndSales: { type: Boolean, default: true },
+        subscriptions: { type: Boolean, default: true }
     },
     metaKeyword: { type: String },
     metaDescription: { type: String },

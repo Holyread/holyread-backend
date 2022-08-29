@@ -10,7 +10,7 @@ const updateRating = async (body: { bookId: string, star: number, description?: 
             if (!bookDetails) {
                   throw new Error(bookSummaryControllerResponse.getBookSummaryFailure)
             }
-            await RatingModel.findOneAndUpdate({ bookId: body.bookId, userId: body.userId }, { ...body, updatedAt: new Date() }, { upsert: true }).lean().exec()
+            await RatingModel.findOneAndUpdate({ bookId: body.bookId, userId: body.userId }, { ...body, updatedAt: new Date() }, { runValidators: true, upsert: true }).lean().exec()
             return true
       } catch (e: any) {
             throw new Error(e)

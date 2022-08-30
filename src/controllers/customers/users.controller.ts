@@ -592,25 +592,35 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             if (!subscriptionDetails) {
                   return next(Boom.notFound(authControllerResponse.blessFriendSubscriptionError))
             }
-            const customer = await stripeSubscriptionService.createCustomer(body.email, req.body.token)
-            const sbscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id, req.body.paymentMethod)
-            const invitedUserDetails = await authService.createUser({
+            const verificationCode = Math.floor(1000 + Math.random() * 9000)
+            const token: string = getToken({ code: String(verificationCode), email: body.email })
+            const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
+            
+            const inviteUserBody: any = {
                   image: '',
                   email: body.email,
                   password: body.password,
                   type: 'User',
-                  status: 'Active',
-                  verified: true,
-                  verificationCode: '',
+                  status: 'Deactive',
+                  verified: false,
+                  verificationCode,
                   subscriptions: subscriptionDetails._id,
                   referralUserId: refUser._id,
-                  stripe: {
+                  device: body.device || 'web'
+            }
+            if (!body.inAppSubscription) {
+                  const customer = await stripeSubscriptionService.createCustomer(body.email, req.body.token)
+                  const sbscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id, req.body.paymentMethod)
+                  inviteUserBody.stripe = {
                         customerId: customer.id,
                         planId: subscriptionDetails.stripePlanId,
                         subscriptionId: sbscription.id,
-                  },
-                  device: body.device || 'web'
-            })
+                  }
+            } else {
+                  inviteUserBody.inAppSubscription = body.inAppSubscription
+                  inviteUserBody.inAppSubscriptionStatus = 'Active'
+            }
+            const invitedUserDetails = await authService.createUser(inviteUserBody)
             if (!invitedUserDetails || !invitedUserDetails._id) {
                   return next(Boom.notFound(authControllerResponse.createUserFailed))
             }
@@ -621,8 +631,8 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             const blessFriendSubject = blessFriendTemplate?.subject || 'Customer Registration Bless Friend'
             const sendInvitationSubject = sendInvitationTemplate?.subject || 'Send Invitation'
 
-            let blessFriendHtml = `<p>Dear {{username}},</p><p>Thank you for registered with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : {{email}}<br>Password: {{password}}</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
-            let sentInvitationHtml = '<p>Dear {{username}}</p><p>You have been registered on Holy Reads.</p><p>Your customer account details are below:</p><p>Email : {{email}}<br>Password: {{password}}</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>'
+            let blessFriendHtml = `<p>Dear ${refUser.email.split('@')[0]},</p><p>Thank you for registered with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${body.email}<br>Password: ${body.password}</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let sentInvitationHtml = `<p>Dear ${body.email.split('@')[0]}</p><p>${refUser.email.split('@')[0]} invited you to connect on Holy Reads</p><p>Your customer account details are below:</p><p>Email : ${body.email}<br>Password: ${body.password}</p><p>Please click <a href=${link}>Here</a> to accept invite.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (blessFriendTemplate && blessFriendTemplate.content) {
                   const contentData = { email: body.email, password: body.password, username: refUser.email.substr(0, refUser.email.indexOf('@')) }
@@ -632,7 +642,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                   }
             }
             if (sendInvitationTemplate && sendInvitationTemplate.content) {
-                  const contentData = { email: body.email, password: body.password, username: body.email.substr(0, body.email.indexOf('@')) }
+                  const contentData = { sendername: refUser.email.split('@')[0], link, email: body.email, password: body.password  }
                   const htmlData = await compileHtml(sendInvitationTemplate.content, contentData)
                   if (htmlData) {
                         sentInvitationHtml = htmlData

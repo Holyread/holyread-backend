@@ -55,7 +55,8 @@ export const emailTemplatesTitles = {
         subscriptionActivated: 'Subscription Activated',
         changePassword: 'Change Password',
         emailAuthVerification: 'Customer Email Auth Verification',
-        emailAuthEnabled: 'Customer Email Auth Enabled'
+        emailAuthEnabled: 'Customer Email Auth Enabled',
+        welcomeToHolyreads: 'Welcome To Holy Reads'
     },
     admin: {
         customerRegistration: 'Admin Customer Registration',

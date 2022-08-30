@@ -71,7 +71,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     let html = `<p>Dear ${body.email.split('@')[0]},</p><p>Thank you for registering with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${body.email}</p><p>Please click <a href="${link}">Here</a> to verify your registration.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
-      const contentData = { email: body.email, password: body.password, username: body.email.substr(0, body.email.indexOf('@')), link }
+      const contentData = { link, code: verificationCode, username: body.email.split('@')[0] }
       const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
       if (htmlData) {
         html = htmlData
@@ -152,7 +152,24 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     const title = 'Welcome to Holyreads';
     const description = 'Enjoy best summaries audio and video';
     await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title, description } })
+    
+    /** Get welcome email template */
+    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.welcomeToHolyreads })
+    const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
+    let html = `<p>Dear ${email.split('@')[0]},</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]}/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
+    if (emailTemplateDetails && emailTemplateDetails.content) {
+      const contentData = { loginURL: `${origins[NODE_ENV]}/account/login` }
+      const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+      if (htmlData) {
+        html = htmlData
+      }
+    }
+    /** sent welcome email */
+    const result = await sentEmail(email, subject, html);
+    if (!result) {
+      return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
+    }
     res.status(200).send({ message: authControllerResponse.signUpSuccess })
     /** Push notification */
     if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
@@ -324,6 +341,24 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     const description = 'Enjoy best summaries audio and video';
 
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
+
+    /** Get welcome email template */
+    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.welcomeToHolyreads })
+    const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
+    let html = `<p>Dear ${body.email.split('@')[0]},</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]}/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+
+    if (emailTemplateDetails && emailTemplateDetails.content) {
+      const contentData = { loginURL: `${origins[NODE_ENV]}/account/login` }
+      const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+      if (htmlData) {
+        html = htmlData
+      }
+    }
+    /** sent welcome email */
+    const result = await sentEmail(body.email, subject, html);
+    if (!result) {
+      return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
+    }
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
       data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: body?.email?.split('@')[0] || '' }
@@ -428,6 +463,25 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     const description = 'Enjoy best summaries audio and video';
 
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
+    
+    /** Get welcome email template */
+    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.welcomeToHolyreads })
+    const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
+    let html = `<p>Dear ${body.email.split('@')[0]},</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]}/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+
+    if (emailTemplateDetails && emailTemplateDetails.content) {
+      const contentData = { loginURL: `${origins[NODE_ENV]}/account/login` }
+      const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+      if (htmlData) {
+        html = htmlData
+      }
+    }
+    /** sent welcome email */
+    const result = await sentEmail(body.email, subject, html);
+    if (!result) {
+      return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
+    }
+
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
       data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: body?.email?.split('@')[0] || '' }

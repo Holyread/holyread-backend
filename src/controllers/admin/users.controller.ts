@@ -79,8 +79,6 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             newBody.subscriptions = subscriptionDetails._id
         }
 
-
-
         const data = await usersService.createUser(newBody)
         if (body.subscriptions) {
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })

@@ -709,6 +709,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         await usersService.updateUser({ 'stripe.customerId': customer.id }, { _id: userObj._id })
                   }
                   subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod)
+                  /** Cancel previews subscription */
+                  userObj?.stripe?.subscriptionId && await stripeSubscriptionService.cancelSubscription(userObj?.stripe?.subscriptionId)
                   /** add stripe details into body */
                   body = {
                         'stripe.planId': subscriptionDetails.stripePlanId,
@@ -721,7 +723,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   { _id: userObj._id }
             )
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
-            const sub = emailTemplateDetails.subject || 'Subscription'
+            const sub = emailTemplateDetails.subject || 'Holyreads Subscription'
             let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {

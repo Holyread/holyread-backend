@@ -57,12 +57,6 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     if (user && user.verified) {
       return next(Boom.conflict(authControllerResponse.userAlreadyExistError))
     }
-    if (body.subscriptions && body.inAppSubscription) {
-      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscriptions })
-      if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-        return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
-      }
-    }
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const token: string = getToken({ code: String(verificationCode), email: body.email })
     const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
@@ -102,12 +96,6 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       verified: false,
       verificationCode
     }
-    /** Store In app subscription */
-    if (body.inAppSubscription && body.subscriptions) {
-      data.inAppSubscription = body.inAppSubscription
-      data.inAppSubscriptionStatus = 'Active'
-      data.subscriptions = body.subscriptions
-    }
     await usersService.createUser(data)
     res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
   } catch (e: any) {
@@ -127,12 +115,16 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     if (!user) {
       return next(Boom.notFound(authControllerResponse.getUserError))
     }
+    if (user?.verified) {
+      return next(Boom.notAcceptable(authControllerResponse.verifyUserError))
+    }
     let body: any = {
       verified: true,
       status: 'Active',
-      $unset: { verificationCode: 1 }
+      $unset: { verificationCode: 1 },
+      device: user.subscriptions && user.referralUserId ? req.query.device : user.device
     }
-    if (!user.inAppSubscription && !user.subscriptions) {
+    if (user?.device === 'web' && !user?.subscriptions) {
       const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
       if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
         return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
@@ -175,8 +167,6 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
       const tokens = user.pushTokens.map(i => i.token)
       pushNotification(tokens, title, description)
-      if (user?.notification?.subscriptions && !user.inAppSubscription && !user.subscriptions)
-        pushNotification(tokens, 'Holyreads Trial Subscription', 'Holyreads Subscription has been activated with 5 days trial period')
     }
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -325,15 +315,6 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       device: body?.device?.toLowerCase() || '',
       email: body.email
     }
-    if (body.subscriptions && body.inAppSubscription) {
-      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscriptions })
-      if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-        return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
-      }
-      newBody.subscriptions = subscriptionDetails._id
-      newBody.inAppSubscription = body.inAppSubscription
-      newBody.inAppSubscriptionStatus = 'Active'
-    }
     /** Create new user using social login */
     const data: any = await usersService.createUser(newBody)
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
@@ -369,8 +350,6 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       const tokens = data.pushTokens.map(i => i.token)
       /** sent wellcome notification in app */
       pushNotification(tokens, title, description)
-      if (data?.notification?.subscriptions)
-        pushNotification(tokens, 'Holyreads Subscription', 'Holyreads subscription has been activated!')
     }
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -442,7 +421,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
         email: body.email,
         default: true
       }],
-      device: body?.device?.toLowerCase() || '',
+      device: 'web',
       email: body.email
     }
     const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
@@ -491,8 +470,6 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     if (data && data.pushTokens && data.pushTokens.length && data?.notification?.push) {
       const tokens = data.pushTokens.map(i => i.token)
       pushNotification(tokens, title, description)
-      if (data?.notification?.subscriptions)
-        pushNotification(tokens, 'Holyreads Trial Subscription', '5 days trial subscription has been activated!')
     }
 
   } catch (e: any) {

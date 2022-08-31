@@ -17,6 +17,9 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             if (userDetails.status !== 'Active') {
                 next(Boom.badRequest('User not active'));
             }
+            if (!userDetails?.verified) {
+                next(Boom.badRequest('User not verified'));
+            }
             req.user = userDetails
             global.currentUser = req.user;
             next();

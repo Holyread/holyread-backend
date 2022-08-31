@@ -4,6 +4,7 @@ import auth from './customers/auth.route'
 import users from './customers/users.route'
 import dashboard from './customers/dashboard.route'
 import bookSummary from './customers/book/bookSummary.route'
+import authors from './customers/book/author.route'
 import highLight from './customers/highLight.route'
 import expertCurated from './customers/book/expertCurated.route'
 import cms from './customers/cms.route'
@@ -18,6 +19,7 @@ router.use('/auth', auth)
 router.use('/users', users)
 router.use('/dashboard', customerPassport, dashboard)
 router.use('/book-summary', customerPassport, bookSummary)
+router.use('/authors', customerPassport, authors)
 router.use('/high-lights', customerPassport, highLight)
 router.use('/expert-curated', expertCurated)
 router.use('/cms', cms)

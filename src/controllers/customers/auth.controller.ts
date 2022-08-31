@@ -130,9 +130,10 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     let body: any = {
       verified: true,
       status: 'Active',
+      device: user.referralUserId && req.query.device ? req.query.device : user.device,
       $unset: { verificationCode: 1 }
     }
-    if (!user.inAppSubscription && !user.subscriptions) {
+    if (!user.inAppSubscription && !user.subscriptions && user.device === 'web' && !user.referralUserId) {
       const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
       if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
         return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
@@ -369,7 +370,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       const tokens = data.pushTokens.map(i => i.token)
       /** sent wellcome notification in app */
       pushNotification(tokens, title, description)
-      if (data?.notification?.subscriptions)
+      if (data?.notification?.subscriptions && body.subscriptions && body.inAppSubscription)
         pushNotification(tokens, 'Holyreads Subscription', 'Holyreads subscription has been activated!')
     }
   } catch (e: any) {
@@ -442,7 +443,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
         email: body.email,
         default: true
       }],
-      device: body?.device?.toLowerCase() || '',
+      device: 'web',
       email: body.email
     }
     const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })

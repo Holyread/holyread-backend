@@ -102,6 +102,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     /** Store In app subscription */
     if (body.subscription && body.inAppSubscription) {
       data.inAppSubscription = { ...body.inAppSubscription, createdAt: new Date() }
+      data.inAppSubscriptionStatus = 'Active'
       data.subscription = body.subscription
     }
 
@@ -337,6 +338,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
       }
       newBody.inAppSubscription = { ...body.inAppSubscription, createdAt: new Date() }
+      newBody.inAppSubscriptionStatus = 'Active'
       newBody.subscription = subscriptionDetails._id
     }
     /** Create new user using social login */

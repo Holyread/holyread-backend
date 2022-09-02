@@ -637,6 +637,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                   }
             } else {
                   inviteUserBody.inAppSubscription = { ...body.inAppSubscription, createdAt: new Date() }
+                  inviteUserBody.inAppSubscriptionStatus = 'Active'
             }
             const invitedUserDetails = await authService.createUser(inviteUserBody)
             if (!invitedUserDetails || !invitedUserDetails._id) {

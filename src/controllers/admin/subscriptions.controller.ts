@@ -149,7 +149,7 @@ const updateSubscription = async (req: Request, res: Response, next: NextFunctio
 const deleteSubcription = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
-        const subscriptionUser = await usersService.getOneUserByFilter({ subscriptions: id })
+        const subscriptionUser = await usersService.getOneUserByFilter({ subscription: id })
         if (subscriptionUser) {
             return next(Boom.locked(subscriptionsControllerResponse.subscriptionIsInUsedError))
         }

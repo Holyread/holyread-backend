@@ -7,7 +7,7 @@ export interface IUser extends mongoose.Document {
     lastName?: string,
     email: string,
     password: string,
-    subscriptions?: string,
+    subscription?: string,
     type: 'User' | 'Admin',
     status?: 'Active' | 'Deactive',
     verified?: boolean,
@@ -19,7 +19,7 @@ export interface IUser extends mongoose.Document {
         inApp?: boolean,
         downloads?: boolean,
         promotionsAndSales?: boolean,
-        subscriptions?: boolean
+        subscription?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -55,12 +55,13 @@ export interface IUser extends mongoose.Document {
     }],
     referralUserId?: string,
     kindleEmail?: string,
-    inAppSubscription?: Object,
+    inAppSubscription?: Object, // default key - createdAt(Date)
     inAppSubscriptionStatus?: 'Cancelled' | 'Active',
     stripe: {
         subscriptionId?: string,
         customerId?: string,
         planId?: string,
+        createdAt?: Date
     },
     device: string
 }
@@ -70,7 +71,7 @@ export type createUserType = {
     lastName?: string,
     email: string,
     password: string,
-    subscriptions?: string,
+    subscription?: string,
     type: 'User' | 'Admin',
     status?: 'Active' | 'Deactive',
     verified?: boolean,
@@ -82,7 +83,7 @@ export type createUserType = {
         inApp?: boolean,
         downloads?: boolean,
         promotionsAndSales?: boolean,
-        subscriptions?: boolean
+        subscription?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -118,12 +119,13 @@ export type createUserType = {
     }],
     referralUserId?: string,
     kindleEmail?: string,
-    inAppSubscription?: Object,
+    inAppSubscription?: Object, // default key - createdAt(Date)
     inAppSubscriptionStatus?: 'Cancelled' | 'Active',
     stripe: {
         subscriptionId?: string,
         customerId?: string,
         planId?: string,
+        createdAt?: Date
     },
     device: string
 }
@@ -133,7 +135,7 @@ export type getUserType = {
     firstName?: string,
     lastName?: string,
     email: string,
-    subscriptions?: string,
+    subscription?: string,
     type: 'User' | 'Admin',
     status?: 'Active' | 'Deactive',
     verified?: boolean,
@@ -145,7 +147,7 @@ export type getUserType = {
         inApp?: boolean,
         downloads?: boolean,
         promotionsAndSales?: boolean,
-        subscriptions?: boolean
+        subscription?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -181,12 +183,13 @@ export type getUserType = {
     }],
     referralUserId?: string,
     kindleEmail?: string,
-    inAppSubscription?: Object,
+    inAppSubscription?: Object, // default key - createdAt(Date)
     inAppSubscriptionStatus?: 'Cancelled' | 'Active',
     stripe: {
         subscriptionId?: string,
         customerId?: string,
         planId?: string,
+        createdAt?: Date
     },
     device: string
 }
@@ -196,7 +199,7 @@ export const UserSchema = new Schema({
     lastName: { type: String },
     email: { type: String, required: true, index: true, validate: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ },
     password: { type: String },
-    subscriptions: { type: String },
+    subscription: { type: String },
     type: { type: String, required: true, enum: ['User', 'Admin'] },
     status: { type: String, enum: ['Active', 'Deactive'] },
     verified: { type: Boolean },
@@ -208,7 +211,7 @@ export const UserSchema = new Schema({
         inApp: { type: Boolean, default: true },
         downloads: { type: Boolean, default: true },
         promotionsAndSales: { type: Boolean, default: true },
-        subscriptions: { type: Boolean, default: true }
+        subscription: { type: Boolean, default: true }
     },
     metaKeyword: { type: String },
     metaDescription: { type: String },
@@ -249,8 +252,9 @@ export const UserSchema = new Schema({
         subscriptionId: { type: String },
         customerId: { type: String },
         planId: { type: String },
+        createdAt: { type: Date },
     },
-    inAppSubscription: { type: Object },
+    inAppSubscription: { type: Object }, // default key - createdAt(Date)
     inAppSubscriptionStatus: { type: String, enum: ['Cancelled', 'Active'] },
     device: { type: String, required: true },
     createdAt: {

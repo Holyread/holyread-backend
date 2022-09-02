@@ -11,7 +11,7 @@ import subscriptionService from '../../services/admin/subscriptions/subscription
 import stripeSubscriptionService from '../../services/stripe/subscription'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNotification, verifyToken, getToken, decrypt, sortArrayObject } from '../../lib/utils/utils'
+import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNotification, verifyToken, getToken, decrypt, sortArrayObject, getDayDiff } from '../../lib/utils/utils'
 import { awsBucket, dataLimit, emailTemplatesTitles, originEmails, origins } from '../../constants/app.constant'
 import config from '../../../config'
 import ratingService from '../../services/customers/book/rating.service';
@@ -38,6 +38,13 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
                   userObj.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + userObj.image
             }
             userObj.isEmailLinked = !!userObj.password
+            let subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: userObj.subscription })
+            if (subscriptionDetails?._id) {
+                  let months = subscriptionDetails.duration === 'Month' ? 1 : subscriptionDetails.duration === 'Half Year' ? 6 : 12;
+                  const createdAt = userObj?.inAppSubscription?.createdAt || userObj?.stripe?.createdAt || new Date()              
+                  const subscriptionEndDate = String(new Date(createdAt).setMonth(new Date(createdAt).getMonth() + months))
+                  userObj.subscriptionEndsIn = Math.ceil(getDayDiff(String(new Date()), String(new Date(Number(subscriptionEndDate)))))
+            }
             delete userObj.password
             delete userObj.library
             delete userObj.smallGroups
@@ -206,9 +213,15 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
       try {
             /** Get current user */
             let data: any = Object.assign({}, req.user)
-            if (data.subscriptions) {
+            if (data.subscription) {
                   try {
-                        data.subscriptions = await subscriptionService.getOneSubscriptionByFilter({ _id: data.subscriptions })
+                        data.subscription = await subscriptionService.getOneSubscriptionByFilter({ _id: data.subscription })
+                        if (data.subscription?._id) {
+                              let months = data.subscription.duration === 'Month' ? 1 : data.subscription.duration === 'Half Year' ? 6 : 12;
+                              const createdAt = data?.inAppSubscription?.createdAt || data?.stripe?.createdAt || new Date()              
+                              const subscriptionEndDate = String(new Date(createdAt).setMonth(new Date(createdAt).getMonth() + months))
+                              data.subscriptionEndsIn = getDayDiff(String(new Date()), String(new Date(Number(subscriptionEndDate))))
+                        }
                   } catch (error) {
                         /** Handle get subscription error here */
                   }
@@ -237,7 +250,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                         email: (req.body?.notification && typeof req.body?.notification?.email === 'boolean') ? req.body?.notification?.email : req.body?.notification?.email || false,
                         inApp: (req.body?.notification && typeof req.body?.notification?.inApp === 'boolean') ? req.body?.notification?.inApp : req.body?.notification?.inApp || false,
                         promotionsAndSales: (req.body?.notification && typeof req.body?.notification?.promotionsAndSales === 'boolean') ? req.body?.notification?.promotionsAndSales : req.body?.notification?.promotionsAndSales || false,
-                        subscriptions: (req.body?.notification && typeof req.body?.notification?.subscriptions === 'boolean') ? req.body?.notification?.subscriptions : req.body?.notification?.subscriptions || false,
+                        subscription: (req.body?.notification && typeof req.body?.notification?.subscription === 'boolean') ? req.body?.notification?.subscription : req.body?.notification?.subscription || false,
                   }
             }
   
@@ -327,7 +340,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             if (userObj.pushTokens.length && userObj?.notification?.push) {
                   const tokens = userObj.pushTokens.map(i => i.token)
                   req.body.kindleEmail && pushNotification(tokens, kindleTitle, kindleDescription)
-                  isAppSubscriptionStatus && userObj?.notification?.subscriptions && pushNotification(tokens, notificationTitle, notificationDescription)
+                  isAppSubscriptionStatus && userObj?.notification?.subscription && pushNotification(tokens, notificationTitle, notificationDescription)
             }
       } catch (e: any) {
             return next(Boom.badData(e.message))
@@ -588,7 +601,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             if (inviteUser) {
                   return next(Boom.conflict(authControllerResponse.userAlreadyExistError))
             }
-            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscriptions })
+            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscription })
             if (!subscriptionDetails) {
                   return next(Boom.notFound(authControllerResponse.blessFriendSubscriptionError))
             }
@@ -604,7 +617,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                   status: 'Deactive',
                   verified: false,
                   verificationCode,
-                  subscriptions: subscriptionDetails._id,
+                  subscription: subscriptionDetails._id,
                   referralUserId: refUser._id,
                   device: body.device || 'web'
             }
@@ -615,10 +628,10 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                         customerId: customer.id,
                         planId: subscriptionDetails.stripePlanId,
                         subscriptionId: sbscription.id,
+                        createdAt: new Date()
                   }
             } else {
-                  inviteUserBody.inAppSubscription = body.inAppSubscription
-                  inviteUserBody.inAppSubscriptionStatus = 'Active'
+                  inviteUserBody.inAppSubscription = { ...body.inAppSubscription, createdAt: new Date() }
             }
             const invitedUserDetails = await authService.createUser(inviteUserBody)
             if (!invitedUserDetails || !invitedUserDetails._id) {
@@ -684,7 +697,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             next(Boom.badData(e.message))
       }
 }
-
+               
 /** subscribe plan */
 const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
       try {
@@ -697,23 +710,29 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             let subscription;
             if (req.body.inAppSubscription) {
                   body = {
-                        subscriptions: req.body.subscription,
+                        subscription: req.body.subscription,
                         inAppSubscription: req.body.inAppSubscription,
                         inAppSubscriptionStatus: 'Active'
                   }
             } else {
-                  if (!userObj.stripe || !userObj.stripe.customerId) {
+                  if (!userObj?.stripe?.customerId) {
                         const customer = await stripeSubscriptionService.createCustomer(userObj.email, req.body.token)
                         if (!userObj.stripe) { userObj.stripe = {} }
                         userObj.stripe.customerId = customer.id
                         await usersService.updateUser({ 'stripe.customerId': customer.id }, { _id: userObj._id })
                   }
-                  subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod)
+                  if (!userObj?.stripe?.subscriptionId) {
+                        subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod)
+                  } else {
+                        await stripeSubscriptionService.updateSubscription(subscriptionDetails.stripePlanId, userObj.stripe.subscriptionId)
+                        subscription = await stripeSubscriptionService.retrieveSubscription(userObj.stripe.subscriptionId)
+                  }
                   /** add stripe details into body */
                   body = {
                         'stripe.planId': subscriptionDetails.stripePlanId,
                         'stripe.subscriptionId': subscription.id,
-                        subscriptions: subscriptionDetails._id
+                        'stripe.createdAt': new Date(),
+                        subscription: subscriptionDetails._id
                   }
             }
             await usersService.updateUser(
@@ -721,7 +740,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   { _id: userObj._id }
             )
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
-            const sub = emailTemplateDetails.subject || 'Subscription'
+            const sub = emailTemplateDetails.subject || 'Holyreads Subscription'
             let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
@@ -737,7 +756,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   }
             }
             const notificationTitle = 'Holyreads Subscription'
-            const notificationDescription = req.body.inAppSubscription && !userObj.inAppSubscription ? 'Subscription activated successfully' : 'Subscription upgraded successfully'
+            const notificationDescription = 'Subscription activated successfully'
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
             fetchNotifications(io.sockets, { _id: userObj._id })
 
@@ -745,15 +764,17 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             if (!result) {
                   return next(Boom.badData(authControllerResponse.sentSubscriptionEmailFilure))
             }
+
             res.status(200).send({
                   message: subscriptionsControllerResponse.createSubscriptionSuccess,
-                  data: !req.body.inAppSubscription ? {
+                  data: !req.body?.inAppSubscription ? {
                         subscriptionStatus: subscription.status,
                         customerEmail: userObj.email
-                  } : { subscriptions: subscriptionDetails._id }
+                  } : { subscription: subscriptionDetails._id }
             })
+
             /** Push notification */
-            if (req.user.pushTokens.length && userObj?.notification?.push && userObj?.notification?.subscriptions) {
+            if (req.user.pushTokens.length && userObj?.notification?.push && userObj?.notification?.subscription) {
                   const tokens = req.user.pushTokens.map(i => i.token)
                   pushNotification(tokens, notificationTitle, notificationDescription)
             }

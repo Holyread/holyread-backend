@@ -3,19 +3,14 @@ import { getToken, encrypt } from '../../../lib/utils/utils'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
-import subscriptionService from '../subscriptions/subscriptions.service'
+
 const NODE_ENV = config.NODE_ENV
 const authControllerResponse = responseMessage.authControllerResponse
+
 /** Add User */
 const createUser = async (body: any) => {
     try {
         if (body.password) body.password = encrypt(body.password)
-        if (!body.subscriptions) {
-            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ title: 'Free-Trial' })
-            if (subscriptionDetails) {
-                body.subscriptions = subscriptionDetails._id
-            }
-        }
         const result = await UserModel.create(body)
         if (!result) {
             throw new Error(authControllerResponse.createUserFailed)
@@ -62,14 +57,22 @@ const getAllUsers = async (skip: number, limit, search: object, sort) => {
             if (oneUser.image) {
                 oneUser.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + oneUser.image
             }
-            if (!oneUser.subscriptions) {
+            oneUser.stripe?.map(i => {
+                if (i.default)
+                oneUser.subscription = i.subscriptionPlan
+            })
+            oneUser.inAppSubscription?.map(i => {
+                if (i.default)
+                oneUser.subscription = i.subscriptionPlan
+            })
+            if (!oneUser.subscription) {
                 return;
             }
-            const userSubscriptionDetails = await SubscriptionsModel.findById(oneUser.subscriptions).lean()
+            const userSubscriptionDetails = await SubscriptionsModel.findById(oneUser.subscription).lean()
             if (!userSubscriptionDetails) {
                 return
             }
-            oneUser.subscriptions = userSubscriptionDetails.title
+            oneUser.subscription = userSubscriptionDetails.title
         }))
         return { count, users }
     } catch (e: any) {

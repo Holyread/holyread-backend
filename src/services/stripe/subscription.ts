@@ -68,9 +68,24 @@ const createSubscription = async (planId: string, customerId: string, paymentMet
                         { price: planId },
                   ],
                   expand: ['latest_invoice.payment_intent'],
-                  trial_period_days: 5
+                  trial_period_days: 3
             });
             return subscription
+      } catch (error: any) {
+            throw new Error(error)
+      }
+}
+
+const updateSubscription = async (planId: string, subscriptionId: string) => {
+      try {
+            await stripe.subscriptions.update(subscriptionId, {
+                  cancel_at_period_end: false,
+                  proration_behavior: 'create_prorations',
+                  items: [{
+                        id: subscriptionId,
+                        price: planId,
+                  }]
+            });
       } catch (error: any) {
             throw new Error(error)
       }
@@ -89,11 +104,16 @@ const clearPaymentMethods = async (customerId) => {
 
 const cancelSubscription = async (subscriptionId: string) => {
       await stripe.subscriptions.del(subscriptionId);
+      stripe.subscriptions.update(subscriptionId, {
+            cancel_at_period_end: true,
+      });
+
 }
 
 export default {
       retrieveSubscription,
       createSubscription,
       createCustomer,
-      cancelSubscription
+      cancelSubscription,
+      updateSubscription
 }

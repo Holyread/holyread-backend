@@ -235,5 +235,14 @@ export const sortArrayObject = (list: [object], key: string, order: 'asc' | 'des
 
 export const getDayDiff = (from: string, to: string) => {
     const timeDiff = new Date(to).getTime() - new Date(from).getTime()
-    return timeDiff / (1000 * 3600 * 24);
+    let seconds = Math.floor(timeDiff / 1000);
+    let minutes = Math.floor(seconds / 60);
+    let hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    hours = hours-(days*24);
+    minutes = minutes-(days*24*60)-(hours*60);
+    seconds = seconds-(days*24*60*60)-(hours*60*60)-(minutes*60);
+
+    return `${days}:${hours}:${minutes}:${seconds}`;
 }

@@ -46,7 +46,7 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
                   const createdAt = userObj?.inAppSubscription?.createdAt || userObj?.stripe?.createdAt || new Date()              
                   subscriptionEndDate = new Date(createdAt).setMonth(new Date(createdAt).getMonth() + months)
             }
-            userObj.subscriptionEndsIn = Math.ceil(getDayDiff(String(new Date()), String(new Date(subscriptionEndDate))))
+            userObj.subscriptionEndsIn = getDayDiff(String(new Date()), String(new Date(subscriptionEndDate)))
             delete userObj.password
             delete userObj.library
             delete userObj.smallGroups
@@ -717,8 +717,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             if (req.body.inAppSubscription) {
                   body = {
                         subscription: req.body.subscription,
-                        inAppSubscription: req.body.inAppSubscription,
-                        inAppSubscriptionStatus: 'Active'
+                        inAppSubscription: { ...req.body.inAppSubscription, createdAt: new Date() },
+                        inAppSubscriptionStatus: 'Active',
                   }
             } else {
                   if (!userObj?.stripe?.customerId) {

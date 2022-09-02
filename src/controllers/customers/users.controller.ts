@@ -11,7 +11,7 @@ import subscriptionService from '../../services/admin/subscriptions/subscription
 import stripeSubscriptionService from '../../services/stripe/subscription'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNotification, verifyToken, getToken, decrypt, sortArrayObject, getDayDiff } from '../../lib/utils/utils'
+import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNotification, verifyToken, getToken, decrypt, sortArrayObject, getTimeDiff } from '../../lib/utils/utils'
 import { awsBucket, dataLimit, emailTemplatesTitles, originEmails, origins } from '../../constants/app.constant'
 import config from '../../../config'
 import ratingService from '../../services/customers/book/rating.service';
@@ -46,7 +46,7 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
                   const createdAt = userObj?.inAppSubscription?.createdAt || userObj?.stripe?.createdAt || new Date()              
                   subscriptionEndDate = new Date(createdAt).setMonth(new Date(createdAt).getMonth() + months)
             }
-            userObj.subscriptionEndsIn = Math.ceil(getDayDiff(String(new Date()), String(new Date(subscriptionEndDate))))
+            userObj.subscriptionEndsIn = getTimeDiff(String(new Date()), String(new Date(subscriptionEndDate)))
             delete userObj.password
             delete userObj.library
             delete userObj.smallGroups
@@ -226,7 +226,7 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
                               const createdAt = data?.inAppSubscription?.createdAt || data?.stripe?.createdAt || new Date()              
                               subscriptionEndDate = new Date(createdAt).setMonth(new Date(createdAt).getMonth() + months)
                         }
-                        data.subscriptionEndsIn = getDayDiff(String(new Date()), String(new Date(subscriptionEndDate)))
+                        data.subscriptionEndsIn = getTimeDiff(String(new Date()), String(new Date(subscriptionEndDate)))
                   } catch (error) {
                         /** Handle get subscription error here */
                   }
@@ -717,8 +717,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             if (req.body.inAppSubscription) {
                   body = {
                         subscription: req.body.subscription,
-                        inAppSubscription: req.body.inAppSubscription,
-                        inAppSubscriptionStatus: 'Active'
+                        inAppSubscription: { ...req.body.inAppSubscription, createdAt: new Date() },
+                        inAppSubscriptionStatus: 'Active',
                   }
             } else {
                   if (!userObj?.stripe?.customerId) {

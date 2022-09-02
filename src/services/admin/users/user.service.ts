@@ -57,14 +57,6 @@ const getAllUsers = async (skip: number, limit, search: object, sort) => {
             if (oneUser.image) {
                 oneUser.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + oneUser.image
             }
-            oneUser.stripe?.map(i => {
-                if (i.default)
-                oneUser.subscription = i.subscriptionPlan
-            })
-            oneUser.inAppSubscription?.map(i => {
-                if (i.default)
-                oneUser.subscription = i.subscriptionPlan
-            })
             if (!oneUser.subscription) {
                 return;
             }

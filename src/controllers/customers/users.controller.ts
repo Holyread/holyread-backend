@@ -215,22 +215,22 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
       try {
             /** Get current user */
             let data: any = Object.assign({}, req.user)
+            let subscriptionEndDate = new Date(data.createdAt).getTime() + (3*24*60*60*1000);
             if (data.subscription) {
                   try {
                         data.subscription = await subscriptionService.getOneSubscriptionByFilter({ _id: data.subscription })
 
                         /** set default subscription end date with 3 days trail */
-                        let subscriptionEndDate = new Date(data.createdAt).getTime() + (3*24*60*60*1000);
                         if (data.subscription?._id) {
                               let months = data.subscription.duration === 'Month' ? 1 : data.subscription.duration === 'Half Year' ? 6 : 12;
                               const createdAt = data?.inAppSubscription?.createdAt || data?.stripe?.createdAt || new Date()              
                               subscriptionEndDate = new Date(createdAt).setMonth(new Date(createdAt).getMonth() + months)
                         }
-                        data.subscriptionEndsIn = getTimeDiff(String(new Date()), String(new Date(subscriptionEndDate)))
                   } catch (error) {
                         /** Handle get subscription error here */
                   }
             }
+            data.subscriptionEndsIn = getTimeDiff(String(new Date()), String(new Date(subscriptionEndDate)))
             delete data.password
             delete data.library
             delete data.smallGroups

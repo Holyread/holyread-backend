@@ -42,8 +42,7 @@ export const responseMessage = {
         kindleEmailNotExistError: 'Please add your kindle email address',
         emailAuthEnabledSuccess: 'Your email auth enabled',
         emailAuthExist: 'Your email auth already enabled',
-        socialLinkError: 'Account already linked by some one else, please contact administrator',
-        planAlreadyActivated: 'Subscription plan already activated'
+        socialLinkError: 'Account already linked by some one else, please contact administrator'
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

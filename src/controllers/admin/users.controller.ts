@@ -66,37 +66,40 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             verified: true,
             device: 'web'
         }
-        const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscriptions })
-        if (body.subscriptions) {
+        const subscriptionDetails = body.subscription && await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscription })
+        if (body.subscription) {
             if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
                 return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }
             const customer = await stripeSubscriptionService.createCustomer(body.email as any)
             const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
-            newBody['stripe.planId'] = subscriptionDetails.stripePlanId
-            newBody['stripe.subscriptionId'] = subscription.id
-            newBody['stripe.customerId'] = customer.id
-            newBody.subscriptions = subscriptionDetails._id
+            newBody.stripe = {
+                planId: subscriptionDetails.stripePlanId,
+                subscriptionId: subscription.id,
+                customerId: customer.id,
+                createdAt: new Date()
+            }
+            newBody.subscription = subscriptionDetails._id
         }
 
         const data = await usersService.createUser(newBody)
-        if (body.subscriptions) {
+        if (body.subscription) {
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
-        const sub = emailTemplateDetails.subject || 'Subscription'
-        let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for 30 days on ${subscriptionDetails.duration} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            const sub = emailTemplateDetails.subject || 'Holyreads Subscription'
+            let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for 30 days on ${subscriptionDetails.duration} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
-        if (emailTemplateDetails && emailTemplateDetails.content) {
-            const contentData = {
-                username: body.email.split('@')[0],
-                subscription_title: subscriptionDetails.title,
-                subscription_details: subscriptionDetails.duration,
-                subscription_duration: subscriptionDetails.title
+            if (emailTemplateDetails && emailTemplateDetails.content) {
+                const contentData = {
+                    username: body.email.split('@')[0],
+                    subscription_title: subscriptionDetails.title,
+                    subscription_details: subscriptionDetails.duration,
+                    subscription_duration: subscriptionDetails.title
+                }
+                const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                if (htmlData) {
+                    html = htmlData
+                }
             }
-            const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
-            if (htmlData) {
-                html = htmlData
-            }
-        }
             const result = await sentEmail(data.email, sub, html);
             if (!result) {
                 return next(Boom.notFound(authControllerResponse.sentSubscriptionEmailFilure))
@@ -112,8 +115,8 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         const title = 'Welcome to Holyreads';
         const description = 'Enjoy best summaries audio and video';
         await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
-        const createSubscriptionTitle = 'Subscription Created'
-        const createSubscriptionDesc = 'Subscription created successfully'
+        const createSubscriptionTitle = 'Holyreads Subscription'
+        const createSubscriptionDesc = 'Subscription activated successfully'
         await notificationsService.createNotification({ userId: data._id, type: 'setting', notification: { title: createSubscriptionTitle, description: createSubscriptionDesc } })
         fetchNotifications(io.sockets, { _id: data._id })
     } catch (e: any) {
@@ -206,8 +209,8 @@ const updateUser = async (req: Request | any, res: Response, next: NextFunction)
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = userObj.image
         }
-        if (req.body.subscriptions && String(req.body.subscriptions) !== String(userObj.subscriptions)) {
-            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: req.body.subscriptions })
+        if (req.body.subscription && String(req.body.subscription) !== String(userObj.subscription)) {
+            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: req.body.subscription })
             if (!subscriptionDetails) {
                 return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }
@@ -215,11 +218,19 @@ const updateUser = async (req: Request | any, res: Response, next: NextFunction)
                 return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }
             const customer = userObj.stripe.customerId || await stripeSubscriptionService.createCustomer(req.body.email as any)
-            const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
+            let subscription;
+            if (!userObj?.stripe?.subscriptionId) {
+                /** Create stripe subscription */
+                subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
+            } else {
+                /** Update stripe subscription */
+                await stripeSubscriptionService.updateSubscription(subscriptionDetails.stripePlanId, userObj.stripe.subscriptionId)
+                subscription = await stripeSubscriptionService.retrieveSubscription(userObj.stripe.subscriptionId)
+            }
             req.body['stripe.planId'] = subscriptionDetails.stripePlanId
             req.body['stripe.subscriptionId'] = subscription.id
             req.body['stripe.customerId'] = customer.id
-            req.body.subscriptions = subscriptionDetails._id
+            req.body.subscription = subscriptionDetails._id
         }
         req.body.email = userObj.email
         req.body.device = userObj.device || ''

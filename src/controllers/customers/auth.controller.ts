@@ -51,25 +51,22 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     const body = req.body
     /** Get user from db */
     const user: any = await usersService.getOneUserByFilter({ email: body.email })
-    if (user && !user.verified) {
-      return res.status(200).send({ message: authControllerResponse.verifyEmailSuccess })
-    }
-    if (user && user.verified) {
-      return next(Boom.conflict(authControllerResponse.userAlreadyExistError))
-    }
-    if (body.subscriptions && body.inAppSubscription) {
-      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscriptions })
-      if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-        return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
-      }
-    }
+    if (user && !user.verified) return res.status(200).send({ message: authControllerResponse.verifyEmailSuccess })
+    if (user && user.verified) return next(Boom.conflict(authControllerResponse.userAlreadyExistError))
+
+    const subscriptionDetails = body.subscription && await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscription })
+    if (
+      body.subscription &&
+      body.inAppSubscription &&
+      (!subscriptionDetails || !subscriptionDetails.stripePlanId)
+    ) return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
+
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const token: string = getToken({ code: String(verificationCode), email: body.email })
     const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
     const subject = emailTemplateDetails?.subject || 'Account Verification'
     let html = `<p>Dear ${body.email.split('@')[0]},</p><p>Thank you for registering with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${body.email}</p><p>Please click <a href="${link}">Here</a> to verify your registration.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
-
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { link, code: verificationCode, username: body.email.split('@')[0] }
       const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
@@ -77,21 +74,21 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
         html = htmlData
       }
     }
+
     /** sent email for account verification */
     const result = await sentEmail(body.email, subject, html);
     if (!result) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
     }
     if (user && !user.verificationCode) {
-      await usersService.updateUser({
-        verificationCode
-      }, { _id: user._id })
+      await usersService.updateUser({ verificationCode }, { _id: user._id })
       return res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
     }
     if (body.image) {
       const s3File: any = await uploadFileToS3(body.image, `user-${verificationCode}`, s3Bucket)
       body.image = s3File.name
     }
+
     const data: any = {
       image: body.image ? body.image : '',
       email: body.email,
@@ -103,11 +100,11 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       verificationCode
     }
     /** Store In app subscription */
-    if (body.inAppSubscription && body.subscriptions) {
-      data.inAppSubscription = body.inAppSubscription
-      data.inAppSubscriptionStatus = 'Active'
-      data.subscriptions = body.subscriptions
+    if (body.subscription && body.inAppSubscription) {
+      data.inAppSubscription = { ...body.inAppSubscription, createdAt: new Date() }
+      data.subscription = body.subscription
     }
+
     await usersService.createUser(data)
     res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
   } catch (e: any) {
@@ -133,19 +130,23 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       device: user.referralUserId && req.query.device ? req.query.device : user.device,
       $unset: { verificationCode: 1 }
     }
-    if (!user.inAppSubscription && !user.subscriptions && user.device === 'web' && !user.referralUserId) {
+    if (!user.inAppSubscription && user.device === 'web' && !user.referralUserId) {
       const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
       if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
         return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
       }
+
+      /** Create stripe customer */
       const customer = await stripeSubscriptionService.createCustomer(email)
+      /** Create stripe subscription */
       const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
       body.stripe = {
         planId: subscriptionDetails.stripePlanId,
         subscriptionId: subscription.id,
         customerId: customer.id,
+        createdAt: new Date()
       }
-      body.subscriptions = subscriptionDetails._id
+      body.subscription = subscriptionDetails._id
     }
 
     await usersService.updateUser(body, { _id: user._id })
@@ -153,7 +154,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     const title = 'Welcome to Holyreads';
     const description = 'Enjoy best summaries audio and video';
     await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title, description } })
-    
+
     /** Get welcome email template */
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.welcomeToHolyreads })
     const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
@@ -176,8 +177,12 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
       const tokens = user.pushTokens.map(i => i.token)
       pushNotification(tokens, title, description)
-      if (user?.notification?.subscriptions && !user.inAppSubscription && !user.subscriptions)
-        pushNotification(tokens, 'Holyreads Trial Subscription', 'Holyreads Subscription has been activated with 5 days trial period')
+      if (
+        user?.notification?.subscription &&
+        user.device === 'web' &&
+        !user.inAppSubscription &&
+        !user.referralUserId
+      ) pushNotification(tokens, 'Holyreads Trial Subscription', 'Holyreads Subscription has been activated with 3 days trial period')
     }
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -326,14 +331,13 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       device: body?.device?.toLowerCase() || '',
       email: body.email
     }
-    if (body.subscriptions && body.inAppSubscription) {
-      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscriptions })
+    if (body.subscription && body.inAppSubscription) {
+      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscription })
       if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
         return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
       }
-      newBody.subscriptions = subscriptionDetails._id
-      newBody.inAppSubscription = body.inAppSubscription
-      newBody.inAppSubscriptionStatus = 'Active'
+      newBody.inAppSubscription = { ...body.inAppSubscription, createdAt: new Date() }
+      newBody.subscription = subscriptionDetails._id
     }
     /** Create new user using social login */
     const data: any = await usersService.createUser(newBody)
@@ -370,7 +374,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       const tokens = data.pushTokens.map(i => i.token)
       /** sent wellcome notification in app */
       pushNotification(tokens, title, description)
-      if (data?.notification?.subscriptions && body.subscriptions && body.inAppSubscription)
+      if (data?.notification?.subscription && body.subscription && body.inAppSubscription)
         pushNotification(tokens, 'Holyreads Subscription', 'Holyreads subscription has been activated!')
     }
   } catch (e: any) {
@@ -388,11 +392,13 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     if (!body.id || !body.provider) {
       return next(Boom.notFound(authControllerResponse.missingoAuthKeyError))
     }
+
     const query: any = { 'oAuth.clientId': body.id, 'oAuth.provider': body.provider }
     const user: any = await usersService.getOneUserByFilter(query)
     if (user?.type === 'Admin') {
       return next(Boom.unauthorized(authControllerResponse.userNotAuthorizationError))
     }
+
     const emailUser: any = await usersService.getOneUserByFilter({ email: body.email })
     const isEmailConflicts = emailUser && String(emailUser._id) !== String(user?._id) ? true : false
     if (user) {
@@ -411,14 +417,16 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     if (emailUser) {
       emailUser.oAuth = emailUser?.oAuth?.length ? emailUser.oAuth : []
       const index = emailUser.oAuth.findIndex(i => i.provider === body.provider);
-      (index < 0) ? emailUser.oAuth.push({
-          email: body.email,
-          provider: body.provider,
-          clientId: body.id,
-          default: emailUser?.oAuth?.length ? false : true
-        })
+      (index < 0)
+        ? emailUser.oAuth.push({
+            email: body.email,
+            provider: body.provider,
+            clientId: body.id,
+            default: emailUser?.oAuth?.length ? false : true
+          })
         : emailUser.oAuth[index] = { ...emailUser.oAuth[index], email: body.email }
       await usersService.updateUser({ oAuth: emailUser.oAuth }, { _id: emailUser._id })
+
       const token: string = getToken({ email: emailUser.email, 'oauthClientId': body.id, id: emailUser._id })
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
@@ -432,6 +440,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
         body.photoUrl = s3File.name
       })
     }
+
     const newBody: any = {
       image: body.photoUrl ? body.photoUrl : '',
       type: 'User',
@@ -450,26 +459,28 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
       return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
     }
+
     const customer = await stripeSubscriptionService.createCustomer(body.email as any)
     /** Create trial subscription */
     const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
-    newBody['stripe.planId'] = subscriptionDetails.stripePlanId
-    newBody['stripe.subscriptionId'] = subscription.id
-    newBody['stripe.customerId'] = customer.id
-    newBody.subscriptions = subscriptionDetails._id
+    newBody.stripe = {
+      planId: subscriptionDetails.stripePlanId,
+      subscriptionId: subscription.id,
+      customerId: customer.id,
+      createdAt: new Date()
+    }
+    newBody.subscription = subscriptionDetails._id
 
     const data: any = await usersService.createUser(newBody)
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
     const title = 'Welcome to Holyreads';
     const description = 'Enjoy best summaries audio and video';
-
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
-    
+
     /** Get welcome email template */
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.welcomeToHolyreads })
     const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
     let html = `<p>Dear ${body.email.split('@')[0]},</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]}/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
-
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { loginURL: `${origins[NODE_ENV]}/account/login` }
       const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
@@ -477,6 +488,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
         html = htmlData
       }
     }
+
     /** sent welcome email */
     const result = await sentEmail(body.email, subject, html);
     if (!result) {
@@ -492,8 +504,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     if (data && data.pushTokens && data.pushTokens.length && data?.notification?.push) {
       const tokens = data.pushTokens.map(i => i.token)
       pushNotification(tokens, title, description)
-      if (data?.notification?.subscriptions)
-        pushNotification(tokens, 'Holyreads Trial Subscription', '5 days trial subscription has been activated!')
+      pushNotification(tokens, 'Holyreads Trial Subscription', '3 days trial subscription has been activated!')
     }
 
   } catch (e: any) {

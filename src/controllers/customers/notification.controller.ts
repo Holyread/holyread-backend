@@ -23,7 +23,7 @@ const createUserNotification = async (req: Request | any, res: Response | any, n
       try {
             await notificationServices.createNotification({ notification: { title: req.body.title, description: req.body.description }, type: req.body.type, userId: req.user._id })
             res.status(200).send({ message: notificationsControllerResponse.createNotificationSuccess })
-            if (req.body.title.includes('subscription') && !req.user?.notification?.subscriptions) return;
+            if (req.body.title.includes('subscription') && !req.user?.notification?.subscription) return;
             /** Push notification */
             if (req.user.pushTokens.length && req.user?.notification?.push) {
                   const tokens = req.user.pushTokens.map(i => i.token)

@@ -43,6 +43,7 @@ export const responseMessage = {
         emailAuthEnabledSuccess: 'Your email auth enabled',
         emailAuthExist: 'Your email auth already enabled',
         socialLinkError: 'Account already linked by some one else, please contact administrator',
+        planAlreadyActivated: 'Subscription plan already activated'
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

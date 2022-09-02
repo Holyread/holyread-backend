@@ -39,12 +39,14 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             }
             userObj.isEmailLinked = !!userObj.password
             let subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: userObj.subscription })
+            /** set default subscription end date with 3 days trail */
+            let subscriptionEndDate = new Date(userObj.createdAt).getTime() + (3*24*60*60*1000);
             if (subscriptionDetails?._id) {
                   let months = subscriptionDetails.duration === 'Month' ? 1 : subscriptionDetails.duration === 'Half Year' ? 6 : 12;
                   const createdAt = userObj?.inAppSubscription?.createdAt || userObj?.stripe?.createdAt || new Date()              
-                  const subscriptionEndDate = String(new Date(createdAt).setMonth(new Date(createdAt).getMonth() + months))
-                  userObj.subscriptionEndsIn = Math.ceil(getDayDiff(String(new Date()), String(new Date(Number(subscriptionEndDate)))))
+                  subscriptionEndDate = new Date(createdAt).setMonth(new Date(createdAt).getMonth() + months)
             }
+            userObj.subscriptionEndsIn = Math.ceil(getDayDiff(String(new Date()), String(new Date(subscriptionEndDate))))
             delete userObj.password
             delete userObj.library
             delete userObj.smallGroups
@@ -216,12 +218,15 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
             if (data.subscription) {
                   try {
                         data.subscription = await subscriptionService.getOneSubscriptionByFilter({ _id: data.subscription })
+
+                        /** set default subscription end date with 3 days trail */
+                        let subscriptionEndDate = new Date(data.createdAt).getTime() + (3*24*60*60*1000);
                         if (data.subscription?._id) {
                               let months = data.subscription.duration === 'Month' ? 1 : data.subscription.duration === 'Half Year' ? 6 : 12;
                               const createdAt = data?.inAppSubscription?.createdAt || data?.stripe?.createdAt || new Date()              
-                              const subscriptionEndDate = String(new Date(createdAt).setMonth(new Date(createdAt).getMonth() + months))
-                              data.subscriptionEndsIn = getDayDiff(String(new Date()), String(new Date(Number(subscriptionEndDate))))
+                              subscriptionEndDate = new Date(createdAt).setMonth(new Date(createdAt).getMonth() + months)
                         }
+                        data.subscriptionEndsIn = getDayDiff(String(new Date()), String(new Date(subscriptionEndDate)))
                   } catch (error) {
                         /** Handle get subscription error here */
                   }

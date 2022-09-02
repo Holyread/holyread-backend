@@ -233,7 +233,7 @@ export const sortArrayObject = (list: [object], key: string, order: 'asc' | 'des
     })
 }
 
-export const getDayDiff = (from: string, to: string) => {
+export const getTimeDiff = (from: string, to: string) => {
     const timeDiff = new Date(to).getTime() - new Date(from).getTime()
     let seconds = Math.floor(timeDiff / 1000);
     let minutes = Math.floor(seconds / 60);

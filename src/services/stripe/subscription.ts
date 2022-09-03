@@ -78,11 +78,12 @@ const createSubscription = async (planId: string, customerId: string, paymentMet
 
 const updateSubscription = async (planId: string, subscriptionId: string) => {
       try {
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId);
             await stripe.subscriptions.update(subscriptionId, {
                   cancel_at_period_end: false,
                   proration_behavior: 'create_prorations',
                   items: [{
-                        id: subscriptionId,
+                        id: subscription.items.data[0].id,
                         price: planId,
                   }]
             });

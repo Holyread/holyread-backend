@@ -278,6 +278,9 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     if (!body.id || !body.provider) {
       return next(Boom.notFound(authControllerResponse.missingoAuthKeyError))
     }
+    if (!body.email && body.provider.toLowerCase() === 'apple') {
+      return next(Boom.notFound(authControllerResponse.missingAppleEmailError))
+    }
     if (!body.email) {
       return next(Boom.notFound(authControllerResponse.missingEmailError))
     }
@@ -388,11 +391,14 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
 const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
   try {
     const body: any = req.body
-    if (!body.email) {
-      return next(Boom.notFound(authControllerResponse.missingEmailError))
-    }
     if (!body.id || !body.provider) {
       return next(Boom.notFound(authControllerResponse.missingoAuthKeyError))
+    }
+    if (!body.email && body.provider.toLowerCase() === 'apple') {
+      return next(Boom.notFound(authControllerResponse.missingAppleEmailError))
+    }
+    if (!body.email) {
+      return next(Boom.notFound(authControllerResponse.missingEmailError))
     }
 
     const query: any = { 'oAuth.clientId': body.id, 'oAuth.provider': body.provider }

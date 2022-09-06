@@ -18,7 +18,7 @@ export const responseMessage = {
         missingSocialAccountError: 'Social account not linked. Add social account in app settings',
         missingEmailOrPasswordError: 'Email or password is missing',
         missingEmailError: 'Email is required',
-        missingAppleEmailError: 'To use Apple ID again Go to >iCloud> stop using apple ID',
+        missingAppleEmailError: 'Go to iCloud > Password and Security > App using apple ID > Stop using apple ID.',
         emailAlreadyUsedError: 'Email already used',
         missingoAuthKeyError: 'Client id or provider missing',
         missingEmailAuthError: 'First enable or add your email auth',

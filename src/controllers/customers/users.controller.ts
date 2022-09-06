@@ -705,7 +705,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                   }
             }
             if (sendInvitationTemplate && sendInvitationTemplate.content) {
-                  const contentData = { sendername: refUser.email.split('@')[0], link, email: body.email, password: body.password }
+                  const contentData = { sendername: refUser.email.split('@')[0], link, email: body.email, password: body.password, plan: subscriptionDetails.duration + 'ly' }
                   const htmlData = await compileHtml(sendInvitationTemplate.content, contentData)
                   if (htmlData) {
                         sentInvitationHtml = htmlData

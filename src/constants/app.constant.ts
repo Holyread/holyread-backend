@@ -46,8 +46,6 @@ export const emailTemplatesTitles = {
     customer: {
         registration: 'Customer Registration',
         forgotPassword: 'Customer Forgot Password',
-        contactUs: 'Contact Us',
-        feedback: 'Client Feedback',
         sendInvitation: 'Send Invitation',
         blessFriend: 'Customer Registration Bless Friend',
         chooseSubscription: 'Choose Subscription',
@@ -56,12 +54,15 @@ export const emailTemplatesTitles = {
         changePassword: 'Change Password',
         emailAuthVerification: 'Customer Email Auth Verification',
         emailAuthEnabled: 'Customer Email Auth Enabled',
-        welcomeToHolyreads: 'Welcome To Holy Reads'
+        welcomeToHolyreads: 'Welcome To Holy Reads',
+        HolyreadsSupport: 'Holyreads Support'
     },
     admin: {
         customerRegistration: 'Admin Customer Registration',
         login: 'Admin Login',
-        forgotPassword: 'Forgot Password'
+        forgotPassword: 'Forgot Password',
+        customerFeedback: 'Customer Feedback',
+        customerInquiry: 'Customer Inquiry',
     }
 }
 

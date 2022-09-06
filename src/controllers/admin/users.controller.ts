@@ -6,8 +6,8 @@ import subscriptionService from '../../services/admin/subscriptions/subscription
 import stripeSubscriptionService from '../../services/stripe/subscription'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeS3File, uploadFileToS3, getSearchRegexp, sentEmail, compileHtml } from '../../lib/utils/utils'
-import { awsBucket, dataTable, emailTemplatesTitles } from '../../constants/app.constant'
+import { removeS3File, uploadFileToS3, getSearchRegexp, sentEmail, compileHtml, getToken } from '../../lib/utils/utils'
+import { awsBucket, dataTable, emailTemplatesTitles, origins } from '../../constants/app.constant'
 import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
 import { io } from '../../app';
@@ -40,12 +40,15 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             body.image = s3File.name
         }
         const password = (Math.random() + 1).toString(36).substring(2)
+        const verificationCode = Math.floor(1000 + Math.random() * 9000)
+        const token: string = getToken({ code: String(verificationCode), email: body.email })
+        const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
         const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.customerRegistration })
         const subject = emailTemplateDetails.subject || 'Account Verification'
-        let html = `<p>Your temporary password is: <b>${password}</b></p>`
+        let html = `<p>Dear ${body.email.split('@')[0]}, You have registerd on holyreads by admin <b><p>Your account details are as below:</p><p>email: ${body.email}</p><p>password: ${password}</p></b><b>Please click <a href=${link}>here</a> to verify your email and activate your account.</b></p>`
 
         if (emailTemplateDetails && emailTemplateDetails.content) {
-            const contentData = { email: body.email, password, username: body.firstName + ' ' + body.lastName }
+            const contentData = { email: body.email, password, username: body.firstName + ' ' + body.lastName, link }
             const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
             if (htmlData) {
                 html = htmlData
@@ -83,28 +86,6 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         }
 
         const data = await usersService.createUser(newBody)
-        if (body.subscription) {
-            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
-            const sub = emailTemplateDetails.subject || 'Holyreads Subscription'
-            let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for 30 days on ${subscriptionDetails.duration} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
-
-            if (emailTemplateDetails && emailTemplateDetails.content) {
-                const contentData = {
-                    username: body.email.split('@')[0],
-                    subscription_title: subscriptionDetails.title,
-                    subscription_details: subscriptionDetails.duration,
-                    subscription_duration: subscriptionDetails.title
-                }
-                const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
-                if (htmlData) {
-                    html = htmlData
-                }
-            }
-            const result = await sentEmail(data.email, sub, html);
-            if (!result) {
-                return next(Boom.notFound(authControllerResponse.sentSubscriptionEmailFilure))
-            }
-        }
         res.status(200).send({
             message: adminControllerResponse.addUserSuccess,
             data: {

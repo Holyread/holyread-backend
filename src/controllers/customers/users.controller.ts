@@ -698,7 +698,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             let sentInvitationHtml = `<p>Dear ${body.email.split('@')[0]}</p><p>${refUser.email.split('@')[0]} invited you to connect on Holy Reads</p><p>Your customer account details are below:</p><p>Email : ${body.email}<br>Password: ${body.password}</p><p>Please click <a href=${link}>Here</a> to accept invite.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (blessFriendTemplate && blessFriendTemplate.content) {
-                  const contentData = { email: body.email, password: body.password, username: refUser.email.substr(0, refUser.email.indexOf('@')) }
+                  const contentData = { email: body.email, username: refUser.email.substr(0, refUser.email.indexOf('@')), plan: subscriptionDetails.duration + 'ly' }
                   const htmlData = await compileHtml(blessFriendTemplate.content, contentData)
                   if (htmlData) {
                         blessFriendHtml = htmlData

@@ -218,18 +218,24 @@ export const pushNotification = async (tokens: string, title: string, descriptio
 
 /** Sort an array object */
 export const sortArrayObject = (list: [object], key: string, order: 'asc' | 'desc') => {
-    return list.sort((a,b) => {
+    return list.sort((a, b) => {
         if (['updatedAt', 'createdAt'].includes(key)) {
-            a[key] = new Date(a[key]).getTime()
-            b[key] = new Date(b[key]).getTime()
+            if (new Date(a[key]).getTime() < new Date(b[key]).getTime()) {
+                return order === 'asc' ? -1 : 1;
+            }
+            if (new Date(a[key]).getTime() > new Date(b[key]).getTime()) {
+                return order === 'desc' ? -1 : 1;
+            }
+            return 0;
+        } else {
+            if (a[key] < b[key]) {
+                return order === 'asc' ? -1 : 1;
+            }
+            if (a[key] > b[key]) {
+                return order === 'desc' ? -1 : 1;
+            }
+            return 0;
         }
-        if (a[key] < b[key]) {
-              return order === 'asc' ? -1 : 1;
-        }
-        if (a[key] > b[key]) {
-            return order === 'desc' ? -1 : 1;
-        }
-        return 0;
     })
 }
 
@@ -240,8 +246,8 @@ export const getTimeDiff = (from: string, to: string) => {
     let hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    hours = hours-(days*24);
-    minutes = minutes-(days*24*60)-(hours*60);
-    seconds = seconds-(days*24*60*60)-(hours*60*60)-(minutes*60);
+    hours = hours - (days * 24);
+    minutes = minutes - (days * 24 * 60) - (hours * 60);
+    seconds = seconds - (days * 24 * 60 * 60) - (hours * 60 * 60) - (minutes * 60);
     return days < 0 ? '0:0:0:0' : `${days}:${hours}:${minutes}:${seconds}`;
 }

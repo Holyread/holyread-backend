@@ -394,7 +394,6 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
             }
             if (section === 'completed') {
                   req.body['$addToSet'] = { 'library.completed': req.body.completed }
-                  req.body['$pull'] = { 'library.reading': { bookId: { '$in': [req.body.completed] } } }
                   delete req.body.completed
             }
             if (type === 'add' && section === 'saved') {
@@ -417,15 +416,17 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                         }
                         userObj.library.reading.push({
                               bookId: req.body.bookId,
-                              chaptersCompleted: [req.body.chapter],
+                              chaptersCompleted: req.body.chapter ? [req.body.chapter] : [],
                               updatedAt: new Date()
                         })
                         await usersService.updateUser({ library: userObj.library }, query)
                         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
                   }
-                  req.body['$addToSet'] = { 'library.reading.$.chaptersCompleted': req.body.chapter }
-                  req.body['$set'] = { 'library.reading.$.updatedAt': new Date() }
+
                   query['library.reading.bookId'] = req.body.bookId
+                  req.body['$set'] = { 'library.reading.$.updatedAt': new Date() }
+                  if (req.body.chapter) req.body['$addToSet'] = { 'library.reading.$.chaptersCompleted': req.body.chapter }
+
                   delete req.body.bookId
                   delete req.body.chapter
             }

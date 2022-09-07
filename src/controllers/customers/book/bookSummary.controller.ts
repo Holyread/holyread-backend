@@ -5,7 +5,7 @@ import bookSummaryService from '../../../services/customers/book/bookSummary.ser
 import bookAuthorService from '../../../services/admin/book/author.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket, dataLimit } from '../../../constants/app.constant'
-import { getSearchRegexp, sentEmail } from '../../../lib/utils/utils'
+import { getSearchRegexp, sentEmail, sortArrayObject } from '../../../lib/utils/utils'
 import config from '../../../../config'
 
 const NODE_ENV = config.NODE_ENV
@@ -49,14 +49,37 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
 }
 
 /**  Get one book summary by id */
-const getOneSummary = async (req: Request, res: Response, next: NextFunction) => {
+const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
     try {
         /** Get summary from db */
         const data: any = await bookSummaryService.getOneBookSummaryByFilter({ _id: req.params.id })
         if (!data) {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
+        let isPlanActive = false
+        if ((req.subscription && req.subscription?.status === 'active') || (req.user.inAppSubscription && req.user.inAppSubscriptionStatus === 'Active')) {
+            isPlanActive = true
+        }
+        if (!isPlanActive) {
+            /** Set today start and end */
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            const end = new Date();
+            end.setHours(23, 59, 59, 999);
 
+            /** Filter current days reads books */
+            let todayReads = req?.user?.library?.reading.filter(i => {
+                const openAt = new Date(i.updatedAt).getTime()
+                return openAt > start.getTime() && openAt < end.getTime() ? true : false
+            })
+            /** Slice today last 5 reads books only */
+            todayReads = sortArrayObject(todayReads, 'updatedAt', 'desc').slice(0, 5)
+
+            /** Throw if user access limit exceed */
+            if (todayReads && todayReads.length === 5 && todayReads.find(i => String(i.bookId) !== String(data._id))) {
+                return next(Boom.forbidden(bookSummaryControllerResponse.trailPlanLimitError))
+            }
+        }
         if (data.coverImage) {
             data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
         }

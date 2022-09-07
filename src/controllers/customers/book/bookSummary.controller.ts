@@ -61,15 +61,21 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             isPlanActive = true
         }
         if (!isPlanActive) {
+            /** Set today start and end */
             const start = new Date();
             start.setHours(0, 0, 0, 0);
             const end = new Date();
             end.setHours(23, 59, 59, 999);
+
+            /** Filter current days reads books */
             let todayReads = req?.user?.library?.reading.filter(i => {
-                const readTime = new Date(i.updatedAt).getTime()
-                return readTime > start.getTime() && readTime < end.getTime() ? true : false
+                const openAt = new Date(i.updatedAt).getTime()
+                return openAt > start.getTime() && openAt < end.getTime() ? true : false
             })
+            /** Slice today last 5 reads books only */
             todayReads = sortArrayObject(todayReads, 'updatedAt', 'desc').slice(0, 5)
+
+            /** Throw if user access limit exceed */
             if (todayReads && todayReads.length === 5 && todayReads.find(i => String(i.bookId) !== String(data._id))) {
                 return next(Boom.forbidden(bookSummaryControllerResponse.trailPlanLimitError))
             }

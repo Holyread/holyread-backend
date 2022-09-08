@@ -43,7 +43,9 @@ export interface IUser extends mongoose.Document {
         completed?: [string],
         reading?: [{
             bookId: string,
-            chaptersCompleted: [string]
+            chaptersCompleted: [string],
+            createdAt: Date,
+            updatedAt: Date
         }],
     },
     smallGroups?: [string],
@@ -107,7 +109,9 @@ export type createUserType = {
         completed?: [string],
         reading?: [{
             bookId: string,
-            chaptersCompleted: [string]
+            chaptersCompleted: [string],
+            createdAt: Date,
+            updatedAt: Date
         }]
     },
     smallGroups?: [string],
@@ -171,7 +175,9 @@ export type getUserType = {
         completed?: [string],
         reading?: [{
             bookId: string,
-            chaptersCompleted: [string]
+            chaptersCompleted: [string],
+            createdAt: Date,
+            updatedAt: Date
         }]
     },
     smallGroups?: [string],
@@ -236,6 +242,7 @@ export const UserSchema = new Schema({
         reading: [{
             bookId: { type: String },
             chaptersCompleted: [{ type: String }],
+            createdAt: { type: Date },
             updatedAt: { type: Date }
         }]
     },

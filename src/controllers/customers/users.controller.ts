@@ -405,9 +405,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   delete req.body.saved
             }
             if (section === 'reading') {
-                  const bookQuery = { _id: req.body.bookId }
-                  if (req.body.chapter) bookQuery['chapters._id'] = req.body.chapter
-                  const bookSummary = await bookService.findBook(bookQuery)
+                  const bookSummary = await bookService.findBook({ _id: req.body.bookId, 'chapters._id': req.body.chapter })
                   if (!bookSummary) {
                         return next(Boom.notFound(bookSummaryControllerResponse.chapterNotExist))
                   }
@@ -418,7 +416,8 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                         }
                         userObj.library.reading.push({
                               bookId: req.body.bookId,
-                              chaptersCompleted: req.body.chapter ? [req.body.chapter] : [],
+                              chaptersCompleted: [req.body.chapter],
+                              createdAt: new Date(),
                               updatedAt: new Date()
                         })
                         await usersService.updateUser({ library: userObj.library }, query)
@@ -427,7 +426,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
 
                   query['library.reading.bookId'] = req.body.bookId
                   req.body['$set'] = { 'library.reading.$.updatedAt': new Date() }
-                  if (req.body.chapter) req.body['$addToSet'] = { 'library.reading.$.chaptersCompleted': req.body.chapter }
+                  req.body['$addToSet'] = { 'library.reading.$.chaptersCompleted': req.body.chapter }
 
                   delete req.body.bookId
                   delete req.body.chapter

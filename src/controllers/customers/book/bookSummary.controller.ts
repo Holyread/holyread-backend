@@ -69,10 +69,9 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
 
             /** Filter current days new reads books */
             let todayReads = []; let isExist = false;
-            req?.user?.library?.reading.map(i => {
-                const openAt = new Date(i.updatedAt).getTime();
+            req?.user?.library?.view.map(i => {
                 const createdAt = new Date(i.createdAt).getTime();
-                if (openAt >= start.getTime() && openAt <= end.getTime() && createdAt >= start.getTime()) todayReads.push(i)
+                if (createdAt >= start.getTime()) todayReads.push(i)
                 if (String(i.bookId) === String(data._id)) {
                     isExist = true
                 }

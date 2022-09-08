@@ -98,7 +98,7 @@ export const uploadFileToS3 = async (
                 pattern = /^data:application\/\w+;base64,/
             } else if (base64Document.indexOf('data:image/') > -1) {
                 docExtension = base64Document.substring('data:image/'.length, base64Document.indexOf(';base64'))
-            } 
+            }
             else {
                 return reject(new Error('File type not supported'))
             }
@@ -204,7 +204,7 @@ export const compileHtml = async (source: string, data: any) => {
 export const randomNumberInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
 
 export const pushNotification = async (tokens: string, title: string, description: string) => {
-    firebaseAdmin.messaging().sendToDevice(tokens, { notification: { title, body: description }}).then(response => {
+    firebaseAdmin.messaging().sendToDevice(tokens, { notification: { title, body: description } }).then(response => {
         response.results.forEach((result, index) => {
             const error = result.error;
             if (error) {
@@ -250,4 +250,12 @@ export const getTimeDiff = (from: string, to: string) => {
     minutes = minutes - (days * 24 * 60) - (hours * 60);
     seconds = seconds - (days * 24 * 60 * 60) - (hours * 60 * 60) - (minutes * 60);
     return days < 0 ? '0:0:0:0' : `${days}:${hours}:${minutes}:${seconds}`;
+}
+
+export const getDates = (d1: any, d2: any) => {
+    const oneDay = 24 * 3600 * 1000;
+    for (var d = [], ms = d1 * 1, last = d2 * 1; ms < last; ms += oneDay) {
+        d.push(new Date(ms));
+    }
+    return d;
 }

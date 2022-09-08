@@ -411,7 +411,10 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   }
                   const readingObj = userObj.library?.reading?.find(oneRead => oneRead.bookId === req.body.bookId)
                   if (!readingObj) {
-                        if (!userObj.library?.reading) {
+                        if (!userObj?.library) {
+                              userObj.library = {}
+                        }
+                        if (!userObj?.library?.reading) {
                               userObj.library.reading = []
                         }
                         userObj.library.reading.push({

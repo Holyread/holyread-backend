@@ -67,17 +67,17 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             const end = new Date();
             end.setHours(23, 59, 59, 999);
 
-            /** Filter current days new reads books */
-            let todayReads = []; let isExist = false;
+            /** Filter current days new view books */
+            let todayViews = []; let isExist = false;
             req?.user?.library?.view.map(i => {
                 const createdAt = new Date(i.createdAt).getTime();
-                if (createdAt >= start.getTime()) todayReads.push(i)
+                if (createdAt >= start.getTime()) todayViews.push(i)
                 if (String(i.bookId) === String(data._id)) {
                     isExist = true
                 }
             })
 
-            if (!isExist && todayReads.length >= 5) {
+            if (!isExist && todayViews.length >= 5) {
                 return next(Boom.forbidden(bookSummaryControllerResponse.trailPlanLimitError))
             }
         }
@@ -98,6 +98,10 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             });
         }
         res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummarySuccess, data })
+        /** Incress book views */
+        if (!req.user?.library?.views.find(i => String(i.bookId) === (req.params.id))) {
+            await bookSummaryService.updateBookSummary({ '$inc': { views: 1 } }, { _id: req.params.id})
+        }
     } catch (e: any) {
         next(Boom.badData(e.message))
     }

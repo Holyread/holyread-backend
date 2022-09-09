@@ -1,6 +1,7 @@
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { ExpertCuratedModel } from '../../../models/index'
+import { randomNumberInRange } from '../../../lib/utils/utils'
 
 const NODE_ENV = config.NODE_ENV
 
@@ -20,7 +21,7 @@ const getAllExpertCurateds = async (skip: number, limit, search: object, sort) =
                     description: item.description,
                     shortDescription: item.shortDescription,
                     image: item.image,
-                    totalReads: 100
+                    views: randomNumberInRange(1000, 5000)
                 }
             }))
         }

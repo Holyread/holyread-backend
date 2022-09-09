@@ -118,7 +118,7 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
                         author: oneBook.book.author,
                         overview: oneBook.book.overview,
                         description: oneBook.book.description,
-                        totalReads: randomNumberInRange(10000, 20000),
+                        views: oneBook.book.views || randomNumberInRange(10000, 20000),
                         reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / oneBook.book?.chapters?.length : 0).toFixed(0)),
                         bookMark,
                         totalStar: ratings[String(oneBook.book._id)]?.averageStar || 3,

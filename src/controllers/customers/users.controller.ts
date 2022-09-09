@@ -675,7 +675,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             let subscriptionEndDate;
             if (!body.inAppSubscription) {
                   const customer = await stripeSubscriptionService.createCustomer(body.email, req.body.token)
-                  const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id, req.body.paymentMethod)
+                  const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id, req.body.paymentMethod, 'active')
                   inviteUserBody.stripe = {
                         customerId: customer.id,
                         planId: subscriptionDetails.stripePlanId,
@@ -683,7 +683,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                         createdAt: new Date()
                   }
                   subscriptionEndDate = new Date(subscription.current_period_end * 1000)
-                  if (subscription.current_period_end === subscription.current_period_end) {
+                  if (subscription.status === 'trialing') {
                         let now = new Date(subscriptionEndDate)
                         switch (subscriptionDetails.duration) {
                               case "Year":
@@ -822,7 +822,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         subscription = await stripeSubscriptionService.retrieveSubscription(userObj.stripe.subscriptionId)
                         subscriptionEndDate = new Date(subscription.current_period_end * 1000)
                   }
-                  if (subscription.current_period_end === subscription.current_period_end) {
+                  if (subscription.status === 'trialing') {
                         let now = new Date(subscriptionEndDate)
                         switch (subscriptionDetails.duration) {
                               case "Year":

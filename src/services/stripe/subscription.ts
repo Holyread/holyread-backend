@@ -48,7 +48,7 @@ const createCustomer = async (email?: string, source?: string) => {
       }
 }
 
-const createSubscription = async (planId: string, customerId: string, paymentMethod?: string) => {
+const createSubscription = async (planId: string, customerId: string, paymentMethod?: string, status?: string) => {
       try {
             if (paymentMethod) {
                   await clearPaymentMethods(customerId)
@@ -68,7 +68,7 @@ const createSubscription = async (planId: string, customerId: string, paymentMet
                         { price: planId },
                   ],
                   expand: ['latest_invoice.payment_intent'],
-                  trial_period_days: 3
+                  trial_period_days: status === 'active' ? 0 : 3
             });
             return subscription
       } catch (error: any) {

@@ -434,6 +434,31 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   delete req.body.bookId
                   delete req.body.chapter
             }
+            if (section === 'view') {
+                  const bookSummary = await bookService.findBook({ _id: req.body.bookId })
+                  if (!bookSummary) {
+                        return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
+                  }
+                  const viewObj = userObj.library?.view?.find(bookItem => bookItem.bookId === req.body.bookId)
+                  if (!viewObj) {
+                        if (!userObj?.library) {
+                              userObj.library = {}
+                        }
+                        if (!userObj?.library?.view) {
+                              userObj.library.view = []
+                        }
+                        userObj.library.view.push({
+                              bookId: req.body.bookId,
+                              createdAt: new Date()
+                        })
+                        await usersService.updateUser({ library: userObj.library }, query)
+                        return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
+                  }
+
+                  query['library.view.bookId'] = req.body.bookId
+                  req.body['$set'] = { 'library.view.$.bookId': req.body.bookId }
+                  delete req.body.bookId
+            }
             /** Add to User small group */
             if (type === 'add' && section === 'smallGroup') {
                   req.body['$addToSet'] = { 'smallGroups': req.body.smallGroup }

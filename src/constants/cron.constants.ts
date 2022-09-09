@@ -1,11 +1,11 @@
 export const readsOfDayDisplayAt = {
   SCHEDULE: {
     Seconds: '0',
-    Minutes: '07',
-    Hours: '21',
+    Minutes: '0',
+    Hours: '1',
     DayOfMonth: '*',
     Months: '*',
     DayOfWeek: '*',
   },
-  JOBRESTRICTENV: ['development'], // 'local','development','production'
+  JOBRESTRICTENV: ['local'], // 'local','development','production'
 }

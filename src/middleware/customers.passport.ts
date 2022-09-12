@@ -18,7 +18,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             if (userDetails.status !== 'Active') {
                 next(Boom.badRequest('User not active'));
             }
-            req.user = userDetails
+            req.user = { ...userDetails, isNewLogin: eval(details?.isNewLogin) }
             global.currentUser = req.user;
             if (req?.user?.stripe?.subscriptionId) {
                 const subscription = await subscriptionService.retrieveSubscription(req?.user?.stripe.subscriptionId)

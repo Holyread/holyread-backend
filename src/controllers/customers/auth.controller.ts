@@ -153,8 +153,8 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
 
     await usersService.updateUser(body, { _id: user._id })
 
-    const title = 'Welcome to Holyreads';
-    const description = 'Enjoy best summaries audio and video';
+    const title = 'Welcome to Holy Reads';
+    const description = 'Enjoy summaries of bestselling Christian books';
     await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title, description } })
 
     /** Get welcome email template */
@@ -348,8 +348,8 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     /** Create new user using social login */
     const data: any = await usersService.createUser({ ...newBody, loginAt: new Date() })
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id, isNewLogin: String(true) })
-    const title = 'Welcome to Holyreads';
-    const description = 'Enjoy best summaries audio and video';
+    const title = 'Welcome to Holy Reads';
+    const description = 'Enjoy summaries of bestselling Christian books';
 
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
 
@@ -482,8 +482,8 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
 
     const data: any = await usersService.createUser({ ...newBody, loginAt: new Date() })
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id, isNewLogin: String(true) })
-    const title = 'Welcome to Holyreads';
-    const description = 'Enjoy best summaries audio and video';
+    const title = 'Welcome to Holy reads';
+    const description = 'Enjoy summaries of bestselling Christian books';
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
 
     /** Get welcome email template */

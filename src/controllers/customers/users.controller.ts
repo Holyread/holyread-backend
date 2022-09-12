@@ -754,8 +754,8 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                   const contentData = {
                         username: body.email.split('@')[0],
                         price: subscriptionDetails.price,
-                        endDate: subscriptionEndDate,
-                        duration: subscriptionDetails.duration
+                        endDate: `[${subscriptionEndDate}]`,
+                        duration: subscriptionDetails?.duration?.toLowercase()?.includes('half') ? subscriptionDetails.duration : `one ${subscriptionDetails.duration}`
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
                   if (htmlData) {
@@ -769,7 +769,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             const notificationTitle = 'Subscription Gift'
             const notificationDescription = 'Subscription Gift Added Successfully'
             await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
-            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: 'Welcome to Holyreads', description: 'Enjoy best summaries audio and video' } })
+            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: 'Welcome to Holy Reads', description: 'Enjoy summaries of bestselling Christian books' } })
             fetchNotifications(io.sockets, { _id: invitedUserDetails._id })
 
             res.status(200).send({ message: authControllerResponse.blessFriendSuccess })
@@ -857,8 +857,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   const contentData = {
                         username: userObj.email.split('@')[0],
                         price: subscriptionDetails.price,
-                        endDate: subscriptionEndDate,
-                        duration: subscriptionDetails.duration
+                        endDate: `[${subscriptionEndDate}]`,
+                        duration: subscriptionDetails?.duration?.toLowercase()?.includes('half') ? subscriptionDetails.duration : `one ${subscriptionDetails.duration}`
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
                   if (htmlData) {

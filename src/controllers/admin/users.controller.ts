@@ -93,8 +93,8 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
                 email: data.email
             }
         })
-        const title = 'Welcome to Holyreads';
-        const description = 'Enjoy best summaries audio and video';
+        const title = 'Welcome to Holy Reads';
+        const description = 'Enjoy summaries of bestselling Christian books';
         await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
         const createSubscriptionTitle = 'Holyreads Subscription'
         const createSubscriptionDesc = 'Subscription activated successfully'

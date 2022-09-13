@@ -80,7 +80,7 @@ const getRecentReads = async (request: any, response: Response, next: NextFuncti
         else data.summaries = sortArrayObject(data.summaries, 'updatedAt', 'desc')
 
         data.summaries = data.summaries.slice(skip, skip + limit)
-        return response.status(200).send({ message: dashboardControllerResponse.getDashboardSuccess, data })
+        return response.status(200).send({ message: dashboardControllerResponse.getDashboardSuccess, data: { recentReads: data } })
     } catch (e: any) {
         return next(Boom.badData(e.message))
     }

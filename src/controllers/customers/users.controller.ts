@@ -755,7 +755,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                         username: body.email.split('@')[0],
                         price: subscriptionDetails.price,
                         endDate: `[${subscriptionEndDate}]`,
-                        duration: subscriptionDetails?.duration?.toLowercase()?.includes('half') ? subscriptionDetails.duration : `one ${subscriptionDetails.duration}`
+                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `one ${subscriptionDetails.duration}`
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
                   if (htmlData) {
@@ -858,7 +858,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         username: userObj.email.split('@')[0],
                         price: subscriptionDetails.price,
                         endDate: `[${subscriptionEndDate}]`,
-                        duration: subscriptionDetails?.duration?.toLowercase()?.includes('half') ? subscriptionDetails.duration : `one ${subscriptionDetails.duration}`
+                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `one ${subscriptionDetails.duration}`
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
                   if (htmlData) {

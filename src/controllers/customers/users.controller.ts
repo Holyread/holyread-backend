@@ -675,7 +675,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             let subscriptionEndDate;
             if (!body.inAppSubscription) {
                   const customer = await stripeSubscriptionService.createCustomer(body.email, req.body.token)
-                  const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id, req.body.paymentMethod)
+                  const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id, req.body.paymentMethod, 'active')
                   inviteUserBody.stripe = {
                         customerId: customer.id,
                         planId: subscriptionDetails.stripePlanId,
@@ -683,7 +683,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                         createdAt: new Date()
                   }
                   subscriptionEndDate = new Date(subscription.current_period_end * 1000)
-                  if (subscription.current_period_end === subscription.current_period_end) {
+                  if (subscription.status === 'trialing') {
                         let now = new Date(subscriptionEndDate)
                         switch (subscriptionDetails.duration) {
                               case "Year":
@@ -754,8 +754,8 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                   const contentData = {
                         username: body.email.split('@')[0],
                         price: subscriptionDetails.price,
-                        endDate: subscriptionEndDate,
-                        duration: subscriptionDetails.duration
+                        endDate: `[${subscriptionEndDate}]`,
+                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `one ${subscriptionDetails.duration}`
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
                   if (htmlData) {
@@ -769,7 +769,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             const notificationTitle = 'Subscription Gift'
             const notificationDescription = 'Subscription Gift Added Successfully'
             await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
-            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: 'Welcome to Holyreads', description: 'Enjoy best summaries audio and video' } })
+            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: 'Welcome to Holy Reads', description: 'Enjoy summaries of bestselling Christian books' } })
             fetchNotifications(io.sockets, { _id: invitedUserDetails._id })
 
             res.status(200).send({ message: authControllerResponse.blessFriendSuccess })
@@ -822,7 +822,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         subscription = await stripeSubscriptionService.retrieveSubscription(userObj.stripe.subscriptionId)
                         subscriptionEndDate = new Date(subscription.current_period_end * 1000)
                   }
-                  if (subscription.current_period_end === subscription.current_period_end) {
+                  if (subscription.status === 'trialing') {
                         let now = new Date(subscriptionEndDate)
                         switch (subscriptionDetails.duration) {
                               case "Year":
@@ -857,8 +857,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   const contentData = {
                         username: userObj.email.split('@')[0],
                         price: subscriptionDetails.price,
-                        endDate: subscriptionEndDate,
-                        duration: subscriptionDetails.duration
+                        endDate: `[${subscriptionEndDate}]`,
+                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `one ${subscriptionDetails.duration}`
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
                   if (htmlData) {

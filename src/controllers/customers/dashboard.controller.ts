@@ -10,7 +10,7 @@ import ratingService from '../../services/customers/book/rating.service'
 import smallGroupService from '../../services/customers/smallGroup/smallGroup.service'
 import { responseMessage } from '../../constants/message.constant'
 import { awsBucket, dataLimit } from '../../constants/app.constant'
-import { randomNumberInRange } from '../../lib/utils/utils'
+import { randomNumberInRange, sortArrayObject } from '../../lib/utils/utils'
 import config from '../../../config'
 
 const NODE_ENV = config.NODE_ENV
@@ -23,7 +23,7 @@ const getCategories = async (request: Request, response: Response, next: NextFun
         const data: any = await bookCategoryService.getAllBookCategories(0, 0, { status: 'Active' }, [['createdAt', 'DESC']])
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
-            data 
+            data
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -31,20 +31,58 @@ const getCategories = async (request: Request, response: Response, next: NextFun
 }
 
 /** Get recent reads books for Dashboard */
-const getRecentReads = async (request: Request, response: Response, next: NextFunction) => {
+const getRecentReads = async (request: any, response: Response, next: NextFunction) => {
     try {
         const params: any = request.query
+        const userObj = request.user
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        const recentReads: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), {}, [['createdAt', 'DESC']])
-        response.status(200).json({
-            message: dashboardControllerResponse.getDashboardSuccess,
-            data: {
-                recentReads
-            }
+        let recentReads: any;
+        if (!request.user?.library?.reading?.length) {
+            recentReads = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), {}, [['createdAt', 'DESC']])
+            return response.status(200).json({
+                message: dashboardControllerResponse.getDashboardSuccess,
+                data: {
+                    recentReads
+                }
+            })
+        }
+
+        /** collect user reads books ids those not in completed books list */
+        const bookIds = new Set();
+        userObj.library.reading.map(oneBook => {
+            if (
+                oneBook.bookId &&
+                !userObj.library?.completed?.find(cb => String(cb) === String(oneBook.bookId))
+            ) bookIds.add(oneBook.bookId)
+        });
+
+        /** Prepare query to get users reads book details */
+        const search: any = { _id: { $in: [...bookIds] } }
+        if (params.author) { search.author = params.author }
+        /** Get user reads books details by users reads books ids */
+        const data = await bookSummaryService.getAllBookSummaries(0, 0, search, [], true)
+
+        /** sort summary by latest reads based on user library readings */
+        const set = new Set()
+        userObj.library.reading.map(r => {
+            const summary = data.summaries.find((os: any) => String(os._id) === String(r.bookId))
+            if (!summary) return;
+            summary.reads = Number((r.chaptersCompleted && r.chaptersCompleted?.length ? (100 * r.chaptersCompleted?.length) / summary?.chapters?.length : 0).toFixed(0))
+            summary.updatedAt = r.updatedAt
+
+            delete summary.chapters
+            set.add(summary);
         })
+        data.summaries = [...set];
+
+        if (params.sort) data.summaries = sortArrayObject(data.summaries, 'title', params.sort.toLowerCase())
+        else data.summaries = sortArrayObject(data.summaries, 'updatedAt', 'desc')
+
+        data.summaries = data.summaries.slice(skip, skip + limit)
+        return response.status(200).send({ message: dashboardControllerResponse.getDashboardSuccess, data })
     } catch (e: any) {
-        next(Boom.badData(e.message))
+        return next(Boom.badData(e.message))
     }
 }
 
@@ -124,7 +162,7 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
                         author: oneBook.book.author,
                         overview: oneBook.book.overview,
                         description: oneBook.book.description,
-                        totalReads: randomNumberInRange(10000, 20000),
+                        views: oneBook.book.views || randomNumberInRange(10000, 20000),
                         reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / oneBook.book?.chapters?.length : 0).toFixed(0)),
                         bookMark,
                         totalStar: ratings[String(oneBook.book._id)]?.averageStar || 3,

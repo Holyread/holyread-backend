@@ -69,7 +69,10 @@ export interface IUser extends mongoose.Document {
         planId?: string,
         createdAt?: Date
     },
-    device: string
+    device: string,
+    createdAt: Date,
+    updatedAt: Date,
+    loginAt: Date
 }
 
 export type createUserType = {
@@ -139,7 +142,10 @@ export type createUserType = {
         planId?: string,
         createdAt?: Date
     },
-    device: string
+    device: string,
+    createdAt: Date,
+    updatedAt: Date,
+    loginAt: Date
 }
 
 export type getUserType = {
@@ -209,7 +215,10 @@ export type getUserType = {
         planId?: string,
         createdAt?: Date
     },
-    device: string
+    device: string,
+    createdAt: Date,
+    updatedAt: Date,
+    loginAt: Date,
 }
 
 export const UserSchema = new Schema({
@@ -286,6 +295,7 @@ export const UserSchema = new Schema({
         },
     },
     updatedAt: { type: Date },
+    loginAt: { type: Date },
 }, { strict: 'throw' })
 
 export const UserModel = mongoose.model<IUser>('user', UserSchema)

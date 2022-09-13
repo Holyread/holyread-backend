@@ -1,5 +1,5 @@
 import { UserModel, SubscriptionsModel } from '../../../models/index'
-import { getToken, encrypt } from '../../../lib/utils/utils'
+import { encrypt } from '../../../lib/utils/utils'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
@@ -15,8 +15,7 @@ const createUser = async (body: any) => {
         if (!result) {
             throw new Error(authControllerResponse.createUserFailed)
         }
-        const token: string = getToken({ email: result.email, id: result._id })
-        return { _id: result._id, email: result.email, token }
+        return { _id: result._id, email: result.email }
     } catch (e: any) {
         throw new Error(e)
     }

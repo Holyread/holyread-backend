@@ -18,7 +18,9 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             if (userDetails.status !== 'Active') {
                 next(Boom.badRequest('User not active'));
             }
-            req.user = userDetails
+            const refUser: any = await UserModel.findOne({ _id: userDetails.referralUserId }).select('firstName lastName email').lean().exec()
+            if (refUser) userDetails.referralUserId = refUser
+            req.user = { ...userDetails, isNewLogin: eval(details?.isNewLogin) }
             global.currentUser = req.user;
             if (req?.user?.stripe?.subscriptionId) {
                 const subscription = await subscriptionService.retrieveSubscription(req?.user?.stripe.subscriptionId)

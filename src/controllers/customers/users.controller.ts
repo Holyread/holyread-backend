@@ -424,7 +424,6 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                         userObj.library.reading.push({
                               bookId: req.body.bookId,
                               chaptersCompleted: [req.body.chapter],
-                              createdAt: new Date(),
                               updatedAt: new Date()
                         })
                         await usersService.updateUser(query, { library: userObj.library })
@@ -527,37 +526,33 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   section === 'reading' &&
                   userObj?.library?.reading?.length
             ) {
-                  /** Sort user reads books by reads _id */
-                  userObj.library.reading = userObj.library.reading.sort((a, b) => (String(a._id) > String(b._id)) ? -1 : ((String(b._id) > String(a._id)) ? 1 : 0))
-
                   /** collect user reads books ids those not in completed books list */
-                  const bookIds = userObj.library.reading.map(oneBook => {
+                  const bookIds = new Set()
+                  userObj.library.reading.map(oneBook => {
                         if (
                               oneBook.bookId &&
                               !userObj.library?.completed?.find(cb => String(cb) === String(oneBook.bookId))
-                        ) {
-                              return oneBook.bookId
-                        }
-                  }).filter(b => b)
+                        ) bookIds.add(oneBook.bookId)
+                  })
 
                   /** Prepare query to get users reads book details */
-                  const search: any = { _id: { $in: bookIds } }
+                  const search: any = { _id: { $in: [...bookIds] } }
                   if (author) { search.author = author }
 
                   /** Get user reads books details by users reads books ids */
-                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']], true)
+                  const data = await bookService.getAllBookSummaries(0, 0, search, [], true)
 
                   /** sort summary by latest reads based on user library readings */
-                  data.summaries = userObj.library.reading.map(r => {
+                 const summaries = new Set()
+                  userObj.library.reading.map(r => {
                         const summary = data.summaries.find((os: any) => String(os._id) === String(r.bookId))
-                        if (summary) {
+                        if (!summary) return; 
                               summary.reads = Number((r.chaptersCompleted && r.chaptersCompleted?.length ? (100 * r.chaptersCompleted?.length) / summary?.chapters?.length : 0).toFixed(0))
                               summary.updatedAt = r.updatedAt
                               delete summary.chapters
-                              return summary
-                        }
-                  }).filter(s => s)
-
+                              summaries.add(summary)
+                  })
+                  data.summaries = [...summaries]
                   if (sort) data.summaries = sortArrayObject(data.summaries, 'title', sort.toLowerCase())
                   else data.summaries = sortArrayObject(data.summaries, 'updatedAt', 'desc')
                   data.summaries = data.summaries.slice(skip, skip + limit)

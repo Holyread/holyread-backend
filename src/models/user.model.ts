@@ -47,7 +47,6 @@ export interface IUser extends mongoose.Document {
         reading?: [{
             bookId: string,
             chaptersCompleted: [string],
-            createdAt: Date,
             updatedAt: Date
         }],
         view?: [{
@@ -123,7 +122,6 @@ export type createUserType = {
         reading?: [{
             bookId: string,
             chaptersCompleted: [string],
-            createdAt: Date,
             updatedAt: Date
         }],
         view?: [{
@@ -199,7 +197,6 @@ export type getUserType = {
         reading?: [{
             bookId: string,
             chaptersCompleted: [string],
-            createdAt: Date,
             updatedAt: Date
         }],
         view?: [{
@@ -275,7 +272,6 @@ export const UserSchema = new Schema({
         reading: [{
             bookId: { type: String },
             chaptersCompleted: [{ type: String }],
-            createdAt: { type: Date },
             updatedAt: { type: Date }
         }],
         view: [{

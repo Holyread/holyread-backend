@@ -55,6 +55,7 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             const notifications = await notificationsService.getUserNotifications({ userId: userObj._id })
             userObj.notifications = notifications
             res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
+            await userService.updateUser({ _id: userObj._id }, { lastSeen: new Date() });
       } catch (e: any) {
             next(Boom.badData(e.message))
       }
@@ -78,7 +79,7 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             if (!password || (newPassword && userObj?.password !== encrypt(password || ''))) {
                   return next(Boom.badData(authControllerResponse.userInvalidPasswordError))
             }
-            await usersService.updateUser({ password: newPassword || password }, { _id: userObj._id })
+            await usersService.updateUser({ _id: userObj._id }, { password: newPassword || password })
             const notificationTitle = 'Change Password'
             const notificationDescription = 'Password Changed Successfully'
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
@@ -147,7 +148,7 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
             if (!result) {
                   return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
             }
-            await usersService.updateUser({ verificationCode }, { _id: userObj._id })
+            await usersService.updateUser({ _id: userObj._id }, { verificationCode })
             res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
       } catch (e: any) {
             next(Boom.badData(e.message))
@@ -169,13 +170,13 @@ const verifyEmailAuth = async (req: Request, res: Response, next: NextFunction) 
                   return next(Boom.notFound(authControllerResponse.getUserError))
             }
 
-            await usersService.updateUser({
+            await usersService.updateUser({ _id: user._id }, {
                   verified: true,
                   status: 'Active',
                   $unset: { verificationCode: 1 },
                   email,
                   password: decrypt(password)
-            }, { _id: user._id })
+            })
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthEnabled })
             const sub = emailTemplateDetails.subject || 'Customer Email Auth Enabled'
@@ -309,7 +310,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             if (isAppSubscriptionStatus && subscriptionDetails) {
                   body.inAppSubscriptionStatus = req.body.inAppSubscription?.status
             }
-            await usersService.updateUser(body, { _id: userObj._id })
+            await usersService.updateUser({ _id: userObj._id }, body)
             /** sent email for subscription status updated */
             const notificationTitle = 'Holyreads Subscription'
             const notificationDescription = emailTemplatesTitles.customer.subscriptionActivated ? 'Subscription activated' : 'Subscription cancelled'
@@ -423,7 +424,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                               createdAt: new Date(),
                               updatedAt: new Date()
                         })
-                        await usersService.updateUser({ library: userObj.library }, query)
+                        await usersService.updateUser(query, { library: userObj.library })
                         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
                   }
 
@@ -451,7 +452,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                               bookId: req.body.bookId,
                               createdAt: new Date()
                         })
-                        await usersService.updateUser({ library: userObj.library }, query)
+                        await usersService.updateUser(query, { library: userObj.library })
                         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
                   }
 
@@ -469,7 +470,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   req.body['$pull'] = { 'smallGroups': req.body.smallGroup }
                   delete req.body.smallGroup
             }
-            await usersService.updateUser(req.body, query)
+            await usersService.updateUser(query, req.body)
             return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
       } catch (e: any) {
             return next(Boom.badData(e.message))
@@ -812,7 +813,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         const customer = await stripeSubscriptionService.createCustomer(userObj.email, req.body.token)
                         if (!userObj.stripe) { userObj.stripe = {} }
                         userObj.stripe.customerId = customer.id
-                        await usersService.updateUser({ 'stripe.customerId': customer.id }, { _id: userObj._id })
+                        await usersService.updateUser({ _id: userObj._id }, { 'stripe.customerId': customer.id })
                   }
                   if (!userObj?.stripe?.subscriptionId) {
                         subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod)
@@ -845,10 +846,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   }
                   
             }
-            await usersService.updateUser(
-                  body,
-                  { _id: userObj._id }
-            )
+            await usersService.updateUser({ _id: userObj._id }, body)
+
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
             const sub = emailTemplateDetails.subject || 'Holyreads Subscription'
             let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`

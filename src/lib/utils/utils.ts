@@ -251,3 +251,15 @@ export const getTimeDiff = (from: string, to: string) => {
     seconds = seconds - (days * 24 * 60 * 60) - (hours * 60 * 60) - (minutes * 60);
     return days < 0 ? '0:0:0:0' : `${days}:${hours}:${minutes}:${seconds}`;
 }
+
+export const getDates = (d1: any, d2: any) => {
+    const oneDay = 24 * 3600 * 1000;
+    for (var d = [], ms = d1 * 1, last = d2 * 1; ms < last; ms += oneDay) {
+        d.push(new Date(ms));
+    }
+    return d;
+}
+
+export const groupByKey = (list: any, key: string) =>
+    list.reduce((hash, obj) =>
+        ({...hash, [obj[key]]:( hash[obj[key]] || [] ).concat(obj)}), {})

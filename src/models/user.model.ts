@@ -19,7 +19,8 @@ export interface IUser extends mongoose.Document {
         inApp?: boolean,
         downloads?: boolean,
         promotionsAndSales?: boolean,
-        subscription?: boolean
+        subscription?: boolean,
+        dailyDevotional?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -72,7 +73,8 @@ export interface IUser extends mongoose.Document {
     device: string,
     createdAt: Date,
     updatedAt: Date,
-    loginAt: Date
+    lastSeen: Date,
+    timeZone: String
 }
 
 export type createUserType = {
@@ -92,7 +94,8 @@ export type createUserType = {
         inApp?: boolean,
         downloads?: boolean,
         promotionsAndSales?: boolean,
-        subscription?: boolean
+        subscription?: boolean,
+        dailyDevotional?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -238,7 +241,8 @@ export const UserSchema = new Schema({
         inApp: { type: Boolean, default: true },
         downloads: { type: Boolean, default: true },
         promotionsAndSales: { type: Boolean, default: true },
-        subscription: { type: Boolean, default: true }
+        subscription: { type: Boolean, default: true },
+        dailyDevotional: { type: Boolean, default: true }
     },
     metaKeyword: { type: String },
     metaDescription: { type: String },

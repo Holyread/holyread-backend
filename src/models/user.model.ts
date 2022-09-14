@@ -17,8 +17,6 @@ export interface IUser extends mongoose.Document {
         email?: boolean,
         push?: boolean,
         inApp?: boolean,
-        downloads?: boolean,
-        promotionsAndSales?: boolean,
         subscription?: boolean,
         dailyDevotional?: boolean,
         offerAndDeal?: boolean
@@ -92,8 +90,6 @@ export type createUserType = {
         email?: boolean,
         push?: boolean,
         inApp?: boolean,
-        downloads?: boolean,
-        promotionsAndSales?: boolean,
         subscription?: boolean,
         dailyDevotional?: boolean,
         offerAndDeal?: boolean
@@ -167,8 +163,6 @@ export type getUserType = {
         email?: boolean,
         push?: boolean,
         inApp?: boolean,
-        downloads?: boolean,
-        promotionsAndSales?: boolean,
         subscription?: boolean,
         dailyDevotional?: boolean,
         offerAndDeal?: boolean
@@ -242,8 +236,6 @@ export const UserSchema = new Schema({
         email: { type: Boolean, default: true },
         push: { type: Boolean, default: true },
         inApp: { type: Boolean, default: true },
-        downloads: { type: Boolean, default: true },
-        promotionsAndSales: { type: Boolean, default: true },
         subscription: { type: Boolean, default: true },
         dailyDevotional: { type: Boolean, default: true },
         offerAndDeal: { type: Boolean, default: true },

@@ -252,12 +252,15 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   firstName: req.body.firstName || userObj.firstName,
                   lastName: req.body.lastName || userObj.lastName,
                   notification: {
-                        push: (req.body?.notification && typeof req.body?.notification?.push === 'boolean') ? req.body?.notification?.push : req.body?.notification?.push || false,
-                        email: (req.body?.notification && typeof req.body?.notification?.email === 'boolean') ? req.body?.notification?.email : req.body?.notification?.email || false,
-                        inApp: (req.body?.notification && typeof req.body?.notification?.inApp === 'boolean') ? req.body?.notification?.inApp : req.body?.notification?.inApp || false,
-                        promotionsAndSales: (req.body?.notification && typeof req.body?.notification?.promotionsAndSales === 'boolean') ? req.body?.notification?.promotionsAndSales : req.body?.notification?.promotionsAndSales || false,
-                        subscription: (req.body?.notification && typeof req.body?.notification?.subscription === 'boolean') ? req.body?.notification?.subscription : req.body?.notification?.subscription || false,
-                  }
+                        push: typeof eval(req.body?.notification?.push) === 'boolean' ? req.body?.notification?.push : userObj?.notification?.push || false,
+                        email: typeof eval(req.body?.notification?.email) === 'boolean' ? req.body?.notification?.email : userObj?.notification?.email || false,
+                        inApp: typeof eval(req.body?.notification?.inApp) === 'boolean' ? req.body?.notification?.inApp : userObj?.notification?.inApp || false,
+                        promotionsAndSales: typeof eval(req.body?.notification?.promotionsAndSales) === 'boolean' ? req.body?.notification?.promotionsAndSales : userObj?.notification?.promotionsAndSales || false,
+                        subscription: typeof eval(req.body?.notification?.subscription) === 'boolean' ? req.body?.notification?.subscription : userObj?.notification?.subscription || false,
+                        dailyDevotional: typeof eval(req.body?.notification?.dailyDevotional) === 'boolean' ? req.body?.notification?.dailyDevotional : userObj?.notification?.dailyDevotional || false,
+                        offerAndDeal: typeof eval(req.body?.notification?.offerAndDeal) === 'boolean' ? req.body?.notification?.offerAndDeal : userObj?.notification?.offerAndDeal || false,
+                  },
+                  downloadOverWifi: typeof eval(req.body?.downloadOverWifi) === 'boolean' ? req.body?.downloadOverWifi : userObj?.downloadOverWifi || false
             }
 
             if (req.body.kindleEmail) {

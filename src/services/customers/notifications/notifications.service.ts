@@ -21,8 +21,9 @@ const deleteNotifications = async (query: object) => {
 }
 
 /** Create notifications */
-const createNotification = async (body: Object) => {
+const createNotification = async (body: any) => {
     try {
+        body.notification.status = 'unread'
         await NotificationsModel.create(body)
         return true
     } catch (e: any) {
@@ -30,4 +31,19 @@ const createNotification = async (body: Object) => {
     }
 }
 
-export default { getUserNotifications, deleteNotifications, createNotification }
+/** Update notifications */
+const updateNotification = async (query: any, body: any) => {
+    try {
+        await NotificationsModel.updateMany(query, body, { runValidators: true })
+        return true
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+export default {
+    getUserNotifications,
+    deleteNotifications,
+    createNotification,
+    updateNotification
+}

@@ -19,7 +19,9 @@ export interface IUser extends mongoose.Document {
         inApp?: boolean,
         downloads?: boolean,
         promotionsAndSales?: boolean,
-        subscription?: boolean
+        subscription?: boolean,
+        dailyDevotional?: boolean,
+        offerAndDeal?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -34,6 +36,7 @@ export interface IUser extends mongoose.Document {
     iosAppLink?: string,
     androidAppLink?: string,
     maxDevicesLogin?: string,
+    downloadOverWifi?: boolean,
     pushTokens?: [{
         deviceId: string,
         token: string
@@ -92,7 +95,9 @@ export type createUserType = {
         inApp?: boolean,
         downloads?: boolean,
         promotionsAndSales?: boolean,
-        subscription?: boolean
+        subscription?: boolean,
+        dailyDevotional?: boolean,
+        offerAndDeal?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -107,6 +112,7 @@ export type createUserType = {
     iosAppLink?: string,
     androidAppLink?: string,
     maxDevicesLogin?: string,
+    downloadOverWifi?: boolean,
     pushTokens?: [{
         deviceId: string,
         token: string
@@ -165,7 +171,9 @@ export type getUserType = {
         inApp?: boolean,
         downloads?: boolean,
         promotionsAndSales?: boolean,
-        subscription?: boolean
+        subscription?: boolean,
+        dailyDevotional?: boolean,
+        offerAndDeal?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -180,6 +188,7 @@ export type getUserType = {
     iosAppLink?: string,
     androidAppLink?: string,
     maxDevicesLogin?: string,
+    downloadOverWifi?: boolean,
     pushTokens?: [{
         deviceId: string,
         token: string
@@ -238,7 +247,9 @@ export const UserSchema = new Schema({
         inApp: { type: Boolean, default: true },
         downloads: { type: Boolean, default: true },
         promotionsAndSales: { type: Boolean, default: true },
-        subscription: { type: Boolean, default: true }
+        subscription: { type: Boolean, default: true },
+        dailyDevotional: { type: Boolean, default: true },
+        offerAndDeal: { type: Boolean, default: true },
     },
     metaKeyword: { type: String },
     metaDescription: { type: String },
@@ -253,6 +264,7 @@ export const UserSchema = new Schema({
     iosAppLink: { type: String },
     androidAppLink: { type: String },
     maxDevicesLogin: { type: String },
+    downloadOverWifi: { type: Boolean, default: false },
     pushTokens: [{
         deviceId: String,
         token: String

@@ -49,7 +49,7 @@ const updateAdmin = async (req: Request | any, res: Response, next: NextFunction
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = data.image
         }
-        await usersService.updateUser({ _id: data._id }, req.body)
+        await usersService.updateUser(req.body, { _id: data._id })
         return res.status(200).send({ message: adminControllerResponse.updateAdminSuccess })
     } catch (e: any) {
         return next(Boom.badData(e.message))
@@ -63,7 +63,7 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
         if (req.user?.password !== encrypt(password)) {
             return next(Boom.notFound(authControllerResponse.userInvalidPasswordError))
         }
-        await usersService.updateUser({ _id: req.user._id }, { password: newPassword })
+        await usersService.updateUser({ password: newPassword }, { _id: req.user._id })
         res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
     } catch (e: any) {
         next(Boom.badData(e.message))

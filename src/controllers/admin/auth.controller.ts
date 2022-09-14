@@ -34,7 +34,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     if (!result) {
       return next(Boom.badData(adminControllerResponse.sentEmailFailure))
     }
-    const updatedUserDetails: any = await usersService.updateUser({ _id: user._id }, { verificationCode })
+    const updatedUserDetails: any = await usersService.updateUser({ verificationCode }, { _id: user._id })
     if (!updatedUserDetails || updatedUserDetails.verificationCode !== String(verificationCode)) {
       return next(Boom.badData(adminControllerResponse.updateCodeFailure))
     }
@@ -120,7 +120,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     if (!result) {
       return next(Boom.badData(adminControllerResponse.updateCodeFailure))
     }
-    await usersService.updateUser({ _id: user._id }, { verificationCode })
+    await usersService.updateUser({ verificationCode }, { _id: user._id })
     res.status(200).send({
       message: adminControllerResponse.sendCodeSuccess
     })
@@ -141,7 +141,7 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
     if (!userObj) {
       return next(Boom.notFound(adminControllerResponse.updateCodeFailure))
     }
-    await usersService.updateUser({ _id: userObj._id }, { password: newPassword, $unset: { verificationCode: 1 } })
+    await usersService.updateUser({ password: newPassword, $unset: { verificationCode: 1 } }, { _id: userObj._id })
     res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
   } catch (e: any) {
     next(Boom.badData(e.message))

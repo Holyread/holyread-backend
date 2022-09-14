@@ -20,7 +20,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             }
             const refUser: any = await UserModel.findOne({ _id: userDetails.referralUserId }).select('firstName lastName email').lean().exec()
             if (refUser) userDetails.referralUserId = refUser
-            req.user = { ...userDetails, isNewLogin: eval(details?.isNewLogin) }
+            req.user = { ...userDetails, isNewLogin: !userDetails.lastSeen }
             global.currentUser = req.user;
             if (req?.user?.stripe?.subscriptionId) {
                 const subscription = await subscriptionService.retrieveSubscription(req?.user?.stripe.subscriptionId)

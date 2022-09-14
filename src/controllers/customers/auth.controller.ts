@@ -35,12 +35,11 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     if (user && user.status !== 'Active') {
       return next(Boom.notAcceptable(authControllerResponse.userNotActivatedError))
     }
-    const token: string = getToken({ email: user.email, id: user._id, isNewLogin: String(!user.loginAt) })
+    const token: string = getToken({ email: user.email, id: user._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
       data: { _id: user._id, email: user.email, token, type: user.type }
     })
-    await usersService.updateUser({ loginAt: new Date() }, { _id: user._id });
   } catch (e: any) {
     next(Boom.badData(e.message))
   }
@@ -82,7 +81,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
     }
     if (user && !user.verificationCode) {
-      await usersService.updateUser({ verificationCode }, { _id: user._id })
+      await usersService.updateUser({ _id: user._id }, { verificationCode })
       return res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
     }
     if (body.image) {
@@ -151,7 +150,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       body.subscription = subscriptionDetails._id
     }
 
-    await usersService.updateUser(body, { _id: user._id })
+    await usersService.updateUser({ _id: user._id }, body)
 
     const title = 'Welcome to Holy Reads';
     const description = 'Enjoy summaries of bestselling Christian books';
@@ -216,7 +215,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     if (!result) {
       return next(Boom.badData(adminControllerResponse.sendCodeFailure))
     }
-    await usersService.updateUser({ verificationCode }, { _id: user._id })
+    await usersService.updateUser({ _id: user._id }, { verificationCode })
     res.status(200).send({
       message: adminControllerResponse.sendCodeSuccess
     })
@@ -237,7 +236,7 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
     if (!userObj) {
       return next(Boom.notFound(adminControllerResponse.codeVerificationFailure))
     }
-    await usersService.updateUser({ password: newPassword, $unset: { verificationCode: 1 } }, { _id: userObj._id })
+    await usersService.updateUser({ _id: userObj._id }, { password: newPassword, $unset: { verificationCode: 1 } })
     res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -261,12 +260,11 @@ const appOAuthSignIn = async (req: Request, res: any, next: NextFunction) => {
     if (!user) {
       return next(Boom.notFound(authControllerResponse.missingSocialAccountError))
     }
-    const token: string = getToken({ email: user.email, 'oauthClientId': body.id, id: user._id, isNewLogin: String(!user.loginAt) })
+    const token: string = getToken({ email: user.email, 'oauthClientId': body.id, id: user._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
       data: { _id: user._id, email: user.email, token, type: user.type, userName: user?.email?.split('@')[0] || '' }
     })
-    await usersService.updateUser({ loginAt: new Date() }, { _id: user._id });
   } catch (e: any) {
     next(Boom.badData(e.message))
   }
@@ -307,8 +305,8 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         })
         :
         emailUser.oAuth[index] = { ...emailUser.oAuth[index], email: body.email }
-      await usersService.updateUser({ oAuth: emailUser.oAuth, loginAt: new Date() }, { _id: emailUser._id })
-      const token: string = getToken({ email: emailUser.email, 'oauthClientId': body.id, id: emailUser._id, isNewLogin: String(!emailUser.loginAt) })
+      await usersService.updateUser({ _id: emailUser._id }, { oAuth: emailUser.oAuth })
+      const token: string = getToken({ email: emailUser.email, 'oauthClientId': body.id, id: emailUser._id })
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
         data: { _id: emailUser._id, email: emailUser.email || '', token, type: emailUser.type, userName: emailUser.email.split('@')[0] || '' }
@@ -346,8 +344,8 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       newBody.subscription = subscriptionDetails._id
     }
     /** Create new user using social login */
-    const data: any = await usersService.createUser({ ...newBody, loginAt: new Date() })
-    const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id, isNewLogin: String(true) })
+    const data: any = await usersService.createUser(newBody)
+    const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
     const title = 'Welcome to Holy Reads';
     const description = 'Enjoy summaries of bestselling Christian books';
 
@@ -415,8 +413,8 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       const index = emailUser.oAuth.findIndex(i => i.provider === body.provider)
       /** set email if email does not exist */
       user.oAuth[index] = { ...user.oAuth[index], email: user.email }
-      await usersService.updateUser({ oAuth: user.oAuth, email: user.email, loginAt: new Date() }, { _id: user._id })
-      const token: string = getToken({ email: user.email, 'oauthClientId': body.id, id: user._id, isNewLogin: String(!user.loginAt) })
+      await usersService.updateUser({ _id: user._id }, { oAuth: user.oAuth, email: user.email })
+      const token: string = getToken({ email: user.email, 'oauthClientId': body.id, id: user._id })
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
         data: { _id: user._id, email: user.email, token, type: user.type, userName: user?.email?.split('@')[0] || '' }
@@ -434,9 +432,9 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
             default: emailUser?.oAuth?.length ? false : true
           })
         : emailUser.oAuth[index] = { ...emailUser.oAuth[index], email: body.email }
-      await usersService.updateUser({ oAuth: emailUser.oAuth, loginAt: new Date() }, { _id: emailUser._id })
+      await usersService.updateUser({ _id: emailUser._id }, { oAuth: emailUser.oAuth })
 
-      const token: string = getToken({ email: emailUser.email, 'oauthClientId': body.id, id: emailUser._id, isNewLogin: String(!user.loginAt) })
+      const token: string = getToken({ email: emailUser.email, 'oauthClientId': body.id, id: emailUser._id })
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
         data: { _id: emailUser._id, email: emailUser.email, token, type: emailUser.type, userName: emailUser?.email?.split('@')[0] || '' }
@@ -480,8 +478,8 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     }
     newBody.subscription = subscriptionDetails._id
 
-    const data: any = await usersService.createUser({ ...newBody, loginAt: new Date() })
-    const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id, isNewLogin: String(true) })
+    const data: any = await usersService.createUser(newBody)
+    const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
     const title = 'Welcome to Holy reads';
     const description = 'Enjoy summaries of bestselling Christian books';
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })

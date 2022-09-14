@@ -22,7 +22,7 @@ const createUser = async (body: any) => {
 }
 
 /** Modify User */
-const updateUser = async (body: any, query: object) => {
+const updateUser = async (query: object, body: any) => {
     try {
         if (body.password) {
             body.password = encrypt(body.password)

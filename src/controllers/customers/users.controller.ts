@@ -255,7 +255,6 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                         push: typeof eval(req.body?.notification?.push) === 'boolean' ? req.body?.notification?.push : userObj?.notification?.push || false,
                         email: typeof eval(req.body?.notification?.email) === 'boolean' ? req.body?.notification?.email : userObj?.notification?.email || false,
                         inApp: typeof eval(req.body?.notification?.inApp) === 'boolean' ? req.body?.notification?.inApp : userObj?.notification?.inApp || false,
-                        promotionsAndSales: typeof eval(req.body?.notification?.promotionsAndSales) === 'boolean' ? req.body?.notification?.promotionsAndSales : userObj?.notification?.promotionsAndSales || false,
                         subscription: typeof eval(req.body?.notification?.subscription) === 'boolean' ? req.body?.notification?.subscription : userObj?.notification?.subscription || false,
                         dailyDevotional: typeof eval(req.body?.notification?.dailyDevotional) === 'boolean' ? req.body?.notification?.dailyDevotional : userObj?.notification?.dailyDevotional || false,
                         offerAndDeal: typeof eval(req.body?.notification?.offerAndDeal) === 'boolean' ? req.body?.notification?.offerAndDeal : userObj?.notification?.offerAndDeal || false,

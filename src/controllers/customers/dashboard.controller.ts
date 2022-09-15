@@ -20,7 +20,7 @@ const smallGroupControllerResponse = responseMessage.smallGroupControllerRespons
 /** Get categories for dashboard */
 const getCategories = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const data: any = await bookCategoryService.getAllBookCategories(0, 0, { status: 'Active' }, [['createdAt', 'DESC']])
+        const data: any = await bookCategoryService.getAllBookCategories(0, 0, { status: 'Active' }, [['title', 'ASC']])
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data

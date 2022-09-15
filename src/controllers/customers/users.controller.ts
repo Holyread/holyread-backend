@@ -79,6 +79,12 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             if (!password || (newPassword && userObj?.password !== encrypt(password || ''))) {
                   return next(Boom.badData(authControllerResponse.userInvalidPasswordError))
             }
+            if (
+                  (!newPassword && userObj?.password === encrypt(password || '')) ||
+                  (newPassword && userObj?.password === encrypt(newPassword || ''))
+            ) {
+                  return next(Boom.badData(authControllerResponse.userSamePasswordError))
+            }
             await usersService.updateUser({ _id: userObj._id }, { password: newPassword || password })
             const notificationTitle = 'Change Password'
             const notificationDescription = 'Password Changed Successfully'

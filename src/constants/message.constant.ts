@@ -216,6 +216,7 @@ export const responseMessage = {
     },
     notificationsControllerResponse: {
         createNotificationSuccess: 'Notification created successfully',
-        updateNotificationSuccess: 'Notification updated successfully'
+        updateNotificationSuccess: 'Notification updated successfully',
+        deleteNotificationSuccess: 'Notification deleted successfully'
     },
 }

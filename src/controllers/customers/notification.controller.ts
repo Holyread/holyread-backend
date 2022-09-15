@@ -45,9 +45,22 @@ const updateUserNotification = async (req: Request | any, res: Response | any, n
       }
 }
 
+/** create user notification */
+const deleteUserNotification = async (req: Request | any, res: Response | any, next: NextFunction) => {
+      try {
+            const query = req.query.id ? { _id: req.query.id, userId: req.user._id } : { userId: req.user._id }
+            if (req.query.status) query['notification.status'] = req.query.status
+            await notificationServices.deleteNotifications(query)
+            res.status(200).send({ message: notificationsControllerResponse.deleteNotificationSuccess })
+      } catch (e: any) {
+            return next(Boom.badData(e.message))
+      }
+}
+
 export {
       fetchNotifications,
       clearNotifications,
       createUserNotification,
-      updateUserNotification
+      updateUserNotification,
+      deleteUserNotification
 }

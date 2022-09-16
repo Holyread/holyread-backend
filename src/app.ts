@@ -30,6 +30,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cookieParser())
 
 require('./scripts')
+require('./cron')
 
 io.use(customerIoAuth);
 require('./socket')(io)

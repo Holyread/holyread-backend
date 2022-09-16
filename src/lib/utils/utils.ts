@@ -98,7 +98,7 @@ export const uploadFileToS3 = async (
                 pattern = /^data:application\/\w+;base64,/
             } else if (base64Document.indexOf('data:image/') > -1) {
                 docExtension = base64Document.substring('data:image/'.length, base64Document.indexOf(';base64'))
-            } 
+            }
             else {
                 return reject(new Error('File type not supported'))
             }
@@ -204,7 +204,7 @@ export const compileHtml = async (source: string, data: any) => {
 export const randomNumberInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
 
 export const pushNotification = async (tokens: string, title: string, description: string) => {
-    firebaseAdmin.messaging().sendToDevice(tokens, { notification: { title, body: description }}).then(response => {
+    firebaseAdmin.messaging().sendToDevice(tokens, { notification: { title, body: description } }).then(response => {
         response.results.forEach((result, index) => {
             const error = result.error;
             if (error) {

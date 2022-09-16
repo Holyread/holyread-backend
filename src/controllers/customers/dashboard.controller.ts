@@ -124,7 +124,13 @@ const getReadsOfTheDay = async (request: Request, response: Response, next: Next
         const params: any = request.query
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        const data: any = await readsOfDayService.getAllReadsOfDays(Number(skip), Number(limit), { status: 'Active' }, [['createdAt', 'DESC']])
+        /** Set today start and end */
+        const start = new Date();
+        start.setDate(new Date().getDate() - 4);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+        const data: any = await readsOfDayService.getAllReadsOfDays(Number(skip), Number(limit), { displayAt: { $gte: new Date(start), $lte: new Date(end) } }, [['displayAt', 'DESC']])
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data

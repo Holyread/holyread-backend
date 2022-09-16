@@ -1,1 +1,2 @@
-require('./dailyDevotionalNotifier')
+import './dailyDevotionalNotifier';
+import './readsOfDayDisplayAt';

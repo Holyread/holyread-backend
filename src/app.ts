@@ -29,7 +29,7 @@ app.use(bodyParser.json({ limit: '1024mb' }))
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cookieParser())
 
-require('./scripts')
+require('./scripts');
 require('./cron');
 
 io.use(customerIoAuth);

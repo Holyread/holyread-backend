@@ -42,7 +42,7 @@ const start = async () => {
                   const period = time[1];
                   const [hours, minutes]: any = time[0].split(':');
 
-                  if (period === 'PM' && hours === '7' && minutes) {
+                  if (period === 'AM' && hours === '8' && eval(minutes) <= 1) {
                         const tokenSet = new Set();
                         result[i]?.map(item => {
                               tokenSet.add(

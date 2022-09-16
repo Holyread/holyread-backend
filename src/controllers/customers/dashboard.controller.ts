@@ -20,7 +20,7 @@ const smallGroupControllerResponse = responseMessage.smallGroupControllerRespons
 /** Get categories for dashboard */
 const getCategories = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const data: any = await bookCategoryService.getAllBookCategories(0, 0, { status: 'Active' }, [['createdAt', 'DESC']])
+        const data: any = await bookCategoryService.getAllBookCategories(0, 0, { status: 'Active' }, [['title', 'ASC']])
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data
@@ -80,7 +80,7 @@ const getRecentReads = async (request: any, response: Response, next: NextFuncti
         else data.summaries = sortArrayObject(data.summaries, 'updatedAt', 'desc')
 
         data.summaries = data.summaries.slice(skip, skip + limit)
-        return response.status(200).send({ message: dashboardControllerResponse.getDashboardSuccess, data })
+        return response.status(200).send({ message: dashboardControllerResponse.getDashboardSuccess, data: { recentReads: data } })
     } catch (e: any) {
         return next(Boom.badData(e.message))
     }

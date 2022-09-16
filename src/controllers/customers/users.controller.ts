@@ -55,6 +55,7 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             const notifications = await notificationsService.getUserNotifications({ userId: userObj._id })
             userObj.notifications = notifications
             res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
+            await userService.updateUser({ _id: userObj._id }, { lastSeen: new Date() });
       } catch (e: any) {
             next(Boom.badData(e.message))
       }
@@ -78,7 +79,13 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             if (!password || (newPassword && userObj?.password !== encrypt(password || ''))) {
                   return next(Boom.badData(authControllerResponse.userInvalidPasswordError))
             }
-            await usersService.updateUser({ password: newPassword || password }, { _id: userObj._id })
+            if (
+                  (!newPassword && userObj?.password === encrypt(password || '')) ||
+                  (newPassword && userObj?.password === encrypt(newPassword || ''))
+            ) {
+                  return next(Boom.badData(authControllerResponse.userSamePasswordError))
+            }
+            await usersService.updateUser({ _id: userObj._id }, { password: newPassword || password })
             const notificationTitle = 'Change Password'
             const notificationDescription = 'Password Changed Successfully'
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
@@ -147,7 +154,7 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
             if (!result) {
                   return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
             }
-            await usersService.updateUser({ verificationCode }, { _id: userObj._id })
+            await usersService.updateUser({ _id: userObj._id }, { verificationCode })
             res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
       } catch (e: any) {
             next(Boom.badData(e.message))
@@ -169,13 +176,13 @@ const verifyEmailAuth = async (req: Request, res: Response, next: NextFunction) 
                   return next(Boom.notFound(authControllerResponse.getUserError))
             }
 
-            await usersService.updateUser({
+            await usersService.updateUser({ _id: user._id }, {
                   verified: true,
                   status: 'Active',
                   $unset: { verificationCode: 1 },
                   email,
                   password: decrypt(password)
-            }, { _id: user._id })
+            })
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthEnabled })
             const sub = emailTemplateDetails.subject || 'Customer Email Auth Enabled'
@@ -251,12 +258,14 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   firstName: req.body.firstName || userObj.firstName,
                   lastName: req.body.lastName || userObj.lastName,
                   notification: {
-                        push: (req.body?.notification && typeof req.body?.notification?.push === 'boolean') ? req.body?.notification?.push : req.body?.notification?.push || false,
-                        email: (req.body?.notification && typeof req.body?.notification?.email === 'boolean') ? req.body?.notification?.email : req.body?.notification?.email || false,
-                        inApp: (req.body?.notification && typeof req.body?.notification?.inApp === 'boolean') ? req.body?.notification?.inApp : req.body?.notification?.inApp || false,
-                        promotionsAndSales: (req.body?.notification && typeof req.body?.notification?.promotionsAndSales === 'boolean') ? req.body?.notification?.promotionsAndSales : req.body?.notification?.promotionsAndSales || false,
-                        subscription: (req.body?.notification && typeof req.body?.notification?.subscription === 'boolean') ? req.body?.notification?.subscription : req.body?.notification?.subscription || false,
-                  }
+                        push: typeof eval(req.body?.notification?.push) === 'boolean' ? req.body?.notification?.push : userObj?.notification?.push || false,
+                        email: typeof eval(req.body?.notification?.email) === 'boolean' ? req.body?.notification?.email : userObj?.notification?.email || false,
+                        inApp: typeof eval(req.body?.notification?.inApp) === 'boolean' ? req.body?.notification?.inApp : userObj?.notification?.inApp || false,
+                        subscription: typeof eval(req.body?.notification?.subscription) === 'boolean' ? req.body?.notification?.subscription : userObj?.notification?.subscription || false,
+                        dailyDevotional: typeof eval(req.body?.notification?.dailyDevotional) === 'boolean' ? req.body?.notification?.dailyDevotional : userObj?.notification?.dailyDevotional || false,
+                        offerAndDeal: typeof eval(req.body?.notification?.offerAndDeal) === 'boolean' ? req.body?.notification?.offerAndDeal : userObj?.notification?.offerAndDeal || false,
+                  },
+                  downloadOverWifi: typeof eval(req.body?.downloadOverWifi) === 'boolean' ? req.body?.downloadOverWifi : userObj?.downloadOverWifi || false
             }
 
             if (req.body.kindleEmail) {
@@ -309,7 +318,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             if (isAppSubscriptionStatus && subscriptionDetails) {
                   body.inAppSubscriptionStatus = req.body.inAppSubscription?.status
             }
-            await usersService.updateUser(body, { _id: userObj._id })
+            await usersService.updateUser({ _id: userObj._id }, body)
             /** sent email for subscription status updated */
             const notificationTitle = 'Holyreads Subscription'
             const notificationDescription = emailTemplatesTitles.customer.subscriptionActivated ? 'Subscription activated' : 'Subscription cancelled'
@@ -420,10 +429,9 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                         userObj.library.reading.push({
                               bookId: req.body.bookId,
                               chaptersCompleted: [req.body.chapter],
-                              createdAt: new Date(),
                               updatedAt: new Date()
                         })
-                        await usersService.updateUser({ library: userObj.library }, query)
+                        await usersService.updateUser(query, { library: userObj.library })
                         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
                   }
 
@@ -451,7 +459,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                               bookId: req.body.bookId,
                               createdAt: new Date()
                         })
-                        await usersService.updateUser({ library: userObj.library }, query)
+                        await usersService.updateUser(query, { library: userObj.library })
                         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
                   }
 
@@ -469,7 +477,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   req.body['$pull'] = { 'smallGroups': req.body.smallGroup }
                   delete req.body.smallGroup
             }
-            await usersService.updateUser(req.body, query)
+            await usersService.updateUser(query, req.body)
             return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
       } catch (e: any) {
             return next(Boom.badData(e.message))
@@ -523,37 +531,33 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   section === 'reading' &&
                   userObj?.library?.reading?.length
             ) {
-                  /** Sort user reads books by reads _id */
-                  userObj.library.reading = userObj.library.reading.sort((a, b) => (String(a._id) > String(b._id)) ? -1 : ((String(b._id) > String(a._id)) ? 1 : 0))
-
                   /** collect user reads books ids those not in completed books list */
-                  const bookIds = userObj.library.reading.map(oneBook => {
+                  const bookIds = new Set()
+                  userObj.library.reading.map(oneBook => {
                         if (
                               oneBook.bookId &&
                               !userObj.library?.completed?.find(cb => String(cb) === String(oneBook.bookId))
-                        ) {
-                              return oneBook.bookId
-                        }
-                  }).filter(b => b)
+                        ) bookIds.add(oneBook.bookId)
+                  })
 
                   /** Prepare query to get users reads book details */
-                  const search: any = { _id: { $in: bookIds } }
+                  const search: any = { _id: { $in: [...bookIds] } }
                   if (author) { search.author = author }
 
                   /** Get user reads books details by users reads books ids */
-                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']], true)
+                  const data = await bookService.getAllBookSummaries(0, 0, search, [], true)
 
                   /** sort summary by latest reads based on user library readings */
-                  data.summaries = userObj.library.reading.map(r => {
+                 const summaries = new Set()
+                  userObj.library.reading.map(r => {
                         const summary = data.summaries.find((os: any) => String(os._id) === String(r.bookId))
-                        if (summary) {
+                        if (!summary) return; 
                               summary.reads = Number((r.chaptersCompleted && r.chaptersCompleted?.length ? (100 * r.chaptersCompleted?.length) / summary?.chapters?.length : 0).toFixed(0))
                               summary.updatedAt = r.updatedAt
                               delete summary.chapters
-                              return summary
-                        }
-                  }).filter(s => s)
-
+                              summaries.add(summary)
+                  })
+                  data.summaries = [...summaries]
                   if (sort) data.summaries = sortArrayObject(data.summaries, 'title', sort.toLowerCase())
                   else data.summaries = sortArrayObject(data.summaries, 'updatedAt', 'desc')
                   data.summaries = data.summaries.slice(skip, skip + limit)
@@ -812,7 +816,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         const customer = await stripeSubscriptionService.createCustomer(userObj.email, req.body.token)
                         if (!userObj.stripe) { userObj.stripe = {} }
                         userObj.stripe.customerId = customer.id
-                        await usersService.updateUser({ 'stripe.customerId': customer.id }, { _id: userObj._id })
+                        await usersService.updateUser({ _id: userObj._id }, { 'stripe.customerId': customer.id })
                   }
                   if (!userObj?.stripe?.subscriptionId) {
                         subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod)
@@ -845,10 +849,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   }
                   
             }
-            await usersService.updateUser(
-                  body,
-                  { _id: userObj._id }
-            )
+            await usersService.updateUser({ _id: userObj._id }, body)
+
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
             const sub = emailTemplateDetails.subject || 'Holyreads Subscription'
             let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`

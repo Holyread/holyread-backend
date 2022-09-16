@@ -24,6 +24,7 @@ export const responseMessage = {
         missingEmailAuthError: 'First enable or add your email auth',
         userNotActivatedError: 'User not activated',
         userInvalidPasswordError: 'Password is incorrect',
+        userSamePasswordError: 'New password is same as old. Please choose a different one.',
         passwordUpdateSuccess: 'Password has been changed successfully',
         deleteUserSuccess: 'User deleted successfully',
         createUserFailed: 'Failed to create user',
@@ -216,6 +217,7 @@ export const responseMessage = {
     },
     notificationsControllerResponse: {
         createNotificationSuccess: 'Notification created successfully',
+        updateNotificationSuccess: 'Notification updated successfully',
         deleteNotificationSuccess: 'Notification deleted successfully'
     },
 }

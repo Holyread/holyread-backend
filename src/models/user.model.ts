@@ -17,10 +17,9 @@ export interface IUser extends mongoose.Document {
         email?: boolean,
         push?: boolean,
         inApp?: boolean,
-        downloads?: boolean,
-        promotionsAndSales?: boolean,
+        dailyDevotional?: boolean,
         subscription?: boolean,
-        dailyDevotional?: boolean
+        offerAndDeal?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -35,6 +34,7 @@ export interface IUser extends mongoose.Document {
     iosAppLink?: string,
     androidAppLink?: string,
     maxDevicesLogin?: string,
+    downloadOverWifi?: boolean,
     pushTokens?: [{
         deviceId: string,
         token: string
@@ -45,7 +45,6 @@ export interface IUser extends mongoose.Document {
         reading?: [{
             bookId: string,
             chaptersCompleted: [string],
-            createdAt: Date,
             updatedAt: Date
         }],
         view?: [{
@@ -92,10 +91,9 @@ export type createUserType = {
         email?: boolean,
         push?: boolean,
         inApp?: boolean,
-        downloads?: boolean,
-        promotionsAndSales?: boolean,
+        dailyDevotional?: boolean,
         subscription?: boolean,
-        dailyDevotional?: boolean
+        offerAndDeal?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -110,6 +108,7 @@ export type createUserType = {
     iosAppLink?: string,
     androidAppLink?: string,
     maxDevicesLogin?: string,
+    downloadOverWifi?: boolean,
     pushTokens?: [{
         deviceId: string,
         token: string
@@ -120,7 +119,6 @@ export type createUserType = {
         reading?: [{
             bookId: string,
             chaptersCompleted: [string],
-            createdAt: Date,
             updatedAt: Date
         }],
         view?: [{
@@ -166,9 +164,9 @@ export type getUserType = {
         email?: boolean,
         push?: boolean,
         inApp?: boolean,
-        downloads?: boolean,
-        promotionsAndSales?: boolean,
-        subscription?: boolean
+        subscription?: boolean,
+        dailyDevotional?: boolean,
+        offerAndDeal?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -183,6 +181,7 @@ export type getUserType = {
     iosAppLink?: string,
     androidAppLink?: string,
     maxDevicesLogin?: string,
+    downloadOverWifi?: boolean,
     pushTokens?: [{
         deviceId: string,
         token: string
@@ -193,7 +192,6 @@ export type getUserType = {
         reading?: [{
             bookId: string,
             chaptersCompleted: [string],
-            createdAt: Date,
             updatedAt: Date
         }],
         view?: [{
@@ -239,10 +237,9 @@ export const UserSchema = new Schema({
         email: { type: Boolean, default: true },
         push: { type: Boolean, default: true },
         inApp: { type: Boolean, default: true },
-        downloads: { type: Boolean, default: true },
-        promotionsAndSales: { type: Boolean, default: true },
         subscription: { type: Boolean, default: true },
-        dailyDevotional: { type: Boolean, default: true }
+        dailyDevotional: { type: Boolean, default: true },
+        offerAndDeal: { type: Boolean, default: true }
     },
     metaKeyword: { type: String },
     metaDescription: { type: String },
@@ -257,6 +254,7 @@ export const UserSchema = new Schema({
     iosAppLink: { type: String },
     androidAppLink: { type: String },
     maxDevicesLogin: { type: String },
+    downloadOverWifi: { type: Boolean, default: false },
     pushTokens: [{
         deviceId: String,
         token: String
@@ -267,7 +265,6 @@ export const UserSchema = new Schema({
         reading: [{
             bookId: { type: String },
             chaptersCompleted: [{ type: String }],
-            createdAt: { type: Date },
             updatedAt: { type: Date }
         }],
         view: [{

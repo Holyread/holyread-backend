@@ -79,6 +79,12 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             if (!password || (newPassword && userObj?.password !== encrypt(password || ''))) {
                   return next(Boom.badData(authControllerResponse.userInvalidPasswordError))
             }
+            if (
+                  (!newPassword && userObj?.password === encrypt(password || '')) ||
+                  (newPassword && userObj?.password === encrypt(newPassword || ''))
+            ) {
+                  return next(Boom.badData(authControllerResponse.userSamePasswordError))
+            }
             await usersService.updateUser({ _id: userObj._id }, { password: newPassword || password })
             const notificationTitle = 'Change Password'
             const notificationDescription = 'Password Changed Successfully'
@@ -252,12 +258,14 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   firstName: req.body.firstName || userObj.firstName,
                   lastName: req.body.lastName || userObj.lastName,
                   notification: {
-                        push: (req.body?.notification && typeof req.body?.notification?.push === 'boolean') ? req.body?.notification?.push : req.body?.notification?.push || false,
-                        email: (req.body?.notification && typeof req.body?.notification?.email === 'boolean') ? req.body?.notification?.email : req.body?.notification?.email || false,
-                        inApp: (req.body?.notification && typeof req.body?.notification?.inApp === 'boolean') ? req.body?.notification?.inApp : req.body?.notification?.inApp || false,
-                        promotionsAndSales: (req.body?.notification && typeof req.body?.notification?.promotionsAndSales === 'boolean') ? req.body?.notification?.promotionsAndSales : req.body?.notification?.promotionsAndSales || false,
-                        subscription: (req.body?.notification && typeof req.body?.notification?.subscription === 'boolean') ? req.body?.notification?.subscription : req.body?.notification?.subscription || false,
-                  }
+                        push: typeof eval(req.body?.notification?.push) === 'boolean' ? req.body?.notification?.push : userObj?.notification?.push || false,
+                        email: typeof eval(req.body?.notification?.email) === 'boolean' ? req.body?.notification?.email : userObj?.notification?.email || false,
+                        inApp: typeof eval(req.body?.notification?.inApp) === 'boolean' ? req.body?.notification?.inApp : userObj?.notification?.inApp || false,
+                        subscription: typeof eval(req.body?.notification?.subscription) === 'boolean' ? req.body?.notification?.subscription : userObj?.notification?.subscription || false,
+                        dailyDevotional: typeof eval(req.body?.notification?.dailyDevotional) === 'boolean' ? req.body?.notification?.dailyDevotional : userObj?.notification?.dailyDevotional || false,
+                        offerAndDeal: typeof eval(req.body?.notification?.offerAndDeal) === 'boolean' ? req.body?.notification?.offerAndDeal : userObj?.notification?.offerAndDeal || false,
+                  },
+                  downloadOverWifi: typeof eval(req.body?.downloadOverWifi) === 'boolean' ? req.body?.downloadOverWifi : userObj?.downloadOverWifi || false
             }
 
             if (req.body.kindleEmail) {
@@ -421,7 +429,6 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                         userObj.library.reading.push({
                               bookId: req.body.bookId,
                               chaptersCompleted: [req.body.chapter],
-                              createdAt: new Date(),
                               updatedAt: new Date()
                         })
                         await usersService.updateUser(query, { library: userObj.library })
@@ -524,37 +531,33 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   section === 'reading' &&
                   userObj?.library?.reading?.length
             ) {
-                  /** Sort user reads books by reads _id */
-                  userObj.library.reading = userObj.library.reading.sort((a, b) => (String(a._id) > String(b._id)) ? -1 : ((String(b._id) > String(a._id)) ? 1 : 0))
-
                   /** collect user reads books ids those not in completed books list */
-                  const bookIds = userObj.library.reading.map(oneBook => {
+                  const bookIds = new Set()
+                  userObj.library.reading.map(oneBook => {
                         if (
                               oneBook.bookId &&
                               !userObj.library?.completed?.find(cb => String(cb) === String(oneBook.bookId))
-                        ) {
-                              return oneBook.bookId
-                        }
-                  }).filter(b => b)
+                        ) bookIds.add(oneBook.bookId)
+                  })
 
                   /** Prepare query to get users reads book details */
-                  const search: any = { _id: { $in: bookIds } }
+                  const search: any = { _id: { $in: [...bookIds] } }
                   if (author) { search.author = author }
 
                   /** Get user reads books details by users reads books ids */
-                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']], true)
+                  const data = await bookService.getAllBookSummaries(0, 0, search, [], true)
 
                   /** sort summary by latest reads based on user library readings */
-                  data.summaries = userObj.library.reading.map(r => {
+                 const summaries = new Set()
+                  userObj.library.reading.map(r => {
                         const summary = data.summaries.find((os: any) => String(os._id) === String(r.bookId))
-                        if (summary) {
+                        if (!summary) return; 
                               summary.reads = Number((r.chaptersCompleted && r.chaptersCompleted?.length ? (100 * r.chaptersCompleted?.length) / summary?.chapters?.length : 0).toFixed(0))
                               summary.updatedAt = r.updatedAt
                               delete summary.chapters
-                              return summary
-                        }
-                  }).filter(s => s)
-
+                              summaries.add(summary)
+                  })
+                  data.summaries = [...summaries]
                   if (sort) data.summaries = sortArrayObject(data.summaries, 'title', sort.toLowerCase())
                   else data.summaries = sortArrayObject(data.summaries, 'updatedAt', 'desc')
                   data.summaries = data.summaries.slice(skip, skip + limit)

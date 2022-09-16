@@ -71,10 +71,10 @@ export interface IUser extends mongoose.Document {
         createdAt?: Date
     },
     device: string,
+    timeZone?: string,
     createdAt: Date,
     updatedAt: Date,
     lastSeen: Date,
-    timeZone: String
 }
 
 export type createUserType = {
@@ -146,6 +146,7 @@ export type createUserType = {
         createdAt?: Date
     },
     device: string,
+    timeZone?: string,
     createdAt: Date,
     updatedAt: Date,
     loginAt: Date
@@ -219,6 +220,7 @@ export type getUserType = {
         createdAt?: Date
     },
     device: string,
+    timeZone?: string,
     createdAt: Date,
     updatedAt: Date,
     loginAt: Date,
@@ -293,6 +295,7 @@ export const UserSchema = new Schema({
     inAppSubscription: { type: Object }, // default key - createdAt(Date)
     inAppSubscriptionStatus: { type: String, enum: ['Cancelled', 'Active'] },
     device: { type: String, required: true },
+    timeZone: { type: String },
     createdAt: {
         type: Date, default: () => {
             return new Date()

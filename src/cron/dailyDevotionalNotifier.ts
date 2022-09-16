@@ -2,7 +2,7 @@ import cron from 'cron';
 
 import config from "../../config";
 import { dailyDevotional } from '../constants/cron.constants'
-import { groupByKey, pushNotification, convertToPlain, sentEmail } from '../lib/utils/utils';
+import { groupByKey, pushNotification } from '../lib/utils/utils';
 import { ReadsOfDayModel, UserModel } from '../models';
 
 const start = async () => {
@@ -35,68 +35,27 @@ const start = async () => {
                   return;
             }
             const result = groupByKey(users, 'timeZone');
-            const notificationHour = 8;
             Object.keys(result).map(i => {
-
                   const dateStr = new Date().toLocaleString('en-US', { timeZone: i })
-                  const [dateValues, timeValues] = dateStr.split(', ');
-                  const [month, day, year] = dateValues.split('/');
+                  const timeValues = dateStr.split(', ')[1];
                   const time = timeValues.split(' ');
                   const period = time[1];
-                  let [hours, minutes, seconds]: any = time[0].split(':');
+                  const [hours, minutes]: any = time[0].split(':');
 
-                  if (period === 'PM') hours = eval(hours) * 2;
-                  const currentAt = new Date(+year, +month - 1, +day, +hours, +minutes, +seconds);
-                  let notificationAt = new Date();
-                  notificationAt.setHours(notificationHour, 0, 0, 0);
-                  const remainTime = notificationAt.getTime() - currentAt.getTime();
-
-                  const tokenSet = new Set();
-                  const title = readOfDay.title
-                  const description = convertToPlain(readOfDay.description)
-                  /** collect and store user token into token sent */
-                  result[i]?.map(item => {
-                        tokenSet.add(
-                              pushNotification(
-                                    item?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
-                                    title,
-                                    (description?.trim()?.split(".")[0]?.substring(0, 25) || title) + '...'
+                  if (period === 'PM' && hours === '7' && minutes) {
+                        const tokenSet = new Set();
+                        result[i]?.map(item => {
+                              tokenSet.add(
+                                    pushNotification(
+                                          item?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
+                                          readOfDay.title,
+                                          (readOfDay?.description?.trim()?.replace(/<[^>]+>/g, '').substring(0, 70) || readOfDay.title) + '...'
+                                    )
                               )
-                        )
-                  })
-                  /** if time zone far from 8AM */
-                  if (remainTime >= 0) {
-                        setTimeout(() => {
-                              Promise.all([...tokenSet]);
-                              /** Track daily notfication time */
-                              sentEmail(config.SMTP_EMAIL, 'Daily devotional notification logs for specific timezone', JSON.stringify({
-                                    timeZone: i,
-                                    sentAt: new Date().toLocaleString('en-US', { timeZone: i }),
-                                    totalUsers: result[i].length
-                              }, null, 4))
-                        }, remainTime);
-                        return;
+                        })
+                        Promise.all([...tokenSet]);
                   }
-
-                  /** if time zone goes away from 8AM then notify on next day */
-                  let currentEndAt = new Date(currentAt)
-                  currentEndAt.setHours(23, 59, 59, 999);
-                  const nextDayRemainTime = (currentEndAt.getTime() + (notificationHour * 60 * 60 * 1000)) - currentAt.getTime();
-                  if (nextDayRemainTime < 0) {
-                        console.log('Schedule not process due to faild to get time');
-                        return;
-                  }
-                  setTimeout(() => {
-                        Promise.all([...tokenSet])
-                        /** Track daily notfication time */
-                        sentEmail(config.SMTP_EMAIL, 'Daily devotional notification logs for specific timezone', JSON.stringify({
-                              timeZone: i,
-                              sentAt: new Date().toLocaleString('en-US', { timeZone: i }),
-                              totalUsers: result[i].length
-                        }, null, 4))
-                  }, nextDayRemainTime);
             })
-
 
             console.log('JOB(✅) Daily devotional executed successfully!');
       } catch (error: any) {

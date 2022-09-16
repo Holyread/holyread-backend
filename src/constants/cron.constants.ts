@@ -12,12 +12,11 @@ export const readsOfDayDisplayAt = {
 
 export const dailyDevotional = {
       SCHEDULE: {
-            Seconds: '0',
-            Minutes: '0',
-            Hours: '1',
+            Minutes: '*',
+            Hours: '*',
             DayOfMonth: '*',
             Months: '*',
             DayOfWeek: '*',
       },
-      JOBRESTRICTENV: ['local'], // 'local','development','production'
+      JOBRESTRICTENV: ['develop'], // 'local','development','production'
 }

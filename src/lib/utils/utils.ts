@@ -263,14 +263,3 @@ export const getDates = (d1: any, d2: any) => {
 export const groupByKey = (list: any, key: string) =>
     list.reduce((hash, obj) =>
         ({ ...hash, [obj[key]]: (hash[obj[key]] || []).concat(obj) }), {})
-
-export const convertToPlain = (html: string) => {
-    // Create a new div element
-    var tempDivElement = document.createElement('div');
-
-    // Set the HTML content with the given value
-    tempDivElement.innerHTML = html;
-
-    // Retrieve the text property of the element 
-    return tempDivElement.textContent || tempDivElement.innerText || '';
-}

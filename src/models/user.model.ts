@@ -17,8 +17,8 @@ export interface IUser extends mongoose.Document {
         email?: boolean,
         push?: boolean,
         inApp?: boolean,
-        subscription?: boolean,
         dailyDevotional?: boolean,
+        subscription?: boolean,
         offerAndDeal?: boolean
     },
     metaKeyword?: string,
@@ -70,9 +70,10 @@ export interface IUser extends mongoose.Document {
         createdAt?: Date
     },
     device: string,
+    timeZone?: string,
     createdAt: Date,
     updatedAt: Date,
-    lastSeen: Date
+    lastSeen: Date,
 }
 
 export type createUserType = {
@@ -90,8 +91,8 @@ export type createUserType = {
         email?: boolean,
         push?: boolean,
         inApp?: boolean,
-        subscription?: boolean,
         dailyDevotional?: boolean,
+        subscription?: boolean,
         offerAndDeal?: boolean
     },
     metaKeyword?: string,
@@ -143,6 +144,7 @@ export type createUserType = {
         createdAt?: Date
     },
     device: string,
+    timeZone?: string,
     createdAt: Date,
     updatedAt: Date,
     lastSeen: Date
@@ -216,6 +218,7 @@ export type getUserType = {
         createdAt?: Date
     },
     device: string,
+    timeZone?: string,
     createdAt: Date,
     updatedAt: Date,
     lastSeen: Date,
@@ -238,7 +241,7 @@ export const UserSchema = new Schema({
         inApp: { type: Boolean, default: true },
         subscription: { type: Boolean, default: true },
         dailyDevotional: { type: Boolean, default: true },
-        offerAndDeal: { type: Boolean, default: true },
+        offerAndDeal: { type: Boolean, default: true }
     },
     metaKeyword: { type: String },
     metaDescription: { type: String },
@@ -289,6 +292,7 @@ export const UserSchema = new Schema({
     inAppSubscription: { type: Object }, // default key - createdAt(Date)
     inAppSubscriptionStatus: { type: String, enum: ['Cancelled', 'Active'] },
     device: { type: String, required: true },
+    timeZone: { type: String },
     createdAt: {
         type: Date, default: () => {
             return new Date()

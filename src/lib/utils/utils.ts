@@ -259,3 +259,7 @@ export const getDates = (d1: any, d2: any) => {
     }
     return d;
 }
+
+export const groupByKey = (list: any, key: string) =>
+    list.reduce((hash, obj) =>
+        ({ ...hash, [obj[key]]: (hash[obj[key]] || []).concat(obj) }), {})

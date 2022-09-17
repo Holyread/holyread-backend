@@ -1,1 +1,2 @@
-import './readsOfDayDisplayAt'
+import './dailyDevotionalNotifier';
+import './readsOfDayDisplayAt';

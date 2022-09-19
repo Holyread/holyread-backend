@@ -18,5 +18,5 @@ export const dailyDevotional = {
             Months: '*',
             DayOfWeek: '*',
       },
-      JOBRESTRICTENV: ['develop'], // 'local','development','production'
+      JOBRESTRICTENV: ['local'], // 'local','development','production'
 }

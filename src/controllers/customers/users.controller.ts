@@ -551,11 +551,11 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                  const summaries = new Set()
                   userObj.library.reading.map(r => {
                         const summary = data.summaries.find((os: any) => String(os._id) === String(r.bookId))
-                        if (!summary) return; 
-                              summary.reads = Number((r.chaptersCompleted && r.chaptersCompleted?.length ? (100 * r.chaptersCompleted?.length) / summary?.chapters?.length : 0).toFixed(0))
-                              summary.updatedAt = r.updatedAt
-                              delete summary.chapters
-                              summaries.add(summary)
+                        if (!summary) return;
+                        summary.reads = Number((r.chaptersCompleted && r.chaptersCompleted?.length ? (100 * r.chaptersCompleted?.length) / summary?.chapters?.length : 0).toFixed(0))
+                        summary.updatedAt = r.updatedAt
+                        delete summary.chapters
+                        summaries.add(summary)
                   })
                   data.summaries = [...summaries]
                   if (sort) data.summaries = sortArrayObject(data.summaries, 'title', sort.toLowerCase())
@@ -755,10 +755,11 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
+                  const localeDate = subscriptionEndDate?.toLocaleDateString()?.split('/')
                   const contentData = {
                         username: body.email.split('@')[0],
                         price: subscriptionDetails.price,
-                        endDate: `[${subscriptionEndDate}]`,
+                        endDate: `[${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)} || ${subscriptionEndDate}]`,
                         duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `one ${subscriptionDetails.duration}`
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
@@ -856,10 +857,12 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
+                  const localeDate = subscriptionEndDate?.toLocaleDateString()?.split('/')
+                  console.log(localeDate)
                   const contentData = {
                         username: userObj.email.split('@')[0],
                         price: subscriptionDetails.price,
-                        endDate: `[${subscriptionEndDate}]`,
+                        endDate: `[${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)} || ${subscriptionEndDate}]`,
                         duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `one ${subscriptionDetails.duration}`
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)

@@ -3,7 +3,7 @@ import cron from 'cron';
 import config from "../../config";
 import { dailyDevotional } from '../constants/cron.constants'
 import { groupByKey, pushNotification } from '../lib/utils/utils';
-import { ReadsOfDayModel, UserModel } from '../models';
+import { ReadsOfDayModel, SettingModel, UserModel } from '../models';
 
 const start = async () => {
       try {
@@ -35,14 +35,25 @@ const start = async () => {
                   return;
             }
             const result = groupByKey(users, 'timeZone');
+            const setting = await SettingModel.findOne({}).select('dailyDevotionalTime').lean().exec();
             Object.keys(result).map(i => {
                   const dateStr = new Date().toLocaleString('en-US', { timeZone: i })
                   const timeValues = dateStr.split(', ')[1];
                   const time = timeValues.split(' ');
-                  const period = time[1];
                   const [hours, minutes]: any = time[0].split(':');
 
-                  if (period === 'AM' && hours === '8' && eval(minutes) <= 1) {
+                  const dailyDevotionalTime: any = setting?.dailyDevotionalTime?.split(':') || ['8', '0'];
+                  let meridian = 'PM';
+
+                  if (eval(dailyDevotionalTime[0]) > 12) {
+                        meridian = 'PM';
+                        dailyDevotionalTime[0] = eval(dailyDevotionalTime[0]) - 12;
+                  } else if (eval(dailyDevotionalTime[0]) < 12) {
+                        meridian = 'AM';
+                        if (eval(dailyDevotionalTime[0]) == 0) dailyDevotionalTime[0] = 12;
+                  }
+
+                  if (time[1] === meridian && hours == dailyDevotionalTime[0] && eval(minutes) <= eval(dailyDevotionalTime[1]) + 1) {
                         const tokenSet = new Set();
                         result[i]?.map(item => {
                               tokenSet.add(

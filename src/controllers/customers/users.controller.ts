@@ -858,7 +858,6 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const localeDate = subscriptionEndDate?.toLocaleDateString()?.split('/')
-                  console.log(localeDate)
                   const contentData = {
                         username: userObj.email.split('@')[0],
                         price: subscriptionDetails.price,

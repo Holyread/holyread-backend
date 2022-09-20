@@ -759,8 +759,8 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                   const contentData = {
                         username: body.email.split('@')[0],
                         price: subscriptionDetails.price,
-                        endDate: `[${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)} || ${subscriptionEndDate}]`,
-                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `one ${subscriptionDetails.duration}`
+                        endDate: `[${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)}]`,
+                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `1 ${subscriptionDetails.duration}`
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
                   if (htmlData) {
@@ -862,8 +862,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   const contentData = {
                         username: userObj.email.split('@')[0],
                         price: subscriptionDetails.price,
-                        endDate: `[${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)} || ${subscriptionEndDate}]`,
-                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `one ${subscriptionDetails.duration}`
+                        endDate: `[${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)}]`,
+                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `1 ${subscriptionDetails.duration}`
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
                   if (htmlData) {

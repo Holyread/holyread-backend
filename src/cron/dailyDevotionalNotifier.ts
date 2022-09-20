@@ -2,7 +2,7 @@ import cron from 'cron';
 
 import config from "../../config";
 import { dailyDevotional } from '../constants/cron.constants'
-import { groupByKey, pushNotification } from '../lib/utils/utils';
+import { decodeHTMLEntities, groupByKey, pushNotification } from '../lib/utils/utils';
 import { ReadsOfDayModel, SettingModel, UserModel } from '../models';
 
 const start = async () => {
@@ -21,6 +21,7 @@ const start = async () => {
                   console.log('JOB(🔴) Daily devotional execution stop due to no reads found');
                   return;
             }
+            readOfDay.description = decodeHTMLEntities(readOfDay?.description?.trim()?.replace(/<[^>]+>/g, '').substring(0, 100))
 
             const users = await UserModel.find({
                   status: 'Active',
@@ -60,7 +61,7 @@ const start = async () => {
                                     pushNotification(
                                           item?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
                                           readOfDay.title,
-                                          (readOfDay?.description?.trim()?.replace(/<[^>]+>/g, '').substring(0, 70) || readOfDay.title) + '...'
+                                          readOfDay.description
                                     )
                               )
                         })

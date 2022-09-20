@@ -46,22 +46,22 @@ const start = async () => {
                   const dailyDevotionalTime: any = setting?.dailyDevotionalTime?.split(':') || ['8', '0'];
                   let meridian = 'PM';
 
-                  if (eval(dailyDevotionalTime[0]) > 12) {
+                  if (Number(dailyDevotionalTime[0]) > 12) {
                         meridian = 'PM';
-                        dailyDevotionalTime[0] = eval(dailyDevotionalTime[0]) - 12;
-                  } else if (eval(dailyDevotionalTime[0]) < 12) {
+                        dailyDevotionalTime[0] = Number(dailyDevotionalTime[0]) - 12;
+                  } else if (Number(dailyDevotionalTime[0]) < 12) {
                         meridian = 'AM';
-                        if (eval(dailyDevotionalTime[0]) == 0) dailyDevotionalTime[0] = 12;
+                        if (Number(dailyDevotionalTime[0]) == 0) dailyDevotionalTime[0] = 12;
                   }
 
-                  if (time[1] === meridian && hours == dailyDevotionalTime[0] && eval(minutes) <= eval(dailyDevotionalTime[1]) + 1) {
+                  if (time[1] === meridian && hours == dailyDevotionalTime[0] && Number(minutes) <= Number(dailyDevotionalTime[1]) + 1) {
                         const tokenSet = new Set();
                         result[i]?.map(item => {
                               tokenSet.add(
                                     pushNotification(
                                           item?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
                                           readOfDay.title,
-                                          readOfDay.description
+                                          readOfDay.description + '...'
                                     )
                               )
                         })

@@ -263,3 +263,23 @@ export const getDates = (d1: any, d2: any) => {
 export const groupByKey = (list: any, key: string) =>
     list.reduce((hash, obj) =>
         ({ ...hash, [obj[key]]: (hash[obj[key]] || []).concat(obj) }), {})
+
+export const decodeHTMLEntities = (text: string) => {
+    const entities = [
+        ['amp', '&'],
+        ['apos', '\''],
+        ['#x27', '\''],
+        ['#x2F', '/'],
+        ['#39', '\''],
+        ['#47', '/'],
+        ['lt', '<'],
+        ['gt', '>'],
+        ['nbsp', ' '],
+        ['quot', '"']
+    ];
+
+    for (var i = 0, max = entities.length; i < max; ++i)
+        text = text.replace(new RegExp('&' + entities[i][0] + ';', 'g'), entities[i][1]);
+
+    return text;
+}

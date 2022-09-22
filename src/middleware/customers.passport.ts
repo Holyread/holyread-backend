@@ -10,7 +10,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
         next(Boom.badRequest('Missing access token'));
     } else {
         try {
-            if (!req?.headers?.device) return next(Boom.forbidden('Device limit reached, please logout from previews one device'));
+            if (!req?.headers?.device) return next(Boom.notFound('Device details are missing'));
             const details: any = await verifyToken(accessToken)
             const userDetails: any = await UserModel.findOne({ $or: [{ email: details?.email }, { 'oAuth.clientId': details.oauthClientId }], _id: details.id, type: 'User' }).lean().exec()
             if (!userDetails) {
@@ -33,8 +33,8 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             }
             const maxDevices = [...new Set([...userDetails.maxDevices || [], req.headers.device])]
             req.user.maxDevices = maxDevices
+            await UserModel.findOneAndUpdate({ _id: userDetails._id }, { maxDevices })
             next();
-            Promise.all([UserModel.findOneAndUpdate({ _id: userDetails._id }, { maxDevices })])
         } catch (err: any) {
             next(Boom.badRequest(err));
         }

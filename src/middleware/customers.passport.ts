@@ -10,7 +10,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
         next(Boom.badRequest('Missing access token'));
     } else {
         try {
-            if (!req?.headers?.device) return next(Boom.forbidden('Access denied'));
+            if (!req?.headers?.device) return next(Boom.forbidden('Device limit reached, please logout from previews one device'));
             const details: any = await verifyToken(accessToken)
             const userDetails: any = await UserModel.findOne({ $or: [{ email: details?.email }, { 'oAuth.clientId': details.oauthClientId }], _id: details.id, type: 'User' }).lean().exec()
             if (!userDetails) {
@@ -20,7 +20,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
                 return next(Boom.badRequest('User not active'));
             }
             if (userDetails?.maxDevices?.length >= 3 && !userDetails.maxDevices.includes(req?.headers?.device)) {
-                return next(Boom.forbidden('Access denied'));
+                return next(Boom.forbidden('Device limit reached, please logout from previews one device'));
             }
             const refUser: any = await UserModel.findOne({ _id: userDetails.referralUserId }).select('firstName lastName email').lean().exec()
             if (refUser) userDetails.referralUserId = refUser
@@ -31,8 +31,10 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
                 const subscription = await subscriptionService.retrieveSubscription(req?.user?.stripe.subscriptionId)
                 req.subscription = subscription
             }
+            const maxDevices = [...new Set([...userDetails.maxDevices || [], req.headers.device])]
+            req.user.maxDevices = maxDevices
             next();
-            Promise.all([UserModel.findOneAndUpdate({ _id: userDetails._id }, { maxDevices: [...new Set([...userDetails.maxDevices || [], req.headers.device])] }, { new: true })]);
+            Promise.all([UserModel.findOneAndUpdate({ _id: userDetails._id }, { maxDevices })])
         } catch (err: any) {
             next(Boom.badRequest(err));
         }

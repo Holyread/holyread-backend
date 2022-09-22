@@ -275,8 +275,8 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   await removeS3File(userObj.image, s3Bucket)
             }
             /** Logout from specific device */
-            if (req.headers.device && req.body.action === 'logout') {
-                  body.maxDevices = userObj.maxDevices?.filter(item => item !== req.headers.device) || []
+            if (req.body.deviceId && req.body.action === 'logout') {
+                  body.maxDevices = userObj.maxDevices?.filter(item => item !== req.body.deviceId) || []
             }
             if (req.body.timeZone) {
                   body.timeZone = req.body.timeZone

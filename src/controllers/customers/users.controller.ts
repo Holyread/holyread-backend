@@ -274,6 +274,9 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             if (req.body.image === null) {
                   await removeS3File(userObj.image, s3Bucket)
             }
+            if (req.body.timeZone) {
+                  body.timeZone = req.body.timeZone
+            }
             if (req.body.image && req.body.image.includes('base64')) {
                   await removeS3File(userObj.image, s3Bucket)
                   const s3File: any = await uploadFileToS3(req.body.image, 'profile', s3Bucket)

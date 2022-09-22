@@ -68,7 +68,7 @@ const start = async () => {
                               })
                               Promise.all([...tokenSet]);
                         }
-                  } catch (error) {
+                  } catch (error: any) {
                         console.log('Users processing error - ', error.message)
                   }
 

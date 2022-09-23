@@ -1,6 +1,6 @@
 import express, { Router } from 'express'
 import authController from '../../controllers/customers/auth.controller';
-import customerLogin from '../../middleware/customers.login.passport'
+import customerLogin from '../../middleware/customers.login'
 
 const router: Router = express.Router()
 

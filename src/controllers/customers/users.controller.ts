@@ -923,6 +923,23 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
       }
 }
 
+/** Update user account details */
+const logout = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            /** Get current user */
+            let userObj: any = Object.assign({}, req.user)
+            let maxDevices = [];
+            /** Logout from specific device */
+            if (req.body.deviceId) {
+                  maxDevices = userObj.maxDevices?.filter(item =>  item !== req.body.deviceId)
+            }
+            await usersService.updateUser({ _id: userObj._id }, { maxDevices })
+            res.status(200).send({ message: authControllerResponse.userLogoutSuccess })
+      } catch (e: any) {
+            return next(Boom.badData(e.message))
+      }
+}
+
 export {
       getUserAccount,
       getBlessFriend,
@@ -939,5 +956,6 @@ export {
       updateRating,
       deleteUser,
       emailAuth,
-      verifyEmailAuth
+      verifyEmailAuth,
+      logout
 }

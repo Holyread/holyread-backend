@@ -15,7 +15,7 @@ export interface ISetting extends mongoose.Document {
     twitterLink?: string;
     iosAppLink?: string;
     androidAppLink?: string;
-    maxDeviceLogin?: string;
+    maxDeviceLogin?: number;
     dailyDevotionalTime: string;
 }
 
@@ -32,7 +32,7 @@ export type createSettingType = {
     twitterLink?: string;
     iosAppLink?: string;
     androidAppLink?: string;
-    maxDeviceLogin?: string;
+    maxDeviceLogin?: number;
     dailyDevotionalTime: string;
 }
 
@@ -50,7 +50,7 @@ export type getSettingType = {
     twitterLink?: string;
     iosAppLink?: string;
     androidAppLink?: string;
-    maxDeviceLogin?: string;
+    maxDeviceLogin?: number;
     dailyDevotionalTime: string;
 }
 
@@ -67,7 +67,7 @@ export const SettingSchema = new Schema({
     twitterLink: { type: String, default: '' },
     iosAppLink: { type: String, default: '' },
     androidAppLink: { type: String, default: '' },
-    maxDeviceLogin: { type: String, default: '' },
+    maxDeviceLogin: { type: Number, default: 3 },
     dailyDevotionalTime: { type: String, default: '8:0' },
     createdAt: {
         type: Date, default: () => {

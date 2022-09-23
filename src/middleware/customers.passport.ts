@@ -10,30 +10,22 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
         next(Boom.badRequest('Missing access token'));
     } else {
         try {
-            if (!req?.headers?.device) return next(Boom.notFound('Device details are missing'));
             const details: any = await verifyToken(accessToken)
-            const userDetails: any = await UserModel.findOne({ $or: [{ email: details?.email }, { 'oAuth.clientId': details.oauthClientId }], _id: details.id, type: 'User' }).lean().exec()
+            const userDetails = await UserModel.findOne({ $or: [{ email: details?.email }, { 'oAuth.clientId': details.oauthClientId }], _id: details.id, type: 'User' }).lean().exec()
             if (!userDetails) {
-                return next(Boom.badRequest('User not authorized'));
+                next(Boom.badRequest('User not authorized'));
             }
             if (userDetails.status !== 'Active') {
-                return next(Boom.badRequest('User not active'));
-            }
-            if (userDetails?.maxDevices?.length >= 3 && !userDetails.maxDevices.includes(req?.headers?.device)) {
-                return next(Boom.forbidden('Device limit reached, please logout from previews one device'));
+                next(Boom.badRequest('User not active'));
             }
             const refUser: any = await UserModel.findOne({ _id: userDetails.referralUserId }).select('firstName lastName email').lean().exec()
             if (refUser) userDetails.referralUserId = refUser
-            /** set new login flag for new user first login let's start popup */
             req.user = { ...userDetails, isNewLogin: !userDetails.lastSeen }
             global.currentUser = req.user;
             if (req?.user?.stripe?.subscriptionId) {
                 const subscription = await subscriptionService.retrieveSubscription(req?.user?.stripe.subscriptionId)
                 req.subscription = subscription
             }
-            const maxDevices = [...new Set([...userDetails.maxDevices || [], req.headers.device])]
-            req.user.maxDevices = maxDevices
-            await UserModel.findOneAndUpdate({ _id: userDetails._id }, { maxDevices })
             next();
         } catch (err: any) {
             next(Boom.badRequest(err));

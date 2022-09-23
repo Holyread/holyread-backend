@@ -27,7 +27,6 @@ export const responseMessage = {
         userSamePasswordError: 'New password is same as old. Please choose a different one.',
         passwordUpdateSuccess: 'Password has been changed successfully 🚀',
         deleteUserSuccess: 'User deleted successfully',
-        userLogoutSuccess: 'User logout successfully',
         createUserFailed: 'Failed to create user',
         verifyEmailRequest: 'Please check your email and activate your account',
         blessFriendSuccess: 'User Invited successfully, we\'ve sent your user details on your email',

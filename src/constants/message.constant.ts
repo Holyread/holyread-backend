@@ -220,4 +220,7 @@ export const responseMessage = {
         updateNotificationSuccess: 'Notification updated successfully',
         deleteNotificationSuccess: 'Notification deleted successfully'
     },
+    transactionsControllerResponse: {
+        getTransactionsSuccess: 'Transactions listed successfully',
+    },
 }

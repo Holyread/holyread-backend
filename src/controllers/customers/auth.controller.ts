@@ -13,6 +13,7 @@ import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
 import stripeSubscriptionService from '../../services/stripe/subscription';
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
+import transactionsService from '../../services/customers/users/transactions.service';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
@@ -100,14 +101,34 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       verificationCode
     }
     /** Store In app subscription */
+    const now: Date = new Date()
+    let subscriptionEndDate: Date;
     if (body.subscription && body.inAppSubscription) {
-      data.inAppSubscription = { ...body.inAppSubscription, createdAt: new Date() }
+      data.inAppSubscription = { ...body.inAppSubscription, createdAt: now }
       data.inAppSubscriptionStatus = 'Active'
       data.subscription = body.subscription
     }
-
-    await usersService.createUser(data)
+    const newUser = await usersService.createUser(data)
+    
     res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
+
+    if (!body.inAppSubscription) return;
+
+    let months = subscriptionDetails.duration === 'Month' ? 1 : subscriptionDetails.duration === 'Half Year' ? 6 : 12;
+    subscriptionEndDate = new Date(new Date(now).setMonth(new Date(now).getMonth() + months))
+
+    /** Create transaction */
+    transactionsService.createTransaction({
+      latestInvoice: '',
+      planCreatedAt: now,
+      planExpiredAt: subscriptionEndDate,
+      userId: newUser._id,
+      total: subscriptionDetails.price,
+      status: req.body.inAppSubscription?.status,
+      paymentMethod: null,
+      reason: '',
+      paymentLink: ''
+    })
   } catch (e: any) {
     next(Boom.badData(e.message))
   }
@@ -152,8 +173,8 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
 
     await usersService.updateUser({ _id: user._id }, body)
 
-    const title = 'Welcome to Holy Reads';
-    const description = 'Enjoy summaries of bestselling Christian books';
+    const title = 'Welcome to Holy Reads 🎉';
+    const description = 'Enjoy summaries of bestselling Christian books 📚';
     await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title, description } })
 
     /** Get welcome email template */
@@ -183,7 +204,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
         user.device === 'web' &&
         !user.inAppSubscription &&
         !user.referralUserId
-      ) pushNotification(tokens, 'Holyreads Trial Subscription', 'Holyreads Subscription has been activated with 3 days trial period')
+      ) pushNotification(tokens, 'Holy Reads Free Plan 🔔', 'Enjoy 3 Days free trial with holy reads best summaries📚');
     }
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -334,8 +355,8 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       device: body?.device?.toLowerCase() || '',
       email: body.email
     }
+    const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscription })
     if (body.subscription && body.inAppSubscription) {
-      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscription })
       if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
         return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
       }
@@ -346,9 +367,8 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     /** Create new user using social login */
     const data: any = await usersService.createUser(newBody)
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
-    const title = 'Welcome to Holy Reads';
-    const description = 'Enjoy summaries of bestselling Christian books';
-
+    const title = 'Welcome to Holy Reads 🎉';
+    const description = 'Enjoy summaries of bestselling Christian books 📚';
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
 
     /** Get welcome email template */
@@ -379,8 +399,25 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       /** sent wellcome notification in app */
       pushNotification(tokens, title, description)
       if (data?.notification?.subscription && body.subscription && body.inAppSubscription)
-        pushNotification(tokens, 'Holyreads Subscription', 'Holyreads subscription has been activated!')
+        pushNotification(tokens, 'Holyreads Subscription', 'Holyreads subscription has been activated! 🎉')
     }
+    if (!newBody.inAppSubscription) return;
+    const now = new Date();
+    let months = subscriptionDetails.duration === 'Month' ? 1 : subscriptionDetails.duration === 'Half Year' ? 6 : 12;
+    const subscriptionEndDate = new Date(new Date(now).setMonth(new Date(now).getMonth() + months))
+
+    /** Create transaction */
+    transactionsService.createTransaction({
+      latestInvoice: '',
+      planCreatedAt: now,
+      planExpiredAt: subscriptionEndDate,
+      userId: data._id,
+      total: subscriptionDetails.price,
+      status: req.body.inAppSubscription?.status,
+      paymentMethod: null,
+      reason: '',
+      paymentLink: ''
+    })
   } catch (e: any) {
     next(Boom.badData(e.message))
   }
@@ -426,11 +463,11 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       const index = emailUser.oAuth.findIndex(i => i.provider === body.provider);
       (index < 0)
         ? emailUser.oAuth.push({
-            email: body.email,
-            provider: body.provider,
-            clientId: body.id,
-            default: emailUser?.oAuth?.length ? false : true
-          })
+          email: body.email,
+          provider: body.provider,
+          clientId: body.id,
+          default: emailUser?.oAuth?.length ? false : true
+        })
         : emailUser.oAuth[index] = { ...emailUser.oAuth[index], email: body.email }
       await usersService.updateUser({ _id: emailUser._id }, { oAuth: emailUser.oAuth })
 
@@ -480,8 +517,8 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
 
     const data: any = await usersService.createUser(newBody)
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
-    const title = 'Welcome to Holy reads';
-    const description = 'Enjoy summaries of bestselling Christian books';
+    const title = 'Welcome to Holy Reads 🎉';
+    const description = 'Enjoy summaries of bestselling Christian books 📚';
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
 
     /** Get welcome email template */
@@ -511,7 +548,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     if (data && data.pushTokens && data.pushTokens.length && data?.notification?.push) {
       const tokens = data.pushTokens.map(i => i.token)
       pushNotification(tokens, title, description)
-      pushNotification(tokens, 'Holyreads Trial Subscription', '3 days trial subscription has been activated!')
+      pushNotification(tokens, 'Holy Reads Free Plan 🔔', 'Enjoy 3 Days free trial with holy reads best summaries📚')
     }
 
   } catch (e: any) {

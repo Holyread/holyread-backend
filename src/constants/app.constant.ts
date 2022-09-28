@@ -14,6 +14,14 @@ export const origins = {
     production: '',
 }
 
+export const serverOrigins = {
+    test: '*',
+    local: 'http://localhost:8000',
+    development: 'https://api-dev.holyreads.com',
+    staging: '',
+    production: '',
+}
+
 export const awsBucket = {
     local: { bucketName: 'holyreads-develop', s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com' },
     development: { bucketName: 'holyreads-develop', s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com' },

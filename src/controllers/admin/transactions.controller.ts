@@ -20,7 +20,7 @@ const getAllTransactions = async (request: Request | any, response: Response, ne
             searchFilter = {
                 $or: [
                     { 'status': await getSearchRegexp(params.search) },
-                    { 'total': await getSearchRegexp(params.search) },
+                    { 'email': await getSearchRegexp(params.search) },
                 ]
             }
         }
@@ -30,10 +30,13 @@ const getAllTransactions = async (request: Request | any, response: Response, ne
             case 'status':
                 trnSorting.push(['status', params.order || 'ASC']);
                 break;
+            case 'email':
+                trnSorting.push(['email', params.order || 'ASC']);
+                break;
             case 'total':
                 trnSorting.push(['total', params.order || 'ASC']);
                 break;
-            case 'createdAt':
+            case 'date':
                 trnSorting.push(['createdAt', params.order || 'ASC']);
                 break;
             default:

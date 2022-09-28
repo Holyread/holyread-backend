@@ -350,7 +350,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                         planExpiredAt: subscriptionEndDate,
                         userId: userObj._id,
                         total: subscriptionDetails.price,
-                        status: req.body.inAppSubscription?.status,
+                        status: body.inAppSubscriptionStatus?.toLowerCase(),
                         paymentMethod: null,
                         reason: '',
                         paymentLink: ''
@@ -744,7 +744,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                   planExpiredAt: subscriptionEndDate,
                   userId: invitedUserDetails._id,
                   total: subscriptionDetails.price,
-                  status: req.body.inAppSubscription?.status,
+                  status: inviteUserBody.inAppSubscriptionStatus?.toLowerCase(),
                   paymentMethod: null,
                   reason: '',
                   paymentLink: ''
@@ -822,7 +822,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             if (!subscriptionDetails) {
                   return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }
-            let body = {};
+            let body: any = {};
             let subscription;
             let subscriptionEndDate;
             if (req.body.inAppSubscription) {
@@ -890,7 +890,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   planExpiredAt: subscriptionEndDate,
                   userId: userObj._id,
                   total: subscriptionDetails.price,
-                  status: req.body.inAppSubscription?.status,
+                  status: body.inAppSubscriptionStatus?.toLowerCase(),
                   paymentMethod: null,
                   reason: '',
                   paymentLink: ''

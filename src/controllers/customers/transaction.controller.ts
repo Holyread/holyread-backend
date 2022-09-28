@@ -17,9 +17,8 @@ const createTransaction = async (request: Request, response: Response, next: Nex
       try {
             const event = request.body;
             const session = event?.data?.object;
-            const previousAttributes = event?.data?.previous_attributes;
             /** invalid request */
-            if (session || previousAttributes) return next(Boom.badRequest())
+            if (!session) return next(Boom.badRequest())
 
             const user = await userService.getOneUserByFilter({ 'stripe.customerId': session.customer })
             if (!user) return next(Boom.notAcceptable())

@@ -124,7 +124,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       planExpiredAt: subscriptionEndDate,
       userId: newUser._id,
       total: subscriptionDetails.price,
-      status: req.body.inAppSubscription?.status,
+      status: 'active',
       paymentMethod: null,
       reason: '',
       paymentLink: ''
@@ -413,7 +413,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       planExpiredAt: subscriptionEndDate,
       userId: data._id,
       total: subscriptionDetails.price,
-      status: req.body.inAppSubscription?.status,
+      status: 'active',
       paymentMethod: null,
       reason: '',
       paymentLink: ''

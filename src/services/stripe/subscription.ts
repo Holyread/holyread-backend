@@ -1,5 +1,6 @@
 import config from '../../../config'
 
+import { serverOrigins } from '../../constants/app.constant'
 const stripe = require('stripe')(config.STRIPE_SECRET);
 
 /** Retrive subscription */
@@ -133,8 +134,8 @@ const getWebHookList = async () => {
 
 /** Create subscription webhook */
 const createWebhook = async () => {
-      if (config.NODE_ENV === 'local') return; 
-      const url: string = 'https://6d71-103-251-19-224.in.ngrok.io/api/v1/webhook/transactions';
+      if (config.NODE_ENV === 'local') return;
+      const url: string = serverOrigins[config.NODE_ENV] + '/api/v1/webhook/transactions';
       const webhooks: any[] = await getWebHookList()
       const existingHook: Object = webhooks?.find(wi => wi.url === url);
       if (existingHook) return;

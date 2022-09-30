@@ -3,7 +3,6 @@ import Boom from '@hapi/boom';
 
 import transactionsService from '../../services/admin/users/transactions.service'
 import { responseMessage } from '../../constants/message.constant'
-import { getSearchRegexp } from '../../lib/utils/utils'
 import { dataTable } from '../../constants/app.constant'
 
 const transactionsControllerResponse = responseMessage.transactionsControllerResponse
@@ -11,19 +10,9 @@ const transactionsControllerResponse = responseMessage.transactionsControllerRes
 /** Get all Transactions */
 const getAllTransactions = async (request: Request | any, response: Response, next: NextFunction) => {
     try {
-        const params = request.query
+        const params: any = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : 10
-
-        let searchFilter = {}
-        if (params.search) {
-            searchFilter = {
-                $or: [
-                    { 'status': await getSearchRegexp(params.search) },
-                    { 'email': await getSearchRegexp(params.search) },
-                ]
-            }
-        }
 
         const trnSorting = [];
         switch (params.column) {
@@ -37,14 +26,19 @@ const getAllTransactions = async (request: Request | any, response: Response, ne
                 trnSorting.push(['total', params.order || 'ASC']);
                 break;
             case 'date':
-                trnSorting.push(['createdAt', params.order || 'ASC']);
+                trnSorting.push(['date', params.order || 'ASC']);
                 break;
             default:
-                trnSorting.push(['createdAt', 'DESC']);
+                trnSorting.push(['date', 'DESC']);
                 break;
         }
-
-        const data = await transactionsService.getAllTransactions(Number(skip), Number(limit), searchFilter, trnSorting)
+        if (params.from) {
+            params.from = new Date(params.from).setHours(0, 0, 0, 0)
+        }
+        if (params.to) {
+            params.to = new Date(params.to).setHours(23, 59, 59, 999)
+        }
+        const data = await transactionsService.getAllTransactions(Number(skip), Number(limit), { keyword: params?.search?.trim()?.toLowerCase(), from: params.from, to: params.to }, trnSorting)
         response.status(200).json({ message: transactionsControllerResponse.getTransactionsSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))

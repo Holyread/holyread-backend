@@ -51,6 +51,15 @@ const createCustomer = async (email?: string, source?: string) => {
       }
 }
 
+/** get user */
+const getCustomer = async (id: string) => {
+      try {
+            const customer = await stripe.customers.retrieve(id);
+            return customer
+      } catch (error: any) {
+            return null
+      }
+}
 
 /** Clear existing payment methods */
 const clearPaymentMethods = async (customerId) => {
@@ -144,7 +153,7 @@ const createWebhook = async () => {
             'customer.subscription.created'
       ];
       await stripe.webhookEndpoints.create({ url, enabled_events });
-      console.log('stripe webhook created successfully')
+      console.log('Subscription webhook created successfully')
       return;
 }
 
@@ -188,4 +197,5 @@ export default {
       getPaymentIntent,
       getPaymentMethod,
       getInvoice,
+      getCustomer
 }

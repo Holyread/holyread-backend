@@ -353,7 +353,8 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                         status: body.inAppSubscriptionStatus?.toLowerCase(),
                         paymentMethod: null,
                         reason: '',
-                        paymentLink: ''
+                        paymentLink: '',
+                        device: 'app'
                   })
                   if (emailTemplateDetails && emailTemplateDetails.content) {
                         const contentData = {
@@ -747,7 +748,8 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                   status: inviteUserBody.inAppSubscriptionStatus?.toLowerCase(),
                   paymentMethod: null,
                   reason: '',
-                  paymentLink: ''
+                  paymentLink: '',
+                  device: 'app'
             })
             const sendEmailTemplate = await emailTemplateService.getAllEmailTemplates(0, 0, { title: { $in: [emailTemplatesTitles.customer.sendInvitation, emailTemplatesTitles.customer.blessFriend] } }, [])
             const blessFriendTemplate = sendEmailTemplate.count && sendEmailTemplate.emailTemplates.find(oneTemplate => oneTemplate.title === emailTemplatesTitles.customer.blessFriend)
@@ -893,7 +895,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   status: body.inAppSubscriptionStatus?.toLowerCase(),
                   paymentMethod: null,
                   reason: '',
-                  paymentLink: ''
+                  paymentLink: '',
+                  device: 'app'
             })
             if (!req.body?.inAppSubscription) {
                   return res.status(200).send({

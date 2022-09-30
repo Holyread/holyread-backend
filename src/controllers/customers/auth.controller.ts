@@ -127,7 +127,8 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       status: 'active',
       paymentMethod: null,
       reason: '',
-      paymentLink: ''
+      paymentLink: '',
+      device: 'app'
     })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -416,7 +417,8 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       status: 'active',
       paymentMethod: null,
       reason: '',
-      paymentLink: ''
+      paymentLink: '',
+      device: 'app'
     })
   } catch (e: any) {
     next(Boom.badData(e.message))

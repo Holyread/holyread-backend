@@ -30,7 +30,8 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   planExpiredAt: new Date(session?.current_period_end * 1000),
                   total: (session?.plan?.amount || 0) / 100,
                   status: session?.status,
-                  reason: ''
+                  reason: '',
+                  device: 'web'
             }
             /** Send and push notification */
             const sentNotification = async (notificationTitle: string, notificationDescription: string) => {
@@ -69,12 +70,35 @@ const createTransaction = async (request: Request, response: Response, next: Nex
             }
             /** Get latest invoice details */
             const latestInvoice = await stripeSubscriptionService.getInvoice(session?.latest_invoice)
+            transaction.account = {
+                  country: latestInvoice.account_country,
+                  name: latestInvoice.account_name,
+                  taxIds: latestInvoice.account_tax_ids,
+            }
+            transaction.amount = {
+                  subtotal: (latestInvoice?.subtotal | 0) / 100,
+                  tax: (latestInvoice?.tax | 0) / 100,
+                  total: (latestInvoice?.total | 0) / 100
+            }
+            transaction.invoiceAt = latestInvoice.created && new Date(latestInvoice.created * 1000)
+            transaction.statusTransitions = latestInvoice.status_transitions
+            transaction.customer = {
+                  email: latestInvoice.customer_email,
+                  name: latestInvoice.customer_name,
+                  phone: latestInvoice.customer_phone,
+                  shipping: latestInvoice.customer_shipping
+            }
+
             const paymentIntent = await stripeSubscriptionService.getPaymentIntent(
                   latestInvoice?.payment_intent
             );
             transaction.paymentLink = latestInvoice?.hosted_invoice_url
             transaction.paymentMethod = (await stripeSubscriptionService.getPaymentMethod(paymentIntent?.payment_method))?.card
-            
+            if (!transaction.paymentMethod) {
+                  const customer = await stripeSubscriptionService.getCustomer(session.customer)
+                  const paymentMethod = await stripeSubscriptionService.getPaymentMethod(customer?.invoice_settings?.default_payment_method)
+                  transaction.paymentMethod = paymentMethod?.card
+            }
             /** Trail subscription does not required transation yet */
             if (session.status === 'trailing') {
                   return response.status(200)

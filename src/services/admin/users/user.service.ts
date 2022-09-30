@@ -81,4 +81,14 @@ const deleteUser = async (id: string) => {
     }
 }
 
-export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser }
+/** Get all Users for dashboard */
+const getAllUsersForDashboard = async (query: any, select: string) => {
+    try {
+        const users: any = await UserModel.find().select(select || '').lean().exec()
+        return users
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser, getAllUsersForDashboard }

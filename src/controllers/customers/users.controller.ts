@@ -17,6 +17,7 @@ import config from '../../../config'
 import ratingService from '../../services/customers/book/rating.service';
 import highLightsService from '../../services/customers/highLights/highLights.service';
 import userService from '../../services/customers/users/user.service';
+import transactionsService from '../../services/customers/users/transactions.service';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -316,7 +317,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             }
             const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: userObj.subscription });
             const isAppSubscriptionStatus = ['Cancelled', 'Active'].includes(req.body.inAppSubscription?.status) && !!userObj?.inAppSubscriptionStatus && !!req.body.inAppSubscription?.status !== userObj?.inAppSubscriptionStatus
-            
+
             /** update in App subscription status */
             if (isAppSubscriptionStatus && subscriptionDetails) {
                   body.inAppSubscriptionStatus = req.body.inAppSubscription?.status
@@ -331,7 +332,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have ${req.body.inAppSubscription.status} the subscription.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
                   let now = userObj?.inAppSubscription?.createdAt
                   let subscriptionEndDate;
-                  switch (subscriptionDetails.duration && now) {
+                  switch (subscriptionDetails.duration) {
                         case "Year":
                               subscriptionEndDate = new Date(now.setMonth(now.getMonth() + 12));
                               break;
@@ -342,6 +343,19 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                               subscriptionEndDate = new Date(now.setMonth(now.getMonth() + 1));
                               break;
                   }
+                  /** Create transaction */
+                  await transactionsService.createTransaction({
+                        latestInvoice: '',
+                        planCreatedAt: userObj?.inAppSubscription?.createdAt,
+                        planExpiredAt: subscriptionEndDate,
+                        userId: userObj._id,
+                        total: subscriptionDetails.price,
+                        status: body.inAppSubscriptionStatus?.toLowerCase(),
+                        paymentMethod: null,
+                        reason: '',
+                        paymentLink: '',
+                        device: 'app'
+                  })
                   if (emailTemplateDetails && emailTemplateDetails.content) {
                         const contentData = {
                               username: userObj.email.split('@')[0],
@@ -551,7 +565,7 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   const data = await bookService.getAllBookSummaries(0, 0, search, [], true)
 
                   /** sort summary by latest reads based on user library readings */
-                 const summaries = new Set()
+                  const summaries = new Set()
                   userObj.library.reading.map(r => {
                         const summary = data.summaries.find((os: any) => String(os._id) === String(r.bookId))
                         if (!summary) return;
@@ -724,6 +738,19 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             if (!invitedUserDetails || !invitedUserDetails._id) {
                   return next(Boom.notFound(authControllerResponse.createUserFailed))
             }
+            /** Create transaction */
+            inviteUserBody?.inAppSubscription && await transactionsService.createTransaction({
+                  latestInvoice: '',
+                  planCreatedAt: inviteUserBody?.inAppSubscription?.createdAt,
+                  planExpiredAt: subscriptionEndDate,
+                  userId: invitedUserDetails._id,
+                  total: subscriptionDetails.price,
+                  status: inviteUserBody.inAppSubscriptionStatus?.toLowerCase(),
+                  paymentMethod: null,
+                  reason: '',
+                  paymentLink: '',
+                  device: 'app'
+            })
             const sendEmailTemplate = await emailTemplateService.getAllEmailTemplates(0, 0, { title: { $in: [emailTemplatesTitles.customer.sendInvitation, emailTemplatesTitles.customer.blessFriend] } }, [])
             const blessFriendTemplate = sendEmailTemplate.count && sendEmailTemplate.emailTemplates.find(oneTemplate => oneTemplate.title === emailTemplatesTitles.customer.blessFriend)
             const sendInvitationTemplate = sendEmailTemplate.count && sendEmailTemplate.emailTemplates.find(oneTemplate => oneTemplate.title === emailTemplatesTitles.customer.sendInvitation)
@@ -753,6 +780,14 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             if (!blessFriendEmailResult || !sendInvitationResult) {
                   return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
             }
+
+            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: 'Holy Reads Invitation 🎁', description: refUser.email.split('@')[0] + ' invited to you ✨' } })
+            fetchNotifications(io.sockets, { _id: invitedUserDetails._id })
+
+            if (!inviteUserBody?.inAppSubscription) {
+                  return res.status(200).send({ message: authControllerResponse.blessFriendSuccess })  
+            }
+
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
             const sub = emailTemplateDetails.subject || 'Subscription'
             let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
@@ -774,11 +809,6 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             if (!result) {
                   return next(Boom.badData(authControllerResponse.sentSubscriptionEmailFilure))
             }
-            const notificationTitle = 'Subscription Gift'
-            const notificationDescription = 'Subscription Gift Added Successfully'
-            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
-            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: 'Welcome to Holy Reads', description: 'Enjoy summaries of bestselling Christian books' } })
-            fetchNotifications(io.sockets, { _id: invitedUserDetails._id })
 
             res.status(200).send({ message: authControllerResponse.blessFriendSuccess })
       } catch (e: any) {
@@ -794,7 +824,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             if (!subscriptionDetails) {
                   return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }
-            let body = {};
+            let body: any = {};
             let subscription;
             let subscriptionEndDate;
             if (req.body.inAppSubscription) {
@@ -826,7 +856,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod)
                         subscriptionEndDate = new Date(subscription.current_period_end * 1000)
                   } else {
-                        await stripeSubscriptionService.updateSubscription(subscriptionDetails.stripePlanId, userObj.stripe.subscriptionId)
+                        await stripeSubscriptionService.updateSubscription(subscriptionDetails.stripePlanId, userObj.stripe.subscriptionId, userObj.stripe.customerId, req.body.paymentMethod)
                         subscription = await stripeSubscriptionService.retrieveSubscription(userObj.stripe.subscriptionId)
                         subscriptionEndDate = new Date(subscription.current_period_end * 1000)
                   }
@@ -851,9 +881,32 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         'stripe.createdAt': new Date(),
                         subscription: subscriptionDetails._id
                   }
-                  
+
             }
             await usersService.updateUser({ _id: userObj._id }, body)
+
+            /** Create transaction */
+            req.body?.inAppSubscription && await transactionsService.createTransaction({
+                  latestInvoice: '',
+                  planCreatedAt: userObj?.inAppSubscription?.createdAt,
+                  planExpiredAt: subscriptionEndDate,
+                  userId: userObj._id,
+                  total: subscriptionDetails.price,
+                  status: body.inAppSubscriptionStatus?.toLowerCase(),
+                  paymentMethod: null,
+                  reason: '',
+                  paymentLink: '',
+                  device: 'app'
+            })
+            if (!req.body?.inAppSubscription) {
+                  return res.status(200).send({
+                        message: subscriptionsControllerResponse.createSubscriptionSuccess,
+                        data:  {
+                              subscriptionStatus: subscription.status,
+                              customerEmail: userObj.email
+                        }
+                  })
+            }
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
             const sub = emailTemplateDetails.subject || 'Holyreads Subscription'
@@ -873,7 +926,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   }
             }
             const notificationTitle = 'Holyreads Subscription'
-            const notificationDescription = 'Subscription activated successfully'
+            const notificationDescription = 'Holyreads subscription has been activated! 🎉'
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
             fetchNotifications(io.sockets, { _id: userObj._id })
 

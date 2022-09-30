@@ -77,6 +77,17 @@ const getOneBookSummaryByFilter = async (query: any) => {
     }
 }
 
+/** Get all book summaries count for dashboard */
+const getBooksCountForDashboard = async () => {
+    try {
+        const result = await BookSummaryModel.aggregate([{ '$group': { '_id': '_id', 'chapters': { '$sum': { '$size': '$chapters' } } } }])
+        const count: number = await BookSummaryModel.count().lean().exec()
+        return { count, summaries: result }
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 /** Get all book summaries for table */
 const getAllBookSummaries = async (skip: number, limit, search: object, sort) => {
     try {
@@ -136,5 +147,6 @@ export default {
     getAllBookSummaries,
     getAllBookSummariesOptionsList,
     getOneBookSummaryByFilter,
-    deleteBookSummary
+    deleteBookSummary,
+    getBooksCountForDashboard
 }

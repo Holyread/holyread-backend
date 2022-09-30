@@ -41,6 +41,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
       message: authControllerResponse.loginSuccess,
       data: { _id: user._id, email: user.email, token, type: user.type }
     })
+    usersService.updateUser({ _id: user._id }, { timeZone: req.headers.timeZone || user.timeZone || '' })
   } catch (e: any) {
     next(Boom.badData(e.message))
   }
@@ -287,6 +288,8 @@ const appOAuthSignIn = async (req: Request, res: any, next: NextFunction) => {
       message: authControllerResponse.loginSuccess,
       data: { _id: user._id, email: user.email, token, type: user.type, userName: user?.email?.split('@')[0] || '' }
     })
+    usersService.updateUser({ _id: user._id }, { timeZone: req.headers.timeZone || user.timeZone || '' })
+
   } catch (e: any) {
     next(Boom.badData(e.message))
   }
@@ -327,7 +330,9 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         })
         :
         emailUser.oAuth[index] = { ...emailUser.oAuth[index], email: body.email }
-      await usersService.updateUser({ _id: emailUser._id }, { oAuth: emailUser.oAuth })
+
+      await usersService.updateUser({ _id: emailUser._id }, { oAuth: emailUser.oAuth, timeZone: req.headers.timeZone || emailUser.timeZone || '' })
+
       const token: string = getToken({ email: emailUser.email, 'oauthClientId': body.id, id: emailUser._id })
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
@@ -354,7 +359,8 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         default: true
       }],
       device: body?.device?.toLowerCase() || '',
-      email: body.email
+      email: body.email,
+      timeZone: req.headers.timeZone || ''
     }
     const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscription })
     if (body.subscription && body.inAppSubscription) {
@@ -452,7 +458,9 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       const index = emailUser.oAuth.findIndex(i => i.provider === body.provider)
       /** set email if email does not exist */
       user.oAuth[index] = { ...user.oAuth[index], email: user.email }
-      await usersService.updateUser({ _id: user._id }, { oAuth: user.oAuth, email: user.email })
+
+      await usersService.updateUser({ _id: user._id }, { oAuth: user.oAuth, email: user.email, timeZone: req.headers.timeZone || user.timeZone || '' })
+
       const token: string = getToken({ email: user.email, 'oauthClientId': body.id, id: user._id })
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
@@ -471,7 +479,8 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
           default: emailUser?.oAuth?.length ? false : true
         })
         : emailUser.oAuth[index] = { ...emailUser.oAuth[index], email: body.email }
-      await usersService.updateUser({ _id: emailUser._id }, { oAuth: emailUser.oAuth })
+
+      await usersService.updateUser({ _id: emailUser._id }, { oAuth: emailUser.oAuth, timeZone: req.headers.timeZone || emailUser.timeZone || '' })
 
       const token: string = getToken({ email: emailUser.email, 'oauthClientId': body.id, id: emailUser._id })
       return res.status(200).json({
@@ -499,7 +508,8 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
         default: true
       }],
       device: 'web',
-      email: body.email
+      email: body.email,
+      timeZone: req.headers.timeZone || ''
     }
     const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
     if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {

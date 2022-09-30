@@ -54,7 +54,7 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
                         paymentLink: i?.paymentLink,
                         payment: i?.device === 'app' ? ['fa fa-mobile', 'app'] : ['fa-cc-' + i?.paymentMethod?.brand?.toLowerCase(), i?.paymentMethod?.brand || ''],
                         reason: i.reason,
-                        latestInvoice: i.latestInvoice || 'in_' + i?.userId?.inAppSubscription?.transactionId,
+                        latestInvoice: i.latestInvoice || 'in_' + (i?.userId?.inAppSubscription?.transactionId || i._id),
                         subscription: i?.userId?.subscription,
                         account: i.account,
                         customer: { ...i.customer, shipping: shipping && shipping?.line1 + ' ,' + shipping?.country + ' ' + shipping?.postal_code },

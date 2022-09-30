@@ -70,7 +70,8 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
                   if (
                         search.keyword &&
                         !data?.status?.toLowerCase()?.includes(search.keyword) &&
-                        !data?.email?.toLowerCase()?.includes(search.keyword)
+                        !data?.email?.toLowerCase()?.includes(search.keyword) &&
+                        Math.trunc(data?.total) != search.keyword
                   )     { return null }
                   transactions.add(data)
             })

@@ -132,10 +132,15 @@ const updateSubscription = async (req: Request, res: Response, next: NextFunctio
             if (!planDetails) {
                 return next(Boom.notFound(subscriptionsControllerResponse.planFetchError))
             }
-            const createNewPrice = await stripeService.addPrice(planDetails.product, Number(req.body.price), subscriptionObj.duration, subscriptionObj.intervalCount)
-            if (!createNewPrice.id) {
-                req.body.price = subscriptionObj.price
+            req.body.intervalCount = subscriptionObj.intervalCount
+            let duration = req.body.duration || subscriptionObj.duration
+            if (duration === 'Half Year') {
+                req.body.intervalCount = 6
+                duration = 'Month'
             }
+            const createNewPrice = await stripeService.addPrice(planDetails.product, Number(req.body.price), duration, req.body.intervalCount)
+            req.body.price = !createNewPrice.id ? subscriptionObj.price : req.body.price
+            req.body.stripePlanId = createNewPrice?.id || subscriptionObj.stripePlanId
         }
         const data = await subscriptionsService.updateSubscription(req.body, id)
         delete data.stripePlanId
@@ -149,7 +154,7 @@ const updateSubscription = async (req: Request, res: Response, next: NextFunctio
 const deleteSubcription = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
-        const subscriptionUser = await usersService.getOneUserByFilter({ subscriptions: id })
+        const subscriptionUser = await usersService.getOneUserByFilter({ subscription: id })
         if (subscriptionUser) {
             return next(Boom.locked(subscriptionsControllerResponse.subscriptionIsInUsedError))
         }

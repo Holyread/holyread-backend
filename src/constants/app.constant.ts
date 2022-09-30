@@ -14,6 +14,14 @@ export const origins = {
     production: '',
 }
 
+export const serverOrigins = {
+    test: '*',
+    local: 'http://localhost:8000',
+    development: 'https://api-dev.holyreads.com',
+    staging: '',
+    production: '',
+}
+
 export const awsBucket = {
     local: { bucketName: 'holyreads-develop', s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com' },
     development: { bucketName: 'holyreads-develop', s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com' },
@@ -46,8 +54,6 @@ export const emailTemplatesTitles = {
     customer: {
         registration: 'Customer Registration',
         forgotPassword: 'Customer Forgot Password',
-        contactUs: 'Contact Us',
-        feedback: 'Client Feedback',
         sendInvitation: 'Send Invitation',
         blessFriend: 'Customer Registration Bless Friend',
         chooseSubscription: 'Choose Subscription',
@@ -56,12 +62,15 @@ export const emailTemplatesTitles = {
         changePassword: 'Change Password',
         emailAuthVerification: 'Customer Email Auth Verification',
         emailAuthEnabled: 'Customer Email Auth Enabled',
-        welcomeToHolyreads: 'Welcome To Holy Reads'
+        welcomeToHolyreads: 'Welcome To Holy Reads',
+        HolyreadsSupport: 'Holyreads Support'
     },
     admin: {
         customerRegistration: 'Admin Customer Registration',
         login: 'Admin Login',
-        forgotPassword: 'Forgot Password'
+        forgotPassword: 'Forgot Password',
+        customerFeedback: 'Customer Feedback',
+        customerInquiry: 'Customer Inquiry',
     }
 }
 

@@ -6,6 +6,7 @@ export interface INotifications extends mongoose.Document {
     notification: {
         title: string,
         description: string,
+        status: 'read' | 'unread'
     },
     type: string,
     userId: string
@@ -15,6 +16,7 @@ export const NotificationsSchema = new Schema({
     notification: {
         title: { type: String, required: true },
         description: { type: String, required: true },
+        status: { type: String, enum: ['read', 'unread'], default: 'unread' },
     },
     type: { type: String, required: true },
     userId: { type: Schema.Types.ObjectId, ref: 'user', required: true, index: true },

@@ -49,14 +49,38 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
 }
 
 /**  Get one book summary by id */
-const getOneSummary = async (req: Request, res: Response, next: NextFunction) => {
+const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
     try {
         /** Get summary from db */
         const data: any = await bookSummaryService.getOneBookSummaryByFilter({ _id: req.params.id })
         if (!data) {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
+        let isPlanActive = false
+        if ((req.subscription && req.subscription?.status === 'active') || (req.user.inAppSubscription && req.user.inAppSubscriptionStatus === 'Active')) {
+            isPlanActive = true
+        }
+        if (!isPlanActive) {
+            /** Set today start and end */
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            const end = new Date();
+            end.setHours(23, 59, 59, 999);
 
+            /** Filter current days new view books */
+            let todayViews = []; let isExist = false;
+            req?.user?.library?.view.map(i => {
+                const createdAt = new Date(i.createdAt).getTime();
+                if (createdAt >= start.getTime()) todayViews.push(i)
+                if (String(i.bookId) === String(data._id)) {
+                    isExist = true
+                }
+            })
+
+            if (!isExist && todayViews.length >= 5) {
+                return next(Boom.forbidden(bookSummaryControllerResponse.trailPlanLimitError))
+            }
+        }
         if (data.coverImage) {
             data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
         }
@@ -74,6 +98,10 @@ const getOneSummary = async (req: Request, res: Response, next: NextFunction) =>
             });
         }
         res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummarySuccess, data })
+        /** Incress book views */
+        if (!req.user?.library?.views.find(i => String(i.bookId) === (req.params.id))) {
+            await bookSummaryService.updateBookSummary({ '$inc': { views: 1 } }, { _id: req.params.id})
+        }
     } catch (e: any) {
         next(Boom.badData(e.message))
     }

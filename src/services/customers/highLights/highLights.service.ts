@@ -136,7 +136,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
             return { highLightsBooks: [{ count: 0, highlights: [] }] }
         }
         let newResult = []
-        const books = await BookSummaryModel.find({}).select('title overview coverImageBackground coverImage author chapters.name chapters._id').lean().exec()
+        const books = await BookSummaryModel.find({}).select('title overview description coverImageBackground coverImage author chapters.name chapters._id').lean().exec()
         const authors = await BookAuthorModel.find({}).select('name').lean().exec()
         await Promise.all(await result.map(async (item: any) => {
             const bookDetails = books.find(oneBook => String(oneBook._id) === String(item.bookId))
@@ -157,6 +157,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     bookId: item.bookId,
                     userId: item.userId,
                     title: bookDetails.title,
+                    description: bookDetails.description,
                     coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + bookDetails.coverImage,
                     coverImageBackground: bookDetails.coverImageBackground,
                     author: authorDetails,

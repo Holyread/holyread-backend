@@ -1,34 +1,28 @@
 import { UserModel, SubscriptionsModel } from '../../../models/index'
-import { getToken, encrypt } from '../../../lib/utils/utils'
+import { encrypt } from '../../../lib/utils/utils'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
-import subscriptionService from '../subscriptions/subscriptions.service'
+
 const NODE_ENV = config.NODE_ENV
 const authControllerResponse = responseMessage.authControllerResponse
+
 /** Add User */
 const createUser = async (body: any) => {
     try {
         if (body.password) body.password = encrypt(body.password)
-        if (!body.subscriptions) {
-            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ title: 'Free-Trial' })
-            if (subscriptionDetails) {
-                body.subscriptions = subscriptionDetails._id
-            }
-        }
         const result = await UserModel.create(body)
         if (!result) {
             throw new Error(authControllerResponse.createUserFailed)
         }
-        const token: string = getToken({ email: result.email, id: result._id })
-        return { _id: result._id, email: result.email, token }
+        return { _id: result._id, email: result.email }
     } catch (e: any) {
         throw new Error(e)
     }
 }
 
 /** Modify User */
-const updateUser = async (body: any, query: object) => {
+const updateUser = async (query: object, body: any) => {
     try {
         if (body.password) {
             body.password = encrypt(body.password)
@@ -62,14 +56,14 @@ const getAllUsers = async (skip: number, limit, search: object, sort) => {
             if (oneUser.image) {
                 oneUser.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + oneUser.image
             }
-            if (!oneUser.subscriptions) {
+            if (!oneUser.subscription) {
                 return;
             }
-            const userSubscriptionDetails = await SubscriptionsModel.findById(oneUser.subscriptions).lean()
+            const userSubscriptionDetails = await SubscriptionsModel.findById(oneUser.subscription).lean()
             if (!userSubscriptionDetails) {
                 return
             }
-            oneUser.subscriptions = userSubscriptionDetails.title
+            oneUser.subscription = userSubscriptionDetails.title
         }))
         return { count, users }
     } catch (e: any) {
@@ -87,4 +81,14 @@ const deleteUser = async (id: string) => {
     }
 }
 
-export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser }
+/** Get all Users for dashboard */
+const getAllUsersForDashboard = async (query: any, select: string) => {
+    try {
+        const users: any = await UserModel.find().select(select || '').lean().exec()
+        return users
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser, getAllUsersForDashboard }

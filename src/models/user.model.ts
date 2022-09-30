@@ -7,7 +7,7 @@ export interface IUser extends mongoose.Document {
     lastName?: string,
     email: string,
     password: string,
-    subscriptions?: string,
+    subscription?: string,
     type: 'User' | 'Admin',
     status?: 'Active' | 'Deactive',
     verified?: boolean,
@@ -17,9 +17,9 @@ export interface IUser extends mongoose.Document {
         email?: boolean,
         push?: boolean,
         inApp?: boolean,
-        downloads?: boolean,
-        promotionsAndSales?: boolean,
-        subscriptions?: boolean
+        dailyDevotional?: boolean,
+        subscription?: boolean,
+        offerAndDeal?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -34,6 +34,7 @@ export interface IUser extends mongoose.Document {
     iosAppLink?: string,
     androidAppLink?: string,
     maxDevicesLogin?: string,
+    downloadOverWifi?: boolean,
     pushTokens?: [{
         deviceId: string,
         token: string
@@ -43,7 +44,12 @@ export interface IUser extends mongoose.Document {
         completed?: [string],
         reading?: [{
             bookId: string,
-            chaptersCompleted: [string]
+            chaptersCompleted: [string],
+            updatedAt: Date
+        }],
+        view?: [{
+            bookId: string,
+            createdAt: Date
         }],
     },
     smallGroups?: [string],
@@ -55,14 +61,19 @@ export interface IUser extends mongoose.Document {
     }],
     referralUserId?: string,
     kindleEmail?: string,
-    inAppSubscription?: Object,
+    inAppSubscription?: Object, // default key - createdAt(Date)
     inAppSubscriptionStatus?: 'Cancelled' | 'Active',
     stripe: {
         subscriptionId?: string,
         customerId?: string,
         planId?: string,
+        createdAt?: Date
     },
-    device: string
+    device: string,
+    timeZone?: string,
+    createdAt: Date,
+    updatedAt: Date,
+    lastSeen: Date,
 }
 
 export type createUserType = {
@@ -70,7 +81,7 @@ export type createUserType = {
     lastName?: string,
     email: string,
     password: string,
-    subscriptions?: string,
+    subscription?: string,
     type: 'User' | 'Admin',
     status?: 'Active' | 'Deactive',
     verified?: boolean,
@@ -80,9 +91,9 @@ export type createUserType = {
         email?: boolean,
         push?: boolean,
         inApp?: boolean,
-        downloads?: boolean,
-        promotionsAndSales?: boolean,
-        subscriptions?: boolean
+        dailyDevotional?: boolean,
+        subscription?: boolean,
+        offerAndDeal?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -97,6 +108,7 @@ export type createUserType = {
     iosAppLink?: string,
     androidAppLink?: string,
     maxDevicesLogin?: string,
+    downloadOverWifi?: boolean,
     pushTokens?: [{
         deviceId: string,
         token: string
@@ -106,7 +118,12 @@ export type createUserType = {
         completed?: [string],
         reading?: [{
             bookId: string,
-            chaptersCompleted: [string]
+            chaptersCompleted: [string],
+            updatedAt: Date
+        }],
+        view?: [{
+            bookId: string,
+            createdAt: Date
         }]
     },
     smallGroups?: [string],
@@ -118,14 +135,19 @@ export type createUserType = {
     }],
     referralUserId?: string,
     kindleEmail?: string,
-    inAppSubscription?: Object,
+    inAppSubscription?: Object, // default key - createdAt(Date)
     inAppSubscriptionStatus?: 'Cancelled' | 'Active',
     stripe: {
         subscriptionId?: string,
         customerId?: string,
         planId?: string,
+        createdAt?: Date
     },
-    device: string
+    device: string,
+    timeZone?: string,
+    createdAt: Date,
+    updatedAt: Date,
+    lastSeen: Date
 }
 
 export type getUserType = {
@@ -133,7 +155,7 @@ export type getUserType = {
     firstName?: string,
     lastName?: string,
     email: string,
-    subscriptions?: string,
+    subscription?: string,
     type: 'User' | 'Admin',
     status?: 'Active' | 'Deactive',
     verified?: boolean,
@@ -143,9 +165,9 @@ export type getUserType = {
         email?: boolean,
         push?: boolean,
         inApp?: boolean,
-        downloads?: boolean,
-        promotionsAndSales?: boolean,
-        subscriptions?: boolean
+        subscription?: boolean,
+        dailyDevotional?: boolean,
+        offerAndDeal?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -160,6 +182,7 @@ export type getUserType = {
     iosAppLink?: string,
     androidAppLink?: string,
     maxDevicesLogin?: string,
+    downloadOverWifi?: boolean,
     pushTokens?: [{
         deviceId: string,
         token: string
@@ -169,7 +192,12 @@ export type getUserType = {
         completed?: [string],
         reading?: [{
             bookId: string,
-            chaptersCompleted: [string]
+            chaptersCompleted: [string],
+            updatedAt: Date
+        }],
+        view?: [{
+            bookId: string,
+            createdAt: Date
         }]
     },
     smallGroups?: [string],
@@ -181,14 +209,19 @@ export type getUserType = {
     }],
     referralUserId?: string,
     kindleEmail?: string,
-    inAppSubscription?: Object,
+    inAppSubscription?: Object, // default key - createdAt(Date)
     inAppSubscriptionStatus?: 'Cancelled' | 'Active',
     stripe: {
         subscriptionId?: string,
         customerId?: string,
         planId?: string,
+        createdAt?: Date
     },
-    device: string
+    device: string,
+    timeZone?: string,
+    createdAt: Date,
+    updatedAt: Date,
+    lastSeen: Date,
 }
 
 export const UserSchema = new Schema({
@@ -196,7 +229,7 @@ export const UserSchema = new Schema({
     lastName: { type: String },
     email: { type: String, required: true, index: true, validate: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ },
     password: { type: String },
-    subscriptions: { type: String },
+    subscription: { type: String, ref: 'subscriptions' },
     type: { type: String, required: true, enum: ['User', 'Admin'] },
     status: { type: String, enum: ['Active', 'Deactive'] },
     verified: { type: Boolean },
@@ -206,9 +239,9 @@ export const UserSchema = new Schema({
         email: { type: Boolean, default: true },
         push: { type: Boolean, default: true },
         inApp: { type: Boolean, default: true },
-        downloads: { type: Boolean, default: true },
-        promotionsAndSales: { type: Boolean, default: true },
-        subscriptions: { type: Boolean, default: true }
+        subscription: { type: Boolean, default: true },
+        dailyDevotional: { type: Boolean, default: true },
+        offerAndDeal: { type: Boolean, default: true }
     },
     metaKeyword: { type: String },
     metaDescription: { type: String },
@@ -223,6 +256,7 @@ export const UserSchema = new Schema({
     iosAppLink: { type: String },
     androidAppLink: { type: String },
     maxDevicesLogin: { type: String },
+    downloadOverWifi: { type: Boolean, default: false },
     pushTokens: [{
         deviceId: String,
         token: String
@@ -234,6 +268,10 @@ export const UserSchema = new Schema({
             bookId: { type: String },
             chaptersCompleted: [{ type: String }],
             updatedAt: { type: Date }
+        }],
+        view: [{
+            bookId: { type: String },
+            createdAt: { type: Date }
         }]
     },
     smallGroups: [{ type: String }],
@@ -249,16 +287,19 @@ export const UserSchema = new Schema({
         subscriptionId: { type: String },
         customerId: { type: String },
         planId: { type: String },
+        createdAt: { type: Date },
     },
-    inAppSubscription: { type: Object },
+    inAppSubscription: { type: Object }, // default key - createdAt(Date)
     inAppSubscriptionStatus: { type: String, enum: ['Cancelled', 'Active'] },
     device: { type: String, required: true },
+    timeZone: { type: String },
     createdAt: {
         type: Date, default: () => {
             return new Date()
         },
     },
     updatedAt: { type: Date },
+    lastSeen: { type: Date },
 }, { strict: 'throw' })
 
 export const UserModel = mongoose.model<IUser>('user', UserSchema)

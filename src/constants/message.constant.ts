@@ -15,15 +15,17 @@ export const responseMessage = {
         getUserError: 'User does not exist',
         getReferralUserError: 'Referral User does not exist',
         userNotAuthorizationError: 'Incorrect credentials or Wrong password',
-        missingSocialAccountError: 'Social account not linked. Add social account in app settings',
+        missingSocialAccountError: '💬 Your account is not registered with us, please do signup with social media account',
         missingEmailOrPasswordError: 'Email or password is missing',
         missingEmailError: 'Email is required',
+        missingAppleEmailError: 'Go to iCloud > Password and Security > App using apple ID > Stop using apple ID.',
         emailAlreadyUsedError: 'Email already used',
         missingoAuthKeyError: 'Client id or provider missing',
         missingEmailAuthError: 'First enable or add your email auth',
         userNotActivatedError: 'User not activated',
         userInvalidPasswordError: 'Password is incorrect',
-        passwordUpdateSuccess: 'Password has been changed successfully',
+        userSamePasswordError: 'New password is same as old. Please choose a different one.',
+        passwordUpdateSuccess: 'Password has been changed successfully 🚀',
         deleteUserSuccess: 'User deleted successfully',
         createUserFailed: 'Failed to create user',
         verifyEmailRequest: 'Please check your email and activate your account',
@@ -42,7 +44,7 @@ export const responseMessage = {
         kindleEmailNotExistError: 'Please add your kindle email address',
         emailAuthEnabledSuccess: 'Your email auth enabled',
         emailAuthExist: 'Your email auth already enabled',
-        socialLinkError: 'Account already linked by some one else, please contact administrator',
+        socialLinkError: 'Account already linked by some one else, please contact administrator'
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',
@@ -96,6 +98,7 @@ export const responseMessage = {
         fetchBookSummariesSuccess: 'Book summary list fetched successfully',
         createBookSummaryFailure: 'Book summary already added',
         getBookSummaryFailure: 'Failed to fetch book summary details',
+        trailPlanLimitError: 'Your daily limit exceed, please activate plan for access unlimited books summaries',
         getBookSummaryDocFailure: 'Book reading file missing',
         recommendedBookError: 'Book is locked due to book exist in recommended list',
         sendBookToKindleSuccess: 'Book successfully sended to your kindle',
@@ -214,6 +217,10 @@ export const responseMessage = {
     },
     notificationsControllerResponse: {
         createNotificationSuccess: 'Notification created successfully',
+        updateNotificationSuccess: 'Notification updated successfully',
         deleteNotificationSuccess: 'Notification deleted successfully'
+    },
+    transactionsControllerResponse: {
+        getTransactionsSuccess: 'Transactions listed successfully',
     },
 }

@@ -98,7 +98,7 @@ export const uploadFileToS3 = async (
                 pattern = /^data:application\/\w+;base64,/
             } else if (base64Document.indexOf('data:image/') > -1) {
                 docExtension = base64Document.substring('data:image/'.length, base64Document.indexOf(';base64'))
-            } 
+            }
             else {
                 return reject(new Error('File type not supported'))
             }
@@ -204,7 +204,7 @@ export const compileHtml = async (source: string, data: any) => {
 export const randomNumberInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
 
 export const pushNotification = async (tokens: string, title: string, description: string) => {
-    firebaseAdmin.messaging().sendToDevice(tokens, { notification: { title, body: description }}).then(response => {
+    firebaseAdmin.messaging().sendToDevice(tokens, { notification: { title, body: description } }).then(response => {
         response.results.forEach((result, index) => {
             const error = result.error;
             if (error) {
@@ -218,17 +218,68 @@ export const pushNotification = async (tokens: string, title: string, descriptio
 
 /** Sort an array object */
 export const sortArrayObject = (list: [object], key: string, order: 'asc' | 'desc') => {
-    return list.sort((a,b) => {
+    return list.sort((a, b) => {
         if (['updatedAt', 'createdAt'].includes(key)) {
-            a[key] = new Date(a[key]).getTime()
-            b[key] = new Date(b[key]).getTime()
+            if (new Date(a[key]).getTime() < new Date(b[key]).getTime()) {
+                return order === 'asc' ? -1 : 1;
+            }
+            if (new Date(a[key]).getTime() > new Date(b[key]).getTime()) {
+                return order === 'desc' ? -1 : 1;
+            }
+            return 0;
+        } else {
+            if (a[key] < b[key]) {
+                return order === 'asc' ? -1 : 1;
+            }
+            if (a[key] > b[key]) {
+                return order === 'desc' ? -1 : 1;
+            }
+            return 0;
         }
-        if (a[key] < b[key]) {
-              return order === 'asc' ? -1 : 1;
-        }
-        if (a[key] > b[key]) {
-            return order === 'desc' ? -1 : 1;
-        }
-        return 0;
     })
+}
+
+export const getTimeDiff = (from: string, to: string) => {
+    const timeDiff = new Date(to).getTime() - new Date(from).getTime()
+    let seconds = Math.floor(timeDiff / 1000);
+    let minutes = Math.floor(seconds / 60);
+    let hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    hours = hours - (days * 24);
+    minutes = minutes - (days * 24 * 60) - (hours * 60);
+    seconds = seconds - (days * 24 * 60 * 60) - (hours * 60 * 60) - (minutes * 60);
+    return days < 0 ? '0:0:0:0' : `${days}:${hours}:${minutes}:${seconds}`;
+}
+
+export const getDates = (d1: any, d2: any) => {
+    const oneDay = 24 * 3600 * 1000;
+    for (var d = [], ms = d1 * 1, last = d2 * 1; ms < last; ms += oneDay) {
+        d.push(new Date(ms));
+    }
+    return d;
+}
+
+export const groupByKey = (list: any, key: string) =>
+    list.reduce((hash, obj) =>
+        ({ ...hash, [obj[key]]: (hash[obj[key]] || []).concat(obj) }), {})
+
+export const decodeHTMLEntities = (text: string) => {
+    const entities = [
+        ['amp', '&'],
+        ['apos', '\''],
+        ['#x27', '\''],
+        ['#x2F', '/'],
+        ['#39', '\''],
+        ['#47', '/'],
+        ['lt', '<'],
+        ['gt', '>'],
+        ['nbsp', ' '],
+        ['quot', '"']
+    ];
+
+    for (var i = 0, max = entities.length; i < max; ++i)
+        text = text.replace(new RegExp('&' + entities[i][0] + ';', 'g'), entities[i][1]);
+
+    return text;
 }

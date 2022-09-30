@@ -4,34 +4,31 @@ import Boom from '@hapi/boom';
 import usersService from '../../services/admin/users/user.service'
 import bookSummaryService from '../../services/admin/book/bookSummary.service'
 import { responseMessage } from '../../constants/message.constant'
+import { groupByKey } from '../../lib/utils/utils';
 
 const dashboardControllerResponse = responseMessage.dashboardControllerResponse
 
 /** Get Dashboard */
 const getDashboard = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const getUsersList = await usersService.getAllUsers(0, 0, {}, [])
-        const androidUsers = getUsersList.users.filter(user => user.device === 'android')
-        const iosUsers = getUsersList.users.filter(user => user.device === 'ios')
-        const webUsers = getUsersList.users.filter(user => user.device === 'web')
-        const bookSummaryList: any = await bookSummaryService.getAllBookSummaries(0, 0, {}, [])
-        let audioCount: number = 0
-        let videoCount: number = 0
-        await bookSummaryList.summaries.map(async oneSummary => {
-            if (oneSummary && oneSummary.videoFile) {
-                videoCount += 1
-            }
-            if (oneSummary && oneSummary.chapters && oneSummary.chapters.length) {
-                await oneSummary.chapters.map(oneChapter => {
-                    if (oneChapter && oneChapter.audioFile) {
-                        audioCount += 1
-                    }
-                })
-            }
-        })
+        const users = await usersService.getAllUsersForDashboard({
+            device: { $in: ['android', 'ios', 'web']} 
+        }, 'device');
+        const usersByGroup = groupByKey(users, 'device')
+        const bookSummary: any = await bookSummaryService.getBooksCountForDashboard()
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
-            data: { users: { count: getUsersList.count, androidCount: androidUsers?.length, iosCount: iosUsers?.length, webCount: webUsers?.length }, audio: { count: audioCount }, video: { count: videoCount }, book: { count: bookSummaryList.count } }
+            data: {
+                users: {
+                    count: users.length,
+                    androidCount: usersByGroup['android'].length,
+                    iosCount: usersByGroup['ios'].length,
+                    webCount: usersByGroup['web'].length
+                },
+                audio: { count: bookSummary.summaries[0].chapters },
+                video: { count: bookSummary.count },
+                book: { count: bookSummary.count }
+            }
         })
     } catch (e: any) {
         next(Boom.badData(e.message))

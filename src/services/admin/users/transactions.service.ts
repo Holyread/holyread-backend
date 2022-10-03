@@ -52,7 +52,7 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
                         date: formattedDate(i?.createdAt),
                         status: i?.status,
                         paymentLink: i?.paymentLink,
-                        payment: i?.device === 'app' ? ['fa fa-mobile', 'app'] : ['fa-cc-' + i?.paymentMethod?.brand?.toLowerCase(), i?.paymentMethod?.brand || ''],
+                        payment: i?.device === 'app' ? ['fa fa-mobile', 'InApp'] : ['fa-cc-' + i?.paymentMethod?.brand?.toLowerCase(), i?.paymentMethod?.brand || ''],
                         reason: i.reason,
                         latestInvoice: i.latestInvoice || 'in_' + (i?.userId?.inAppSubscription?.transactionId || i._id),
                         subscription: i?.userId?.subscription,

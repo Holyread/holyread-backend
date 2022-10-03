@@ -61,8 +61,8 @@ const start = async () => {
                                     tokenSet.add(
                                           pushNotification(
                                                 item?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
-                                                'Your Daily Pick is ready!',
-                                                readOfDay.description + '...'
+                                                'Your Daily Pick is ready! 🔔',
+                                                readOfDay.description + '📚📚📚'
                                           )
                                     )
                               })

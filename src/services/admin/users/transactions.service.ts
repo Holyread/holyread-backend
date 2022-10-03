@@ -12,7 +12,7 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
                   .populate({
                         path: 'userId',
                         select: 'email inAppSubscription subscription',
-                        populate: { path: 'subscription', select: 'duration title saves' }
+                        populate: { path: 'subscription', select: 'duration title saves price' }
                   })
                   .lean()
                   .exec();
@@ -56,6 +56,7 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
                         reason: i.reason,
                         latestInvoice: i.latestInvoice || 'in_' + (i?.userId?.inAppSubscription?.transactionId || i._id),
                         subscription: i?.userId?.subscription,
+                        price: i?.userId?.subscription?.price,
                         account: i.account,
                         customer: { ...i.customer, shipping: shipping && shipping?.line1 + ' ,' + shipping?.country + ' ' + shipping?.postal_code },
                         subTotal: i?.amount?.subtotal || 0,

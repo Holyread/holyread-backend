@@ -18,8 +18,12 @@ import ratingService from '../../services/customers/book/rating.service';
 import highLightsService from '../../services/customers/highLights/highLights.service';
 import userService from '../../services/customers/users/user.service';
 import transactionsService from '../../services/customers/users/transactions.service';
+import smallGroupService from '../../services/customers/smallGroup/smallGroup.service';
+import handoutsService from '../../services/customers/smallGroup/handouts.service';
 
 const authControllerResponse = responseMessage.authControllerResponse
+const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
+const handoutsControllerResponse = responseMessage.handoutsControllerResponse
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
 const subscriptionsControllerResponse = responseMessage.subscriptionsControllerResponse
 const NODE_ENV = config.NODE_ENV
@@ -486,12 +490,12 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
             }
             /** Add to User small group */
             if (type === 'add' && section === 'smallGroup') {
-                  req.body['$addToSet'] = { 'smallGroups': req.body.smallGroup }
+                  req.body['$addToSet'] = { 'library.smallGroups': req.body.smallGroup }
                   delete req.body.smallGroup
             }
             /** Delete from User small group */
             if (type === 'delete' && section === 'smallGroup') {
-                  req.body['$pull'] = { 'smallGroups': req.body.smallGroup }
+                  req.body['$pull'] = { 'library.smallGroups': req.body.smallGroup }
                   delete req.body.smallGroup
             }
             await usersService.updateUser(query, req.body)
@@ -976,6 +980,33 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
       }
 }
 
+const updateHandout = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const smallGroup = await smallGroupService.getSmallGroupForHandout({ _id: req.params.smallGroup })
+            if (!smallGroup) {
+                  return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure))
+            }
+
+            const { question, answer }: { question: number, answer: string } = req.body;
+            if (!smallGroup?.questions?.length || !smallGroup?.questions[question]) {
+                  return res.status(200).send({ message: handoutsControllerResponse.updateHandoutSuccess })
+            }
+
+            const handout = await handoutsService.getHandout({ user: req.user._id, smallGroup: smallGroup._id });
+            if (!handout?.answers) { handout.answers = [{ answer, question }] }
+            let index = handout?.answers?.findIndex(a => a.question === question);
+
+            (index < 0)
+                  ? handout.answers.push({ answer, question })
+                  : handout.answers[index] = { answer, question }
+
+            await handoutsService.updateHandout({ user: req.user._id, smallGroup: smallGroup._id }, { 'answers': handout.answers });
+            res.status(201).send({ message: handoutsControllerResponse.updateHandoutSuccess })
+      } catch (e: any) {
+            next(Boom.badData(e.message))
+      }
+}
+
 export {
       getUserAccount,
       getBlessFriend,
@@ -992,5 +1023,6 @@ export {
       updateRating,
       deleteUser,
       emailAuth,
-      verifyEmailAuth
+      verifyEmailAuth,
+      updateHandout
 }

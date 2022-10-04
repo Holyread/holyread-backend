@@ -19,6 +19,7 @@ import { SettingModel } from './setting.model'
 import { NotificationsModel } from './notifications.model'
 import { RatingModel } from './rating.model'
 import { TransactionsModel } from './transactions.model'
+import { HandoutsModel } from './handouts.model'
 
 const NODE_ENV = config.NODE_ENV
 const option = { useNewUrlParser: true, useUnifiedTopology: true }
@@ -53,5 +54,6 @@ export {
   SettingModel,
   NotificationsModel,
   RatingModel,
-  TransactionsModel
+  TransactionsModel,
+  HandoutsModel
 }

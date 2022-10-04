@@ -223,4 +223,7 @@ export const responseMessage = {
     transactionsControllerResponse: {
         getTransactionsSuccess: 'Transactions listed successfully',
     },
+    handoutsControllerResponse: {
+        updateHandoutSuccess: 'Handout updated successfully'
+    },
 }

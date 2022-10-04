@@ -993,14 +993,14 @@ const updateHandout = async (req: Request | any, res: Response, next: NextFuncti
             }
 
             const handout = await handoutsService.getHandout({ user: req.user._id, smallGroup: smallGroup._id });
-            if (!handout?.answers) { handout.answers = [{ answer, question }] }
-            let index = handout?.answers?.findIndex(a => a.question === question);
+            let answers = handout?.answers || [{ answer, question }]
+            let index = answers?.findIndex(a => a.question === question);
 
             (index < 0)
-                  ? handout.answers.push({ answer, question })
-                  : handout.answers[index] = { answer, question }
+                  ? answers.push({ answer, question })
+                  : answers[index] = { answer, question }
 
-            await handoutsService.updateHandout({ user: req.user._id, smallGroup: smallGroup._id }, { 'answers': handout.answers });
+            await handoutsService.updateHandout({ user: req.user._id, smallGroup: smallGroup._id }, { 'answers': answers });
             res.status(201).send({ message: handoutsControllerResponse.updateHandoutSuccess })
       } catch (e: any) {
             next(Boom.badData(e.message))

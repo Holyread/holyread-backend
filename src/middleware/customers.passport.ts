@@ -20,7 +20,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             if (userDetails.status !== 'Active') {
                 return next(Boom.badRequest('User not active'));
             }
-            if (userDetails?.maxDevices?.length >= (settings?.maxDeviceLogin || 3) && !userDetails.maxDevices.includes(req?.headers?.device)) {
+            if (!req.path.includes('logout') && userDetails?.maxDevices?.length >= (settings?.maxDeviceLogin || 3) && !userDetails.maxDevices.includes(req?.headers?.device)) {
                 return next(Boom.forbidden('Device limit reached, please logout from previews one device'));
             }
 

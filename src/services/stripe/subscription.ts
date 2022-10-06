@@ -141,13 +141,32 @@ const getWebHookList = async () => {
       }
 };
 
+/** Delete webhooks */
+const deleteWebHook = async (id) => {
+      try {
+            const { deleted } = await stripe.webhookEndpoints.del(id);  
+            return deleted;
+      } catch (e) {
+            return null;
+      }
+};
+
 /** Create subscription webhook */
 const createWebhook = async () => {
-      if (config.NODE_ENV === 'local') return;
       const url: string = serverOrigins[config.NODE_ENV] + '/api/v1/webhook/transactions';
       const webhooks: any[] = await getWebHookList()
-      const existingHook: Object = webhooks?.find(wi => wi.url === url);
-      if (existingHook) return;
+
+      let existingHook: boolean = false;      
+      /** Delete local webhooks */
+      webhooks?.map(wi => {
+            if (wi.url === url) {
+                  existingHook = true
+                  return
+            }
+            if (wi?.url?.includes('ngrok.io') || wi?.url?.includes('localhost')) { deleteWebHook(wi.id) }
+      });
+      if (existingHook || config.NODE_ENV === 'local') return;
+
       const enabled_events: String[] = [
             'customer.subscription.updated',
             'customer.subscription.created'

@@ -107,7 +107,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
             /** No trail subscription */
             if (session.status === 'active') {
                   /** Invited user will activate by email */
-                  !user?.referralUserId && await userService.updateUser({ _id: user._id }, { status: 'Active' });
+                  await userService.updateUser({ _id: user._id }, { status: 'Active' });
                   await transactionsService.createTransaction(transaction)
                   /** Sent subscription activation email */
                   await sentSubscriptionEmail()

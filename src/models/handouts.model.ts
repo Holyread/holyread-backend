@@ -42,5 +42,6 @@ export const HandoutsSchema = new Schema({
 }, { strict: 'throw', timestamps: true })
 
 HandoutsSchema.index({ user: -1, smallGroup: -1 });
+HandoutsSchema.index({ user: -1, smallGroup: -1, 'answers.question': 1 });
 
 export const HandoutsModel = mongoose.model<IHandouts>('handouts', HandoutsSchema)

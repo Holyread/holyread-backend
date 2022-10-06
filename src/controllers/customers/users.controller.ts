@@ -789,7 +789,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             fetchNotifications(io.sockets, { _id: invitedUserDetails._id })
 
             if (!inviteUserBody?.inAppSubscription) {
-                  return res.status(200).send({ message: authControllerResponse.blessFriendSuccess })  
+                  return res.status(200).send({ message: authControllerResponse.blessFriendSuccess })
             }
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
@@ -905,7 +905,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             if (!req.body?.inAppSubscription) {
                   return res.status(200).send({
                         message: subscriptionsControllerResponse.createSubscriptionSuccess,
-                        data:  {
+                        data: {
                               subscriptionStatus: subscription.status,
                               customerEmail: userObj.email
                         }
@@ -988,7 +988,7 @@ const logout = async (req: Request | any, res: Response, next: NextFunction) => 
             let maxDevices = [];
             /** Logout from specific device */
             if (req.body.deviceId) {
-                  maxDevices = userObj.maxDevices?.filter(item =>  item !== req.body.deviceId)
+                  maxDevices = userObj.maxDevices?.filter(item => item !== req.body.deviceId)
             }
             await usersService.updateUser({ _id: userObj._id }, { maxDevices })
             res.status(200).send({ message: authControllerResponse.userLogoutSuccess })
@@ -1010,14 +1010,19 @@ const updateHandout = async (req: Request | any, res: Response, next: NextFuncti
             }
 
             const handout = await handoutsService.getHandout({ user: req.user._id, smallGroup: smallGroup._id });
-            let answers = handout?.answers || [{ answer, question }]
-            let index = answers?.findIndex(a => a.question === question);
+            let query = { user: req.user._id, smallGroup: smallGroup._id };
+            let body: any = { answers: [{ answer, question }] };
 
-            (index < 0)
-                  ? answers.push({ answer, question })
-                  : answers[index] = { answer, question }
+            let ans = handout?.answers?.find(i => i.question === question)
+            if (handout && !ans) {
+                  body = { '$push': { 'answers': { answer, question } } }
+            }
+            else if (ans) {
+                  body = { '$set': { 'answers.$.answer': answer } }
+                  query['answers.question'] = question
+            }
 
-            await handoutsService.updateHandout({ user: req.user._id, smallGroup: smallGroup._id }, { 'answers': answers });
+            await handoutsService.updateHandout(query, body);
             res.status(201).send({ message: handoutsControllerResponse.updateHandoutSuccess })
       } catch (e: any) {
             next(Boom.badData(e.message))

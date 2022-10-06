@@ -18,7 +18,8 @@ import {
   deleteUser,
   emailAuth,
   verifyEmailAuth,
-  updateHandout
+  updateHandout,
+  logout
 } from '../../controllers/customers/users.controller'
 
 const router: Router = express.Router()
@@ -37,6 +38,7 @@ router.post('/feedback', customerPassport, submitFeedback)
 router.post('/subscribe', customerPassport, subscribePlan)
 router.patch('/rate', customerPassport, updateRating)
 router.delete('/', customerPassport, deleteUser)
+router.post('/logout', customerPassport, logout)
 router.post('/email-auth', customerPassport, emailAuth)
 router.post('/email-auth/verify', verifyEmailAuth)
 router.patch('/handout/:smallGroup', customerPassport, updateHandout)

@@ -452,7 +452,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     const isEmailConflicts = emailUser && String(emailUser._id) !== String(user?._id) ? true : false
     if (user) {
       user.email = !user.email && !isEmailConflicts ? body.email : user.email
-      const index = emailUser.oAuth.findIndex(i => i.provider === body.provider)
+      const index = user.oAuth.findIndex(i => i.provider === body.provider)
       /** set email if email does not exist */
       user.oAuth[index] = { ...user.oAuth[index], email: user.email }
 
@@ -475,7 +475,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
           clientId: body.id,
           default: emailUser?.oAuth?.length ? false : true
         })
-        : emailUser.oAuth[index] = { ...emailUser.oAuth[index], email: body.email }
+        : emailUser.oAuth[index] = { ...emailUser.oAuth[index], clientId: body.id, email: body.email }
 
       await usersService.updateUser({ _id: emailUser._id }, { oAuth: emailUser.oAuth })
 

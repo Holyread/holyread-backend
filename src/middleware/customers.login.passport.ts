@@ -25,7 +25,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             }))
         }
         next();
-        Promise.all([UserModel.findOneAndUpdate({ _id: userDetails._id }, { maxDevices: [...new Set([...userDetails.maxDevices || [], req.headers.device])] })]);
+        Promise.all([UserModel.findOneAndUpdate({ _id: userDetails?._id }, { maxDevices: [...new Set([...userDetails?.maxDevices || [], req.headers.device])] })]);
     } catch (error: any) {
         next(Boom.badRequest(error));
     }

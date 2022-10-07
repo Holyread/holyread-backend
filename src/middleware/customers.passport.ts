@@ -10,7 +10,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
         next(Boom.badRequest('Missing access token'));
     } else {
         try {
-            if (!req?.headers?.device) return next(Boom.notFound('Device details are missing'));
+            if (false && !req?.headers?.device) return next(Boom.notFound('Device details are missing'));
             const details: any = await verifyToken(accessToken)
             const userDetails: any = await UserModel.findOne({ $or: [{ email: details?.email }, { 'oAuth.clientId': details.oauthClientId }], _id: details.id, type: 'User' }).lean().exec()
             const settings = await SettingModel.findOne({}).select('maxDeviceLogin').lean().exec();
@@ -23,7 +23,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             if (!userDetails.verified) {
                 return next(Boom.badRequest('User not verfied'));
             }
-            if (!req.path.includes('logout') && userDetails?.maxDevices?.length >= (settings?.maxDeviceLogin || 3) && !userDetails.maxDevices.includes(req?.headers?.device)) {
+            if (false && !req.path.includes('logout') && userDetails?.maxDevices?.length >= (settings?.maxDeviceLogin || 3) && !userDetails.maxDevices.includes(req?.headers?.device)) {
                 return next(Boom.forbidden('Device limit reached, please logout from previews one device'));
             }
 

@@ -18,6 +18,7 @@ import {
   deleteUser,
   emailAuth,
   verifyEmailAuth,
+  updateHandout,
   logout
 } from '../../controllers/customers/users.controller'
 
@@ -40,5 +41,6 @@ router.delete('/', customerPassport, deleteUser)
 router.post('/logout', customerPassport, logout)
 router.post('/email-auth', customerPassport, emailAuth)
 router.post('/email-auth/verify', verifyEmailAuth)
+router.patch('/handout/:smallGroup', customerPassport, updateHandout)
 
 export default router

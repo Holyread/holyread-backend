@@ -1,4 +1,4 @@
-import { SmallGroupModel, BookSummaryModel, BookAuthorModel } from '../../../models/index'
+import { SmallGroupModel, BookSummaryModel, BookAuthorModel, HandoutsModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { randomNumberInRange } from '../../../lib/utils/utils'
@@ -46,7 +46,9 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
 const getOneSmallGroupByFilter = async (query: any) => {
     try {
         const result: any = await SmallGroupModel.findOne(query).populate('books', 'title overview description author coverImage coverImageBackground views').lean()
+        const handout: any = await HandoutsModel.findOne({ smallGroup: result._id, user: global?.currentUser?._id }).select('answers').lean().exec()
         result.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + result.coverImage
+        
         if (result?.books.length) {
             result.books = await Promise.all(result?.books?.map(async oneBook => {
                 if (!oneBook?._id) return undefined
@@ -64,6 +66,24 @@ const getOneSmallGroupByFilter = async (query: any) => {
                 i.isRate = !!ratings[String(i._id)]?.isRate
             })
         }
+        const answers = handout?.answers || []
+        result.questions = result.questions?.map((q, index) => {
+            q = {
+                question: q,
+                answer: answers[index]?.answer
+            }
+            return q
+        })
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+/** Get one small group for handout */
+const getSmallGroupForHandout = async (query: any) => {
+    try {
+        const result: any = await SmallGroupModel.findOne(query).lean().exec()
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -72,5 +92,6 @@ const getOneSmallGroupByFilter = async (query: any) => {
 
 export default {
     getAllSmallGroups,
-    getOneSmallGroupByFilter
+    getOneSmallGroupByFilter,
+    getSmallGroupForHandout
 }

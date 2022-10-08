@@ -18,8 +18,12 @@ import ratingService from '../../services/customers/book/rating.service';
 import highLightsService from '../../services/customers/highLights/highLights.service';
 import userService from '../../services/customers/users/user.service';
 import transactionsService from '../../services/customers/users/transactions.service';
+import smallGroupService from '../../services/customers/smallGroup/smallGroup.service';
+import handoutsService from '../../services/customers/smallGroup/handouts.service';
 
 const authControllerResponse = responseMessage.authControllerResponse
+const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
+const handoutsControllerResponse = responseMessage.handoutsControllerResponse
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
 const subscriptionsControllerResponse = responseMessage.subscriptionsControllerResponse
 const NODE_ENV = config.NODE_ENV
@@ -486,12 +490,12 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
             }
             /** Add to User small group */
             if (type === 'add' && section === 'smallGroup') {
-                  req.body['$addToSet'] = { 'smallGroups': req.body.smallGroup }
+                  req.body['$addToSet'] = { 'library.smallGroups': req.body.smallGroup }
                   delete req.body.smallGroup
             }
             /** Delete from User small group */
             if (type === 'delete' && section === 'smallGroup') {
-                  req.body['$pull'] = { 'smallGroups': req.body.smallGroup }
+                  req.body['$pull'] = { 'library.smallGroups': req.body.smallGroup }
                   delete req.body.smallGroup
             }
             await usersService.updateUser(query, req.body)
@@ -785,7 +789,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             fetchNotifications(io.sockets, { _id: invitedUserDetails._id })
 
             if (!inviteUserBody?.inAppSubscription) {
-                  return res.status(200).send({ message: authControllerResponse.blessFriendSuccess })  
+                  return res.status(200).send({ message: authControllerResponse.blessFriendSuccess })
             }
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
@@ -901,7 +905,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             if (!req.body?.inAppSubscription) {
                   return res.status(200).send({
                         message: subscriptionsControllerResponse.createSubscriptionSuccess,
-                        data:  {
+                        data: {
                               subscriptionStatus: subscription.status,
                               customerEmail: userObj.email
                         }
@@ -984,12 +988,44 @@ const logout = async (req: Request | any, res: Response, next: NextFunction) => 
             let maxDevices = [];
             /** Logout from specific device */
             if (req.body.deviceId) {
-                  maxDevices = userObj.maxDevices?.filter(item =>  item !== req.body.deviceId)
+                  maxDevices = userObj.maxDevices?.filter(item => item !== req.body.deviceId)
             }
             await usersService.updateUser({ _id: userObj._id }, { maxDevices })
             res.status(200).send({ message: authControllerResponse.userLogoutSuccess })
       } catch (e: any) {
             return next(Boom.badData(e.message))
+      }
+}
+
+const updateHandout = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const smallGroup = await smallGroupService.getSmallGroupForHandout({ _id: req.params.smallGroup })
+            if (!smallGroup) {
+                  return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure))
+            }
+
+            const { question, answer }: { question: number, answer: string } = req.body;
+            if (!smallGroup?.questions?.length || !smallGroup?.questions[question]) {
+                  return res.status(200).send({ message: handoutsControllerResponse.updateHandoutSuccess })
+            }
+
+            const handout = await handoutsService.getHandout({ user: req.user._id, smallGroup: smallGroup._id });
+            let query = { user: req.user._id, smallGroup: smallGroup._id };
+            let body: any = { answers: [{ answer, question }] };
+
+            let ans = handout?.answers?.find(i => i.question === question)
+            if (handout && !ans) {
+                  body = { '$push': { 'answers': { answer, question } } }
+            }
+            else if (ans) {
+                  body = { '$set': { 'answers.$.answer': answer } }
+                  query['answers.question'] = question
+            }
+
+            await handoutsService.updateHandout(query, body);
+            res.status(201).send({ message: handoutsControllerResponse.updateHandoutSuccess })
+      } catch (e: any) {
+            next(Boom.badData(e.message))
       }
 }
 
@@ -1010,5 +1046,6 @@ export {
       deleteUser,
       emailAuth,
       verifyEmailAuth,
-      logout
+      logout,
+      updateHandout
 }

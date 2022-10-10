@@ -19,7 +19,7 @@ export const serverOrigins = {
     local: 'http://localhost:8000',
     development: 'https://api-dev.holyreads.com',
     staging: '',
-    production: 'https://api.holyreads.com/',
+    production: 'https://api.holyreads.com',
 }
 
 export const awsBucket = {

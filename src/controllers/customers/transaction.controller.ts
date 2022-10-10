@@ -106,8 +106,6 @@ const createTransaction = async (request: Request, response: Response, next: Nex
 
             /** No trail subscription */
             if (session.status === 'active') {
-                  /** Invited user will activate by email */
-                  await userService.updateUser({ _id: user._id }, { status: 'Active' });
                   await transactionsService.createTransaction(transaction)
                   /** Sent subscription activation email */
                   await sentSubscriptionEmail()
@@ -145,8 +143,6 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   }
             }
 
-            /** De-active user */
-            await userService.updateUser({ _id: user._id }, { status: 'Deactive' });
             const result = await sentEmail(user.email, sub, html);
             if (!result) {
                   return next(Boom.badRequest('Failed to sent an cancel subscription email'))

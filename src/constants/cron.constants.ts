@@ -20,3 +20,14 @@ export const dailyDevotional = {
       },
       JOBRESTRICTENV: ['local','production'], // 'local','development','production'
 }
+
+export const subscriptionPaymentNotifier = {
+      SCHEDULE: {
+            Minutes: '*',
+            Hours: '*',
+            DayOfMonth: '*',
+            Months: '*',
+            DayOfWeek: '*',
+      },
+      JOBRESTRICTENV: ['local', 'production'], // 'local','development','production'
+}

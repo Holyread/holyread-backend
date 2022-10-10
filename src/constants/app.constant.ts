@@ -3,7 +3,7 @@ export const allowedOrigins = {
     local: ['https://localhost:4200', 'http://localhost:4200'],
     development: ['https://localhost:4200', 'http://localhost:4200', 'https://dev-admin.holyreads.com', 'https://dev-customer.holyreads.com', 'https://www.holyreads.com', 'https://holyreads.com'],
     staging: [''],
-    production: [''],
+    production: ['https://admin.holyreads.com', 'https://app.holyreads.com', 'https://www.holyreads.com', 'https://holyreads.com'],
 }
 
 export const origins = {
@@ -11,7 +11,7 @@ export const origins = {
     local: 'http://localhost:4200',
     development: 'https://dev-customer.holyreads.com',
     staging: '',
-    production: '',
+    production: 'https://app.holyreads.com',
 }
 
 export const serverOrigins = {
@@ -19,7 +19,7 @@ export const serverOrigins = {
     local: 'http://localhost:8000',
     development: 'https://api-dev.holyreads.com',
     staging: '',
-    production: '',
+    production: 'https://api.holyreads.com/',
 }
 
 export const awsBucket = {
@@ -63,7 +63,8 @@ export const emailTemplatesTitles = {
         emailAuthVerification: 'Customer Email Auth Verification',
         emailAuthEnabled: 'Customer Email Auth Enabled',
         welcomeToHolyreads: 'Welcome To Holy Reads',
-        HolyreadsSupport: 'Holyreads Support'
+        HolyreadsSupport: 'Holyreads Support',
+        HolyreadsPlanUpgrade: 'Renewal Reminder',
     },
     admin: {
         customerRegistration: 'Admin Customer Registration',

@@ -1003,7 +1003,7 @@ const updateHandout = async (req: Request | any, res: Response, next: NextFuncti
             if (!smallGroup) {
                   return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure))
             }
-            req.body.question = Number(question) || -1
+            req.body.question = Number(req?.body?.question) || -1
             const { question, answer }: { question: number, answer: string } = req.body;
             if (!smallGroup?.questions?.length || !smallGroup?.questions[question]) {
                   return res.status(200).send({ message: handoutsControllerResponse.updateHandoutSuccess })

@@ -1023,7 +1023,7 @@ const updateHandout = async (req: Request | any, res: Response, next: NextFuncti
             }
 
             await handoutsService.updateHandout(query, body);
-            res.status(201).send({ message: handoutsControllerResponse.updateHandoutSuccess })
+            res.status(200).send({ message: handoutsControllerResponse.updateHandoutSuccess })
       } catch (e: any) {
             next(Boom.badData(e.message))
       }

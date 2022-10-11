@@ -1,7 +1,7 @@
 import cron from 'cron';
 
 import { fetchNotifications } from '../controllers/customers/notification.controller';
-import { subscriptionPaymentNotifier } from '../constants/cron.constants'
+import { renewalReminder } from '../constants/cron.constants'
 import { emailTemplatesTitles } from '../constants/app.constant';
 import { compileHtml, sentEmail, } from '../lib/utils/utils';
 import { pushNotification } from '../lib/utils/utils';
@@ -75,16 +75,21 @@ const start = async () => {
             console.log('JOB(🟢) Renewal Reminder Started successfully!');
 
             const users = await UserModel.find({
-                  'stripe.subscriptionId': { $exists: true },
+                  $or: [
+                        { 'stripe.subscriptionId': { $exists: true } },
+                        { 'inAppSubscription.createdAt': { $exists: true }, inAppSubscriptionStatus: 'Active' }
+                  ],
                   status: 'Active'
             }).select([
-                  'stripe.subscriptionId',
-                  'stripe.planRenewRemindeAt',
-                  'email',
-                  'notification',
                   'pushTokens',
-                  'subscription'
-            ]).populate('subscription', 'title').lean().exec();
+                  'inAppSubscription',
+                  'inAppSubscriptionStatus',
+                  'stripe.planRenewRemindeAt',
+                  'stripe.subscriptionId',
+                  'subscription',
+                  'notification',
+                  'email'
+            ]).populate('subscription', 'title duration').lean().exec();
 
             if (!users?.length) {
                   console.log('JOB(🔴) Renewal Reminder execution stop due to no users found');
@@ -96,33 +101,65 @@ const start = async () => {
                   notificationPromises = [],
                   userPromises = [],
                   subscriptions = await Promise.all(
-                        users.map(i =>
-                              stripeSubscriptionServices.retrieveSubscription(
-                                    i.stripe.subscriptionId
-                              ).catch(() => { return undefined; })
-                        )
+                        users.map(i => {
+                              if (i?.stripe?.subscriptionId) {
+                                    return stripeSubscriptionServices.retrieveSubscription(
+                                          i.stripe.subscriptionId
+                                    ).catch(() => { return undefined; })
+                              }
+                              return undefined
+                        })
                   );
             users.map((user: any, index) => {
                   try {
-                        const subscription = subscriptions[index]
-                        if (!subscription?.id) return;
+                        let subscription = subscriptions[index] || {}
                         const now = new Date()
                         const timeAfter24 =
                               now.getTime() + (1000 * 60 * 60 * 24),
                               timeBefore24 =
                                     now.getTime() - (1000 * 60 * 60 * 24);
 
+                        if (!subscription?.id && !user.inAppSubscription?.createdAt) {
+                              return;
+                        }
+                                    
                         if (
-                              !['active', 'trialing'].includes(subscription?.status) ||
-                              !subscription?.current_period_end ||
-                              ((subscription?.current_period_end * 1000) > timeAfter24) ||
+                              subscription?.id &&
                               (
-                                    /** If notified within 24 hours then skip */
-                                    new Date(user?.stripe?.planRenewRemindeAt) &&
-                                    new Date(user.stripe.planRenewRemindeAt).getTime() > timeBefore24
+                                    !['active', 'trialing'].includes(subscription?.status) ||
+                                    !subscription?.current_period_end ||
+                                    ((subscription?.current_period_end * 1000) > timeAfter24) ||
+                                    (
+                                          /** If notified within 24 hours then skip */
+                                          new Date(user?.stripe?.planRenewRemindeAt) &&
+                                          new Date(user.stripe.planRenewRemindeAt).getTime() > timeBefore24
+                                    )
                               )
                         ) { return; }
 
+                        else if (user?.inAppSubscription) {
+                              let now = new Date(user?.inAppSubscription?.createdAt), subscriptionEndDate;
+                              
+                              switch (user.subscription.duration) {
+                                    case "Year":
+                                          subscriptionEndDate = now.setMonth(now.getMonth() + 12);
+                                          break;
+                                    case "Half Year":
+                                          subscriptionEndDate = now.setMonth(now.getMonth() + 6);
+                                          break;
+                                    default:
+                                          subscriptionEndDate = now.setMonth(now.getMonth() + 1);
+                                          break;
+                              }
+                              if (
+                                    (subscriptionEndDate > timeAfter24) ||
+                                    (
+                                          /** If notified within 24 hours then skip */
+                                          new Date(user?.inAppSubscription?.planRenewRemindeAt) &&
+                                          new Date(user.inAppSubscription.planRenewRemindeAt).getTime() > timeBefore24
+                                    )
+                              ) { return }
+                        }
                         const message = {
                               trailing: {
                                     title: 'Holy Reads Renewal Reminder ⏳',
@@ -136,17 +173,22 @@ const start = async () => {
 
                         emailPromises.push(
                               sentSubscriptionEmail(
-                                    user, message[subscription.status].title, message[subscription.status].description
+                                    user, message[subscription.status || 'active'].title, message[subscription.status || 'active'].description
                               ).catch(() => { return undefined; })
                         )
                         notificationPromises.push(
                               sentNotification(
-                                    message[subscription.status].title, message[subscription.status].description, user
+                                    message[subscription.status || 'active'].title, message[subscription.status || 'active'].description, user
                               ).catch(() => { return undefined; })
                         )
+
+                        let body = user.inAppSubscription
+                              ? { 'inAppSubscription.planRenewRemindeAt': now }
+                              : { 'stripe.planRenewRemindeAt': new Date() }
+
                         userPromises.push(
                               UserModel.findOneAndUpdate(
-                                    { _id: user._id }, { 'stripe.planRenewRemindeAt': new Date() }
+                                    { _id: user._id }, body
                               ).catch(() => { return undefined; })
                         )
 
@@ -172,7 +214,7 @@ const start = async () => {
             console.log(`JOB(🟡) Renewal Reminder not initiated due to ${config.NODE_ENV} Environment`);
             return;
       }
-      const schedule = Object.values(subscriptionPaymentNotifier.SCHEDULE).join(' ');
+      const schedule = Object.values(renewalReminder.SCHEDULE).join(' ');
       new cron.CronJob(schedule, () => { start() }, null, true);
       console.log('JOB(🟢) Renewal Reminder initiated successfully!');
-})(subscriptionPaymentNotifier, config);
+})(renewalReminder, config);

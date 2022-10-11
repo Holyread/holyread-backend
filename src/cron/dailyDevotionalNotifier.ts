@@ -54,7 +54,7 @@ const start = async () => {
                               meridian = 'AM';
                               if (Number(dailyDevotionalTime[0]) == 0) dailyDevotionalTime[0] = 12;
                         }
-                        if (time[1] === meridian && Number(hours) == Number(dailyDevotionalTime[0]) && Number(minutes) <= Number(dailyDevotionalTime[1]) + 1) {
+                        if (time[1] === meridian && Number(hours) == Number(dailyDevotionalTime[0]) && Number(minutes) === Number(dailyDevotionalTime[1])) {
                               const tokenSet = new Set();
                               result[i]?.map(item => {
                                     tokenSet.add(

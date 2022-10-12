@@ -1,11 +1,11 @@
 import cron from 'cron';
 
 import { fetchNotifications } from '../controllers/customers/notification.controller';
-import { renewalReminder } from '../constants/cron.constants'
 import { emailTemplatesTitles } from '../constants/app.constant';
-import { compileHtml, sentEmail, } from '../lib/utils/utils';
+import { renewalReminder } from '../constants/cron.constants';
+import { compileHtml, sentEmail } from '../lib/utils/utils';
 import { pushNotification } from '../lib/utils/utils';
-import { UserModel } from '../models';
+import { UserModel, getUserType } from '../models/user.model';
 import { io } from '../app';
 
 import notificationsService from '../services/customers/notifications/notifications.service';
@@ -14,14 +14,11 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
 import config from "../../config";
 
 /** Send and push notification */
-const sentNotification = async (notificationTitle: string, notificationDescription: string, user) => {
+const sentNotification = async (title: string, description: string, user: getUserType) => {
       await notificationsService.createNotification({
+            notification: { title, description },
             userId: user._id,
             type: 'setting',
-            notification: {
-                  title: notificationTitle,
-                  description: notificationDescription
-            }
       })
       fetchNotifications(io.sockets, { _id: user._id })
       /** Push notification */
@@ -30,8 +27,8 @@ const sentNotification = async (notificationTitle: string, notificationDescripti
             user?.notification?.push &&
             user.pushTokens.length
       ) {
-            const tokens = user.pushTokens.map(i => i.token)
-            pushNotification(tokens, notificationTitle, notificationDescription)
+            const tokens: string[] = user.pushTokens.map(i => i.token)
+            pushNotification(tokens, title, description)
       }
 }
 
@@ -50,23 +47,26 @@ const sentSubscriptionEmail = async (user, title, description) => {
                   const
                         contentData = {
                               username: user.email.split('@')[0],
-                              title,
                               description: description,
-                              link: config.NODE_ENV
+                              link: config.NODE_ENV,
+                              title
                         },
-                        htmlData = await compileHtml(emailTemplateDetails.content, contentData);
+                        htmlData = await compileHtml(
+                              emailTemplateDetails.content,
+                              contentData
+                        );
 
-                  if (htmlData) {
-                        html = htmlData
-                  }
+                  if (htmlData) { html = htmlData }
             }
 
             const result = await sentEmail(user.email, sub, html);
+            
             if (!result) {
-                  console.log('Failed to sent an subscription reminder email');
+                  console.log('Failed to sent an renewal reminder email');
             }
+
       } catch ({ message }) {
-            console.log('Failed to sent an subscription reminder email: Error: ', message);
+            console.log('Failed to sent a renewal reminder email: Error: ', message);
       }
 }
 
@@ -74,12 +74,15 @@ const start = async () => {
       try {
             console.log('JOB(🟢) Renewal Reminder Started successfully!');
 
-            const users = await UserModel.find({
-                  $or: [
-                        { 'stripe.subscriptionId': { $exists: true } },
-                        { 'inAppSubscription.createdAt': { $exists: true }, inAppSubscriptionStatus: 'Active' }
-                  ],
-                  status: 'Active'
+            const users = await UserModel.find({ $or: [
+                        {
+                              'inAppSubscription.createdAt': { $exists: true },
+                              'inAppSubscriptionStatus': 'Active'
+                        },
+                        {
+                              'stripe.subscriptionId': { $exists: true } 
+                        },
+                  ], status: 'Active'
             }).select([
                   'pushTokens',
                   'inAppSubscription',
@@ -122,24 +125,21 @@ const start = async () => {
                         if (!subscription?.id && !user.inAppSubscription?.createdAt) {
                               return;
                         }
-                                    
+
                         if (
                               subscription?.id &&
                               (
-                                    !['active', 'trialing'].includes(subscription?.status) ||
-                                    !subscription?.current_period_end ||
+                                    /** If notified within 24 hours then skip */
+                                    (new Date(user?.stripe?.planRenewRemindeAt)?.getTime() > timeBefore24) ||
                                     ((subscription?.current_period_end * 1000) > timeAfter24) ||
-                                    (
-                                          /** If notified within 24 hours then skip */
-                                          new Date(user?.stripe?.planRenewRemindeAt) &&
-                                          new Date(user.stripe.planRenewRemindeAt).getTime() > timeBefore24
-                                    )
+                                    !['active', 'trialing'].includes(subscription?.status) ||
+                                    !subscription?.current_period_end
                               )
                         ) { return; }
 
                         else if (user?.inAppSubscription) {
                               let now = new Date(user?.inAppSubscription?.createdAt), subscriptionEndDate;
-                              
+
                               switch (user.subscription.duration) {
                                     case "Year":
                                           subscriptionEndDate = now.setMonth(now.getMonth() + 12);
@@ -152,12 +152,9 @@ const start = async () => {
                                           break;
                               }
                               if (
-                                    (subscriptionEndDate > timeAfter24) ||
-                                    (
-                                          /** If notified within 24 hours then skip */
-                                          new Date(user?.inAppSubscription?.planRenewRemindeAt) &&
-                                          new Date(user.inAppSubscription.planRenewRemindeAt).getTime() > timeBefore24
-                                    )
+                                    /** If notified within 24 hours then skip */
+                                    (new Date(user?.inAppSubscription?.planRenewRemindeAt)?.getTime() > timeBefore24) ||
+                                    subscriptionEndDate > timeAfter24
                               ) { return }
                         }
                         const message = {

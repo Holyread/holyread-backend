@@ -6,6 +6,7 @@ import { SettingModel, UserModel } from '../models'
 
 export default async (req: any, res: Response, next: NextFunction): Promise<any> => {
     try {
+        return next();
         if (!req?.headers?.device)
             return next(Boom.notFound('Device details are missing'));
 

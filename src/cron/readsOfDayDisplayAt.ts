@@ -33,7 +33,7 @@ const start = async () => {
                         await Promise.all(promises);
                         promises = [];
                   }
-                  promises.push(ReadsOfDayModel.findOneAndUpdate({ _id: item._id }, { displayAt: dates[i] }))
+                  promises.push(ReadsOfDayModel.findOneAndUpdate({ _id: item._id }, { displayAt: dates[i] }).catch(() => { return undefined; }))
             }
             if (promises.length) {
                   await Promise.all(promises)

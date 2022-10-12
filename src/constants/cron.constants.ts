@@ -1,6 +1,5 @@
 export const readsOfDayDisplayAt = {
       SCHEDULE: {
-            Seconds: '0',
             Minutes: '0',
             Hours: '1',
             DayOfMonth: '*',
@@ -19,4 +18,15 @@ export const dailyDevotional = {
             DayOfWeek: '*',
       },
       JOBRESTRICTENV: ['local','production'], // 'local','development','production'
+}
+
+export const renewalReminder = {
+      SCHEDULE: {
+            Minutes: '30',
+            Hours: '1',
+            DayOfMonth: '*',
+            Months: '*',
+            DayOfWeek: '*',
+      },
+      JOBRESTRICTENV: ['local', 'production'], // 'local','development','production'
 }

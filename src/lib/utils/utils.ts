@@ -203,7 +203,7 @@ export const compileHtml = async (source: string, data: any) => {
 
 export const randomNumberInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
 
-export const pushNotification = async (tokens: string, title: string, description: string) => {
+export const pushNotification = async (tokens: string[], title: string, description: string) => {
     firebaseAdmin.messaging().sendToDevice(tokens, { notification: { title, body: description } }).then(response => {
         response.results.forEach((result, index) => {
             const error = result.error;

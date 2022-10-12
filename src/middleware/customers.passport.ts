@@ -10,10 +10,29 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
         next(Boom.badRequest('Missing access token'));
     } else {
         try {
-            if (false && !req?.headers?.device) return next(Boom.notFound('Device details are missing'));
+            if (!req?.headers?.device)
+                return next(Boom.notFound('Device details are missing'));
+
             const details: any = await verifyToken(accessToken)
-            const userDetails: any = await UserModel.findOne({ $or: [{ email: details?.email }, { 'oAuth.clientId': details.oauthClientId }], _id: details.id, type: 'User' }).lean().exec()
-            const settings = await SettingModel.findOne({}).select('maxDeviceLogin').lean().exec();
+            const userDetails: any
+                = await UserModel.findOne({
+                    $or: [
+                        { 'oAuth.clientId': details.oauthClientId },
+                        { email: details?.email },
+                    ],
+                    _id: details.id,
+                    type: 'User'
+                })
+                .lean()
+                .exec();
+
+            const { maxDeviceLogin }
+                = await SettingModel
+                    .findOne({})
+                    .select('maxDeviceLogin')
+                    .lean()
+                    .exec();
+
             if (!userDetails) {
                 return next(Boom.badRequest('User not authorized'));
             }
@@ -23,21 +42,39 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             if (!userDetails.verified) {
                 return next(Boom.badRequest('User not verfied'));
             }
-            if (false && !req.path.includes('logout') && userDetails?.maxDevices?.length >= (settings?.maxDeviceLogin || 3) && !userDetails.maxDevices.includes(req?.headers?.device)) {
-                return next(Boom.forbidden('Device limit reached, please logout from previews one device'));
+            if (
+                !req.path.includes('logout') &&
+                !userDetails.maxDevices.includes(req?.headers?.device) &&
+                userDetails?.maxDevices?.length >= (maxDeviceLogin || 3)
+            ) {
+                return next(
+                    Boom.forbidden(
+                        'Device limit reached, please logout from previews one device'
+                    )
+                );
             }
 
-            const refUser: any = await UserModel.findOne({ _id: userDetails.referralUserId }).select('firstName lastName email').lean().exec()
-            if (refUser) userDetails.referralUserId = refUser
+            const refUser: any = await UserModel.findOne({
+                _id: userDetails.referralUserId
+            }).select('firstName lastName email').lean().exec();
+
+            if (refUser) { userDetails.referralUserId = refUser }
 
             /** set new login flag for new user first login let's start popup */
             req.user = { ...userDetails, isNewLogin: !userDetails.lastSeen }
+
             global.currentUser = req.user;
+
             if (req?.user?.stripe?.subscriptionId) {
-                const subscription = await subscriptionService.retrieveSubscription(req?.user?.stripe.subscriptionId)
+                const subscription
+                    = await subscriptionService.retrieveSubscription(
+                        req?.user?.stripe.subscriptionId
+                    );
                 req.subscription = subscription
             }
+
             next();
+
         } catch (err: any) {
             next(Boom.badRequest(err));
         }

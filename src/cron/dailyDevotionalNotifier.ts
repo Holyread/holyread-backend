@@ -62,7 +62,7 @@ const start = async () => {
                                                 item?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
                                                 'Your Daily Pick is ready! 🔔',
                                                 `${readOfDay.description} 📚📚📚`
-                                          )
+                                          ).catch(() => { return undefined; })
                                     )
                               })
                               Promise.all([...tokenSet]);

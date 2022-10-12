@@ -12,12 +12,23 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
     try {
         const star = search.star;
         delete search.star;
-        let result: any = await BookSummaryModel.find({}).select('-chapters').lean()
-        const authors = await BookAuthorModel.find({}).select('name').lean()
+        let result: any
+            = await BookSummaryModel
+                .find({})
+                .select([
+                    'coverImage',
+                    'coverImageBackground',
+                    'title',
+                    'description',
+                    'author',
+                    'overview',
+                    'categories'
+                ])
+                .populate({ path: 'author', select: 'name' })
+                .lean()
+                .exec();
+
         result = await Promise.all(result.map(async oneItem => {
-            if (oneItem.author) {
-                oneItem.author = authors.find(oneAuthor => String(oneAuthor._id) === String(oneItem.author))
-            }
             /** if search category books then return if category books not exist */
             if (search?.categories && !oneItem.categories.find(oneCate => String(oneCate) === String(search.categories))) return null
             /** if search author then return if book author not match */
@@ -39,9 +50,9 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                 categories: oneItem.categories
             }
         }))
+
         result = result.filter(s => s);
-        const count = result.length;
-        result = result.slice(skip, skip + limit)
+
         const ratings = await ratingService.getBooksRatings(result.map(i => i && i._id).filter(i => i) as [string], global.currentUser._id)
         result = result.map(i => {
             i.totalStar = ratings[String(i._id)]?.averageStar || 3,
@@ -49,7 +60,8 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
             if (star && star !== Math.trunc(i.totalStar)) return false
             return i
         }).filter(i => i)
-        return { count, summaries: result.slice(skip, skip + limit) }
+
+        return { count: result.length, summaries: result.slice(skip, skip + limit) }
     } catch (e: any) {
         throw new Error(e)
     }

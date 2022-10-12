@@ -39,7 +39,9 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                 categories: oneItem.categories
             }
         }))
-        result = result.filter(s => s).slice(skip, skip + limit)
+        result = result.filter(s => s);
+        const count = result.length;
+        result = result.slice(skip, skip + limit)
         const ratings = await ratingService.getBooksRatings(result.map(i => i && i._id).filter(i => i) as [string], global.currentUser._id)
         result = result.map(i => {
             i.totalStar = ratings[String(i._id)]?.averageStar || 3,
@@ -47,7 +49,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
             if (star && star !== Math.trunc(i.totalStar)) return false
             return i
         }).filter(i => i)
-        return { count: result.length, summaries: result.slice(skip, skip + limit) }
+        return { count, summaries: result.slice(skip, skip + limit) }
     } catch (e: any) {
         throw new Error(e)
     }

@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
+import { Types } from 'mongoose'
 
 import bookSummaryService from '../../../services/customers/book/bookSummary.service'
 import bookAuthorService from '../../../services/admin/book/author.service'
@@ -18,17 +19,18 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
         const params = request.query
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        let bookSearchFilter: any = { status: 'Active' }
+        let bookSearchFilter: any = { status: 'Active', search: {} }
         let authorSearchFilter: any = {}
         if (params.category) {
-            bookSearchFilter.categories = String(params.category)
+            bookSearchFilter.search.categories = { $in: [Types.ObjectId(params.category as any)] }
         }
         if (params.search) {
-            bookSearchFilter.filter = String(params.search).toLowerCase().trim()
+            bookSearchFilter.search['$or'] = [{title: await getSearchRegexp(params.search)}]
+            bookSearchFilter.search['$or'].push({'author.name': await getSearchRegexp(params.search) })
             authorSearchFilter.name = await getSearchRegexp(params.search)
         }
         if (params.author) {
-            bookSearchFilter.author = params.author
+            bookSearchFilter.search['author._id'] = params.author
         }
         const bookSummariesList: any = await bookSummaryService.getAllBookSummariesForDiscover(Number(skip), Number(limit), bookSearchFilter, [['createdAt', 'DESC']])
         if (params.author) {

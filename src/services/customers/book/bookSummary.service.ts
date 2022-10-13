@@ -10,58 +10,72 @@ const NODE_ENV = config.NODE_ENV
 /** Get all book summaries with filter by author id or author name, book title or all */
 const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, sort) => {
     try {
-        const star = search.star;
-        delete search.star;
         let result: any
             = await BookSummaryModel
-                .find({})
-                .select([
-                    'coverImage',
-                    'coverImageBackground',
-                    'title',
-                    'description',
-                    'author',
-                    'overview',
-                    'categories'
-                ])
-                .populate({ path: 'author', select: 'name' })
-                .lean()
-                .exec();
+                .aggregate([
+                    {
+                        "$project": {
+                            "coverImage": 1.0,
+                            "coverImageBackground": 1.0,
+                            "title": 1.0,
+                            "description": 1.0,
+                            "author": 1.0,
+                            "overview": 1.0,
+                            "categories": 1.0
+                        }
+                    },
+                    {
+                        "$lookup": {
+                            "from": "bookauthors",
+                            "localField": "author",
+                            "foreignField": "_id",
+                            "as": "author"
+                        }
+                    },
+                    {
+                        "$match": search.search
+                    },
+                    {
+                        $facet: {
+                            page: [{ $skip: skip }, { $limit: limit }],
+                            total: [
+                                {
+                                    $count: 'count'
+                                }
+                            ]
+                        }
+                    }
+                ]);
 
-        result = await Promise.all(result.map(async oneItem => {
-            /** if search category books then return if category books not exist */
-            if (search?.categories && !oneItem.categories.find(oneCate => String(oneCate) === String(search.categories))) return null
-            /** if search author then return if book author not match */
-            if (search?.author && String(oneItem.author._id) !== String(search?.author)) return null
-            /** if search then return if book title or author name not match */
-            if (search.filter && !oneItem?.title?.toLowerCase()?.includes(search.filter) && !oneItem?.author?.name?.toLowerCase().includes(search.filter.trim().toLowerCase())) return null
+        delete search.star;
+                
+        const star = search.star;
+        const count = result[0].total[0].count
+        const ratings = await ratingService.getBooksRatings(result[0]?.page?.map(i => i && i._id).filter(i => i) as [string], global.currentUser._id)
+        const summaries = new Set()
+        const saved = global?.currentUser?.library?.saved
 
-            const isSaved = global?.currentUser?.library?.saved?.find(b => String(b) === String(oneItem?._id)) ? true : false
-            return {
+        await Promise.all(result[0]?.page?.map(async oneItem => {
+            const totalStar = ratings[String(oneItem._id)]?.averageStar || 3
+            if (star && star !== Math.trunc(totalStar)) return
+
+            summaries.add({
                 _id: oneItem._id,
                 coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneItem.coverImage,
                 title: oneItem.title,
                 description: oneItem.description,
-                author: oneItem.author,
+                author: oneItem.author[0] || {},
                 overview: oneItem.overview,
                 views: oneItem.views || randomNumberInRange(10000, 20000),
-                bookMark: isSaved,
+                bookMark: !!saved?.find(b => String(b) === String(oneItem?._id)),
                 coverImageBackground: oneItem.coverImageBackground,
-                categories: oneItem.categories
-            }
+                categories: oneItem.categories,
+                isRate: !!ratings[String(oneItem._id)]?.isRate,
+                totalStar
+            })
         }))
 
-        result = result.filter(s => s);
-
-        const ratings = await ratingService.getBooksRatings(result.map(i => i && i._id).filter(i => i) as [string], global.currentUser._id)
-        result = result.map(i => {
-            i.totalStar = ratings[String(i._id)]?.averageStar || 3,
-            i.isRate = !!ratings[String(i._id)]?.isRate
-            if (star && star !== Math.trunc(i.totalStar)) return false
-            return i
-        }).filter(i => i)
-
-        return { count: result.length, summaries: result.slice(skip, skip + limit) }
+        return { count, summaries: [...summaries] }
     } catch (e: any) {
         throw new Error(e)
     }
@@ -121,7 +135,7 @@ const getOneBookSummaryByFilter = async (query: any) => {
             data.author = await BookAuthorModel.findOne({ _id: data.author }).lean().exec()
         }
         data.totalStar = ratings[String(data._id)]?.averageStar || 3,
-        data.isRate = !!ratings[String(data._id)]?.isRate
+            data.isRate = !!ratings[String(data._id)]?.isRate
         data.views = data.views || randomNumberInRange(10000, 20000)
         data.bookMark = global?.currentUser?.library?.saved?.find(b => String(b) === String(data?._id)) ? true : false
         data.reads = Number((libBookChapters?.length ? (100 * libBookChapters?.length) / data?.chapters?.length : 0).toFixed(0))
@@ -164,7 +178,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
         const count = summaries.length;
         summaries = summaries.sort((a, b) => { return b.reads - a.reads }).slice(skip, skip + limit);
         const ratings = await ratingService.getBooksRatings(summaries.map(i => i.book && i.book._id).filter(i => i) as [string], global.currentUser._id)
-        
+
         summaries = await Promise.all(summaries.map(async oneItem => {
             const isSaved = global?.currentUser?.library?.saved?.find(b => String(b) === String(oneItem?.book?._id)) ? true : false
             if (oneItem.book.author) {

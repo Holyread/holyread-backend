@@ -1,32 +1,56 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import { io } from '../../app';
-import usersService from '../../services/customers/users/user.service'
-import notificationsService from '../../services/customers/notifications/notifications.service'
-import { fetchNotifications } from '../../controllers/customers/notification.controller'
-import authService from '../../services/admin/users/user.service'
-import bookService from '../../services/customers/book/bookSummary.service'
-import subscriptionService from '../../services/admin/subscriptions/subscriptions.service'
-import stripeSubscriptionService from '../../services/stripe/subscription'
-import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
-import { responseMessage } from '../../constants/message.constant'
-import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNotification, verifyToken, getToken, decrypt, sortArrayObject, getTimeDiff } from '../../lib/utils/utils'
-import { awsBucket, dataLimit, emailTemplatesTitles, originEmails, origins } from '../../constants/app.constant'
-import config from '../../../config'
-import ratingService from '../../services/customers/book/rating.service';
-import highLightsService from '../../services/customers/highLights/highLights.service';
-import userService from '../../services/customers/users/user.service';
-import transactionsService from '../../services/customers/users/transactions.service';
-import smallGroupService from '../../services/customers/smallGroup/smallGroup.service';
-import handoutsService from '../../services/customers/smallGroup/handouts.service';
+import {
+      encrypt,
+      decrypt,
+      getToken,
+      sentEmail,
+      compileHtml,
+      getTimeDiff,
+      verifyToken,
+      removeS3File,
+      uploadFileToS3,
+      sortArrayObject,
+      pushNotification,
+} from '../../lib/utils/utils'
 
+import {
+      origins,
+      dataLimit,
+      awsBucket,
+      originEmails,
+      emailTemplatesTitles,
+} from '../../constants/app.constant'
+
+import { io } from '../../app';
+import { responseMessage } from '../../constants/message.constant'
+import { fetchNotifications } from '../../controllers/customers/notification.controller'
+
+import config from '../../../config'
+import authService from '../../services/admin/users/user.service'
+import userService from '../../services/customers/users/user.service';
+import usersService from '../../services/customers/users/user.service';
+import ratingService from '../../services/customers/book/rating.service';
+
+import stripeSubscriptionService from '../../services/stripe/subscription';
+
+import bookService from '../../services/customers/book/bookSummary.service';
+import handoutsService from '../../services/customers/smallGroup/handouts.service';
+import transactionsService from '../../services/customers/users/transactions.service';
+import highLightsService from '../../services/customers/highLights/highLights.service';
+import smallGroupService from '../../services/customers/smallGroup/smallGroup.service';
+import subscriptionService from '../../services/admin/subscriptions/subscriptions.service';
+import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service';
+import notificationsService from '../../services/customers/notifications/notifications.service';
+
+
+const NODE_ENV = config.NODE_ENV
 const authControllerResponse = responseMessage.authControllerResponse
-const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
 const handoutsControllerResponse = responseMessage.handoutsControllerResponse
+const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
 const subscriptionsControllerResponse = responseMessage.subscriptionsControllerResponse
-const NODE_ENV = config.NODE_ENV
 
 const s3Bucket = {
       region: awsBucket.region,
@@ -439,7 +463,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   if (!bookSummary) {
                         return next(Boom.notFound(bookSummaryControllerResponse.chapterNotExist))
                   }
-                  const readingObj = userObj.library?.reading?.find(oneRead => oneRead.bookId === req.body.bookId)
+                  const readingObj = await userObj.library?.reading?.find(oneRead => oneRead.bookId === req.body.bookId)
                   if (!readingObj) {
                         if (!userObj?.library) {
                               userObj.library = {}
@@ -456,9 +480,20 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
                   }
 
+                  readingObj.chaptersCompleted =
+                        readingObj
+                              .chaptersCompleted
+                              .filter(i => i !== req.body.chapter)
+                  readingObj
+                        .chaptersCompleted
+                        .push(req.body.chapter)
+
                   query['library.reading.bookId'] = req.body.bookId
-                  req.body['$set'] = { 'library.reading.$.updatedAt': new Date() }
-                  req.body['$addToSet'] = { 'library.reading.$.chaptersCompleted': req.body.chapter }
+
+                  req.body['$set'] = {
+                        'library.reading.$.updatedAt': new Date(),
+                        'library.reading.$.chaptersCompleted': readingObj.chaptersCompleted
+                  }
 
                   delete req.body.bookId
                   delete req.body.chapter
@@ -516,6 +551,7 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
 
             if (bookId && !section) {
                   const book = userObj?.library?.saved?.find(id => String(id) === bookId)
+                  userObj.library.reading = sortArrayObject(userObj.library.reading, 'updatedAt', 'desc')
                   res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data: { library: userObj.library, saved: book ? true : false } })
                   return null
             }

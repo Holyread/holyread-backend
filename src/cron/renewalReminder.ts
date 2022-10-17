@@ -1,10 +1,9 @@
 import cron from 'cron';
 
 import { fetchNotifications } from '../controllers/customers/notification.controller';
-import { emailTemplatesTitles } from '../constants/app.constant';
+import { pushNotification, compileHtml, sentEmail } from '../lib/utils/utils';
+import { emailTemplatesTitles, origins } from '../constants/app.constant';
 import { renewalReminder } from '../constants/cron.constants';
-import { compileHtml, sentEmail } from '../lib/utils/utils';
-import { pushNotification } from '../lib/utils/utils';
 import { UserModel, getUserType } from '../models/user.model';
 import { io } from '../app';
 
@@ -48,7 +47,7 @@ const sentSubscriptionEmail = async (user, title, description) => {
                         contentData = {
                               username: user.email.split('@')[0],
                               description: description,
-                              link: config.NODE_ENV,
+                              link: origins[config.NODE_ENV],
                               title
                         },
                         htmlData = await compileHtml(

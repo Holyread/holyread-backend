@@ -35,4 +35,16 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
     }
 }
 
-export { getDashboard }
+const getTopReadsBooks = async (request: Request, response: Response, next: NextFunction) => {
+    try {
+        const bookSummary: any = await bookSummaryService.getTopReadsBooks(request.query.duration as 'year' | 'month' | 'week')
+        response.status(200).json({
+            message: dashboardControllerResponse.getDashboardSuccess,
+            data: bookSummary
+        })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
+export { getDashboard, getTopReadsBooks }

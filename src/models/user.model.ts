@@ -271,7 +271,7 @@ export const UserSchema = new Schema({
         saved: [{ type: String }],
         completed: [{ type: String }],
         reading: [{
-            bookId: { type: String },
+            bookId: { type: String, ref: 'bookSummary' },
             chaptersCompleted: [{ type: String }],
             updatedAt: { type: Date }
         }],

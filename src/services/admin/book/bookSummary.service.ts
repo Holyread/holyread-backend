@@ -138,8 +138,7 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
                                     '$size' : '$library.reading.chaptersCompleted'
                                 }
                             }
-                        },
-                        myCount: { $sum: 1 }
+                        }
                     }
                 }, 
                 {
@@ -176,7 +175,7 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
                 }
             ]
         )
-        const totalReaders = await UserModel.count({ 'library.reading.bookId': { $exists: true } })
+        const totalReaders = await UserModel.count({ 'library.reading.bookId': { $exists: true }, 'library.reading.updatedAt': query['_id.updatedAt'] })
 
         result = await Promise.all(result.map(async i => {
             return {

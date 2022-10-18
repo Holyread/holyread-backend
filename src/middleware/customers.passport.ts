@@ -10,7 +10,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
         next(Boom.badRequest('Missing access token'));
     } else {
         try {
-            if (false && !req?.headers?.device)
+            if (!req?.headers?.device)
                 return next(Boom.notFound('Device details are missing'));
 
             const details: any = await verifyToken(accessToken)
@@ -43,7 +43,6 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
                 return next(Boom.badRequest('User not verfied'));
             }
             if (
-                false &&
                 !req.path.includes('logout') &&
                 !userDetails.maxDevices.includes(req?.headers?.device) &&
                 userDetails?.maxDevices?.length >= (maxDeviceLogin || 3)

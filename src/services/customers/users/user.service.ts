@@ -1,5 +1,5 @@
 import { encrypt } from '../../../lib/utils/utils'
-import { UserModel, NotificationsModel } from '../../../models/index'
+import { UserModel, NotificationsModel, UserLibraryModel } from '../../../models/index'
 
 /** Modify User */
 const updateUser = async (query: object, body: any) => {
@@ -28,6 +28,27 @@ const getOneUserByFilter = async (query: any) => {
     }
 }
 
+/** Get user library */
+const getUserLibrary = async (query: any, select: String[] = []) => {
+    try {
+        const result: any = await UserLibraryModel.findOne(query).select(select).lean().exec()
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+/** Modify User */
+const updateUserLibrary = async (query: object, body: any) => {
+    try {
+        const data: any = await UserLibraryModel.findOneAndUpdate(query, { ...body }, { new: true })
+        /** Todo: update user updatedAt */
+        return data
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 /** Get all Users */
 const getAllUsers = async (search: object) => {
     try {
@@ -48,4 +69,11 @@ const deleteUser = async (id: string) => {
     }
 }
 
-export default { updateUser, getOneUserByFilter, getAllUsers, deleteUser }
+export default {
+    updateUser,
+    deleteUser,
+    getAllUsers,
+    getUserLibrary,
+    updateUserLibrary,
+    getOneUserByFilter,
+}

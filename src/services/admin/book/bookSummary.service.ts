@@ -94,7 +94,7 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
         const query = {};
         const now = new Date();
         now.setHours(0, 0, 0, 0);
-        switch(duration) {
+        switch (duration) {
             case 'week':
                 query['_id.updatedAt'] = { $gte: new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000)) }
                 break;
@@ -102,7 +102,7 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
             case 'month':
                 query['_id.updatedAt'] = { $gte: new Date(now.setMonth(new Date().getMonth() - 1)) }
                 break;
-            
+
             default:
                 query['_id.updatedAt'] = { $gte: new Date(now.setMonth(new Date().getMonth() - 12)) }
                 break;
@@ -110,79 +110,101 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
         let result = await UserModel.aggregate(
             [
                 {
-                    '$match' : {
-                        'library.reading.bookId' : {
-                            '$exists' : true
+                    '$match': {
+                        'libraries': {
+                            '$exists': true
                         }
-                    }
-                }, 
-                {
-                    '$project' : {
-                        'email' : 1.0,
-                        'library' : 1.0
                     }
                 },
                 {
-                    '$unwind' : {
-                        'path' : '$library.reading'
+                    "$lookup": {
+                        "from": "userlibraries",
+                        "localField": "libraries",
+                        "foreignField": "_id",
+                        "as": "libraries"
                     }
-                }, 
+                },
                 {
-                    '$group' : {
-                        '_id' : {
-                            'book' : '$library.reading.bookId',
-                            'email' : '$email',
-                            updatedAt: '$library.reading.updatedAt',
-                            'chapters' : {
-                                '$sum' : {
-                                    '$size' : '$library.reading.chaptersCompleted'
+                    '$unwind': {
+                        'path': '$libraries'
+                    }
+                },
+                {
+                    '$match': {
+                        'libraries.reading.bookId': {
+                            '$exists': true
+                        }
+                    }
+                },
+                {
+                    '$project': {
+                        'email': 1.0,
+                        'libraries': 1.0
+                    }
+                },
+                {
+                    '$unwind': {
+                        'path': '$libraries.reading'
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': {
+                            'book': '$libraries.reading.bookId',
+                            'email': '$email',
+                            updatedAt: '$libraries.reading.updatedAt',
+                            'chapters': {
+                                '$sum': {
+                                    '$size': '$libraries.reading.chaptersCompleted'
                                 }
                             }
                         }
                     }
-                }, 
-                {
-                    '$match' : query
                 },
                 {
-                    '$group' : {
-                        '_id' : '$_id.book',
-                        'emails' : {
-                            '$push' : {
-                                'email' : '$_id.email',
-                                'chapters' : '$_id.chapters'
+                    '$match': query
+                },
+                {
+                    '$group': {
+                        '_id': '$_id.book',
+                        'emails': {
+                            '$push': {
+                                'email': '$_id.email',
+                                'chapters': '$_id.chapters'
                             }
                         },
                     }
                 },
                 {
-                    '$group' : {
-                        '_id' : '$_id',
-                        'total' : {
-                            '$sum' : {
-                                '$size' : '$emails'
+                    '$group': {
+                        '_id': '$_id',
+                        'total': {
+                            '$sum': {
+                                '$size': '$emails'
                             }
                         }
                     }
-                }, 
+                },
                 {
-                    '$sort' : {
-                        'total' : -1.0
+                    '$sort': {
+                        'total': -1.0
                     }
                 },
                 {
-                    '$limit': 5
+                    $facet: {
+                        page: [{ $limit: 5 }],
+                        total: [{
+                            $count: 'count'
+                        }]
+                    }
                 }
             ]
         )
-        const totalReaders = await UserModel.count({ 'library.reading.bookId': { $exists: true }, 'library.reading.updatedAt': query['_id.updatedAt'] })
-
-        result = await Promise.all(result.map(async i => {
-            return {
-                book: await BookSummaryModel.findOne({ _id: i._id }).select('title').lean().exec(),
-                total: Math.trunc((i.total / totalReaders) * 100) + '%'
-            }
-        }))
+        const totalReaders = result[0]?.total[0]?.count
+        result = result[0].page.map(i => {
+            i.total = Math.trunc((i.total / totalReaders) * 100) + '%'
+            return i
+        })
         return result
     } catch (e: any) {
         throw new Error(e)

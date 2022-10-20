@@ -24,6 +24,7 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
             };
             let transactions: any = new Set()
             result.map((i, index) => {
+                  if (!i.userId) return;
                   /** return if date not in range */
                   if (
                         search.from &&
@@ -48,7 +49,7 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
                   const shipping = i?.customer?.shipping?.address
                   const data = {
                         _id: i._id,
-                        email: i.userId.email,
+                        email: i.userId?.email,
                         date: formattedDate(i?.createdAt),
                         status: i?.status,
                         paymentLink: i?.paymentLink,
@@ -87,6 +88,16 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
       }
 }
 
+/** Delete user transactions */
+const deleteTransaction = async (query: Object) => {
+      try {
+            await TransactionsModel.deleteMany(query)
+      } catch (e: any) {
+            throw new Error(e)
+      }
+}
+
 export default {
-      getAllTransactions
+      getAllTransactions,
+      deleteTransaction
 }

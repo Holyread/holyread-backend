@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose'
+import mongoose, { Schema, Types } from 'mongoose'
 
 mongoose.set('useCreateIndex', true)
 
@@ -39,6 +39,7 @@ export interface IUser extends mongoose.Document {
         deviceId: string,
         token: string
     }],
+    libraries: Types.ObjectId,
     library?: {
         saved?: [string],
         completed?: [string],
@@ -115,6 +116,7 @@ export type createUserType = {
         deviceId: string,
         token: string
     }],
+    libraries: Types.ObjectId,
     library?: {
         saved?: [string],
         completed?: [string],
@@ -191,6 +193,7 @@ export type getUserType = {
         deviceId: string,
         token: string
     }],
+    libraries: Types.ObjectId,
     library?: {
         saved?: [string],
         completed?: [string],
@@ -267,6 +270,7 @@ export const UserSchema = new Schema({
         deviceId: String,
         token: String
     }],
+    libraries: { type: Schema.Types.ObjectId, ref: 'userLibrary' },
     library: {
         saved: [{ type: String }],
         completed: [{ type: String }],

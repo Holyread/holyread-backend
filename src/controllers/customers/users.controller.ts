@@ -77,7 +77,6 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             }
             userObj.subscriptionEndsIn = getTimeDiff(String(new Date()), String(new Date(subscriptionEndDate)))
             delete userObj.password
-            delete userObj.library
             delete userObj.smallGroups
             delete userObj.verificationCode
             delete userObj.stripe
@@ -268,7 +267,6 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
             }
             data.subscriptionEndsIn = getTimeDiff(String(new Date()), String(new Date(subscriptionEndDate)))
             delete data.password
-            delete data.library
             delete data.smallGroups
             delete data.verificationCode
             res.status(200).send({ message: authControllerResponse.getUserSuccess, data })
@@ -439,23 +437,24 @@ const getShareOptionImageUrl = async (req: Request | any, res: Response, next: N
 /** Update user library details */
 const updateUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const query: any = { _id: req.user._id }
             const { type, section } = req.query as any
             /** Get user from db */
             const userObj: any = Object.assign({}, req.user)
+            const query: any = { _id: userObj.libraries }
+            userObj.libraries = await usersService.getUserLibrary(query)
             if (!section) {
                   return next(Boom.notFound(authControllerResponse.missingSectionParams))
             }
             if (section === 'completed') {
-                  req.body['$addToSet'] = { 'library.completed': req.body.completed }
+                  req.body['$addToSet'] = { 'completed': req.body.completed }
                   delete req.body.completed
             }
             if (type === 'add' && section === 'saved') {
-                  req.body['$addToSet'] = { 'library.saved': req.body.saved }
+                  req.body['$addToSet'] = { 'saved': req.body.saved }
                   delete req.body.saved
             }
             if (type === 'delete' && section === 'saved') {
-                  req.body['$pull'] = { 'library.saved': req.body.saved }
+                  req.body['$pull'] = { 'saved': req.body.saved }
                   delete req.body.saved
             }
             if (section === 'reading') {
@@ -463,20 +462,20 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   if (!bookSummary) {
                         return next(Boom.notFound(bookSummaryControllerResponse.chapterNotExist))
                   }
-                  const readingObj = await userObj.library?.reading?.find(oneRead => oneRead.bookId === req.body.bookId)
+                  const readingObj = await userObj.libraries?.reading?.find(oneRead => String(oneRead.bookId) === req.body.bookId)
                   if (!readingObj) {
-                        if (!userObj?.library) {
-                              userObj.library = {}
+                        if (!userObj?.libraries) {
+                              userObj.libraries = {}
                         }
-                        if (!userObj?.library?.reading) {
-                              userObj.library.reading = []
+                        if (!userObj?.libraries?.reading) {
+                              userObj.libraries.reading = []
                         }
-                        userObj.library.reading.push({
+                        userObj.libraries.reading.push({
                               bookId: req.body.bookId,
                               chaptersCompleted: [req.body.chapter],
                               updatedAt: new Date()
                         })
-                        await usersService.updateUser(query, { library: userObj.library })
+                        await usersService.updateUserLibrary(query, userObj.libraries)
                         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
                   }
 
@@ -488,11 +487,11 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                         .chaptersCompleted
                         .push(req.body.chapter)
 
-                  query['library.reading.bookId'] = req.body.bookId
+                  query['reading.bookId'] = req.body.bookId
 
                   req.body['$set'] = {
-                        'library.reading.$.updatedAt': new Date(),
-                        'library.reading.$.chaptersCompleted': readingObj.chaptersCompleted
+                        'reading.$.updatedAt': new Date(),
+                        'reading.$.chaptersCompleted': readingObj.chaptersCompleted
                   }
 
                   delete req.body.bookId
@@ -503,37 +502,37 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   if (!bookSummary) {
                         return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
                   }
-                  const viewObj = userObj.library?.view?.find(bookItem => bookItem.bookId === req.body.bookId)
+                  const viewObj = userObj.libraries?.view?.find(bookItem => String(bookItem.bookId) === req.body.bookId)
                   if (!viewObj) {
-                        if (!userObj?.library) {
-                              userObj.library = {}
+                        if (!userObj?.libraries) {
+                              userObj.libraries = {}
                         }
-                        if (!userObj?.library?.view) {
-                              userObj.library.view = []
+                        if (!userObj?.libraries?.view) {
+                              userObj.libraries.view = []
                         }
-                        userObj.library.view.push({
+                        userObj.libraries.view.push({
                               bookId: req.body.bookId,
                               createdAt: new Date()
                         })
-                        await usersService.updateUser(query, { library: userObj.library })
+                        await usersService.updateUserLibrary(query, userObj.libraries)
                         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
                   }
 
-                  query['library.view.bookId'] = req.body.bookId
-                  req.body['$set'] = { 'library.view.$.bookId': req.body.bookId }
+                  query['view.bookId'] = req.body.bookId
+                  req.body['$set'] = { 'view.$.bookId': req.body.bookId }
                   delete req.body.bookId
             }
             /** Add to User small group */
             if (type === 'add' && section === 'smallGroup') {
-                  req.body['$addToSet'] = { 'library.smallGroups': req.body.smallGroup }
+                  req.body['$addToSet'] = { 'smallGroups': req.body.smallGroup }
                   delete req.body.smallGroup
             }
             /** Delete from User small group */
             if (type === 'delete' && section === 'smallGroup') {
-                  req.body['$pull'] = { 'library.smallGroups': req.body.smallGroup }
+                  req.body['$pull'] = { 'smallGroups': req.body.smallGroup }
                   delete req.body.smallGroup
             }
-            await usersService.updateUser(query, req.body)
+            await usersService.updateUserLibrary(query, req.body)
             return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
       } catch (e: any) {
             return next(Boom.badData(e.message))
@@ -555,36 +554,36 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
 
             /** Get current user */
             let userObj: any = Object.assign({}, req.user)
-
+            userObj.libraries = await usersService.getUserLibrary({ _id: userObj.libraries })
             if (bookId && !section) {
-                  const book = userObj?.library?.saved?.find(
+                  const book = userObj?.libraries?.saved?.find(
                         id => String(id) === bookId
                   )
-                  userObj.library.reading
-                        = userObj.library.reading.filter(
+                  userObj.libraries.reading
+                        = userObj.libraries.reading.filter(
                               i => String(i.bookId) === String(bookId)
                         )
                   res.status(200).send({
                         message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
                         data: {
-                              library: userObj.library,
+                              library: userObj.libraries,
                               saved: book ? true : false
                         }
                   })
                   return null
             }
 
-            if (section === 'saved' && userObj?.library?.saved?.length) {
+            if (section === 'saved' && userObj?.libraries?.saved?.length) {
                   const search: any = {
-                        _id: { $in: bookId ? [bookId] : userObj.library.saved }
+                        _id: { $in: bookId ? [bookId] : userObj.libraries.saved }
                   }
                   if (author) { search.author = author }
                   if (star) { search.star = Number(star) }
                   const data = await bookService.getAllBookSummaries(
-                        0, 0, search, [['createdAt', sort || 'DESC']]
+                        0, 0, search, { 'createdAt': String(sort || 'ASC').toLowerCase() === 'asc' ? 1.0 : -1.0 }
                   )
                   if (data.summaries?.length) {
-                        data.summaries = userObj.library.saved.reverse().map(oi => {
+                        data.summaries = userObj.libraries.saved.reverse().map(oi => {
                               return data.summaries.find(si => String(si._id) === String(oi))
                         }).filter(i => i)
 
@@ -603,19 +602,19 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   return null
             }
 
-            if (section === 'completed' && userObj?.library?.completed?.length) {
+            if (section === 'completed' && userObj?.libraries?.completed?.length) {
                   const search: any = {
                         _id: {
-                              $in: bookId ? [bookId] : userObj.library.completed
+                              $in: bookId ? [bookId] : userObj.libraries.completed
                         }
                   }
                   if (author) { search.author = author }
                   if (star) { search.star = Number(star) }
                   const data = await bookService.getAllBookSummaries(
-                        0, 0, search, [['createdAt', sort || 'DESC']]
+                        0, 0, search, { 'createdAt': String(sort || 'ASC').toLowerCase() === 'asc' ? 1.0 : -1.0 }
                   )
                   if (data.summaries?.length) {
-                        data.summaries = userObj.library.completed.reverse().map(oi => {
+                        data.summaries = userObj.libraries.completed.reverse().map(oi => {
                               return data.summaries.find(si => String(si._id) === String(oi))
                         }).filter(i => i)
 
@@ -635,21 +634,21 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
             }
             if (
                   section === 'reading' &&
-                  userObj?.library?.reading?.length
+                  userObj?.libraries?.reading?.length
             ) {
                   /** collect user reads books ids those not in completed books list */
                   const bookIds = new Set()
                   if (
                         bookId &&
-                        !userObj.library?.completed?.find(
+                        !userObj.libraries?.completed?.find(
                               cb => String(cb) === String(bookId)
                         )
                   ) { bookIds.add(bookId) }
                   else if (!bookId) {
-                        userObj.library.reading.map(oneBook => {
+                        userObj.libraries.reading.map(oneBook => {
                               if (
                                     oneBook.bookId &&
-                                    !userObj.library?.completed?.find(
+                                    !userObj.libraries?.completed?.find(
                                           cb => String(cb) === String(oneBook.bookId)
                                     )
                               ) bookIds.add(oneBook.bookId)
@@ -661,11 +660,11 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   if (author) { search.author = author }
 
                   /** Get user reads books details by users reads books ids */
-                  const data = await bookService.getAllBookSummaries(0, 0, search, [], true)
+                  const data = await bookService.getAllBookSummaries(0, 0, search, { 'createdAt': -1.0 }, true)
 
-                  /** sort summary by latest reads based on user library readings */
+                  /** sort summary by latest reads based on user libraries readings */
                   const summaries = new Set()
-                  userObj.library.reading.map(r => {
+                  userObj.libraries.reading.map(r => {
                         const summary = data.summaries.find(
                               (os: any) => String(os._id) === String(r.bookId)
                         )
@@ -1084,17 +1083,17 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
             await usersService.deleteUser(userObj._id)
             res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
             if (userObj && userObj.image) {
-                  await removeS3File(userObj.image, s3Bucket)
+                  removeS3File(userObj.image, s3Bucket)
             }
             if (userObj?.stripe?.subscriptionId) {
-                  await stripeSubscriptionService.cancelSubscription(userObj.stripe.subscriptionId)
+                  stripeSubscriptionService.cancelSubscription(userObj.stripe.subscriptionId)
             }
-            /** Delete user notifications */
-            const deleteNotifications = notificationsService.deleteNotifications({ userId: userObj._id })
-            /** Delete user books ratings */
-            const deleteRatings = ratingService.deleteRatings({ userId: userObj._id })
-            const deleteHighlights = highLightsService.deleteHighLights({ userId: userObj._id })
-            await Promise.all([deleteNotifications, deleteRatings, deleteHighlights])
+            Promise.all([
+                  ratingService.deleteRatings({ userId: userObj._id }),
+                  highLightsService.deleteHighLights({ userId: userObj._id }),
+                  transactionsService.deleteTransaction({ userId: userObj._id }),
+                  notificationsService.deleteNotifications({ userId: userObj._id }),
+            ])
       } catch (e: any) {
             return next(Boom.badData(e.message))
       }

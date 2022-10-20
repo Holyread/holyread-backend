@@ -14,6 +14,7 @@ import { io } from '../../app';
 import { fetchNotifications } from '../customers/notification.controller';
 import ratingService from '../../services/customers/book/rating.service';
 import highLightsService from '../../services/customers/highLights/highLights.service';
+import transactionsService from '../../services/admin/users/transactions.service';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
@@ -173,7 +174,6 @@ const updateUser = async (req: Request | any, res: Response, next: NextFunction)
     try {
         const id: any = req.params.userId
         delete req.body.password
-        delete req.body.library
         /** Get user from db */
         const userObj: any = await usersService.getOneUserByFilter({ _id: id })
         if (!userObj) {
@@ -229,18 +229,20 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
         const userObj: any = await usersService.getOneUserByFilter({ _id: id })
         await usersService.deleteUser(id)
         res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
+
         if (userObj && userObj.image) {
-            await removeS3File(userObj.image, s3Bucket)
+            removeS3File(userObj.image, s3Bucket)
         }
         if (userObj?.stripe?.subscriptionId) {
-            await stripeSubscriptionService.cancelSubscription(userObj.stripe.subscriptionId)
+            stripeSubscriptionService.cancelSubscription(userObj.stripe.subscriptionId)
         }
-        /** Delete user notifications */
-        const deleteNotifications = notificationsService.deleteNotifications({ userId: userObj._id })
-        /** Delete user books ratings */
-        const deleteRatings = ratingService.deleteRatings({ userId: userObj._id })
-        const deleteHighlights = highLightsService.deleteHighLights({ userId: userObj._id })
-        await Promise.all([deleteNotifications, deleteRatings, deleteHighlights])
+
+        Promise.all([
+            ratingService.deleteRatings({ userId: userObj._id }),
+            highLightsService.deleteHighLights({ userId: userObj._id }),
+            transactionsService.deleteTransaction({ userId: userObj._id }),
+            notificationsService.deleteNotifications({ userId: userObj._id })
+        ])
     } catch (e: any) {
         return next(Boom.badData(e.message))
     }

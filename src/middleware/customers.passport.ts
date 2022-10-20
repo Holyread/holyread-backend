@@ -1,7 +1,6 @@
 import { Response, NextFunction } from 'express'
 import { verifyToken } from '../lib/utils/utils'
 import { SettingModel, UserModel } from '../models'
-import subscriptionService from '../services/stripe/subscription'
 import Boom from '@hapi/boom'
 
 export default async (req: any, res: Response, next: NextFunction): Promise<any> => {
@@ -65,14 +64,6 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             req.user = { ...userDetails, isNewLogin: !userDetails.lastSeen }
 
             global.currentUser = req.user;
-
-            if (req?.user?.stripe?.subscriptionId) {
-                const subscription
-                    = await subscriptionService.retrieveSubscription(
-                        req?.user?.stripe.subscriptionId
-                    );
-                req.subscription = subscription
-            }
 
             next();
 

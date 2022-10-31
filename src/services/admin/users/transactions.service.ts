@@ -24,7 +24,8 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
             };
             let transactions: any = new Set()
             result.map((i, index) => {
-                  if (!i.userId) return;
+                  if (!i?.userId?.email) return;
+
                   /** return if date not in range */
                   if (
                         search.from &&

@@ -57,7 +57,7 @@ export const UserLibrarySchema = new Schema({
     }],
     smallGroups: [{ type: Schema.Types.ObjectId }],
     reading: [{
-        bookId: { type: Schema.Types.ObjectId, ref: 'bookSummary' },
+        bookId: { type: Schema.Types.ObjectId, ref: 'bookSummary', index: true },
         chaptersCompleted: [{ type: String }],
         updatedAt: { type: Date }
     }],

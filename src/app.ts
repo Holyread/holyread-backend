@@ -64,6 +64,7 @@ if (config.NODE_ENV !== 'test') {
     .createWebhook()
     .then(res => console.log('Subscription webhook initiated succeed'))
 }
+
 firebaseAdmin.initializeApp({
   credential: firebaseAdmin.credential.cert(fireStoreConfig as any),
 });

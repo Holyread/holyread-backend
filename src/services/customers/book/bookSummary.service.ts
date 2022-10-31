@@ -14,30 +14,33 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
             = await BookSummaryModel
                 .aggregate([
                     {
-                        "$project": {
-                            "coverImage": 1.0,
-                            "coverImageBackground": 1.0,
-                            "title": 1.0,
-                            "description": 1.0,
-                            "author": 1.0,
-                            "overview": 1.0,
-                            "categories": 1.0
+                        $project: {
+                            title: 1.0,
+                            author: 1.0,
+                            overview: 1.0,
+                            categories: 1.0,
+                            coverImage: 1.0,
+                            description: 1.0,
+                            coverImageBackground: 1.0,
                         }
                     },
                     {
-                        "$lookup": {
-                            "from": "bookauthors",
-                            "localField": "author",
-                            "foreignField": "_id",
-                            "as": "author"
+                        $lookup: {
+                            as: 'author',
+                            foreignField: '_id',
+                            from: 'bookauthors',
+                            localField: 'author',
                         }
                     },
                     {
-                        "$match": search.search
+                        $match: search.search
                     },
                     {
                         $facet: {
-                            page: [{ $skip: skip }, { $limit: limit }],
+                            page: [
+                                { $skip: skip },
+                                { $limit: limit }
+                            ],
                             total: [
                                 {
                                     $count: 'count'
@@ -109,11 +112,21 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                 }
             },
             {
-                "$lookup": {
-                    "from": "bookauthors",
-                    "localField": "author",
-                    "foreignField": "_id",
-                    "as": "author"
+                $lookup: {
+                    from: "bookauthors",
+                    localField: "author",
+                    foreignField: "_id",
+                    as: "author"
+                }
+            },
+            {
+                $unwind: '$author'
+            },
+            {
+                $project: {
+                    'author.__v': 0,
+                    'author.about': 0, 
+                    'author.createdAt': 0,
                 }
             }
         ])
@@ -243,9 +256,10 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
         const updatedAt = 'libraries.reading.updatedAt'
         const author = 'libraries.reading.bookId.author'
         const overview = 'libraries.reading.bookId.overview'
-        const categories = 'libraries.reading.bookId.categories'
-        const description = 'libraries.reading.bookId.description'
         const chapters = 'libraries.reading.bookId.chapters._id'
+        const categories = 'libraries.reading.bookId.categories'
+        const coverImage = 'libraries.reading.bookId.coverImage'
+        const description = 'libraries.reading.bookId.description'
         const coverImageBackground = 'libraries.reading.bookId.coverImageBackground'
 
         const project = {
@@ -261,25 +275,25 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
             [description]: '$' + [description],
             [coverImageBackground]: '$' + [coverImageBackground],
             [chapters]: '$' + [chapters],
-            'libraries.reading.bookId.coverImage': {
+            [coverImage]: {
                 $concat: [
                     awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/',
-                    '$libraries.reading.bookId.coverImage'
+                    '$' + [coverImage]
                 ]
             }
         }
 
         const select = {
-            'title': { $first: '$libraries.reading.bookId.title' },
-            'views': { $first: '$libraries.reading.bookId.views' },
-            'updatedAt': { $first: '$libraries.reading.updatedAt' },
-            'author': { $first: '$libraries.reading.bookId.author' },
-            'overview': { $first: '$libraries.reading.bookId.overview' },
-            'categories': { $first: '$libraries.reading.bookId.categories' },
-            'coverImage': { $first: '$libraries.reading.bookId.coverImage' },
-            'chapters': { $first: '$libraries.reading.bookId.chapters._id' },
-            'description': { $first: '$libraries.reading.bookId.description' },
-            'coverImageBackground': { $first: '$libraries.reading.bookId.coverImageBackground' },   
+            'title': { $first: '$' + [title] },
+            'views': { $first: '$' + [views] },
+            'author': { $first: '$' + [author] },
+            'chapters': { $first: '$' + [chapters] },
+            'overview': { $first: '$' + [overview] },
+            'updatedAt': { $first: '$' + [updatedAt] },
+            'categories': { $first: '$' + [categories] },
+            'coverImage': { $first: '$' + [coverImage] },
+            'description': { $first: '$' + [description] },
+            'coverImageBackground': { $first: '$' + [coverImageBackground] },
         }
 
         const page: any = [{ $limit: limit }]
@@ -384,7 +398,14 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                         "from": "bookauthors",
                         "localField": "author",
                         "foreignField": "_id",
-                        "as": "author.name"
+                        "as": "author"
+                    }
+                },
+                {
+                    $project: {
+                        'author.about': 0, 
+                        'author.createdAt': 0, 
+                        'author.__v': 0, 
                     }
                 },
                 {
@@ -439,6 +460,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
 
             summaries.add({
                 ...oneItem,
+                author: oneItem.author[0],
                 bookMark: isSaved,
                 isRate: !!ratings[String(oneItem._id)]?.isRate,
                 views: oneItem.views || randomNumberInRange(10000, 20000),

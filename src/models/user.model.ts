@@ -270,7 +270,7 @@ export const UserSchema = new Schema({
         deviceId: String,
         token: String
     }],
-    libraries: { type: Schema.Types.ObjectId, ref: 'userLibrary' },
+    libraries: { type: Schema.Types.ObjectId, ref: 'userLibrary', index: true },
     library: {
         saved: [{ type: String }],
         completed: [{ type: String }],

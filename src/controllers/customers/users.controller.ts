@@ -438,13 +438,72 @@ const getShareOptionImageUrl = async (req: Request | any, res: Response, next: N
 const updateUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
             const { type, section } = req.query as any
-            /** Get user from db */
-            const userObj: any = Object.assign({}, req.user)
-            const query: any = { _id: userObj.libraries }
-            userObj.libraries = await usersService.getUserLibrary(query)
             if (!section) {
                   return next(Boom.notFound(authControllerResponse.missingSectionParams))
             }
+            /** Get user from db */
+            const userObj: any = Object.assign({}, req.user)
+            const
+                  view = [],
+                  saved = [],
+                  reading = [],
+                  completed = [],
+                  smallGroups = [];
+
+            if (!userObj.libraries) {
+                  if (section === 'reading') {
+                        const bookSummary = await bookService.findBook({ _id: req.body.bookId, 'chapters._id': req.body.chapter })
+                        if (!bookSummary) {
+                              return next(Boom.notFound(bookSummaryControllerResponse.chapterNotExist))
+                        }
+                        reading.push({
+                              updatedAt: new Date(),
+                              bookId: req.body.bookId,
+                              chaptersCompleted: [req.body.chapter],
+                        });
+                  }
+                  if (section === 'view') {
+                        const bookSummary = await bookService.findBook({ _id: req.body.bookId })
+                        if (!bookSummary) {
+                              return next(Boom.notFound(bookSummaryControllerResponse.chapterNotExist))
+                        }
+                        view.push({
+                              bookId: req.body.bookId,
+                              createdAt: new Date()
+                        })
+                  }
+
+                  if (section === 'completed') {
+                        completed.push(req.body.completed);
+                  }
+                  if (section === 'saved' && type === 'add') {
+                        saved.push(req.body.saved);
+                  }
+                  if (section === 'smallGroup' && type === 'add') {
+                        smallGroups.push(req.body.smallGroup);
+                  }
+                  const newLib = await userService
+                        .createUserLibrary(
+                              {
+                                    view,
+                                    saved,
+                                    reading,
+                                    completed,
+                                    smallGroups,
+                              }
+                        )
+                  await userService
+                        .updateUser(
+                              { _id: userObj._id },
+                              { libraries: newLib._id }
+                        )
+
+                  return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
+            }
+
+            const query: any = { _id: userObj.libraries }
+            userObj.libraries = await usersService.getUserLibrary(query)
+
             if (section === 'completed') {
                   req.body['$addToSet'] = { 'completed': req.body.completed }
                   delete req.body.completed
@@ -462,6 +521,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   if (!bookSummary) {
                         return next(Boom.notFound(bookSummaryControllerResponse.chapterNotExist))
                   }
+
                   const readingObj = await userObj.libraries?.reading?.find(oneRead => String(oneRead.bookId) === req.body.bookId)
                   if (!readingObj) {
                         if (!userObj?.libraries) {
@@ -471,12 +531,16 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                               userObj.libraries.reading = []
                         }
                         userObj.libraries.reading.push({
+                              updatedAt: new Date(),
                               bookId: req.body.bookId,
                               chaptersCompleted: [req.body.chapter],
-                              updatedAt: new Date()
                         })
                         await usersService.updateUserLibrary(query, userObj.libraries)
-                        return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
+                        return res
+                              .status(200)
+                              .send({
+                                    message: authControllerResponse.userUpdateSuccess
+                              })
                   }
 
                   readingObj.chaptersCompleted =
@@ -588,9 +652,9 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                         }).filter(i => i)
 
                         if (sort)
-                        data.summaries = sortArrayObject(
-                              data.summaries, 'title', sort.toLowerCase()
-                        )
+                              data.summaries = sortArrayObject(
+                                    data.summaries, 'title', sort.toLowerCase()
+                              )
 
                         data.count = data.summaries.length
                         data.summaries = data.summaries.slice(Number(skip), Number(skip) + Number(limit))
@@ -619,9 +683,9 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                         }).filter(i => i)
 
                         if (sort)
-                        data.summaries = sortArrayObject(
-                              data.summaries, 'title', sort.toLowerCase()
-                        )
+                              data.summaries = sortArrayObject(
+                                    data.summaries, 'title', sort.toLowerCase()
+                              )
 
                         data.count = data.summaries.length
                         data.summaries = data.summaries.slice(Number(skip), Number(skip) + Number(limit))
@@ -672,14 +736,14 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                         summary.reads = Number(
                               (
                                     r.chaptersCompleted &&
-                                    r.chaptersCompleted?.length
+                                          r.chaptersCompleted?.length
                                           ?
-                                                (
-                                                      100
-                                                      *
-                                                      r.chaptersCompleted?.length
-                                                ) /
-                                                summary?.chapters?.length
+                                          (
+                                                100
+                                                *
+                                                r.chaptersCompleted?.length
+                                          ) /
+                                          summary?.chapters?.length
                                           : 0
                               ).toFixed(0))
                         summary.updatedAt = r.updatedAt

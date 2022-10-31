@@ -41,8 +41,19 @@ const getUserLibrary = async (query: any, select: String[] = []) => {
 /** Modify User */
 const updateUserLibrary = async (query: object, body: any) => {
     try {
-        const data: any = await UserLibraryModel.findOneAndUpdate(query, { ...body }, { new: true })
-        /** Todo: update user updatedAt */
+        const data: any
+            = await UserLibraryModel.findOneAndUpdate(query, { ...body }, { upsert: true, new: true }).lean().exec();
+        return data
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+/** Modify User */
+const createUserLibrary = async (body: any) => {
+    try {
+        const data: any
+            = await UserLibraryModel.create(body);
         return data
     } catch (e: any) {
         throw new Error(e)
@@ -76,4 +87,5 @@ export default {
     getUserLibrary,
     updateUserLibrary,
     getOneUserByFilter,
+    createUserLibrary
 }

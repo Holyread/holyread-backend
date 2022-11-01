@@ -34,13 +34,13 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
                     .exec();
 
             if (!userDetails) {
-                return next(Boom.badRequest('User not authorized'));
+                return next(Boom.unauthorized('User not authorized'));
             }
             if (userDetails.status !== 'Active') {
-                return next(Boom.badRequest('User not active'));
+                return next(Boom.forbidden('User not active'));
             }
             if (!userDetails.verified) {
-                return next(Boom.badRequest('User not verfied'));
+                return next(Boom.forbidden('User not verfied'));
             }
             if (
                 false && 

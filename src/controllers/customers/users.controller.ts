@@ -251,29 +251,91 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
       try {
             /** Get current user */
             let data: any = Object.assign({}, req.user)
-            let subscriptionEndDate = new Date(data.createdAt).getTime() + (3 * 24 * 60 * 60 * 1000);
+            let subscriptionEndDate
+                  = new Date(data.createdAt)
+                        .getTime() + (3 * 24 * 60 * 60 * 1000);
             if (data.subscription) {
                   try {
-                        data.subscription = await subscriptionService.getOneSubscriptionByFilter({ _id: data.subscription })
+                        data.subscription
+                              = await subscriptionService
+                                    .getOneSubscriptionByFilter({
+                                          _id: data.subscription
+                                    })
+                        
+                        data.subscriptionStatus = data?.inAppSubscriptionStatus || 'trailing';
+                        if (data?.stripe?.subscriptionId) {
+                              await stripeSubscriptionService
+                                    .retrieveSubscription(
+                                          data.stripe?.subscriptionId
+                                    ).then(res => {
+                                          data.subscriptionStatus = res.status
+                                    })
+                        }
+
+                        const createdAt = data.subscriptionStatus === 'trialing' ?
+                              (data?.inAppSubscription?.createdAt ||
+                              data?.stripe?.createdAt ||
+                              data.createdAt) : data.createdAt;
+
+                        data.trialEndsIn = data.subscriptionStatus === 'trialing' ? getTimeDiff(
+                              String(
+                                    new Date()
+                              ),
+                              String(
+                                    new Date(
+                                          new Date()
+                                                .setDate(
+                                                      new Date(
+                                                            createdAt
+                                                      )
+                                                      .getDate() + 3
+                                                )
+                                    )
+                              )
+                        ) : '0:0:0:0';
 
                         /** set default subscription end date with 3 days trail */
                         if (data.subscription?._id) {
-                              let months = data.subscription.duration === 'Month' ? 1 : data.subscription.duration === 'Half Year' ? 6 : 12;
-                              const createdAt = data?.inAppSubscription?.createdAt || data?.stripe?.createdAt || new Date()
-                              subscriptionEndDate = new Date(createdAt).setMonth(new Date(createdAt).getMonth() + months)
+                              let months
+                                    = data.subscription.duration === 'Month'
+                                          ? 1
+                                          : data.subscription.duration === 'Half Year'
+                                                ? 6 : 12;
+                              const createdAt
+                                    = data?.inAppSubscription?.createdAt ||
+                                    data?.stripe?.createdAt ||
+                                    new Date();
+                              subscriptionEndDate
+                                    = new Date(createdAt)
+                                          .setMonth(
+                                                new Date(createdAt)
+                                                      .getMonth() + months
+                                          )
                         }
-                  } catch (error) {
+                  } catch ({ message }) {
                         /** Handle get subscription error here */
                   }
             }
-            data.subscriptionEndsIn = getTimeDiff(String(new Date()), String(new Date(subscriptionEndDate)))
+            data.subscriptionEndsIn
+                  = getTimeDiff(
+                        String(new Date()),
+                        String(new Date(subscriptionEndDate))
+                  )
+
             delete data.password
             delete data.library
             delete data.smallGroups
             delete data.verificationCode
-            res.status(200).send({ message: authControllerResponse.getUserSuccess, data })
-      } catch (e: any) {
-            next(Boom.badData(e.message))
+            delete data.library
+
+            res
+                  .status(200)
+                  .send({
+                        message: authControllerResponse.getUserSuccess,
+                        data
+                  })
+      } catch ({ message }) {
+            next(Boom.badData(message as string))
       }
 }
 

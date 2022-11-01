@@ -1,49 +1,73 @@
 export const allowedOrigins = {
     test: ['*'],
-    local: ['https://localhost:4200', 'http://localhost:4200'],
-    development: ['https://localhost:4200', 'http://localhost:4200', 'https://dev-admin.holyreads.com', 'https://dev-customer.holyreads.com', 'https://www.holyreads.com', 'https://holyreads.com'],
     staging: [''],
-    production: ['https://admin.holyreads.com', 'https://app.holyreads.com', 'https://www.holyreads.com', 'https://holyreads.com'],
+    local: [
+        'http://localhost:4200',
+        'https://localhost:4200',
+    ],
+    development: [
+        'https://localhost:4200',
+        'http://localhost:4200',
+        'https://holyreads.com',
+        'https://www.holyreads.com',
+        'https://dev-admin.holyreads.com',
+        'https://dev-customer.holyreads.com',
+    ],
+    production: [
+        'https://holyreads.com',
+        'https://app.holyreads.com',
+        'https://www.holyreads.com',
+        'https://admin.holyreads.com',
+    ],
 }
 
 export const origins = {
     test: '*',
-    local: 'http://localhost:4200',
-    development: 'https://dev-customer.holyreads.com',
     staging: '',
+    local: 'http://localhost:4200',
     production: 'https://app.holyreads.com',
+    development: 'https://dev-customer.holyreads.com',
 }
 
 export const serverOrigins = {
     test: '*',
-    local: 'http://localhost:8000',
-    development: 'https://api-dev.holyreads.com',
     staging: '',
+    local: 'http://localhost:8000',
     production: 'https://api.holyreads.com',
+    development: 'https://api-dev.holyreads.com',
 }
 
 export const awsBucket = {
-    local: { bucketName: 'holyreads-develop', s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com' },
-    development: { bucketName: 'holyreads-develop', s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com' },
-    production: { bucketName: 'holyreads-production', s3BaseURL: 'https://holyreads-production.s3.amazonaws.com' },
-    usersDirectory: 'users',
+    local: {
+        bucketName: 'holyreads-develop',
+        s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com'
+    },
+    development: {
+        bucketName: 'holyreads-develop',
+        s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com'
+    },
+    production: {
+        bucketName: 'holyreads-production',
+        s3BaseURL: 'https://holyreads-production.s3.amazonaws.com'
+    },
+    region: 'us-east-1',
     bookDirectory: 'books',
-    expertCuratedDirectory: 'expertCurated',
-    testimonialDirectory: 'testimonial',
+    usersDirectory: 'users',
     shareImageDirectory: 'shareImage',
     smallGroupDirectory: 'smallGroup',
     readsOfDayDirectory: 'readsOfDay',
-    region: 'us-east-1',
+    testimonialDirectory: 'testimonial',
+    expertCuratedDirectory: 'expertCurated',
 }
 
 export const dataTable = {
-    limit: 100,
     skip: 0,
+    limit: 100,
 }
 
 export const dataLimit = {
-    limit: 10,
     skip: 0,
+    limit: 10,
 }
 
 export const originEmails = {
@@ -52,26 +76,26 @@ export const originEmails = {
 
 export const emailTemplatesTitles = {
     customer: {
-        registration: 'Customer Registration',
-        forgotPassword: 'Customer Forgot Password',
         sendInvitation: 'Send Invitation',
-        blessFriend: 'Customer Registration Bless Friend',
-        chooseSubscription: 'Choose Subscription',
-        subscriptionCancelled: 'Subscription Cancelled',
-        subscriptionActivated: 'Subscription Activated',
         changePassword: 'Change Password',
-        emailAuthVerification: 'Customer Email Auth Verification',
-        emailAuthEnabled: 'Customer Email Auth Enabled',
-        welcomeToHolyreads: 'Welcome To Holy Reads',
+        registration: 'Customer Registration',
         HolyreadsSupport: 'Holyreads Support',
         HolyreadsPlanUpgrade: 'Renewal Reminder',
+        chooseSubscription: 'Choose Subscription',
+        forgotPassword: 'Customer Forgot Password',
+        welcomeToHolyreads: 'Welcome To Holy Reads',
+        subscriptionCancelled: 'Subscription Cancelled',
+        subscriptionActivated: 'Subscription Activated',
+        emailAuthEnabled: 'Customer Email Auth Enabled',
+        blessFriend: 'Customer Registration Bless Friend',
+        emailAuthVerification: 'Customer Email Auth Verification',
     },
     admin: {
         customerRegistration: 'Admin Customer Registration',
         login: 'Admin Login',
         forgotPassword: 'Forgot Password',
-        customerFeedback: 'Customer Feedback',
         customerInquiry: 'Customer Inquiry',
+        customerFeedback: 'Customer Feedback',
     }
 }
 

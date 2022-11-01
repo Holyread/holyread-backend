@@ -9,6 +9,9 @@ export const responseMessage = {
         loginSuccess: 'User login successfully, ',
         signUpSuccess: 'User signUp successfully',
         userUpdateSuccess: 'User updated successfully',
+        savedBook: 'Saved to My favorite',
+        unSavedBook: 'Removed from My Favorite',
+        markAsCompletedBook: 'Book mark as completed',
         userAlreadyExistError: 'User Already exist',
         getUserSuccess: 'User fetched successfully',
         getUsersSuccess: 'users fetched successfully',
@@ -42,7 +45,7 @@ export const responseMessage = {
         submitQuerySuccess: 'Your message was sent successfully, Thanks.',
         bookRatingSuccess: 'Thanks for rate this book 🙂',
         userAuthorisedAsAdmin: 'User authorised as admin, please use another email',
-        kindleEmailNotExistError: 'Please add your kindle email address',
+        kindleEmailNotExistError: 'To send summaries to your kindle account, go to connected services and add kindle email.',
         emailAuthEnabledSuccess: 'Your email auth enabled',
         emailAuthExist: 'Your email auth already enabled',
         socialLinkError: 'Account already linked by some one else, please contact administrator'

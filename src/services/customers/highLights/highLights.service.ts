@@ -1,4 +1,4 @@
-import { HighLightsModel, BookAuthorModel, BookSummaryModel } from '../../../models/index'
+import { HighLightsModel } from '../../../models/index'
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
@@ -131,18 +131,79 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
     try {
         const search = filter.search ? filter.search.trim().toLowerCase() : filter.search
         delete filter.search
-        let result: any = await HighLightsModel.find(filter).sort(sort).lean().exec()
+
+        let result = await HighLightsModel.aggregate([
+            {
+                $match: {
+                    ...filter
+                },
+            },
+            {
+                $project: {
+                    bookId: -1,
+                    chapterId: 1,
+                    userId: -1,
+                    createdAt: -1,
+                    highLights: 1
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "booksummaries",
+                    "localField": "bookId",
+                    "foreignField": "_id",
+                    "as": "bookId"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "bookauthors",
+                    "localField": "bookId.author",
+                    "foreignField": "_id",
+                    "as": "author"
+                }
+            },
+            {
+                $unwind: {
+                    'path': '$bookId'
+                }
+            },
+            {
+                $unwind: {
+                    'path': '$author'
+                }
+            },
+            {
+                $project: {
+                    'bookId._id': -1.0,
+                    'bookId.title': -1.0,
+                    'bookId.description': 1.0,
+                    'bookId.coverImage': {
+                        $concat: [
+                            awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/',
+                            '$bookId.coverImage'
+                        ]
+                    },
+                    'bookId.coverImageBackground': 1.0,
+                    'bookId.chapters.name': 1.0,
+                    'bookId.chapters._id': 1.0,
+                    'author._id': 1.0,
+                    'author.name': 1.0,
+                    'bookId.overview': 1.0,
+                    'highLights': 1.0,
+                    'createdAt': -1.0
+                }
+            }
+        ])
         if (!result.length && filter.bookId) {
             return { highLightsBooks: [{ count: 0, highlights: [] }] }
         }
         let newResult = []
-        const books = await BookSummaryModel.find({}).select('title overview description coverImageBackground coverImage author chapters.name chapters._id').lean().exec()
-        const authors = await BookAuthorModel.find({}).select('name').lean().exec()
         await Promise.all(await result.map(async (item: any) => {
-            const bookDetails = books.find(oneBook => String(oneBook._id) === String(item.bookId))
+            const bookDetails = item?.bookId
             if (!bookDetails) return
             const chapterDetails: any = bookDetails.chapters.find((oneChapter: any) => String(oneChapter._id) === String(item.chapterId))
-            const authorDetails = authors.find(oneAuthor =>  String(oneAuthor._id) == String(bookDetails.author))
+            const authorDetails = item?.author
             const existingHighLight = newResult.findIndex(o => String(o.bookId) === String(item.bookId))
 
             if (filter.bookId) {
@@ -158,7 +219,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     userId: item.userId,
                     title: bookDetails.title,
                     description: bookDetails.description,
-                    coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + bookDetails.coverImage,
+                    coverImage: bookDetails.coverImage,
                     coverImageBackground: bookDetails.coverImageBackground,
                     author: authorDetails,
                     overview: bookDetails.overview,
@@ -168,9 +229,14 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                 })
             } else {
                 const existingUpdatedAt = newResult[existingHighLight].updatedAt
-                newResult[existingHighLight].highLights = newResult[existingHighLight].highLights.concat(item.highLights)
-                newResult[existingHighLight].updatedAt = new Date(existingUpdatedAt).getTime() < new Date(item.updatedAt).getTime() ? item.updatedAt : existingUpdatedAt
-                newResult[existingHighLight].count = newResult[existingHighLight].count + item.highLights.length
+                newResult[existingHighLight].highLights
+                    = newResult[existingHighLight].highLights.concat(item.highLights)
+                newResult[existingHighLight].updatedAt
+                    = new Date(existingUpdatedAt).getTime() <
+                        new Date(item.updatedAt).getTime()
+                        ? item.updatedAt : existingUpdatedAt
+                newResult[existingHighLight].count
+                    = newResult[existingHighLight].count + item.highLights.length
             }
         }))
 

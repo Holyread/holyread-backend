@@ -45,7 +45,7 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
 /** Get one small group by filter */
 const getOneSmallGroupByFilter = async (query: any) => {
     try {
-        const result: any = await SmallGroupModel.findOne(query).populate('books', 'title overview description author coverImage coverImageBackground views').lean()
+        const result: any = await SmallGroupModel.findOne(query).populate('books', 'title overview description author coverImage coverImageBackground views bookFor').lean()
         const handout: any = await HandoutsModel.findOne({ smallGroup: result._id, user: global?.currentUser?._id }).select('answers').lean().exec()
         result.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + result.coverImage
         
@@ -53,7 +53,7 @@ const getOneSmallGroupByFilter = async (query: any) => {
             result.books = await Promise.all(result?.books?.map(async oneBook => {
                 if (!oneBook?._id) return undefined
                 if (oneBook.author) {
-                    const authorDetails = await BookAuthorModel.findOne({ _id: oneBook.author }).select('name _id').lean().exec()
+                    const authorDetails = await BookAuthorModel.findOne({ _id: oneBook.author }).select('name about _id').lean().exec()
                     oneBook.author = authorDetails ? authorDetails : oneBook.author
                 }
                 oneBook.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneBook.coverImage

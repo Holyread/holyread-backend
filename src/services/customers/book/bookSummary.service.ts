@@ -22,6 +22,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                             coverImage: 1.0,
                             description: 1.0,
                             coverImageBackground: 1.0,
+                            "bookFor": 1.0
                         }
                     },
                     {
@@ -71,6 +72,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                 author: oneItem.author[0] || {},
                 overview: oneItem.overview,
                 views: oneItem.views || randomNumberInRange(10000, 20000),
+                bookFor: oneItem.bookFor,
                 bookMark: !!saved?.find(b => String(b) === String(oneItem?._id)),
                 coverImageBackground: oneItem.coverImageBackground,
                 categories: oneItem.categories,
@@ -260,6 +262,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
         const categories = 'libraries.reading.bookId.categories'
         const coverImage = 'libraries.reading.bookId.coverImage'
         const description = 'libraries.reading.bookId.description'
+        const bookFor = 'libraries.reading.bookId.bookFor'
         const coverImageBackground = 'libraries.reading.bookId.coverImageBackground'
 
         const project = {
@@ -267,6 +270,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
             [email]: '$' + [email],
             [title]: '$' + [title],
             [views]: '$' + [views],
+            [bookFor]: '$' + [bookFor],
             [bookId]: '$' + [bookId],
             [author]: '$' + [author],
             [overview]: '$' + [overview],
@@ -286,6 +290,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
         const select = {
             'title': { $first: '$' + [title] },
             'views': { $first: '$' + [views] },
+            'bookFor': { $first: '$' + [bookFor] },
             'author': { $first: '$' + [author] },
             'chapters': { $first: '$' + [chapters] },
             'overview': { $first: '$' + [overview] },
@@ -374,6 +379,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                         },
                         'title': { $first: '$title' },
                         'views': { $first: '$views' },
+                        'bookFor': { $first: '$bookFor' },
                         'author': { $first: '$author' },
                         'chapters': {
                             '$sum': {
@@ -402,8 +408,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                     }
                 },
                 {
-                    $project: {
-                        'author.about': 0, 
+                    $project: { 
                         'author.createdAt': 0, 
                         'author.__v': 0, 
                     }

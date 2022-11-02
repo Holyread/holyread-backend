@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
+import { Types } from 'mongoose';
 import Boom from '@hapi/boom';
 
 import highLightsService from '../../services/customers/highLights/highLights.service'
@@ -36,7 +37,7 @@ const getHighLightsByFilter = async (req: Request | any, res: Response, next: Ne
         const skip: any = params.skip ? params.skip : 0
         const limit: any = params.limit ? params.limit : 0
         if (params.bookId) {
-            filter.bookId = params.bookId
+            filter.bookId = Types.ObjectId(params.bookId)
         }
         if (params.bookId && params.chapterId) {
             filter = {

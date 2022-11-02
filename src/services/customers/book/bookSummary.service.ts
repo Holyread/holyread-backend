@@ -21,7 +21,8 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                             "description": 1.0,
                             "author": 1.0,
                             "overview": 1.0,
-                            "categories": 1.0
+                            "categories": 1.0,
+                            "bookFor": 1.0
                         }
                     },
                     {
@@ -67,6 +68,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                 author: oneItem.author[0] || {},
                 overview: oneItem.overview,
                 views: oneItem.views || randomNumberInRange(10000, 20000),
+                bookFor: oneItem.bookFor,
                 bookMark: !!saved?.find(b => String(b) === String(oneItem?._id)),
                 coverImageBackground: oneItem.coverImageBackground,
                 categories: oneItem.categories,
@@ -97,10 +99,11 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                 'coverImageBackground',
                 'categories',
                 'views',
+                'bookFor',
                 'chapters.name',
                 'chapters.size'
             ])
-            .populate('author', 'name')
+            .populate('author', 'name about')
             .skip(skip)
             .limit(limit)
             .sort(sort)
@@ -125,6 +128,7 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                 overview: oneItem.overview,
                 description: oneItem.description,
                 views: oneItem.views || randomNumberInRange(10000, 20000),
+                bookFor: oneItem.bookFor,
                 bookMark: isSaved,
                 coverImageBackground: oneItem.coverImageBackground,
                 chapters: library ? oneItem.chapters : undefined,
@@ -175,7 +179,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
     try {
         const users = await usersService.getAllUsers({ 'library.reading.0': { '$exists': true } })
         let summaries = []
-        let books = await BookSummaryModel.find({}).select('chapters._id _id description overview categories coverImage coverImageBackground title author views').lean().exec()
+        let books = await BookSummaryModel.find({}).select('chapters._id _id description overview categories coverImage coverImageBackground title author views bookFor').lean().exec()
         await Promise.all(users.map(async oneUser => {
             await Promise.all(oneUser.library.reading.map(async oneBook => {
                 const bookDetails = books.find(i => String(i._id) === String(oneBook.bookId))
@@ -190,7 +194,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                 }
             }))
         }))
-        const authors = summaries.length && await BookAuthorModel.find({}).select('name').lean()
+        const authors = summaries.length && await BookAuthorModel.find({}).select('name about').lean()
         const count = summaries.length;
         summaries = summaries.sort((a, b) => { return b.reads - a.reads }).slice(skip, skip + limit);
         const ratings = await ratingService.getBooksRatings(summaries.map(i => i.book && i.book._id).filter(i => i) as [string], global.currentUser._id)
@@ -211,6 +215,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                 totalStar: ratings[String(oneItem.book._id)]?.averageStar || 3,
                 isRate: !!ratings[String(oneItem.book._id)]?.isRate,
                 views: oneItem.book.views || randomNumberInRange(10000, 20000),
+                bookFor: oneItem.book.bookFor,
                 bookMark: isSaved,
                 coverImageBackground: oneItem.book.coverImageBackground,
                 categories: oneItem.book.categories,

@@ -508,8 +508,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
             if (!section) {
                   return next(Boom.notFound(authControllerResponse.missingSectionParams))
             }
-            /** Get user from db */
-            const userObj: any = Object.assign({}, req.user)
+
             const
                   view = [],
                   saved = [],

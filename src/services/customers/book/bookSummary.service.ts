@@ -22,7 +22,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                             coverImage: 1.0,
                             description: 1.0,
                             coverImageBackground: 1.0,
-                            "bookFor": 1.0
+                            bookFor: 1.0
                         }
                     },
                     {
@@ -127,7 +127,6 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
             {
                 $project: {
                     'author.__v': 0,
-                    'author.about': 0, 
                     'author.createdAt': 0,
                 }
             }
@@ -197,7 +196,7 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                     return {
                         totalStar,
                         ...oneItem,
-                        author: oneItem.author[0],
+                        author: oneItem.author,
                         isRate: !!ratings[String(oneItem._id)]?.isRate,
                         chapters: library ? oneItem.chapters : undefined,
                         reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / oneItem?.chapters?.length : 0).toFixed(0)),

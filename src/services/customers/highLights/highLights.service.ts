@@ -178,6 +178,8 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     'bookId._id': -1.0,
                     'bookId.title': -1.0,
                     'bookId.description': 1.0,
+                    'userId': -1.0,
+                    'chapterId': 1.0,
                     'bookId.coverImage': {
                         $concat: [
                             awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/',
@@ -204,7 +206,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
             if (!bookDetails) return
             const chapterDetails: any = bookDetails.chapters.find((oneChapter: any) => String(oneChapter._id) === String(item.chapterId))
             const authorDetails = item?.author
-            const existingHighLight = newResult.findIndex(o => String(o.bookId) === String(item.bookId))
+            const existingHighLight = newResult.findIndex(o => String(o.bookId) === String(bookDetails._id))
 
             if (filter.bookId) {
                 item.highLights.map(oneItem => {
@@ -215,7 +217,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
 
             if (existingHighLight === -1) {
                 newResult.push({
-                    bookId: item.bookId,
+                    bookId: bookDetails._id,
                     userId: item.userId,
                     title: bookDetails.title,
                     description: bookDetails.description,

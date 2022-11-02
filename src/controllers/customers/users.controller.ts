@@ -503,6 +503,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
       try {
             const query: any = { _id: req.user._id }
             const { type, section } = req.query as any
+            let message = authControllerResponse.userUpdateSuccess
             /** Get user from db */
             const userObj: any = Object.assign({}, req.user)
             if (!section) {
@@ -511,14 +512,17 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
             if (section === 'completed') {
                   req.body['$addToSet'] = { 'library.completed': req.body.completed }
                   delete req.body.completed
+                  message = authControllerResponse.markAsCompletedBook
             }
             if (type === 'add' && section === 'saved') {
                   req.body['$addToSet'] = { 'library.saved': req.body.saved }
                   delete req.body.saved
+                  message = authControllerResponse.savedBook
             }
             if (type === 'delete' && section === 'saved') {
                   req.body['$pull'] = { 'library.saved': req.body.saved }
                   delete req.body.saved
+                  message = authControllerResponse.unSavedBook
             }
             if (section === 'reading') {
                   const bookSummary = await bookService.findBook({ _id: req.body.bookId, 'chapters._id': req.body.chapter })
@@ -589,14 +593,16 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
             if (type === 'add' && section === 'smallGroup') {
                   req.body['$addToSet'] = { 'library.smallGroups': req.body.smallGroup }
                   delete req.body.smallGroup
+                  message = authControllerResponse.savedBook
             }
             /** Delete from User small group */
             if (type === 'delete' && section === 'smallGroup') {
                   req.body['$pull'] = { 'library.smallGroups': req.body.smallGroup }
                   delete req.body.smallGroup
+                  message = authControllerResponse.unSavedBook
             }
             await usersService.updateUser(query, req.body)
-            return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
+            return res.status(200).send({ message })
       } catch (e: any) {
             return next(Boom.badData(e.message))
       }

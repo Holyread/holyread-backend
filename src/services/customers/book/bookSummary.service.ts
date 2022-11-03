@@ -111,7 +111,8 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                     'categories': 1.0,
                     'views': '$views',
                     'chapters.name': 1.0,
-                    'chapters.size': 1.0
+                    'chapters.size': 1.0,
+                    'createdAt': -1.0
                 }
             },
             {
@@ -130,6 +131,9 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                     'author.__v': 0,
                     'author.createdAt': 0,
                 }
+            },
+            {
+                $sort: sort
             }
         ])
 

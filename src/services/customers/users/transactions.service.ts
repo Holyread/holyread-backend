@@ -9,6 +9,16 @@ const createTransaction = async (body: createTransationsType) => {
       }
 }
 
+/** Delete user transactions */
+const deleteTransaction = async (query: Object) => {
+      try {
+            await TransactionsModel.deleteMany(query)
+      } catch (e: any) {
+            throw new Error(e)
+      }
+}
+
 export default {
-      createTransaction
+      createTransaction,
+      deleteTransaction
 }

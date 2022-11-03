@@ -8,24 +8,53 @@ const NODE_ENV = config.NODE_ENV
 /** Get all expert Curated for app */
 const getAllExpertCurateds = async (skip: number, limit, search: object, sort) => {
     try {
-        let curatedList = await ExpertCuratedModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        let count = await ExpertCuratedModel.count(search).lean().exec()
-        if (curatedList.length) {
-            curatedList = await Promise.all(curatedList.map(item => {
-                if (item && item.image) {
-                    item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/' + item.image
+        const page: any = [{ $skip: skip }]
+        const aggregate: any = new Set([
+            {
+                $project: {
+                    title: 1.0,
+                    description: 1.0,
+                    shortDescripion: 1.0,
+                    image: { $concat: [
+                        awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/',
+                        '$image'
+                    ] },
+                    views: randomNumberInRange(1000, 5000),
+                    status: 1.0
                 }
-                return {
-                    _id: item._id,
-                    title: item.title,
-                    description: item.description,
-                    shortDescription: item.shortDescription,
-                    image: item.image,
-                    views: randomNumberInRange(1000, 5000)
-                }
-            }))
+            }
+        ])
+
+        if (Object.keys(search).length) {
+            aggregate.add({
+                $match: search
+            })
         }
-        return { curatedList, count }
+        aggregate.add({
+            $sort: sort
+        })
+        aggregate.add({
+            $facet: {
+                page
+                    : limit
+                    ? page.concat({ $limit: limit })
+                    : page,
+                total: [{
+                    $count: 'count'
+                }]
+            }
+        })
+
+        const result
+            = await ExpertCuratedModel
+                .aggregate([
+                    ...aggregate
+                ])
+
+        return {
+            curatedList: result[0]?.page,
+            count: result[0].total[0]?.count
+        }
     } catch (e: any) {
         throw new Error(e)
     }

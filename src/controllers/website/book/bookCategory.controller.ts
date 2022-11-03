@@ -9,7 +9,7 @@ const bookCategoryControllerResponse = responseMessage.bookCategoryControllerRes
 /** Get all book category by filter */
 const getAllCategory = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const data = await bookCategoryService.getAllBookCategories(0, 0, {}, [['createdAt', 'DESC']])
+        const data = await bookCategoryService.getAllBookCategories(0, 0, {}, { createdAt: -1.0 })
         response.status(200).json({ message: bookCategoryControllerResponse.fetchBookCategoriesSuccess, data: data.categories })
     } catch (e: any) {
         next(Boom.badData(e.message))

@@ -8,6 +8,8 @@ import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket, dataLimit } from '../../../constants/app.constant'
 import { getSearchRegexp, sentEmail } from '../../../lib/utils/utils'
 import config from '../../../../config'
+import userService from '../../../services/customers/users/user.service';
+import stripeSubscriptionService from '../../../services/stripe/subscription';
 
 const NODE_ENV = config.NODE_ENV
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -59,8 +61,22 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
         let isPlanActive = false
-        if ((req.subscription && req.subscription?.status === 'active') || (req.user.inAppSubscription && req.user.inAppSubscriptionStatus === 'Active')) {
+
+        if (req.user.inAppSubscription && req.user.inAppSubscriptionStatus === 'Active') {
             isPlanActive = true
+            // todo: count duration with createdAt
+            // if duration already ended
+            // then mark plan as inactive
+        }
+
+        if (req.user?.stripe?.subscriptionId) {
+            try {
+                const s = await stripeSubscriptionService
+                    .retrieveSubscription(
+                        req.user.stripe.subscriptionId
+                    )
+                isPlanActive = !!s?.id
+            } catch (e) {}
         }
         if (!isPlanActive) {
             /** Set today start and end */
@@ -71,7 +87,8 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
 
             /** Filter current days new view books */
             let todayViews = []; let isExist = false;
-            req?.user?.library?.view.map(i => {
+            req.user.libraries = await userService.getUserLibrary({ _id: req.user.libraries })
+            req?.user?.libraries?.view.map(i => {
                 const createdAt = new Date(i.createdAt).getTime();
                 if (createdAt >= start.getTime()) todayViews.push(i)
                 if (String(i.bookId) === String(data._id)) {
@@ -101,7 +118,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
         }
         res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummarySuccess, data })
         /** Incress book views */
-        if (!req.user?.library?.views.find(i => String(i.bookId) === (req.params.id))) {
+        if (!req.user?.libraries?.views.find(i => String(i.bookId) === (req.params.id))) {
             await bookSummaryService.updateBookSummary({ '$inc': { views: 1 } }, { _id: req.params.id})
         }
     } catch (e: any) {

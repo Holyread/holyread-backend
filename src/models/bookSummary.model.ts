@@ -1,9 +1,9 @@
-import mongoose, { Schema } from 'mongoose'
+import mongoose, { Schema, Types } from 'mongoose'
 mongoose.set('useCreateIndex', true)
 
 export interface IBookSummary extends mongoose.Document {
     title: string,
-    author: string,
+    author: Types.ObjectId,
     description: string,
     overview: string,
     bookFor: string,
@@ -26,7 +26,7 @@ export interface IBookSummary extends mongoose.Document {
 
 export type createBookSummaryType = {
     title: string,
-    author: string,
+    author: Types.ObjectId,
     description: string,
     overview: string,
     bookFor: string,
@@ -50,7 +50,7 @@ export type createBookSummaryType = {
 export type getBookSummaryType = {
     _id?: string,
     title: string,
-    author?: string,
+    author?: Types.ObjectId,
     description?: string,
     overview?: string,
     bookFor?: string,

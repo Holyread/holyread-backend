@@ -668,7 +668,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   message = authControllerResponse.unSavedBook
             }
 
-            await usersService.updateUser(query, req.body)
+            await usersService.updateUserLibrary(query, req.body)
             return res.status(200).send({ message })
 
       } catch (e: any) {

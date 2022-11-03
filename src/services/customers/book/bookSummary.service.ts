@@ -99,6 +99,7 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                     'title': 1.0,
                     'author': 1.0,
                     'overview': 1.0,
+                    'bookFor': 1.0,
                     'description': 1.0,
                     'coverImage': {
                         $concat: [
@@ -108,7 +109,7 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                     },
                     'coverImageBackground': 1.0,
                     'categories': 1.0,
-                    'views': '$views' || randomNumberInRange(10000, 20000),
+                    'views': '$views',
                     'chapters.name': 1.0,
                     'chapters.size': 1.0
                 }
@@ -202,7 +203,8 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                         reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / oneItem?.chapters?.length : 0).toFixed(0)),
                         isSaved: libraries?.saved?.find(
                             b => String(b) === String(oneItem._id)
-                        ) ? true : false
+                        ) ? true : false,
+                        'views': oneItem.views || randomNumberInRange(10000, 20000),
                     }
                 }
                 ))

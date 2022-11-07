@@ -63,7 +63,7 @@ export interface IUser extends mongoose.Document {
     referralUserId?: string,
     kindleEmail?: string,
     inAppSubscription?: Object, // default key - createdAt(Date)
-    inAppSubscriptionStatus?: 'Cancelled' | 'Active',
+    inAppSubscriptionStatus?: string,
     stripe: {
         subscriptionId?: string,
         customerId?: string,
@@ -140,7 +140,7 @@ export type createUserType = {
     referralUserId?: string,
     kindleEmail?: string,
     inAppSubscription?: Object, // default key - createdAt(Date)
-    inAppSubscriptionStatus?: 'Cancelled' | 'Active',
+    inAppSubscriptionStatus?: string,
     stripe: {
         subscriptionId?: string,
         customerId?: string,
@@ -217,7 +217,7 @@ export type getUserType = {
     referralUserId?: string,
     kindleEmail?: string,
     inAppSubscription?: Object, // default key - createdAt(Date)
-    inAppSubscriptionStatus?: 'Cancelled' | 'Active',
+    inAppSubscriptionStatus?: string,
     stripe: {
         subscriptionId?: string,
         customerId?: string,
@@ -301,7 +301,7 @@ export const UserSchema = new Schema({
         planRenewRemindAt: { type: Date },
     },
     inAppSubscription: { type: Object }, // default key - createdAt(Date)
-    inAppSubscriptionStatus: { type: String, enum: ['Cancelled', 'Active'] },
+    inAppSubscriptionStatus: { type: String },
     device: { type: String, required: true },
     maxDevices: [{ type: String }], // max devices size depends on maxDevicesLogin
     timeZone: { type: String },

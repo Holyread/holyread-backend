@@ -29,6 +29,7 @@ import { EmailTemplateModel } from './emailTemplate.model'
 import { NotificationsModel } from './notifications.model'
 
 import { RecommendedBookModel } from './recommendedBooks.model'
+import { InAppNotificationModel } from './inAppNotification.model'
 
 const NODE_ENV = config.NODE_ENV
 const option = { useNewUrlParser: true, useUnifiedTopology: true }
@@ -71,4 +72,5 @@ export {
   EmailTemplateModel,
   NotificationsModel,
   RecommendedBookModel,
+  InAppNotificationModel
 }

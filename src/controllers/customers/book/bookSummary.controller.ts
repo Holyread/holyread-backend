@@ -32,7 +32,7 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
             authorSearchFilter.name = await getSearchRegexp(params.search)
         }
         if (params.author) {
-            bookSearchFilter.search['author._id'] = params.author
+            bookSearchFilter.search['author._id'] = Types.ObjectId(params.author as string)
         }
         const bookSummariesList: any = await bookSummaryService.getAllBookSummariesForDiscover(Number(skip), Number(limit), bookSearchFilter, [['createdAt', 'DESC']])
         if (params.author) {

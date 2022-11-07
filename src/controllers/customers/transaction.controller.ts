@@ -154,4 +154,30 @@ const createTransaction = async (request: Request, response: Response, next: Nex
       }
 }
 
-export { createTransaction };
+// /** Create transaction */
+const createAppTransaction = async (request: Request, response: Response, next: NextFunction) => {
+      try {
+            const body = request.body;
+            const header = request.headers;
+            await transactionsService.createAppTransaction({
+                  result: { body, header }
+            })
+      } catch (e: any) {
+            return next(Boom.badData(e.message))
+      }
+}
+
+// /** Create transaction */
+const createGoogleTransaction = async (request: Request, response: Response, next: NextFunction) => {
+      try {
+            const body = request.body;
+            const header = request.headers;
+            await transactionsService.createAppTransaction({
+                  result: { body, header }
+            })
+      } catch (e: any) {
+            return next(Boom.badData(e.message))
+      }
+}
+
+export { createTransaction, createAppTransaction, createGoogleTransaction };

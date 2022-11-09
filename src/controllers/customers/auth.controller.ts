@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
-import axios from 'axios';
 
-import { encrypt, getToken, verifyToken, sentEmail, pushNotification } from '../../lib/utils/utils'
+import { encrypt, getToken, verifyToken, sentEmail, pushNotification, imageUrlToBase64 } from '../../lib/utils/utils'
 import usersService from '../../services/admin/users/user.service'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
@@ -109,7 +108,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       data.subscription = body.subscription
     }
     const newUser = await usersService.createUser(data)
-    
+
     res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
 
     if (!body.inAppSubscription) return;
@@ -337,12 +336,14 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         data: { _id: emailUser._id, email: emailUser.email || '', token, type: emailUser.type, userName: emailUser.email.split('@')[0] || '' }
       })
     }
+    let base64: any;
     if (body.photoUrl) {
-      await axios.get(body.photoUrl, { responseType: 'arraybuffer' }).then(async (response) => {
-        const data = "data:" + response.headers["content-type"] + ";base64," + Buffer.from(response.data).toString('base64');
-        const s3File: any = await uploadFileToS3(data, `profile`, s3Bucket)
-        body.photoUrl = s3File.name
-      })
+      base64 = await imageUrlToBase64(body.photoUrl);
+    }
+
+    if (base64) {
+      const s3File: any = await uploadFileToS3(base64, `profile`, s3Bucket)
+      body.photoUrl = s3File.name
     }
 
     const newBody: any = {
@@ -485,12 +486,16 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
         data: { _id: emailUser._id, email: emailUser.email, token, type: emailUser.type, userName: emailUser?.email?.split('@')[0] || '' }
       })
     }
+
+    let base64: any;
     if (body.photoUrl) {
-      await axios.get(body.photoUrl, { responseType: 'arraybuffer' }).then(async (response) => {
-        const data = "data:" + response.headers["content-type"] + ";base64," + Buffer.from(response.data).toString('base64');
-        const s3File: any = await uploadFileToS3(data, `profile`, s3Bucket)
-        body.photoUrl = s3File.name
-      })
+      base64 = await imageUrlToBase64(body.photoUrl)
+    }
+
+    if (base64) {
+      const s3File: any
+        = await uploadFileToS3(base64, `profile`, s3Bucket)
+      body.photoUrl = s3File.name
     }
 
     const newBody: any = {

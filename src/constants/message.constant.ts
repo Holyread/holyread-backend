@@ -40,6 +40,7 @@ export const responseMessage = {
         sentSubscriptionEmailFilure: 'Failed to sent subscription plan details on email',
         missingSectionParams: 'Missing section params',
         addShareImage: 'Share image uploaded successfully',
+        encodeImageSuccess: 'Image text generated successfully',
         submitQueryError: 'Failed to send your message, please try letter or contact administrator by other way',
         paymentStatusPending: 'Payment status is pending, please contact administrator',
         submitQuerySuccess: 'Your message was sent successfully, Thanks.',

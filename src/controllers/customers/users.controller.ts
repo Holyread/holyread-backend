@@ -13,6 +13,7 @@ import {
       uploadFileToS3,
       sortArrayObject,
       pushNotification,
+      imageUrlToBase64,
 } from '../../lib/utils/utils'
 
 import {
@@ -260,7 +261,7 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
                                     .getOneSubscriptionByFilter({
                                           _id: data.subscription
                                     })
-                        
+
                         data.subscriptionStatus = data?.inAppSubscriptionStatus || 'trailing';
                         if (data?.stripe?.subscriptionId) {
                               await stripeSubscriptionService
@@ -273,8 +274,8 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
 
                         const createdAt = data.subscriptionStatus === 'trialing' ?
                               (data?.inAppSubscription?.createdAt ||
-                              data?.stripe?.createdAt ||
-                              data.createdAt) : data.createdAt;
+                                    data?.stripe?.createdAt ||
+                                    data.createdAt) : data.createdAt;
 
                         data.trialEndsIn = data.subscriptionStatus === 'trialing' ? getTimeDiff(
                               String(
@@ -491,6 +492,20 @@ const getShareOptionImageUrl = async (req: Request | any, res: Response, next: N
             }
             const imageUrl: string = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.usersDirectory + '/share-options/' + req.body.image
             return res.status(200).send({ message: authControllerResponse.addShareImage, data: { image: imageUrl } })
+      } catch (e: any) {
+            return next(Boom.badData(e.message))
+      }
+}
+
+/** get encode image */
+const getEncodeImage = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            if (req.body.image) {
+                  req.body.image = await imageUrlToBase64(req.body.image);
+            }
+            return res.status(200).send({ 
+                  message: authControllerResponse.encodeImageSuccess, data: { image: req.body.image } 
+            })
       } catch (e: any) {
             return next(Boom.badData(e.message))
       }
@@ -1286,22 +1301,23 @@ const updateHandout = async (req: Request | any, res: Response, next: NextFuncti
 }
 
 export {
+      logout,
+      emailAuth,
+      deleteUser,
+      submitQuery,
+      blessFriend,
+      updateRating,
+      subscribePlan,
+      updateHandout,
+      submitFeedback,
       getUserAccount,
       getBlessFriend,
-      getShareOptionImageUrl,
       changePassword,
-      getUserSubscription,
+      getUserLibrary,
+      getEncodeImage,
+      verifyEmailAuth,
       updateUserAccount,
       updateUserLibrary,
-      getUserLibrary,
-      submitQuery,
-      submitFeedback,
-      blessFriend,
-      subscribePlan,
-      updateRating,
-      deleteUser,
-      emailAuth,
-      verifyEmailAuth,
-      logout,
-      updateHandout
+      getUserSubscription,
+      getShareOptionImageUrl,
 }

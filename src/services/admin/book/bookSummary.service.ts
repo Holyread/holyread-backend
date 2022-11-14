@@ -191,6 +191,21 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
                     }
                 },
                 {
+                    "$lookup": {
+                        "from": "booksummaries",
+                        "localField": "_id",
+                        "foreignField": "_id",
+                        "as": "_id"
+                    }
+                },
+                {
+                    $project: {
+                        _id: '$_id._id',
+                        title: '$_id.title',
+                        total: '$total'
+                    }
+                },
+                {
                     $facet: {
                         page: [{ $limit: 5 }],
                         total: [{
@@ -202,8 +217,11 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
         )
         const totalReaders = result[0]?.total[0]?.count
         result = result[0].page.map(i => {
-            i.total = Math.trunc((i.total / totalReaders) * 100) + '%'
-            return i
+            return {
+                _id: i._id[0],
+                title: i.title[0],
+                total: Math.trunc((i.total / totalReaders) * 100) + '%'
+            }
         })
         return result
     } catch (e: any) {

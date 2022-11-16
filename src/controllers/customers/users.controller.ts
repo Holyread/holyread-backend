@@ -432,19 +432,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                               subscriptionEndDate = new Date(now.setMonth(now.getMonth() + 1));
                               break;
                   }
-                  /** Create transaction */
-                  await transactionsService.createTransaction({
-                        latestInvoice: '',
-                        planCreatedAt: userObj?.inAppSubscription?.createdAt,
-                        planExpiredAt: subscriptionEndDate,
-                        userId: userObj._id,
-                        total: subscriptionDetails.price,
-                        status: body.inAppSubscriptionStatus?.toLowerCase(),
-                        paymentMethod: null,
-                        reason: '',
-                        paymentLink: '',
-                        device: 'app'
-                  })
+
                   if (emailTemplateDetails && emailTemplateDetails.content) {
                         const contentData = {
                               username: userObj.email.split('@')[0],
@@ -1013,19 +1001,7 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             if (!invitedUserDetails || !invitedUserDetails._id) {
                   return next(Boom.notFound(authControllerResponse.createUserFailed))
             }
-            /** Create transaction */
-            inviteUserBody?.inAppSubscription && await transactionsService.createTransaction({
-                  latestInvoice: '',
-                  planCreatedAt: inviteUserBody?.inAppSubscription?.createdAt,
-                  planExpiredAt: subscriptionEndDate,
-                  userId: invitedUserDetails._id,
-                  total: subscriptionDetails.price,
-                  status: inviteUserBody.inAppSubscriptionStatus?.toLowerCase(),
-                  paymentMethod: null,
-                  reason: '',
-                  paymentLink: '',
-                  device: 'app'
-            })
+
             const sendEmailTemplate = await emailTemplateService.getAllEmailTemplates(0, 0, { title: { $in: [emailTemplatesTitles.customer.sendInvitation, emailTemplatesTitles.customer.blessFriend] } }, [])
             const blessFriendTemplate = sendEmailTemplate.count && sendEmailTemplate.emailTemplates.find(oneTemplate => oneTemplate.title === emailTemplatesTitles.customer.blessFriend)
             const sendInvitationTemplate = sendEmailTemplate.count && sendEmailTemplate.emailTemplates.find(oneTemplate => oneTemplate.title === emailTemplatesTitles.customer.sendInvitation)
@@ -1160,19 +1136,6 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             }
             await usersService.updateUser({ _id: userObj._id }, body)
 
-            /** Create transaction */
-            req.body?.inAppSubscription && await transactionsService.createTransaction({
-                  latestInvoice: '',
-                  planCreatedAt: userObj?.inAppSubscription?.createdAt,
-                  planExpiredAt: subscriptionEndDate,
-                  userId: userObj._id,
-                  total: subscriptionDetails.price,
-                  status: body.inAppSubscriptionStatus?.toLowerCase(),
-                  paymentMethod: null,
-                  reason: '',
-                  paymentLink: '',
-                  device: 'app'
-            })
             if (!req.body?.inAppSubscription) {
                   return res.status(200).send({
                         message: subscriptionsControllerResponse.createSubscriptionSuccess,

@@ -3,16 +3,18 @@ import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 import jwt from 'jsonwebtoken';
 
-import userService from '../../services/customers/users/user.service';
-import stripeSubscriptionService from '../../services/stripe/subscription'
-import transactionsService from '../../services/customers/users/transactions.service'
-import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service';
+import { io } from '../../app';
+import { fetchNotifications } from './notification.controller';
 import { emailTemplatesTitles } from '../../constants/app.constant';
 import { compileHtml, pushNotification, sentEmail } from '../../lib/utils/utils';
+
+import stripeSubscriptionService from '../../services/stripe/subscription'
+
+import userService from '../../services/customers/users/user.service';
+import transactionsService from '../../services/customers/users/transactions.service'
+import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service';
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
-import { fetchNotifications } from './notification.controller';
 import notificationsService from '../../services/customers/notifications/notifications.service';
-import { io } from '../../app';
 
 /** Create transaction */
 const createTransaction = async (request: Request, response: Response, next: NextFunction) => {
@@ -168,9 +170,10 @@ const createAppTransaction = async (request: Request, response: Response, next: 
             if (!body?.signedPayload) {
                   return next(Boom.notFound('Signed Payload is null'))
             }
+
             /* JWS header, payload, and signature representations */
-            var splitParts = body.signedPayload.Split('.');
-            if (splitParts.Length != 3) {
+            var splitParts = body.signedPayload.split('.');
+            if (splitParts.length != 3) {
                   return next(Boom.notFound('Invalid signedPayload'));
             }
 
@@ -191,16 +194,14 @@ const createAppTransaction = async (request: Request, response: Response, next: 
 
             jwt.verify(
                   splitParts[0],
-                  decodedHeader.x5c,
+                  decodedHeader.x5c[0],
                   {
                         algorithms: [decodedHeader.alg]
                   },
                   function (error: { message: string }, payload: Object) {
                         if (error) {
-                              console.log(error);
-                              return next(Boom.notFound(error.message));
+                              console.log(error.message);
                         }
-                        console.log(payload);
                   }
             );
 
@@ -209,20 +210,40 @@ const createAppTransaction = async (request: Request, response: Response, next: 
             const dataBuff = Buffer.from(payload, 'base64');
             const v2Notification = JSON.parse(dataBuff.toString());
 
-            if (!v2Notification?.Data) {
+            if (!v2Notification?.data) {
                   return next(Boom.badData('v2Notification is null or is not valid'));
             }
 
             let v2RenewalInfo = null;
-            if (v2Notification?.Data?.SignedRenewalInfo) {
-                  const renewalInfoBuff = Buffer.from(v2Notification.Data.SignedRenewalInfo, 'base64');
+            if (v2Notification?.data?.signedRenewalInfo) {
+                  const renewalInfoBuff
+                        = Buffer
+                              .from(
+                                    v2Notification
+                                          .data
+                                          .signedRenewalInfo
+                                          .split(".")[1],
+                                    'base64'
+                              );
                   v2RenewalInfo = JSON.parse(renewalInfoBuff.toString());
             }
 
-            const transactionInfoBuff = Buffer.from(v2Notification.Data.SignedTransactionInfo, 'base64');
+            const transactionInfoBuff
+                  = Buffer
+                        .from(
+                              v2Notification
+                                    .data
+                                    .signedTransactionInfo
+                                    .split(".")[1],
+                              'base64'
+                        );
             const v2TransactionInfo = JSON.parse(transactionInfoBuff.toString());
 
-            const user = await userService.getOneUserByFilter({ 'inAppSubscription.originalTransactionIdentifierIOS': v2TransactionInfo.originalTransactionId })
+            const user
+                  = await userService.getOneUserByFilter({
+                        'inAppSubscription.originalTransactionIdentifierIOS'
+                              : v2TransactionInfo.originalTransactionId
+                  })
             if (!user) {
                   return next(Boom.notFound('User details not found'));
             }
@@ -239,6 +260,32 @@ const createAppTransaction = async (request: Request, response: Response, next: 
                   transactionId: v2TransactionInfo?.transactionId,
                   originalTransactionDateIOS: v2TransactionInfo?.originalPurchaseDate,
             }
+            let subscriptionInfo = await subscriptionsService.getOneSubscriptionByFilter({
+                  duration:
+                        v2TransactionInfo.productId.includes('six')
+                              ? 'Half Year'
+                              : v2TransactionInfo.productId.includes('month')
+                                    ? 'Month'
+                                    : 'Year'
+            })
+            if (!subscriptionInfo) {
+                  return next(Boom.notFound('Faild to fetch subscription details'))
+            }
+            const createTransaction = async () => {
+                  await transactionsService.createTransaction({
+                        latestInvoice: '',
+                        planCreatedAt: new Date(),
+                        planExpiredAt: new Date(v2TransactionInfo.expiresDate * 1000),
+                        userId: user._id,
+                        total: subscriptionInfo.price,
+                        status: v2Notification.notificationType.toLowerCase(),
+                        paymentMethod: null,
+                        reason: '',
+                        paymentLink: '',
+                        device: 'app'
+                  })
+            }
+
             switch (v2Notification?.notificationType) {
                   case 'TEST':
                         /*
@@ -263,6 +310,7 @@ const createAppTransaction = async (request: Request, response: Response, next: 
                               3) To request a list of all refunded transactions for a user,
                               see Get Refund History in the App Store Server API.
                         */
+                        await createTransaction()
                         break;
                   case 'REVOKE':
                         /*
@@ -277,6 +325,7 @@ const createAppTransaction = async (request: Request, response: Response, next: 
                               see Supporting Family Sharing in Your App.
                         */
                         inAppSubscriptionStatus = 'Cancelled'
+                        await createTransaction()
                         break;
                   case 'EXPIRED':
                         /*
@@ -303,6 +352,7 @@ const createAppTransaction = async (request: Request, response: Response, next: 
                               ].includes(v2Notification.subtype)
                         ) {
                               inAppSubscriptionStatus = 'Cancelled';
+                              await createTransaction()
                         }
                         break;
                   case 'DID_RENEW':
@@ -316,6 +366,7 @@ const createAppTransaction = async (request: Request, response: Response, next: 
                               access to the subscription’s content or service.
                         */
                         inAppSubscriptionStatus = 'Active'
+                        await createTransaction()
                         break;
                   case 'SUBSCRIBED':
                         /* 
@@ -327,6 +378,7 @@ const createAppTransaction = async (request: Request, response: Response, next: 
                               or to another subscription within the same subscription group.
                         */
                         inAppSubscriptionStatus = 'Active'
+                        await createTransaction()
                         break;
                   case 'OFFER_REDEEMED':
                         /*
@@ -397,6 +449,7 @@ const createAppTransaction = async (request: Request, response: Response, next: 
                         */
                         if (!v2Notification.subtype) {
                               inAppSubscriptionStatus = 'Cancelled'
+                              await createTransaction()
                         }
                         break;
                   case 'CONSUMPTION_REQUEST':
@@ -419,6 +472,7 @@ const createAppTransaction = async (request: Request, response: Response, next: 
                               For more information, see Reducing Involuntary Subscriber Churn.
                         */
                         inAppSubscriptionStatus = 'Cancelled'
+                        await createTransaction()
                         break;
                   case 'DID_CHANGE_RENEWAL_PREF':
                         /*
@@ -435,6 +489,7 @@ const createAppTransaction = async (request: Request, response: Response, next: 
                         */
                         if (v2Notification.subtype == 'UPGRADE') {
                               inAppSubscriptionStatus = 'Active';
+                              await createTransaction()
                         }
                         break;
                   case 'DID_CHANGE_RENEWAL_STATUS':
@@ -451,7 +506,15 @@ const createAppTransaction = async (request: Request, response: Response, next: 
                         break;
             }
 
-            await userService.updateUser({ _id: user._id }, { inAppSubscription: { ...user.inAppSubscription, ...inAppPurchaseBody }, inAppSubscriptionStatus })
+            await userService.updateUser(
+                  { _id: user._id },
+                  { 
+                        inAppSubscription:{
+                              ...user.inAppSubscription,
+                              ...inAppPurchaseBody
+                        },
+                        inAppSubscriptionStatus
+                  })
             response.status(200).send({ message: 'OK' });
       } catch (e: any) {
             return next(Boom.badData(e.message))

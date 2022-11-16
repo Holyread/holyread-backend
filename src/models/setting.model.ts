@@ -17,6 +17,11 @@ export interface ISetting extends mongoose.Document {
     androidAppLink?: string;
     maxDeviceLogin?: number;
     dailyDevotionalTime: string;
+    profits: {
+        year: number,
+        month: number,
+        week: number
+    }
 }
 
 export type createSettingType = {
@@ -34,6 +39,11 @@ export type createSettingType = {
     androidAppLink?: string;
     maxDeviceLogin?: number;
     dailyDevotionalTime: string;
+    profits: {
+        year: number,
+        month: number,
+        week: number
+    }
 }
 
 export type getSettingType = {
@@ -52,6 +62,11 @@ export type getSettingType = {
     androidAppLink?: string;
     maxDeviceLogin?: number;
     dailyDevotionalTime: string;
+    profits: {
+        year: number,
+        month: number,
+        week: number
+    }
 }
 
 export const SettingSchema = new Schema({
@@ -69,6 +84,11 @@ export const SettingSchema = new Schema({
     androidAppLink: { type: String, default: '' },
     maxDeviceLogin: { type: Number, default: 3 },
     dailyDevotionalTime: { type: String, default: '8:0' },
+    profits: {
+        year: { type: Number },
+        month: { type: Number },
+        week: { type: Number }
+    },
     createdAt: {
         type: Date, default: () => {
             return new Date()

@@ -9,6 +9,14 @@ const start = async () => {
       try {
             console.log('JOB(🟢) Reads of day display date filling Started successfully!');
             /** Find reads of days list have missing displayAt */
+            const now = new Date();
+            now.setHours(0,0,0,0);
+            const upcomingReadsOfDays = await ReadsOfDayModel.find({ displayAt: { $gte:  now } }).select('_id').lean().exec();
+
+            if (!upcomingReadsOfDays.length) {
+                  await ReadsOfDayModel.updateMany({}, { $unset: { displayAt: 1 } })
+            }
+
             const missingDatesReadsOfDays = await ReadsOfDayModel.find({ displayAt: { $exists: false } }).select('_id').lean().exec();
             if (!missingDatesReadsOfDays?.length) {
                   return;
@@ -33,7 +41,7 @@ const start = async () => {
                         await Promise.all(promises);
                         promises = [];
                   }
-                  promises.push(ReadsOfDayModel.findOneAndUpdate({ _id: item._id }, { displayAt: dates[i] }))
+                  promises.push(ReadsOfDayModel.findOneAndUpdate({ _id: item._id }, { displayAt: dates[i] }).catch(() => { return undefined; }))
             }
             if (promises.length) {
                   await Promise.all(promises)

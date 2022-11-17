@@ -37,11 +37,11 @@ const getOneAuthorByFilter = async (query: any) => {
 /** Get all authors for table */
 const getAllAuthors = async (skip: number, limit, search: object, sort) => {
       try {
-            const authorsList: any = await BookAuthorModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+            const authorsList: any = await BookAuthorModel.find(search).select('name about').skip(skip).limit(limit).sort(sort).lean()
+            const count = await BookAuthorModel.find(search).count();
             await Promise.all(authorsList.map(async oneAuthor => {
-                  oneAuthor.booksCount = await BookSummaryModel.count({ author: oneAuthor._id }).lean().exec()
+                  oneAuthor.booksCount = await BookSummaryModel.count({ author: oneAuthor._id })
             }))
-            const count = await BookAuthorModel.find(search).count()
             return { count, authors: authorsList }
       } catch (e: any) {
             throw new Error(e)

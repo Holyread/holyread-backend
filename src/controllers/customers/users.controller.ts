@@ -1,27 +1,57 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import { io } from '../../app';
-import usersService from '../../services/customers/users/user.service'
-import notificationsService from '../../services/customers/notifications/notifications.service'
-import { fetchNotifications } from '../../controllers/customers/notification.controller'
-import authService from '../../services/admin/users/user.service'
-import bookService from '../../services/customers/book/bookSummary.service'
-import subscriptionService from '../../services/admin/subscriptions/subscriptions.service'
-import stripeSubscriptionService from '../../services/stripe/subscription'
-import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
-import { responseMessage } from '../../constants/message.constant'
-import { removeS3File, uploadFileToS3, encrypt, compileHtml, sentEmail, pushNotification, verifyToken, getToken, decrypt, sortArrayObject, getTimeDiff } from '../../lib/utils/utils'
-import { awsBucket, dataLimit, emailTemplatesTitles, originEmails, origins } from '../../constants/app.constant'
-import config from '../../../config'
-import ratingService from '../../services/customers/book/rating.service';
-import highLightsService from '../../services/customers/highLights/highLights.service';
-import userService from '../../services/customers/users/user.service';
+import {
+      encrypt,
+      decrypt,
+      getToken,
+      sentEmail,
+      compileHtml,
+      getTimeDiff,
+      verifyToken,
+      removeS3File,
+      uploadFileToS3,
+      sortArrayObject,
+      pushNotification,
+      imageUrlToBase64,
+} from '../../lib/utils/utils'
 
+import {
+      origins,
+      dataLimit,
+      awsBucket,
+      originEmails,
+      emailTemplatesTitles,
+} from '../../constants/app.constant'
+
+import { io } from '../../app';
+import { responseMessage } from '../../constants/message.constant'
+import { fetchNotifications } from '../../controllers/customers/notification.controller'
+
+import config from '../../../config'
+import authService from '../../services/admin/users/user.service'
+import userService from '../../services/customers/users/user.service';
+import usersService from '../../services/customers/users/user.service';
+import ratingService from '../../services/customers/book/rating.service';
+
+import stripeSubscriptionService from '../../services/stripe/subscription';
+
+import bookService from '../../services/customers/book/bookSummary.service';
+import handoutsService from '../../services/customers/smallGroup/handouts.service';
+import transactionsService from '../../services/customers/users/transactions.service';
+import highLightsService from '../../services/customers/highLights/highLights.service';
+import smallGroupService from '../../services/customers/smallGroup/smallGroup.service';
+import subscriptionService from '../../services/admin/subscriptions/subscriptions.service';
+import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service';
+import notificationsService from '../../services/customers/notifications/notifications.service';
+
+
+const NODE_ENV = config.NODE_ENV
 const authControllerResponse = responseMessage.authControllerResponse
+const handoutsControllerResponse = responseMessage.handoutsControllerResponse
+const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
 const subscriptionsControllerResponse = responseMessage.subscriptionsControllerResponse
-const NODE_ENV = config.NODE_ENV
 
 const s3Bucket = {
       region: awsBucket.region,
@@ -48,7 +78,6 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             }
             userObj.subscriptionEndsIn = getTimeDiff(String(new Date()), String(new Date(subscriptionEndDate)))
             delete userObj.password
-            delete userObj.library
             delete userObj.smallGroups
             delete userObj.verificationCode
             delete userObj.stripe
@@ -222,29 +251,90 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
       try {
             /** Get current user */
             let data: any = Object.assign({}, req.user)
-            let subscriptionEndDate = new Date(data.createdAt).getTime() + (3 * 24 * 60 * 60 * 1000);
+            let subscriptionEndDate
+                  = new Date(data.createdAt)
+                        .getTime() + (3 * 24 * 60 * 60 * 1000);
             if (data.subscription) {
                   try {
-                        data.subscription = await subscriptionService.getOneSubscriptionByFilter({ _id: data.subscription })
+                        data.subscription
+                              = await subscriptionService
+                                    .getOneSubscriptionByFilter({
+                                          _id: data.subscription
+                                    })
+
+                        data.subscriptionStatus = data?.inAppSubscriptionStatus || 'trailing';
+                        if (data?.stripe?.subscriptionId) {
+                              await stripeSubscriptionService
+                                    .retrieveSubscription(
+                                          data.stripe?.subscriptionId
+                                    ).then(res => {
+                                          data.subscriptionStatus = res.status
+                                    })
+                        }
+
+                        const createdAt = data.subscriptionStatus === 'trialing' ?
+                              (data?.inAppSubscription?.createdAt ||
+                                    data?.stripe?.createdAt ||
+                                    data.createdAt) : data.createdAt;
+
+                        data.trialEndsIn = data.subscriptionStatus === 'trialing' ? getTimeDiff(
+                              String(
+                                    new Date()
+                              ),
+                              String(
+                                    new Date(
+                                          new Date()
+                                                .setDate(
+                                                      new Date(
+                                                            createdAt
+                                                      )
+                                                      .getDate() + 3
+                                                )
+                                    )
+                              )
+                        ) : '0:0:0:0';
 
                         /** set default subscription end date with 3 days trail */
                         if (data.subscription?._id) {
-                              let months = data.subscription.duration === 'Month' ? 1 : data.subscription.duration === 'Half Year' ? 6 : 12;
-                              const createdAt = data?.inAppSubscription?.createdAt || data?.stripe?.createdAt || new Date()
-                              subscriptionEndDate = new Date(createdAt).setMonth(new Date(createdAt).getMonth() + months)
+                              let months
+                                    = data.subscription.duration === 'Month'
+                                          ? 1
+                                          : data.subscription.duration === 'Half Year'
+                                                ? 6 : 12;
+                              const createdAt
+                                    = data?.inAppSubscription?.createdAt ||
+                                    data?.stripe?.createdAt ||
+                                    new Date();
+                              subscriptionEndDate
+                                    = new Date(createdAt)
+                                          .setMonth(
+                                                new Date(createdAt)
+                                                      .getMonth() + months
+                                          )
                         }
-                  } catch (error) {
+                  } catch ({ message }) {
                         /** Handle get subscription error here */
                   }
             }
-            data.subscriptionEndsIn = getTimeDiff(String(new Date()), String(new Date(subscriptionEndDate)))
+            data.subscriptionEndsIn
+                  = getTimeDiff(
+                        String(new Date()),
+                        String(new Date(subscriptionEndDate))
+                  )
+
             delete data.password
-            delete data.library
             delete data.smallGroups
             delete data.verificationCode
-            res.status(200).send({ message: authControllerResponse.getUserSuccess, data })
-      } catch (e: any) {
-            next(Boom.badData(e.message))
+            delete data.library
+
+            res
+                  .status(200)
+                  .send({
+                        message: authControllerResponse.getUserSuccess,
+                        data
+                  })
+      } catch ({ message }) {
+            next(Boom.badData(message as string))
       }
 }
 
@@ -316,7 +406,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             }
             const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: userObj.subscription });
             const isAppSubscriptionStatus = ['Cancelled', 'Active'].includes(req.body.inAppSubscription?.status) && !!userObj?.inAppSubscriptionStatus && !!req.body.inAppSubscription?.status !== userObj?.inAppSubscriptionStatus
-            
+
             /** update in App subscription status */
             if (isAppSubscriptionStatus && subscriptionDetails) {
                   body.inAppSubscriptionStatus = req.body.inAppSubscription?.status
@@ -331,7 +421,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have ${req.body.inAppSubscription.status} the subscription.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
                   let now = userObj?.inAppSubscription?.createdAt
                   let subscriptionEndDate;
-                  switch (subscriptionDetails.duration && now) {
+                  switch (subscriptionDetails.duration) {
                         case "Year":
                               subscriptionEndDate = new Date(now.setMonth(now.getMonth() + 12));
                               break;
@@ -342,6 +432,19 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                               subscriptionEndDate = new Date(now.setMonth(now.getMonth() + 1));
                               break;
                   }
+                  /** Create transaction */
+                  await transactionsService.createTransaction({
+                        latestInvoice: '',
+                        planCreatedAt: userObj?.inAppSubscription?.createdAt,
+                        planExpiredAt: subscriptionEndDate,
+                        userId: userObj._id,
+                        total: subscriptionDetails.price,
+                        status: body.inAppSubscriptionStatus?.toLowerCase(),
+                        paymentMethod: null,
+                        reason: '',
+                        paymentLink: '',
+                        device: 'app'
+                  })
                   if (emailTemplateDetails && emailTemplateDetails.content) {
                         const contentData = {
                               username: userObj.email.split('@')[0],
@@ -394,53 +497,150 @@ const getShareOptionImageUrl = async (req: Request | any, res: Response, next: N
       }
 }
 
+/** get encode image */
+const getEncodeImage = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            if (req.body.image) {
+                  req.body.image = await imageUrlToBase64(req.body.image);
+            }
+            return res.status(200).send({ 
+                  message: authControllerResponse.encodeImageSuccess, data: { image: req.body.image } 
+            })
+      } catch (e: any) {
+            return next(Boom.badData(e.message))
+      }
+}
+
 /** Update user library details */
 const updateUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const query: any = { _id: req.user._id }
             const { type, section } = req.query as any
+
+            let message = authControllerResponse.userUpdateSuccess
             /** Get user from db */
             const userObj: any = Object.assign({}, req.user)
+
             if (!section) {
                   return next(Boom.notFound(authControllerResponse.missingSectionParams))
             }
+
+            const
+                  view = [],
+                  saved = [],
+                  reading = [],
+                  completed = [],
+                  smallGroups = [];
+
+            if (!userObj.libraries) {
+                  if (section === 'reading') {
+                        const bookSummary = await bookService.findBook({ _id: req.body.bookId, 'chapters._id': req.body.chapter })
+                        if (!bookSummary) {
+                              return next(Boom.notFound(bookSummaryControllerResponse.chapterNotExist))
+                        }
+                        reading.push({
+                              updatedAt: new Date(),
+                              bookId: req.body.bookId,
+                              chaptersCompleted: [req.body.chapter],
+                        });
+                  }
+                  if (section === 'view') {
+                        const bookSummary = await bookService.findBook({ _id: req.body.bookId })
+                        if (!bookSummary) {
+                              return next(Boom.notFound(bookSummaryControllerResponse.chapterNotExist))
+                        }
+                        view.push({
+                              bookId: req.body.bookId,
+                              createdAt: new Date()
+                        })
+                  }
+
+                  if (section === 'completed') {
+                        completed.push(req.body.completed);
+                  }
+                  if (section === 'saved' && type === 'add') {
+                        saved.push(req.body.saved);
+                  }
+                  if (section === 'smallGroup' && type === 'add') {
+                        smallGroups.push(req.body.smallGroup);
+                  }
+                  const newLib = await userService
+                        .createUserLibrary(
+                              {
+                                    view,
+                                    saved,
+                                    reading,
+                                    completed,
+                                    smallGroups,
+                              }
+                        )
+                  await userService
+                        .updateUser(
+                              { _id: userObj._id },
+                              { libraries: newLib._id }
+                        )
+
+                  return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
+            }
+
+            const query: any = { _id: userObj.libraries }
+            userObj.libraries = await usersService.getUserLibrary(query)
+
             if (section === 'completed') {
-                  req.body['$addToSet'] = { 'library.completed': req.body.completed }
+                  req.body['$addToSet'] = { 'completed': req.body.completed }
                   delete req.body.completed
+                  message = authControllerResponse.markAsCompletedBook
             }
             if (type === 'add' && section === 'saved') {
-                  req.body['$addToSet'] = { 'library.saved': req.body.saved }
+                  req.body['$addToSet'] = { 'saved': req.body.saved }
                   delete req.body.saved
+                  message = authControllerResponse.savedBook
             }
             if (type === 'delete' && section === 'saved') {
-                  req.body['$pull'] = { 'library.saved': req.body.saved }
+                  req.body['$pull'] = { 'saved': req.body.saved }
                   delete req.body.saved
+                  message = authControllerResponse.unSavedBook
             }
             if (section === 'reading') {
                   const bookSummary = await bookService.findBook({ _id: req.body.bookId, 'chapters._id': req.body.chapter })
                   if (!bookSummary) {
                         return next(Boom.notFound(bookSummaryControllerResponse.chapterNotExist))
                   }
-                  const readingObj = userObj.library?.reading?.find(oneRead => oneRead.bookId === req.body.bookId)
+
+                  const readingObj = await userObj.libraries?.reading?.find(oneRead => String(oneRead.bookId) === req.body.bookId)
                   if (!readingObj) {
-                        if (!userObj?.library) {
-                              userObj.library = {}
+                        if (!userObj?.libraries) {
+                              userObj.libraries = {}
                         }
-                        if (!userObj?.library?.reading) {
-                              userObj.library.reading = []
+                        if (!userObj?.libraries?.reading) {
+                              userObj.libraries.reading = []
                         }
-                        userObj.library.reading.push({
+                        userObj.libraries.reading.push({
+                              updatedAt: new Date(),
                               bookId: req.body.bookId,
                               chaptersCompleted: [req.body.chapter],
-                              updatedAt: new Date()
                         })
-                        await usersService.updateUser(query, { library: userObj.library })
-                        return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
+                        await usersService.updateUserLibrary(query, userObj.libraries)
+                        return res
+                              .status(200)
+                              .send({
+                                    message: authControllerResponse.userUpdateSuccess
+                              })
                   }
 
-                  query['library.reading.bookId'] = req.body.bookId
-                  req.body['$set'] = { 'library.reading.$.updatedAt': new Date() }
-                  req.body['$addToSet'] = { 'library.reading.$.chaptersCompleted': req.body.chapter }
+                  readingObj.chaptersCompleted =
+                        readingObj
+                              .chaptersCompleted
+                              .filter(i => i !== req.body.chapter)
+                  readingObj
+                        .chaptersCompleted
+                        .push(req.body.chapter)
+
+                  query['reading.bookId'] = req.body.bookId
+
+                  req.body['$set'] = {
+                        'reading.$.updatedAt': new Date(),
+                        'reading.$.chaptersCompleted': readingObj.chaptersCompleted
+                  }
 
                   delete req.body.bookId
                   delete req.body.chapter
@@ -450,38 +650,42 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   if (!bookSummary) {
                         return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
                   }
-                  const viewObj = userObj.library?.view?.find(bookItem => bookItem.bookId === req.body.bookId)
+                  const viewObj = userObj.libraries?.view?.find(bookItem => String(bookItem.bookId) === req.body.bookId)
                   if (!viewObj) {
-                        if (!userObj?.library) {
-                              userObj.library = {}
+                        if (!userObj?.libraries) {
+                              userObj.libraries = {}
                         }
-                        if (!userObj?.library?.view) {
-                              userObj.library.view = []
+                        if (!userObj?.libraries?.view) {
+                              userObj.libraries.view = []
                         }
-                        userObj.library.view.push({
+                        userObj.libraries.view.push({
                               bookId: req.body.bookId,
                               createdAt: new Date()
                         })
-                        await usersService.updateUser(query, { library: userObj.library })
+                        await usersService.updateUserLibrary(query, userObj.libraries)
                         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
                   }
 
-                  query['library.view.bookId'] = req.body.bookId
-                  req.body['$set'] = { 'library.view.$.bookId': req.body.bookId }
+                  query['view.bookId'] = req.body.bookId
+                  req.body['$set'] = { 'view.$.bookId': req.body.bookId }
                   delete req.body.bookId
             }
             /** Add to User small group */
             if (type === 'add' && section === 'smallGroup') {
                   req.body['$addToSet'] = { 'smallGroups': req.body.smallGroup }
                   delete req.body.smallGroup
+                  message = authControllerResponse.savedBook
             }
             /** Delete from User small group */
             if (type === 'delete' && section === 'smallGroup') {
                   req.body['$pull'] = { 'smallGroups': req.body.smallGroup }
                   delete req.body.smallGroup
+                  message = authControllerResponse.unSavedBook
             }
-            await usersService.updateUser(query, req.body)
-            return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
+
+            await usersService.updateUserLibrary(query, req.body)
+            return res.status(200).send({ message })
+
       } catch (e: any) {
             return next(Boom.badData(e.message))
       }
@@ -490,84 +694,169 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
 /**  Get one user library by library id */
 const getUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const { section, sort, author, bookId, star } = req.query as any
-            const skip = req.query.skip || dataLimit.skip
-            const limit = req.query.limit || dataLimit.limit
+            const {
+                  sort,
+                  star,
+                  author,
+                  bookId,
+                  section,
+                  skip = dataLimit.skip,
+                  limit = dataLimit.limit
+            } = req.query as any
+
             /** Get current user */
             let userObj: any = Object.assign({}, req.user)
-            if (bookId) {
-                  const book = userObj?.library?.saved?.find(id => String(id) === bookId)
-                  res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data: { library: userObj.library, saved: book ? true : false } })
-                  return
+            userObj.libraries = await usersService.getUserLibrary({ _id: userObj.libraries })
+            if (bookId && !section) {
+                  const book = userObj?.libraries?.saved?.find(
+                        id => String(id) === bookId
+                  )
+                  userObj.libraries.reading
+                        = userObj.libraries.reading.filter(
+                              i => String(i.bookId) === String(bookId)
+                        )
+                  res.status(200).send({
+                        message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
+                        data: {
+                              library: userObj.libraries,
+                              saved: book ? true : false
+                        }
+                  })
+                  return null
             }
-            if (section === 'saved' && userObj?.library?.saved?.length) {
-                  const search: any = { _id: { $in: userObj.library.saved } }
+
+            if (section === 'saved' && userObj?.libraries?.saved?.length) {
+                  const search: any = {
+                        _id: { $in: bookId ? [bookId] : userObj.libraries.saved }
+                  }
                   if (author) { search.author = author }
                   if (star) { search.star = Number(star) }
-                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']])
+                  const data = await bookService.getAllBookSummaries(
+                        0, 0, search, { 'createdAt': String(sort || 'ASC').toLowerCase() === 'asc' ? 1.0 : -1.0 }
+                  )
                   if (data.summaries?.length) {
-                        data.summaries = userObj.library.saved.reverse().map(oi => {
+                        data.summaries = userObj.libraries.saved.reverse().map(oi => {
                               return data.summaries.find(si => String(si._id) === String(oi))
                         }).filter(i => i)
-                        if (sort) data.summaries = sortArrayObject(data.summaries, 'title', sort.toLowerCase())
-                        data.summaries = data.summaries.slice(skip, skip + limit)
+
+                        if (sort)
+                              data.summaries = sortArrayObject(
+                                    data.summaries, 'title', sort.toLowerCase()
+                              )
+
+                        data.count = data.summaries.length
+                        data.summaries = data.summaries.slice(Number(skip), Number(skip) + Number(limit))
                   }
-                  res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
-                  return
+                  res.status(200).send({
+                        message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
+                        data
+                  })
+                  return null
             }
-            if (section === 'completed' && userObj?.library?.completed?.length) {
-                  const search: any = { _id: { $in: userObj.library.completed } }
+
+            if (section === 'completed' && userObj?.libraries?.completed?.length) {
+                  const search: any = {
+                        _id: {
+                              $in: bookId ? [bookId] : userObj.libraries.completed
+                        }
+                  }
                   if (author) { search.author = author }
                   if (star) { search.star = Number(star) }
-                  const data = await bookService.getAllBookSummaries(0, 0, search, [['createdAt', sort || 'DESC']])
+                  const data = await bookService.getAllBookSummaries(
+                        0, 0, search, { 'createdAt': String(sort || 'ASC').toLowerCase() === 'asc' ? 1.0 : -1.0 }
+                  )
                   if (data.summaries?.length) {
-                        data.summaries = userObj.library.completed.reverse().map(oi => {
+                        data.summaries = userObj.libraries.completed.reverse().map(oi => {
                               return data.summaries.find(si => String(si._id) === String(oi))
                         }).filter(i => i)
-                        if (sort) data.summaries = sortArrayObject(data.summaries, 'title', sort.toLowerCase())
-                        data.summaries = data.summaries.slice(skip, skip + limit)
+
+                        if (sort)
+                              data.summaries = sortArrayObject(
+                                    data.summaries, 'title', sort.toLowerCase()
+                              )
+
+                        data.count = data.summaries.length
+                        data.summaries = data.summaries.slice(Number(skip), Number(skip) + Number(limit))
                   }
-                  res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
-                  return
+                  res.status(200).send({
+                        message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
+                        data
+                  })
+                  return null
             }
             if (
                   section === 'reading' &&
-                  userObj?.library?.reading?.length
+                  userObj?.libraries?.reading?.length
             ) {
                   /** collect user reads books ids those not in completed books list */
                   const bookIds = new Set()
-                  userObj.library.reading.map(oneBook => {
-                        if (
-                              oneBook.bookId &&
-                              !userObj.library?.completed?.find(cb => String(cb) === String(oneBook.bookId))
-                        ) bookIds.add(oneBook.bookId)
-                  })
+                  if (
+                        bookId &&
+                        !userObj.libraries?.completed?.find(
+                              cb => String(cb) === String(bookId)
+                        )
+                  ) { bookIds.add(bookId) }
+                  else if (!bookId) {
+                        userObj.libraries.reading.map(oneBook => {
+                              if (
+                                    oneBook.bookId &&
+                                    !userObj.libraries?.completed?.find(
+                                          cb => String(cb) === String(oneBook.bookId)
+                                    )
+                              ) bookIds.add(oneBook.bookId)
+                        })
+                  }
 
                   /** Prepare query to get users reads book details */
                   const search: any = { _id: { $in: [...bookIds] } }
                   if (author) { search.author = author }
 
                   /** Get user reads books details by users reads books ids */
-                  const data = await bookService.getAllBookSummaries(0, 0, search, [], true)
+                  const data = await bookService.getAllBookSummaries(0, 0, search, { 'createdAt': -1.0 }, true)
 
-                  /** sort summary by latest reads based on user library readings */
-                 const summaries = new Set()
-                  userObj.library.reading.map(r => {
-                        const summary = data.summaries.find((os: any) => String(os._id) === String(r.bookId))
+                  /** sort summary by latest reads based on user libraries readings */
+                  const summaries = new Set()
+                  userObj.libraries.reading.map(r => {
+                        const summary = data.summaries.find(
+                              (os: any) => String(os._id) === String(r.bookId)
+                        )
                         if (!summary) return;
-                        summary.reads = Number((r.chaptersCompleted && r.chaptersCompleted?.length ? (100 * r.chaptersCompleted?.length) / summary?.chapters?.length : 0).toFixed(0))
+                        summary.reads = Number(
+                              (
+                                    r.chaptersCompleted &&
+                                          r.chaptersCompleted?.length
+                                          ?
+                                          (
+                                                100
+                                                *
+                                                r.chaptersCompleted?.length
+                                          ) /
+                                          summary?.chapters?.length
+                                          : 0
+                              ).toFixed(0))
                         summary.updatedAt = r.updatedAt
                         delete summary.chapters
                         summaries.add(summary)
                   })
                   data.summaries = [...summaries]
-                  if (sort) data.summaries = sortArrayObject(data.summaries, 'title', sort.toLowerCase())
-                  else data.summaries = sortArrayObject(data.summaries, 'updatedAt', 'desc')
-                  data.summaries = data.summaries.slice(skip, skip + limit)
-                  res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
-                  return
+                  if (sort) data.summaries = sortArrayObject(
+                        data.summaries, 'title', sort.toLowerCase()
+                  )
+                  else data.summaries = sortArrayObject(
+                        data.summaries, 'updatedAt', 'desc'
+                  )
+                  data.count = data.summaries.length
+                  data.summaries = data.summaries.slice(Number(skip), Number(skip) + Number(limit))
+                  res.status(200).send({
+                        message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
+                        data
+                  })
+                  return null
             }
-            res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data: [] })
+            res.status(200).send({
+                  message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
+                  data: []
+            })
       } catch (e: any) {
             next(Boom.badData(e.message))
       }
@@ -724,6 +1013,19 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             if (!invitedUserDetails || !invitedUserDetails._id) {
                   return next(Boom.notFound(authControllerResponse.createUserFailed))
             }
+            /** Create transaction */
+            inviteUserBody?.inAppSubscription && await transactionsService.createTransaction({
+                  latestInvoice: '',
+                  planCreatedAt: inviteUserBody?.inAppSubscription?.createdAt,
+                  planExpiredAt: subscriptionEndDate,
+                  userId: invitedUserDetails._id,
+                  total: subscriptionDetails.price,
+                  status: inviteUserBody.inAppSubscriptionStatus?.toLowerCase(),
+                  paymentMethod: null,
+                  reason: '',
+                  paymentLink: '',
+                  device: 'app'
+            })
             const sendEmailTemplate = await emailTemplateService.getAllEmailTemplates(0, 0, { title: { $in: [emailTemplatesTitles.customer.sendInvitation, emailTemplatesTitles.customer.blessFriend] } }, [])
             const blessFriendTemplate = sendEmailTemplate.count && sendEmailTemplate.emailTemplates.find(oneTemplate => oneTemplate.title === emailTemplatesTitles.customer.blessFriend)
             const sendInvitationTemplate = sendEmailTemplate.count && sendEmailTemplate.emailTemplates.find(oneTemplate => oneTemplate.title === emailTemplatesTitles.customer.sendInvitation)
@@ -753,6 +1055,14 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             if (!blessFriendEmailResult || !sendInvitationResult) {
                   return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
             }
+
+            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: 'Holy Reads Invitation 🎁', description: refUser.email.split('@')[0] + ' invited to you ✨' } })
+            fetchNotifications(io.sockets, { _id: invitedUserDetails._id })
+
+            if (!inviteUserBody?.inAppSubscription) {
+                  return res.status(200).send({ message: authControllerResponse.blessFriendSuccess })
+            }
+
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
             const sub = emailTemplateDetails.subject || 'Subscription'
             let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
@@ -774,11 +1084,6 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             if (!result) {
                   return next(Boom.badData(authControllerResponse.sentSubscriptionEmailFilure))
             }
-            const notificationTitle = 'Subscription Gift'
-            const notificationDescription = 'Subscription Gift Added Successfully'
-            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
-            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: 'Welcome to Holy Reads', description: 'Enjoy summaries of bestselling Christian books' } })
-            fetchNotifications(io.sockets, { _id: invitedUserDetails._id })
 
             res.status(200).send({ message: authControllerResponse.blessFriendSuccess })
       } catch (e: any) {
@@ -794,7 +1099,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             if (!subscriptionDetails) {
                   return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }
-            let body = {};
+            let body: any = {};
             let subscription;
             let subscriptionEndDate;
             if (req.body.inAppSubscription) {
@@ -826,7 +1131,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod)
                         subscriptionEndDate = new Date(subscription.current_period_end * 1000)
                   } else {
-                        await stripeSubscriptionService.updateSubscription(subscriptionDetails.stripePlanId, userObj.stripe.subscriptionId)
+                        await stripeSubscriptionService.updateSubscription(subscriptionDetails.stripePlanId, userObj.stripe.subscriptionId, userObj.stripe.customerId, req.body.paymentMethod)
                         subscription = await stripeSubscriptionService.retrieveSubscription(userObj.stripe.subscriptionId)
                         subscriptionEndDate = new Date(subscription.current_period_end * 1000)
                   }
@@ -851,9 +1156,32 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         'stripe.createdAt': new Date(),
                         subscription: subscriptionDetails._id
                   }
-                  
+
             }
             await usersService.updateUser({ _id: userObj._id }, body)
+
+            /** Create transaction */
+            req.body?.inAppSubscription && await transactionsService.createTransaction({
+                  latestInvoice: '',
+                  planCreatedAt: userObj?.inAppSubscription?.createdAt,
+                  planExpiredAt: subscriptionEndDate,
+                  userId: userObj._id,
+                  total: subscriptionDetails.price,
+                  status: body.inAppSubscriptionStatus?.toLowerCase(),
+                  paymentMethod: null,
+                  reason: '',
+                  paymentLink: '',
+                  device: 'app'
+            })
+            if (!req.body?.inAppSubscription) {
+                  return res.status(200).send({
+                        message: subscriptionsControllerResponse.createSubscriptionSuccess,
+                        data: {
+                              subscriptionStatus: subscription.status,
+                              customerEmail: userObj.email
+                        }
+                  })
+            }
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
             const sub = emailTemplateDetails.subject || 'Holyreads Subscription'
@@ -873,7 +1201,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   }
             }
             const notificationTitle = 'Holyreads Subscription'
-            const notificationDescription = 'Subscription activated successfully'
+            const notificationDescription = 'Holyreads subscription has been activated! 🎉'
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
             fetchNotifications(io.sockets, { _id: userObj._id })
 
@@ -907,37 +1235,89 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
             await usersService.deleteUser(userObj._id)
             res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
             if (userObj && userObj.image) {
-                  await removeS3File(userObj.image, s3Bucket)
+                  removeS3File(userObj.image, s3Bucket)
             }
             if (userObj?.stripe?.subscriptionId) {
-                  await stripeSubscriptionService.cancelSubscription(userObj.stripe.subscriptionId)
+                  stripeSubscriptionService.cancelSubscription(userObj.stripe.subscriptionId)
             }
-            /** Delete user notifications */
-            const deleteNotifications = notificationsService.deleteNotifications({ userId: userObj._id })
-            /** Delete user books ratings */
-            const deleteRatings = ratingService.deleteRatings({ userId: userObj._id })
-            const deleteHighlights = highLightsService.deleteHighLights({ userId: userObj._id })
-            await Promise.all([deleteNotifications, deleteRatings, deleteHighlights])
+            Promise.all([
+                  ratingService.deleteRatings({ userId: userObj._id }),
+                  highLightsService.deleteHighLights({ userId: userObj._id }),
+                  transactionsService.deleteTransaction({ userId: userObj._id }),
+                  notificationsService.deleteNotifications({ userId: userObj._id }),
+            ])
       } catch (e: any) {
             return next(Boom.badData(e.message))
       }
 }
 
+/** Update user account details */
+const logout = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            /** Get current user */
+            let userObj: any = Object.assign({}, req.user)
+            let maxDevices = [];
+            /** Logout from specific device */
+            if (req.body.deviceId) {
+                  maxDevices = userObj.maxDevices?.filter(item => item !== req.body.deviceId)
+            }
+            await usersService.updateUser({ _id: userObj._id }, { maxDevices })
+            res.status(200).send({ message: authControllerResponse.userLogoutSuccess })
+      } catch (e: any) {
+            return next(Boom.badData(e.message))
+      }
+}
+
+const updateHandout = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const smallGroup = await smallGroupService.getSmallGroupForHandout({ _id: req.params.smallGroup })
+            if (!smallGroup) {
+                  return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure))
+            }
+            req.body.question = Number(req?.body?.question) >= 0 ? Number(req.body.question) : -1
+            const { question, answer }: { question: number, answer: string } = req.body;
+            if (!smallGroup?.questions?.length || !smallGroup?.questions[question]) {
+                  return res.status(200).send({ message: handoutsControllerResponse.updateHandoutSuccess })
+            }
+
+            const handout = await handoutsService.getHandout({ user: req.user._id, smallGroup: smallGroup._id });
+            let query = { user: req.user._id, smallGroup: smallGroup._id };
+            let body: any = { answers: [{ answer, question }] };
+
+            let ans = handout?.answers?.find(i => i.question === question)
+            if (handout && !ans) {
+                  body = { '$push': { 'answers': { answer, question } } }
+            }
+            else if (ans) {
+                  body = { '$set': { 'answers.$.answer': answer } }
+                  query['answers.question'] = question
+            }
+
+            await handoutsService.updateHandout(query, body);
+            res.status(200).send({ message: handoutsControllerResponse.updateHandoutSuccess })
+      } catch (e: any) {
+            next(Boom.badData(e.message))
+      }
+}
+
 export {
+      logout,
+      emailAuth,
+      deleteUser,
+      submitQuery,
+      blessFriend,
+      updateRating,
+      subscribePlan,
+      updateHandout,
+      submitFeedback,
       getUserAccount,
       getBlessFriend,
-      getShareOptionImageUrl,
       changePassword,
-      getUserSubscription,
+      getUserLibrary,
+      getEncodeImage,
+      verifyEmailAuth,
       updateUserAccount,
       updateUserLibrary,
-      getUserLibrary,
-      submitQuery,
-      submitFeedback,
-      blessFriend,
-      subscribePlan,
-      updateRating,
-      deleteUser,
-      emailAuth,
-      verifyEmailAuth
+      getUserSubscription,
+      getShareOptionImageUrl,
 }

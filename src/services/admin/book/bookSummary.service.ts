@@ -1,4 +1,4 @@
-import { BookSummaryModel, BookAuthorModel, HighLightsModel, BookCategoryModel } from '../../../models/index'
+import { BookSummaryModel, BookAuthorModel, HighLightsModel, BookCategoryModel, UserModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
@@ -77,6 +77,158 @@ const getOneBookSummaryByFilter = async (query: any) => {
     }
 }
 
+/** Get all book summaries count for dashboard */
+const getBooksCountForDashboard = async () => {
+    try {
+        const result = await BookSummaryModel.aggregate([{ '$group': { '_id': '_id', 'chapters': { '$sum': { '$size': '$chapters' } } } }])
+        const count: number = await BookSummaryModel.count().lean().exec()
+        return { count, summaries: result }
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+/** Get all book summaries count for dashboard */
+const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
+    try {
+        const query = {};
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        switch (duration) {
+            case 'week':
+                query['_id.updatedAt'] = { $gte: new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000)) }
+                break;
+
+            case 'month':
+                query['_id.updatedAt'] = { $gte: new Date(now.setMonth(new Date().getMonth() - 1)) }
+                break;
+
+            default:
+                query['_id.updatedAt'] = { $gte: new Date(now.setMonth(new Date().getMonth() - 12)) }
+                break;
+        }
+        let result = await UserModel.aggregate(
+            [
+                {
+                    '$match': {
+                        'libraries': {
+                            '$exists': true
+                        }
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "userlibraries",
+                        "localField": "libraries",
+                        "foreignField": "_id",
+                        "as": "libraries"
+                    }
+                },
+                {
+                    '$unwind': {
+                        'path': '$libraries'
+                    }
+                },
+                {
+                    '$match': {
+                        'libraries.reading.bookId': {
+                            '$exists': true
+                        }
+                    }
+                },
+                {
+                    '$project': {
+                        'email': 1.0,
+                        'libraries': 1.0
+                    }
+                },
+                {
+                    '$unwind': {
+                        'path': '$libraries.reading'
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': {
+                            'book': '$libraries.reading.bookId',
+                            'email': '$email',
+                            updatedAt: '$libraries.reading.updatedAt',
+                            'chapters': {
+                                '$sum': {
+                                    '$size': '$libraries.reading.chaptersCompleted'
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    '$match': query
+                },
+                {
+                    '$group': {
+                        '_id': '$_id.book',
+                        'emails': {
+                            '$push': {
+                                'email': '$_id.email',
+                                'chapters': '$_id.chapters'
+                            }
+                        },
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': '$_id',
+                        'total': {
+                            '$sum': {
+                                '$size': '$emails'
+                            }
+                        }
+                    }
+                },
+                {
+                    '$sort': {
+                        'total': -1.0
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "booksummaries",
+                        "localField": "_id",
+                        "foreignField": "_id",
+                        "as": "_id"
+                    }
+                },
+                {
+                    $project: {
+                        _id: '$_id._id',
+                        title: '$_id.title',
+                        total: '$total'
+                    }
+                },
+                {
+                    $facet: {
+                        page: [{ $limit: 5 }],
+                        total: [{
+                            $count: 'count'
+                        }]
+                    }
+                }
+            ]
+        )
+        const totalReaders = result[0]?.total[0]?.count
+        result = result[0].page.map(i => {
+            return {
+                _id: i._id[0],
+                title: i.title[0],
+                total: Math.trunc((i.total / totalReaders) * 100) + '%'
+            }
+        })
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 /** Get all book summaries for table */
 const getAllBookSummaries = async (skip: number, limit, search: object, sort) => {
     try {
@@ -136,5 +288,7 @@ export default {
     getAllBookSummaries,
     getAllBookSummariesOptionsList,
     getOneBookSummaryByFilter,
-    deleteBookSummary
+    deleteBookSummary,
+    getBooksCountForDashboard,
+    getTopReadsBooks
 }

@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose'
+import mongoose, { Schema, Types } from 'mongoose'
 
 mongoose.set('useCreateIndex', true)
 
@@ -39,6 +39,7 @@ export interface IUser extends mongoose.Document {
         deviceId: string,
         token: string
     }],
+    libraries: Types.ObjectId,
     library?: {
         saved?: [string],
         completed?: [string],
@@ -51,8 +52,8 @@ export interface IUser extends mongoose.Document {
             bookId: string,
             createdAt: Date
         }],
+        smallGroups?: [string],
     },
-    smallGroups?: [string],
     oAuth?: [{
         clientId: string,
         provider: string,
@@ -62,14 +63,16 @@ export interface IUser extends mongoose.Document {
     referralUserId?: string,
     kindleEmail?: string,
     inAppSubscription?: Object, // default key - createdAt(Date)
-    inAppSubscriptionStatus?: 'Cancelled' | 'Active',
+    inAppSubscriptionStatus?: string,
     stripe: {
         subscriptionId?: string,
         customerId?: string,
         planId?: string,
-        createdAt?: Date
+        createdAt?: Date,
+        planRenewRemindAt?: Date,
     },
     device: string,
+    maxDevices: [string],
     timeZone?: string,
     createdAt: Date,
     updatedAt: Date,
@@ -113,6 +116,7 @@ export type createUserType = {
         deviceId: string,
         token: string
     }],
+    libraries: Types.ObjectId,
     library?: {
         saved?: [string],
         completed?: [string],
@@ -124,9 +128,9 @@ export type createUserType = {
         view?: [{
             bookId: string,
             createdAt: Date
-        }]
+        }],
+        smallGroups?: [string],
     },
-    smallGroups?: [string],
     oAuth?: [{
         clientId: string,
         provider: string,
@@ -136,14 +140,16 @@ export type createUserType = {
     referralUserId?: string,
     kindleEmail?: string,
     inAppSubscription?: Object, // default key - createdAt(Date)
-    inAppSubscriptionStatus?: 'Cancelled' | 'Active',
+    inAppSubscriptionStatus?: string,
     stripe: {
         subscriptionId?: string,
         customerId?: string,
         planId?: string,
-        createdAt?: Date
+        createdAt?: Date,
+        planRenewRemindAt?: Date,
     },
     device: string,
+    maxDevices: [string],
     timeZone?: string,
     createdAt: Date,
     updatedAt: Date,
@@ -187,6 +193,7 @@ export type getUserType = {
         deviceId: string,
         token: string
     }],
+    libraries: Types.ObjectId,
     library?: {
         saved?: [string],
         completed?: [string],
@@ -198,9 +205,9 @@ export type getUserType = {
         view?: [{
             bookId: string,
             createdAt: Date
-        }]
+        }],
+        smallGroups?: [string],
     },
-    smallGroups?: [string],
     oAuth?: [{
         clientId: string,
         provider: string,
@@ -210,14 +217,16 @@ export type getUserType = {
     referralUserId?: string,
     kindleEmail?: string,
     inAppSubscription?: Object, // default key - createdAt(Date)
-    inAppSubscriptionStatus?: 'Cancelled' | 'Active',
+    inAppSubscriptionStatus?: string,
     stripe: {
         subscriptionId?: string,
         customerId?: string,
         planId?: string,
-        createdAt?: Date
+        createdAt?: Date,
+        planRenewRemindAt?: Date,
     },
     device: string,
+    maxDevices: [string],
     timeZone?: string,
     createdAt: Date,
     updatedAt: Date,
@@ -229,7 +238,7 @@ export const UserSchema = new Schema({
     lastName: { type: String },
     email: { type: String, required: true, index: true, validate: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ },
     password: { type: String },
-    subscription: { type: String },
+    subscription: { type: String, ref: 'subscriptions' },
     type: { type: String, required: true, enum: ['User', 'Admin'] },
     status: { type: String, enum: ['Active', 'Deactive'] },
     verified: { type: Boolean },
@@ -261,20 +270,21 @@ export const UserSchema = new Schema({
         deviceId: String,
         token: String
     }],
+    libraries: { type: Schema.Types.ObjectId, ref: 'userLibrary', index: true },
     library: {
         saved: [{ type: String }],
         completed: [{ type: String }],
         reading: [{
-            bookId: { type: String },
+            bookId: { type: String, ref: 'bookSummary' },
             chaptersCompleted: [{ type: String }],
             updatedAt: { type: Date }
         }],
         view: [{
             bookId: { type: String },
             createdAt: { type: Date }
-        }]
+        }],
+        smallGroups: [{ type: String }],
     },
-    smallGroups: [{ type: String }],
     oAuth: [{
         clientId: String,
         provider: String,
@@ -288,10 +298,12 @@ export const UserSchema = new Schema({
         customerId: { type: String },
         planId: { type: String },
         createdAt: { type: Date },
+        planRenewRemindAt: { type: Date },
     },
     inAppSubscription: { type: Object }, // default key - createdAt(Date)
-    inAppSubscriptionStatus: { type: String, enum: ['Cancelled', 'Active'] },
+    inAppSubscriptionStatus: { type: String },
     device: { type: String, required: true },
+    maxDevices: [{ type: String }], // max devices size depends on maxDevicesLogin
     timeZone: { type: String },
     createdAt: {
         type: Date, default: () => {

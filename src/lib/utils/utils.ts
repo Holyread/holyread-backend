@@ -1,18 +1,22 @@
-import crypto from 'crypto'
-import jwt from 'jsonwebtoken';
 import aws from 'aws-sdk';
-import nodemailer from 'nodemailer';
-import smtpTransport from 'nodemailer-smtp-transport';
+import axios from 'axios';
+
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+
 import handlebars from 'handlebars'
+import nodemailer from 'nodemailer';
+
 import firebaseAdmin from 'firebase-admin';
+import smtpTransport from 'nodemailer-smtp-transport';
 
 import config from '../../../config'
 
 const algorithm = 'aes-256-cbc';
-const key = '2b7e151628aed2a6abf7158809cf4f3c';
 const iv = '3ad77bb40d7a3660';
 const inputEncoding = 'utf8';
 const outputEncoding = 'base64';
+const key = '2b7e151628aed2a6abf7158809cf4f3c';
 
 export const encrypt = (text: string): string => {
     const cipher = crypto.createCipheriv(algorithm, key, iv);
@@ -203,7 +207,7 @@ export const compileHtml = async (source: string, data: any) => {
 
 export const randomNumberInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
 
-export const pushNotification = async (tokens: string, title: string, description: string) => {
+export const pushNotification = async (tokens: string[], title: string, description: string) => {
     firebaseAdmin.messaging().sendToDevice(tokens, { notification: { title, body: description } }).then(response => {
         response.results.forEach((result, index) => {
             const error = result.error;
@@ -282,4 +286,16 @@ export const decodeHTMLEntities = (text: string) => {
         text = text.replace(new RegExp('&' + entities[i][0] + ';', 'g'), entities[i][1]);
 
     return text;
+}
+
+export const imageUrlToBase64 = async (imageUrl: string) => {
+    try {
+        const { headers, data } = await axios.get(
+            imageUrl,
+            { responseType: 'arraybuffer' }
+        )
+        return "data:" + headers["content-type"] + ";base64," + Buffer.from(data).toString('base64');
+    } catch({ message }) {
+        return null;
+    }
 }

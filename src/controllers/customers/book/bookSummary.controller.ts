@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
+import { Types } from 'mongoose'
 
 import bookSummaryService from '../../../services/customers/book/bookSummary.service'
 import bookAuthorService from '../../../services/admin/book/author.service'
@@ -7,6 +8,8 @@ import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket, dataLimit } from '../../../constants/app.constant'
 import { getSearchRegexp, sentEmail } from '../../../lib/utils/utils'
 import config from '../../../../config'
+import userService from '../../../services/customers/users/user.service';
+import stripeSubscriptionService from '../../../services/stripe/subscription';
 
 const NODE_ENV = config.NODE_ENV
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -18,17 +21,18 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
         const params = request.query
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        let bookSearchFilter: any = { status: 'Active' }
+        let bookSearchFilter: any = { status: 'Active', search: {} }
         let authorSearchFilter: any = {}
         if (params.category) {
-            bookSearchFilter.categories = String(params.category)
+            bookSearchFilter.search.categories = { $in: [Types.ObjectId(params.category as any)] }
         }
         if (params.search) {
-            bookSearchFilter.filter = String(params.search).toLowerCase().trim()
+            bookSearchFilter.search['$or'] = [{title: await getSearchRegexp(params.search)}]
+            bookSearchFilter.search['$or'].push({'author.name': await getSearchRegexp(params.search) })
             authorSearchFilter.name = await getSearchRegexp(params.search)
         }
         if (params.author) {
-            bookSearchFilter.author = params.author
+            bookSearchFilter.search['author._id'] = Types.ObjectId(params.author as string)
         }
         const bookSummariesList: any = await bookSummaryService.getAllBookSummariesForDiscover(Number(skip), Number(limit), bookSearchFilter, [['createdAt', 'DESC']])
         if (params.author) {
@@ -57,8 +61,22 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
         let isPlanActive = false
-        if ((req.subscription && req.subscription?.status === 'active') || (req.user.inAppSubscription && req.user.inAppSubscriptionStatus === 'Active')) {
+
+        if (req.user.inAppSubscription && req.user.inAppSubscriptionStatus === 'Active') {
             isPlanActive = true
+            // todo: count duration with createdAt
+            // if duration already ended
+            // then mark plan as inactive
+        }
+
+        if (req.user?.stripe?.subscriptionId) {
+            try {
+                const s = await stripeSubscriptionService
+                    .retrieveSubscription(
+                        req.user.stripe.subscriptionId
+                    )
+                isPlanActive = !!s?.id
+            } catch (e) {}
         }
         if (!isPlanActive) {
             /** Set today start and end */
@@ -69,7 +87,8 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
 
             /** Filter current days new view books */
             let todayViews = []; let isExist = false;
-            req?.user?.library?.view.map(i => {
+            req.user.libraries = await userService.getUserLibrary({ _id: req.user.libraries })
+            req?.user?.libraries?.view.map(i => {
                 const createdAt = new Date(i.createdAt).getTime();
                 if (createdAt >= start.getTime()) todayViews.push(i)
                 if (String(i.bookId) === String(data._id)) {
@@ -98,8 +117,9 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             });
         }
         res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummarySuccess, data })
+        req.user.libraries = req.user.libraries && await userService.getUserLibrary(req.user.libraries, ['view'])
         /** Incress book views */
-        if (!req.user?.library?.views.find(i => String(i.bookId) === (req.params.id))) {
+        if (!req.user?.libraries?.views.find(i => String(i.bookId) === (req.params.id))) {
             await bookSummaryService.updateBookSummary({ '$inc': { views: 1 } }, { _id: req.params.id})
         }
     } catch (e: any) {

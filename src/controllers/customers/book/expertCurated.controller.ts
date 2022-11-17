@@ -33,7 +33,7 @@ const getOneExpertCurated = async (req: Request, res: Response, next: NextFuncti
 /** Get all book summary by filter */
 const getAllExpertCurated = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const params = request.query
+        const params = request.query as any
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
@@ -47,19 +47,20 @@ const getAllExpertCurated = async (request: Request, response: Response, next: N
                 ]
             }
         }
-        const expertCuratedSorting = [];
+        params.order = String(params.order || 'asc').toLowerCase() === 'asc' ? 1.0 : -1.0
+        const expertCuratedSorting: any = {};
         switch (params.column) {
             case 'title':
-                expertCuratedSorting.push(['title', params.order || 'ASC']);
+                expertCuratedSorting.title = params.order;
                 break;
             case 'status':
-                expertCuratedSorting.push(['status', params.order || 'ASC']);
+                expertCuratedSorting.status = params.order;
                 break;
             case 'createdAt':
-                expertCuratedSorting.push(['createdAt', params.order || 'ASC']);
+                expertCuratedSorting.createdAt = params.order;
                 break;
             default:
-                expertCuratedSorting.push(['title', 'DESC']);
+                expertCuratedSorting.title = -1.0;
                 break;
         }
 

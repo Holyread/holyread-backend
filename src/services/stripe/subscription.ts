@@ -1,7 +1,9 @@
 import config from '../../../config'
 
+import { serverOrigins } from '../../constants/app.constant'
 const stripe = require('stripe')(config.STRIPE_SECRET);
 
+/** Retrive subscription */
 const retrieveSubscription = async (id: string) => {
       try {
             const subscription = await stripe.subscriptions.retrieve(id);
@@ -11,6 +13,7 @@ const retrieveSubscription = async (id: string) => {
       }
 }
 
+/** Create user */
 const createCustomer = async (email?: string, source?: string) => {
       try {
             const name = email?.split('@')[0] || ''
@@ -48,19 +51,42 @@ const createCustomer = async (email?: string, source?: string) => {
       }
 }
 
+/** get user */
+const getCustomer = async (id: string) => {
+      try {
+            const customer = await stripe.customers.retrieve(id);
+            return customer
+      } catch (error: any) {
+            return null
+      }
+}
+
+/** Clear existing payment methods */
+const clearPaymentMethods = async (customerId) => {
+      const paymentMethods = await stripe.customers.listPaymentMethods(
+            customerId,
+            { type: 'card' }
+      );
+      if (!paymentMethods.data.length) return
+      await Promise.all(paymentMethods.data.map(async (i: any) => {
+            await stripe.paymentMethods.detach(i.id);
+      }))
+}
+
+/** Update payment method */
+const updatePaymentMethod = async (customerId: string, paymentMethod: string) => {
+      await clearPaymentMethods(customerId)
+      await stripe.paymentMethods.attach(paymentMethod, { customer: customerId });
+      await stripe.customers.update(customerId, {
+            invoice_settings: { default_payment_method: paymentMethod },
+      });
+}
+
+/** Create subscription */
 const createSubscription = async (planId: string, customerId: string, paymentMethod?: string, status?: string) => {
       try {
             if (paymentMethod) {
-                  await clearPaymentMethods(customerId)
-                  await stripe.paymentMethods.attach(
-                        paymentMethod,
-                        { customer: customerId }
-                  );
-                  await stripe.customers.update(customerId, {
-                        invoice_settings: {
-                              default_payment_method: paymentMethod,
-                        },
-                  });
+                  await updatePaymentMethod(customerId, paymentMethod)
             }
             const subscription = await stripe.subscriptions.create({
                   customer: customerId,
@@ -76,9 +102,13 @@ const createSubscription = async (planId: string, customerId: string, paymentMet
       }
 }
 
-const updateSubscription = async (planId: string, subscriptionId: string) => {
+/** Update subscription */
+const updateSubscription = async (planId: string, subscriptionId: string, customerId?: string, paymentMethod?: string) => {
       try {
             const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+            if (paymentMethod) {
+                  await updatePaymentMethod(customerId, paymentMethod)
+            }
             await stripe.subscriptions.update(subscriptionId, {
                   cancel_at_period_end: false,
                   proration_behavior: 'create_prorations',
@@ -92,17 +122,7 @@ const updateSubscription = async (planId: string, subscriptionId: string) => {
       }
 }
 
-const clearPaymentMethods = async (customerId) => {
-      const paymentMethods = await stripe.customers.listPaymentMethods(
-            customerId,
-            { type: 'card' }
-      );
-      if (!paymentMethods.data.length) return
-      await Promise.all(paymentMethods.data.map(async (i: any) => {
-            await stripe.paymentMethods.detach(i.id);
-      }))
-}
-
+/** Cancel subscription by id */
 const cancelSubscription = async (subscriptionId: string) => {
       await stripe.subscriptions.del(subscriptionId);
       stripe.subscriptions.update(subscriptionId, {
@@ -111,10 +131,90 @@ const cancelSubscription = async (subscriptionId: string) => {
 
 }
 
+/** Get webhooks */
+const getWebHookList = async () => {
+      try {
+            const { data } = await stripe.webhookEndpoints.list();
+            return data;
+      } catch (e) {
+            return null;
+      }
+};
+
+/** Delete webhooks */
+const deleteWebHook = async (id) => {
+      try {
+            const { deleted } = await stripe.webhookEndpoints.del(id);  
+            return deleted;
+      } catch (e) {
+            return null;
+      }
+};
+
+/** Create subscription webhook */
+const createWebhook = async () => {
+      const url: string = serverOrigins[config.NODE_ENV] + '/api/v1/webhook/transactions';
+      const webhooks: any[] = await getWebHookList()
+
+      let existingHook: boolean = false;      
+      /** Delete local webhooks */
+      webhooks?.map(wi => {
+            if (wi.url === url) {
+                  existingHook = true
+                  return
+            }
+            if (wi?.url?.includes('ngrok.io') || wi?.url?.includes('localhost')) { deleteWebHook(wi.id) }
+      });
+      if (existingHook || config.NODE_ENV === 'local') return;
+
+      const enabled_events: String[] = [
+            'customer.subscription.updated',
+            'customer.subscription.created'
+      ];
+      await stripe.webhookEndpoints.create({ url, enabled_events });
+      console.log('Subscription webhook created successfully')
+      return;
+}
+
+/** Get invoice by id */
+const getInvoice = async (id: string) => {
+      try {
+            const invoice = await stripe.invoices.retrieve(id);
+            return invoice
+      } catch (error) {
+            return null
+      }
+}
+
+/** Get payment intent by id */
+const getPaymentIntent = async (id: string) => {
+      try {
+            const paymentIntent = await stripe.paymentIntents.retrieve(id);
+            return paymentIntent
+      } catch (error) {
+            return null
+      }
+}
+
+/** Get payment method */
+const getPaymentMethod = async (id: string) => {
+      try {
+            const paymentMethod = await stripe.paymentMethods.retrieve(id);
+            return paymentMethod
+      } catch (error) {
+            return null
+      }
+}
+
 export default {
       retrieveSubscription,
       createSubscription,
       createCustomer,
       cancelSubscription,
-      updateSubscription
+      updateSubscription,
+      createWebhook,
+      getPaymentIntent,
+      getPaymentMethod,
+      getInvoice,
+      getCustomer
 }

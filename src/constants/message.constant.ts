@@ -9,6 +9,9 @@ export const responseMessage = {
         loginSuccess: 'User login successfully, ',
         signUpSuccess: 'User signUp successfully',
         userUpdateSuccess: 'User updated successfully',
+        savedBook: 'Saved to My favorite',
+        unSavedBook: 'Removed from My Favorite',
+        markAsCompletedBook: 'Book mark as completed',
         userAlreadyExistError: 'User Already exist',
         getUserSuccess: 'User fetched successfully',
         getUsersSuccess: 'users fetched successfully',
@@ -27,6 +30,7 @@ export const responseMessage = {
         userSamePasswordError: 'New password is same as old. Please choose a different one.',
         passwordUpdateSuccess: 'Password has been changed successfully 🚀',
         deleteUserSuccess: 'User deleted successfully',
+        userLogoutSuccess: 'User logout successfully',
         createUserFailed: 'Failed to create user',
         verifyEmailRequest: 'Please check your email and activate your account',
         blessFriendSuccess: 'User Invited successfully, we\'ve sent your user details on your email',
@@ -36,12 +40,13 @@ export const responseMessage = {
         sentSubscriptionEmailFilure: 'Failed to sent subscription plan details on email',
         missingSectionParams: 'Missing section params',
         addShareImage: 'Share image uploaded successfully',
+        encodeImageSuccess: 'Image text generated successfully',
         submitQueryError: 'Failed to send your message, please try letter or contact administrator by other way',
         paymentStatusPending: 'Payment status is pending, please contact administrator',
         submitQuerySuccess: 'Your message was sent successfully, Thanks.',
         bookRatingSuccess: 'Thanks for rate this book 🙂',
         userAuthorisedAsAdmin: 'User authorised as admin, please use another email',
-        kindleEmailNotExistError: 'Please add your kindle email address',
+        kindleEmailNotExistError: 'To send summaries to your kindle account, go to connected services and add kindle email.',
         emailAuthEnabledSuccess: 'Your email auth enabled',
         emailAuthExist: 'Your email auth already enabled',
         socialLinkError: 'Account already linked by some one else, please contact administrator'
@@ -219,5 +224,11 @@ export const responseMessage = {
         createNotificationSuccess: 'Notification created successfully',
         updateNotificationSuccess: 'Notification updated successfully',
         deleteNotificationSuccess: 'Notification deleted successfully'
+    },
+    transactionsControllerResponse: {
+        getTransactionsSuccess: 'Transactions listed successfully',
+    },
+    handoutsControllerResponse: {
+        updateHandoutSuccess: 'Handout updated successfully'
     },
 }

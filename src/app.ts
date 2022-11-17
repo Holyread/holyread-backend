@@ -11,12 +11,14 @@ import firebaseAdmin from 'firebase-admin';
 import customersRoutes from './routes/customers.routes'
 import websiteRoutes from './routes/website.routes'
 import adminRoutes from './routes/admin.routes'
+import webhookRoutes from './routes/webhook.route'
 import appConfig from './lib/appConfig'
 import './models/index'
 import config from '../config'
 import { allowedOrigins, fireStoreConfig } from './constants/app.constant'
 import { responseMessage } from './constants/message.constant'
 import customerIoAuth from './middleware/customers.io.passport'
+import subscriptionService from './services/stripe/subscription'
 
 const io = require('socket.io')();
 const app = express()
@@ -46,15 +48,23 @@ export const corsOptionsDelegate = async (req, callback) => {
 app.use('/api/v1/customers', cors(corsOptionsDelegate), customersRoutes)
 app.use('/api/v1/admin', cors(corsOptionsDelegate), adminRoutes)
 app.use('/api/v1/website', cors(corsOptionsDelegate), websiteRoutes)
+app.use('/api/v1/webhook', cors(), webhookRoutes)
 app.get('/', async (req: Request, res: Response) => res.sendFile(__dirname + '/views/index.html'))
 app.use(appConfig.handleError)
 app.set('port', config.PORT);
-var server = http.createServer(app);
+
+const server = http.createServer(app);
 
 if (config.NODE_ENV !== 'test') {
   server.listen(config.PORT, () => console.log(`API listening on ${config.PORT}`))
-  io.attach(server); 
+  io.attach(server);
+
+  /** Create webhook */
+  subscriptionService
+    .createWebhook()
+    .then(res => console.log('Subscription webhook initiated succeed'))
 }
+
 firebaseAdmin.initializeApp({
   credential: firebaseAdmin.credential.cert(fireStoreConfig as any),
 });

@@ -262,7 +262,7 @@ const createAppTransaction = async (request: Request, response: Response, next: 
             }
             let subscriptionInfo = await subscriptionsService.getOneSubscriptionByFilter({
                   duration:
-                        v2TransactionInfo.productId.includes('six')
+                        v2TransactionInfo?.productId?.toLowerCase()?.includes('six')
                               ? 'Half Year'
                               : v2TransactionInfo.productId.includes('month')
                                     ? 'Month'

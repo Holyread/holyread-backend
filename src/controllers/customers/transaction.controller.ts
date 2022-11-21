@@ -44,11 +44,11 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   }
             }
             /** Sent subscription activation email */
+            const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: user.subscription })
             const sentSubscriptionEmail = async () => {
                   const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.subscriptionActivated })
                   const sub = emailTemplateDetails.subject || `Holy Reads Subscription Activated`
                   let html = `<p>Dear ${user.email.split('@')[0]},</p><p>Your holy reads subscription activated successfully.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
-                  const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: user.subscription })
                   if (emailTemplateDetails && emailTemplateDetails.content) {
                         const localeDate = transaction.planExpiredAt?.toLocaleDateString()?.split('/')
                         const contentData = {
@@ -109,7 +109,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   await transactionsService.createTransaction(transaction)
                   /** Sent subscription activation email */
                   await sentSubscriptionEmail()
-                  Promise.all([sentNotification('Holyreads Subscription', 'Subscription activated successfully 🎉')])
+                  Promise.all([sentNotification('Holyreads Subscription', `Holy reads ${subscriptionDetails.title} Subscription activated successfully 🎉`)])
                   return response.status(200)
             }
 
@@ -148,7 +148,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   return next(Boom.badRequest('Failed to sent an cancel subscription email'))
             }
             response.status(200)
-            Promise.all([sentNotification('Holyreads Subscription Cancelled ⛔', 'Your Holy Reads Subscription Cancelled')])
+            Promise.all([sentNotification('Holyreads Subscription Cancelled ⛔', `Your Holy Reads ${subscriptionDetails.title} Subscription Cancelled`)])
       } catch (e: any) {
             return next(Boom.badData(e.message))
       }

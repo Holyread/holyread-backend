@@ -1201,7 +1201,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   }
             }
             const notificationTitle = 'Holyreads Subscription'
-            const notificationDescription = 'Holyreads subscription has been activated! 🎉'
+            const notificationDescription = `Holyreads ${subscriptionDetails.title} subscription has been activated! 🎉`
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
             fetchNotifications(io.sockets, { _id: userObj._id })
 

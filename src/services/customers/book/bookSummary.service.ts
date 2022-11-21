@@ -205,7 +205,7 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                         isRate: !!ratings[String(oneItem._id)]?.isRate,
                         chapters: library ? oneItem.chapters : undefined,
                         reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / oneItem?.chapters?.length : 0).toFixed(0)),
-                        isSaved: libraries?.saved?.find(
+                        bookMark: libraries?.saved?.find(
                             b => String(b) === String(oneItem._id)
                         ) ? true : false,
                         'views': oneItem.views || randomNumberInRange(10000, 20000),

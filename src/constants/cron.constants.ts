@@ -30,3 +30,14 @@ export const renewalReminder = {
       },
       JOBRESTRICTENV: ['local', 'production'], // 'local','development','production'
 }
+
+export const syncProfits = {
+      SCHEDULE: {
+            Minutes: '30',
+            Hours: '*',
+            DayOfMonth: '*',
+            Months: '*',
+            DayOfWeek: '*',
+      },
+      JOBRESTRICTENV: ['local', 'production'], // 'local','development','production'
+}

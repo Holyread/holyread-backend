@@ -236,7 +236,6 @@ const retrieveProfit = async (duration='year') => {
                         now = (new Date(now).setMonth(new Date(now).getMonth() - 12) / 1000);
                         break;
             }
-            console.log(now);
             const query = {
                   limit: 100,
                   status: 'paid',

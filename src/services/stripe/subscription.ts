@@ -242,7 +242,6 @@ const retrieveProfit = async (duration='year') => {
                   created: { gte: now },
             }
             const invoices = await getInvoices(query);
-            // fs.writeFileSync('test.json', JSON.stringify(invoices, null, 4));
             delete query.status;
             const refunds = await getRefunds(query);
             const totalInvoice = invoices.reduce((p, c) => {

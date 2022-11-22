@@ -2,8 +2,11 @@ import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
 import usersService from '../../services/admin/users/user.service'
-import bookSummaryService from '../../services/admin/book/bookSummary.service'
 import { responseMessage } from '../../constants/message.constant'
+import settingsService from '../../services/admin/setting/setting.service'
+import bookSummaryService from '../../services/admin/book/bookSummary.service'
+import transactionsService from '../../services/admin/users/transactions.service'
+
 import { groupByKey } from '../../lib/utils/utils';
 
 const dashboardControllerResponse = responseMessage.dashboardControllerResponse
@@ -47,4 +50,29 @@ const getTopReadsBooks = async (request: Request, response: Response, next: Next
     }
 }
 
-export { getDashboard, getTopReadsBooks }
+const getUserAnylatics = async (request: Request, response: Response, next: NextFunction) => {
+    try {
+        const { profits }: any
+            = await settingsService.getSetting();
+        const transactions
+            = await transactionsService
+                .getUserAnalytics(
+                    request.query.duration as string || 'year'
+                );
+        response.status(200).json({
+            message: dashboardControllerResponse.getDashboardSuccess,
+            data: {
+                profits,
+                transactions
+            }
+        })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
+export {
+    getDashboard,
+    getTopReadsBooks,
+    getUserAnylatics,
+}

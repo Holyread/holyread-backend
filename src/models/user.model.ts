@@ -40,20 +40,6 @@ export interface IUser extends mongoose.Document {
         token: string
     }],
     libraries: Types.ObjectId,
-    library?: {
-        saved?: [string],
-        completed?: [string],
-        reading?: [{
-            bookId: string,
-            chaptersCompleted: [string],
-            updatedAt: Date
-        }],
-        view?: [{
-            bookId: string,
-            createdAt: Date
-        }],
-        smallGroups?: [string],
-    },
     oAuth?: [{
         clientId: string,
         provider: string,
@@ -117,20 +103,6 @@ export type createUserType = {
         token: string
     }],
     libraries: Types.ObjectId,
-    library?: {
-        saved?: [string],
-        completed?: [string],
-        reading?: [{
-            bookId: string,
-            chaptersCompleted: [string],
-            updatedAt: Date
-        }],
-        view?: [{
-            bookId: string,
-            createdAt: Date
-        }],
-        smallGroups?: [string],
-    },
     oAuth?: [{
         clientId: string,
         provider: string,
@@ -194,20 +166,6 @@ export type getUserType = {
         token: string
     }],
     libraries: Types.ObjectId,
-    library?: {
-        saved?: [string],
-        completed?: [string],
-        reading?: [{
-            bookId: string,
-            chaptersCompleted: [string],
-            updatedAt: Date
-        }],
-        view?: [{
-            bookId: string,
-            createdAt: Date
-        }],
-        smallGroups?: [string],
-    },
     oAuth?: [{
         clientId: string,
         provider: string,
@@ -271,20 +229,6 @@ export const UserSchema = new Schema({
         token: String
     }],
     libraries: { type: Schema.Types.ObjectId, ref: 'userLibrary', index: true },
-    library: {
-        saved: [{ type: String }],
-        completed: [{ type: String }],
-        reading: [{
-            bookId: { type: String, ref: 'bookSummary' },
-            chaptersCompleted: [{ type: String }],
-            updatedAt: { type: Date }
-        }],
-        view: [{
-            bookId: { type: String },
-            createdAt: { type: Date }
-        }],
-        smallGroups: [{ type: String }],
-    },
     oAuth: [{
         clientId: String,
         provider: String,

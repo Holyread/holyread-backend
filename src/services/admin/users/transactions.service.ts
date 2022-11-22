@@ -1,4 +1,4 @@
-import { sortArrayObject } from '../../../lib/utils/utils';
+import { getDates, sortArrayObject } from '../../../lib/utils/utils';
 import { TransactionsModel } from '../../../models/index'
 
 /** Get transaction by filter */
@@ -34,19 +34,19 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
                               new Date(i.createdAt).getTime() < search.from ||
                               new Date(i.createdAt).getTime() > search.to
                         )
-                  )     { return null }
+                  ) { return null }
                   /** return if date less then start */
                   if (
                         search.from &&
                         !search.to &&
                         new Date(i.createdAt).getTime() < search.from
-                  )     { return null }
+                  ) { return null }
                   /** return if date grater then end */
                   if (
                         !search.from &&
                         search.to &&
                         new Date(i.createdAt).getTime() > search.to
-                  )     { return null }
+                  ) { return null }
                   const shipping = i?.customer?.shipping?.address
                   const data = {
                         _id: i._id,
@@ -75,7 +75,7 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
                         !data?.status?.toLowerCase()?.includes(search.keyword) &&
                         !data?.email?.toLowerCase()?.includes(search.keyword) &&
                         Math.trunc(data?.total) != search.keyword
-                  )     { return null }
+                  ) { return null }
                   transactions.add(data)
             })
             transactions = [...transactions].filter(i => i)
@@ -84,6 +84,65 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
             const count = transactions.length;
             transactions = transactions.slice(skip, skip + limit)
             return { count, transactions: [...transactions] }
+      } catch (e: any) {
+            throw new Error(e)
+      }
+}
+
+/** Get user analytics */
+const getUserAnalytics = async (duration = 'year') => {
+      try {
+            let now = new Date();
+            switch (duration) {
+                  case 'year':
+                        now.setMonth(now.getMonth() - 12);
+                        break;
+                  case 'month':
+                        now.setMonth(now.getMonth() - 1);
+                        break;
+                  default:
+                        now.setDate(now.getDate() - 7);
+                        break;
+            }
+            now.setHours(0, 0, 0, 0);
+            let transactions: any = await TransactionsModel
+                  .find({ userId: { $exists: true }, createdAt: { $gte: now }, status: { $in: ['active', 'subscribed', 'did_renew'] } })
+                  .select(
+                        'userId total status createdAt amount device'
+                  )
+                  .sort([['createdAt', 'ASC']])
+                  .lean()
+                  .exec();
+
+            const today = new Date();
+            today.setHours(23,59,59,999);
+            const dates = getDates(now,today);
+            let users: any = [];
+            let plans: any = [];
+            let titles = new Set();
+            const formattedDate = (date: Date) => {
+                  return date.toLocaleDateString('en-GB', {
+                        day: 'numeric', month: 'numeric', year: 'numeric'
+                  }).replace(/ /g, '/')
+            };
+            dates.map((i) => {
+                  const iTransactions
+                        = transactions
+                              .filter(j =>
+                                    j.createdAt.setHours(0,0,0,0) === new Date(i).setHours(0,0,0,0)
+                              );
+                  let user = new Set();
+                  let plan = 0;
+                  while(iTransactions.length) {
+                        const first: any = iTransactions?.splice(0,1)[0]
+                        user.add(first?.userId);
+                        plan++;
+                  }
+                  titles.add(formattedDate(i));
+                  users.push([...user].length);
+                  plans.push(plan);
+            })
+            return { users, titles, plans }
       } catch (e: any) {
             throw new Error(e)
       }
@@ -99,6 +158,7 @@ const deleteTransaction = async (query: Object) => {
 }
 
 export default {
+      getUserAnalytics,
+      deleteTransaction,
       getAllTransactions,
-      deleteTransaction
 }

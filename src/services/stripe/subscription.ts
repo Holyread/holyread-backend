@@ -144,7 +144,7 @@ const getWebHookList = async () => {
 /** Delete webhooks */
 const deleteWebHook = async (id) => {
       try {
-            const { deleted } = await stripe.webhookEndpoints.del(id);  
+            const { deleted } = await stripe.webhookEndpoints.del(id);
             return deleted;
       } catch (e) {
             return null;
@@ -156,7 +156,7 @@ const createWebhook = async () => {
       const url: string = serverOrigins[config.NODE_ENV] + '/api/v1/webhook/transactions';
       const webhooks: any[] = await getWebHookList()
 
-      let existingHook: boolean = false;      
+      let existingHook: boolean = false;
       /** Delete local webhooks */
       webhooks?.map(wi => {
             if (wi.url === url) {
@@ -186,6 +186,78 @@ const getInvoice = async (id: string) => {
       }
 }
 
+/** Get invoices */
+const getInvoices = async (query: Object, invoices = [], starting_after={}) => {
+      try {
+            const { data, has_more }
+                  = await stripe.invoices.list({ ...query, starting_after });
+            invoices = invoices.concat(data || [])
+            if (has_more) {
+                  starting_after = invoices[invoices.length-1].id;
+                  getInvoices(query, invoices, starting_after)
+            }
+            return invoices;
+      } catch (error) {
+            return []
+      }
+}
+
+/** Get refunds */
+const getRefunds = async (query: Object, refunds = [], starting_after={}) => {
+      try {
+            const { data, has_more }
+                  = await stripe.refunds.list({ ...query, starting_after });
+            refunds = refunds.concat(data || [])
+            if (has_more) {
+                  starting_after = refunds[refunds.length-1].id;
+                  getRefunds(query, refunds, starting_after)
+            } else {
+                  refunds.concat(data);
+            }
+            return refunds;
+      } catch (error) {
+            return []
+      }
+}
+
+/** Retrive total profit */
+const retrieveProfit = async (duration='year') => {
+      try {
+            let now: Date | Number = new Date();
+            now.setHours(0, 0, 0, 0);
+            switch (duration) {
+                  case 'week':
+                        now = (new Date(now).setDate(new Date(now).getDate() - 7) / 1000);
+                        break;
+                  case 'month':
+                        now = (new Date(now).setMonth(new Date(now).getMonth() - 2) / 1000);
+                        break;
+                  default:
+                        now = (new Date(now).setMonth(new Date(now).getMonth() - 12) / 1000);
+                        break;
+            }
+            console.log(now);
+            const query = {
+                  limit: 100,
+                  status: 'paid',
+                  created: { gte: now },
+            }
+            const invoices = await getInvoices(query);
+            // fs.writeFileSync('test.json', JSON.stringify(invoices, null, 4));
+            delete query.status;
+            const refunds = await getRefunds(query);
+            const totalInvoice = invoices.reduce((p, c) => {
+                  return p + (c.total/100)
+            }, 0);
+            const totalRefund = refunds.reduce((p, c) => {
+                  return c.status === 'succeed' ? (p + (c.amoun/100)) : p
+            }, 0);
+            return Math.trunc(totalInvoice - totalRefund)
+      } catch (error: any) {
+            throw new Error(error)
+      }
+}
+
 /** Get payment intent by id */
 const getPaymentIntent = async (id: string) => {
       try {
@@ -207,14 +279,15 @@ const getPaymentMethod = async (id: string) => {
 }
 
 export default {
-      retrieveSubscription,
-      createSubscription,
-      createCustomer,
-      cancelSubscription,
-      updateSubscription,
+      getInvoice,
+      getCustomer,
       createWebhook,
+      retrieveProfit,
+      createCustomer,
       getPaymentIntent,
       getPaymentMethod,
-      getInvoice,
-      getCustomer
+      cancelSubscription,
+      createSubscription,
+      updateSubscription,
+      retrieveSubscription,
 }

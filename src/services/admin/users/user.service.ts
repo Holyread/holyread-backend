@@ -1,8 +1,8 @@
-import { UserModel, SubscriptionsModel } from '../../../models/index'
+import config from '../../../../config'
 import { encrypt } from '../../../lib/utils/utils'
 import { awsBucket } from '../../../constants/app.constant'
-import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
+import { UserModel, SubscriptionsModel } from '../../../models/index'
 
 const NODE_ENV = config.NODE_ENV
 const authControllerResponse = responseMessage.authControllerResponse

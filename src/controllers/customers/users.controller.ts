@@ -84,7 +84,18 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             const notifications = await notificationsService.getUserNotifications({ userId: userObj._id })
             userObj.notifications = notifications
             res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
-            await userService.updateUser({ _id: userObj._id }, { lastSeen: new Date() });
+            
+            if (!userObj.libraries) {
+                  const libraries = await userService.createUserLibrary({
+                        saved: [],
+                        completed: [],
+                        view: [],
+                        smallGroups: [],
+                        reading: [], 
+                  })
+                  userObj.libraries = libraries?._id
+            }
+            await userService.updateUser({ _id: userObj._id }, { lastSeen: new Date(), libraries: userObj.libraries });
       } catch (e: any) {
             next(Boom.badData(e.message))
       }
@@ -522,64 +533,6 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
 
             if (!section) {
                   return next(Boom.notFound(authControllerResponse.missingSectionParams))
-            }
-
-            const
-                  view = [],
-                  saved = [],
-                  reading = [],
-                  completed = [],
-                  smallGroups = [];
-
-            if (!userObj.libraries) {
-                  if (section === 'reading') {
-                        const bookSummary = await bookService.findBook({ _id: req.body.bookId, 'chapters._id': req.body.chapter })
-                        if (!bookSummary) {
-                              return next(Boom.notFound(bookSummaryControllerResponse.chapterNotExist))
-                        }
-                        reading.push({
-                              updatedAt: new Date(),
-                              bookId: req.body.bookId,
-                              chaptersCompleted: [req.body.chapter],
-                        });
-                  }
-                  if (section === 'view') {
-                        const bookSummary = await bookService.findBook({ _id: req.body.bookId })
-                        if (!bookSummary) {
-                              return next(Boom.notFound(bookSummaryControllerResponse.chapterNotExist))
-                        }
-                        view.push({
-                              bookId: req.body.bookId,
-                              createdAt: new Date()
-                        })
-                  }
-
-                  if (section === 'completed') {
-                        completed.push(req.body.completed);
-                  }
-                  if (section === 'saved' && type === 'add') {
-                        saved.push(req.body.saved);
-                  }
-                  if (section === 'smallGroup' && type === 'add') {
-                        smallGroups.push(req.body.smallGroup);
-                  }
-                  const newLib = await userService
-                        .createUserLibrary(
-                              {
-                                    view,
-                                    saved,
-                                    reading,
-                                    completed,
-                                    smallGroups,
-                              }
-                        )
-                  await userService
-                        .updateUser(
-                              { _id: userObj._id },
-                              { libraries: newLib._id }
-                        )
-
-                  return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
             }
 
             const query: any = { _id: userObj.libraries }

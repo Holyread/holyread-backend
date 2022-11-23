@@ -1,9 +1,10 @@
 import cron from 'cron';
 
 import config from "../../config";
+import { awsBucket } from '../constants/app.constant';
 import { dailyDevotional } from '../constants/cron.constants'
-import { decodeHTMLEntities, groupByKey, pushNotification } from '../lib/utils/utils';
 import { ReadsOfDayModel, SettingModel, UserModel } from '../models';
+import { decodeHTMLEntities, groupByKey, pushNotification } from '../lib/utils/utils';
 
 const start = async () => {
       try {
@@ -62,7 +63,13 @@ const start = async () => {
                                           pushNotification(
                                                 item?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
                                                 'Your Daily Pick is ready! 🔔',
-                                                `${readOfDay.description} 📚📚📚`
+                                                `${readOfDay.description} 📚📚📚`,
+                                                {
+                                                      dailyDevotional: {
+                                                            _id: readOfDay._id,
+                                                            image: awsBucket[config.NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + readOfDay.image
+                                                      }
+                                                }
                                           ).catch(() => { return undefined; })
                                     )
                               })

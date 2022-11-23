@@ -214,7 +214,9 @@ export const pushNotification = async (tokens: string[], title: string, descript
                 title,
                 body: description,
             },
-            data: args
+            data: {
+                info: JSON.stringify(args)
+            }
         }).then(response => {
         response.results.forEach((result, index) => {
             const error = result.error;

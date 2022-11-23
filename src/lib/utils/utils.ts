@@ -288,7 +288,8 @@ export const decodeHTMLEntities = (text: string) => {
         ['lt', '<'],
         ['gt', '>'],
         ['nbsp', ' '],
-        ['quot', '"']
+        ['quot', '"'],
+        ['&nbsp;', ' ']
     ];
 
     for (var i = 0, max = entities.length; i < max; ++i)

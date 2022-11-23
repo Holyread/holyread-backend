@@ -105,8 +105,10 @@ const getUserAnalytics = async (duration = 'year') => {
                         break;
             }
             now.setHours(0, 0, 0, 0);
+            now.setDate(now.getDate() + 1);
+
             let transactions: any = await TransactionsModel
-                  .find({ userId: { $exists: true }, createdAt: { $gte: now }, status: { $in: ['active', 'subscribed', 'did_renew'] } })
+                  .find({ userId: { $exists: true }, createdAt: { $gt: now }, status: { $in: ['active', 'subscribed', 'did_renew'] } })
                   .select(
                         'userId total status createdAt amount device'
                   )
@@ -115,34 +117,59 @@ const getUserAnalytics = async (duration = 'year') => {
                   .exec();
 
             const today = new Date();
-            today.setHours(23,59,59,999);
-            const dates = getDates(now,today);
-            let users: any = [];
-            let plans: any = [];
-            let titles = new Set();
+            today.setHours(23, 59, 59, 999);
+            const dates = getDates(now, today);
+            let
+                  users: any = [],
+                  plans: any = [],
+                  titles = new Set(),
+                  totalUsers = 0,
+                  totalPlans = 0,
+                  totalRevenue = 0;
+
+            let revenues = [];
             const formattedDate = (date: Date) => {
                   return date.toLocaleDateString('en-GB', {
                         day: 'numeric', month: 'numeric', year: 'numeric'
                   }).replace(/ /g, '/')
             };
+
             dates.map((i) => {
-                  const iTransactions
-                        = transactions
+                  const iTransactions =
+                        transactions
                               .filter(j =>
-                                    j.createdAt.setHours(0,0,0,0) === new Date(i).setHours(0,0,0,0)
+                                    new Date(j.createdAt).setHours(0, 0, 0, 0) === new Date(i).setHours(0, 0, 0, 0)
                               );
-                  let user = new Set();
+      
                   let plan = 0;
-                  while(iTransactions.length) {
-                        const first: any = iTransactions?.splice(0,1)[0]
+                  let revenue = 0;
+                  const user = new Set();
+
+                  while (iTransactions.length) {
+                        const first: any = iTransactions?.splice(0, 1)[0]
                         user.add(first?.userId);
                         plan++;
+                        if (first.total && first.status == 'active') {
+                              revenue += first.total;
+                        }
+                        totalUsers++;
                   }
+                  totalPlans += plan; 
+                  plans.push(plan);
+                  totalRevenue += revenue;
+                  revenues.push(revenue.toFixed(2));
                   titles.add(formattedDate(i));
                   users.push([...user].length);
-                  plans.push(plan);
             })
-            return { users, titles, plans }
+            return {
+                  plans,
+                  users,
+                  totalPlans,
+                  totalUsers,
+                  totalRevenue: totalRevenue.toFixed(2),
+                  titles: [...titles],
+                  revenues: [...revenues],
+            }
       } catch (e: any) {
             throw new Error(e)
       }

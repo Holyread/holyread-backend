@@ -2,13 +2,13 @@ import express, { Router } from 'express'
 import {
   getDashboard,
   getTopReadsBooks,
-  getUserAnylatics,
+  getUserAnaylatics,
 } from '../../controllers/admin/dashboard.controller'
 
 const router: Router = express.Router()
 
 router.get('/', getDashboard)
 router.get('/top-reads', getTopReadsBooks)
-router.get('/anlytics', getUserAnylatics)
+router.get('/analytics', getUserAnaylatics)
 
 export default router

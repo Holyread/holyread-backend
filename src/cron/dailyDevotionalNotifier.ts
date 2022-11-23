@@ -62,7 +62,12 @@ const start = async () => {
                                           pushNotification(
                                                 item?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
                                                 'Your Daily Pick is ready! 🔔',
-                                                `${readOfDay.description} 📚📚📚`
+                                                `${readOfDay.description} 📚📚📚`,
+                                                {
+                                                      dailyDevotional: {
+                                                            _id: readOfDay._id
+                                                      }
+                                                }
                                           ).catch(() => { return undefined; })
                                     )
                               })

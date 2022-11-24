@@ -64,12 +64,12 @@ const start = async () => {
                                                 item?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
                                                 'Your Daily Pick is ready! 🔔',
                                                 `${readOfDay.description} 📚📚📚`,
-                                                {
+                                                JSON.stringify({
                                                       dailyDevotional: {
                                                             _id: readOfDay._id,
                                                             image: awsBucket[config.NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + readOfDay.image
                                                       }
-                                                }
+                                                })
                                           ).catch(() => { return undefined; })
                                     )
                               })

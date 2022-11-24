@@ -3,7 +3,6 @@ import Boom from '@hapi/boom';
 
 import usersService from '../../services/admin/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
-import settingsService from '../../services/admin/setting/setting.service'
 import bookSummaryService from '../../services/admin/book/bookSummary.service'
 import transactionsService from '../../services/admin/users/transactions.service'
 
@@ -50,21 +49,16 @@ const getTopReadsBooks = async (request: Request, response: Response, next: Next
     }
 }
 
-const getUserAnylatics = async (request: Request, response: Response, next: NextFunction) => {
+const getUserAnaylatics = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const { profits }: any
-            = await settingsService.getSetting();
-        const transactions
+        const data
             = await transactionsService
                 .getUserAnalytics(
                     request.query.duration as string || 'year'
                 );
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
-            data: {
-                profits,
-                transactions
-            }
+            data
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -74,5 +68,5 @@ const getUserAnylatics = async (request: Request, response: Response, next: Next
 export {
     getDashboard,
     getTopReadsBooks,
-    getUserAnylatics,
+    getUserAnaylatics,
 }

@@ -5,15 +5,15 @@ import { syncProfits } from '../constants/cron.constants'
 import stripeSubscriptionServices from '../services/stripe/subscription'
 import transactionServices from '../services/admin/users/transactions.service'
 
-import { SettingModel } from '../models';
+import { RevenueModel } from '../models';
 
 const start = async () => {
       try {
             console.log('JOB(🟢) sync profit Started successfully!');
 
-            let yearlyProfit = await stripeSubscriptionServices.retrieveProfit('year')            
-            let weeklyProfit = await stripeSubscriptionServices.retrieveProfit('week')            
-            let monthlyProfit = await stripeSubscriptionServices.retrieveProfit('month')            
+            let yearlyProfit = await stripeSubscriptionServices.retrieveProfit('year')
+            let weeklyProfit = await stripeSubscriptionServices.retrieveProfit('week')
+            let monthlyProfit = await stripeSubscriptionServices.retrieveProfit('month')
 
             const transactionsInfo = await transactionServices.getAllTransactions(
                   0,
@@ -25,7 +25,7 @@ const start = async () => {
                   [['createdAt', 'ASC']]
             )
             const now = new Date();
-            now.setHours(0,0,0,0);
+            now.setHours(0, 0, 0, 0);
 
             const monthAgo = now;
             monthAgo.setMonth(monthAgo.getMonth() - 1);
@@ -35,7 +35,7 @@ const start = async () => {
 
             const weekAgo = now;
             weekAgo.setDate(weekAgo.getDate() - 7);
-            
+
             transactionsInfo.transactions.map(i => {
                   if (new Date(i.createdAt).getTime() >= new Date(yearAgo).getTime()) {
                         if (['did_renew', 'subscribed'].includes(i.status)) {
@@ -51,7 +51,7 @@ const start = async () => {
                         }
                         else if (['refund'].includes(i.status)) {
                               yearlyProfit -= i.total
-                        }     
+                        }
                   }
                   if (new Date(i.createdAt).getTime() >= new Date(weekAgo).getTime()) {
                         if (['did_renew', 'subscribed'].includes(i.status)) {
@@ -63,12 +63,10 @@ const start = async () => {
                   }
             })
 
-            await SettingModel.updateOne({}, {
-                  profits: {
-                        year: yearlyProfit,
-                        week: weeklyProfit,
-                        month: monthlyProfit,
-                  }
+            await RevenueModel.updateOne({}, {
+                  year: yearlyProfit,
+                  week: weeklyProfit,
+                  month: monthlyProfit,
             })
             console.log('JOB(✅) sync profit executed successfully!');
       } catch (error: any) {

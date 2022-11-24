@@ -1,7 +1,8 @@
+import Boom from '@hapi/boom'
 import { Response, NextFunction } from 'express'
+
 import { verifyToken } from '../lib/utils/utils'
 import { SettingModel, UserModel } from '../models'
-import Boom from '@hapi/boom'
 
 export default async (req: any, res: Response, next: NextFunction): Promise<any> => {
     const accessToken: string | null = req.headers['x-access-token'] as string;
@@ -9,7 +10,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
         next(Boom.badRequest('Missing access token'));
     } else {
         try {
-            if (false && !req?.headers?.device)
+            if (!req?.headers?.device)
                 return next(Boom.notFound('Device details are missing'));
 
             const details: any = await verifyToken(accessToken)
@@ -42,7 +43,6 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
                 return next(Boom.forbidden('User not verfied'));
             }
             if (
-                false && 
                 !req.path.includes('logout') &&
                 !userDetails.maxDevices.includes(req?.headers?.device) &&
                 userDetails?.maxDevices?.length >= (maxDeviceLogin || 3)

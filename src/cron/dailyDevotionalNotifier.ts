@@ -17,7 +17,7 @@ const start = async () => {
             /** Get Read of days */
             const readOfDay = await ReadsOfDayModel.findOne({
                   displayAt: { $gte: new Date(start), $lte: new Date(end) }
-            }).select('description').lean().exec();
+            }).select('description image').lean().exec();
             if (!readOfDay) {
                   console.log('JOB(🔴) Daily devotional execution stop due to no reads found');
                   return;

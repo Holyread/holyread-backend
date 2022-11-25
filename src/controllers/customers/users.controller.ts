@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
-// import { Types } from 'mongoose'
+import { Types } from 'mongoose'
+
 import {
       encrypt,
       decrypt,
@@ -44,8 +45,6 @@ import smallGroupService from '../../services/customers/smallGroup/smallGroup.se
 import subscriptionService from '../../services/admin/subscriptions/subscriptions.service';
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service';
 import notificationsService from '../../services/customers/notifications/notifications.service';
-import { Types } from 'mongoose';
-
 
 const NODE_ENV = config.NODE_ENV
 const authControllerResponse = responseMessage.authControllerResponse

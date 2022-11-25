@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
-
+// import { Types } from 'mongoose'
 import {
       encrypt,
       decrypt,
@@ -44,6 +44,7 @@ import smallGroupService from '../../services/customers/smallGroup/smallGroup.se
 import subscriptionService from '../../services/admin/subscriptions/subscriptions.service';
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service';
 import notificationsService from '../../services/customers/notifications/notifications.service';
+import { Types } from 'mongoose';
 
 
 const NODE_ENV = config.NODE_ENV
@@ -670,7 +671,7 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   const search: any = {
                         _id: { $in: bookId ? [bookId] : userObj.libraries.saved }
                   }
-                  if (author) { search.author = author }
+                  if (author) { search['author._id'] = Types.ObjectId(author) }
                   if (star) { search.star = Number(star) }
                   const data = await bookService.getAllBookSummaries(
                         0, 0, search, { 'createdAt': String(sort || 'ASC').toLowerCase() === 'asc' ? 1.0 : -1.0 }
@@ -701,7 +702,7 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                               $in: bookId ? [bookId] : userObj.libraries.completed
                         }
                   }
-                  if (author) { search.author = author }
+                  if (author) { search['author._id'] = Types.ObjectId(author) }
                   if (star) { search.star = Number(star) }
                   const data = await bookService.getAllBookSummaries(
                         0, 0, search, { 'createdAt': String(sort || 'ASC').toLowerCase() === 'asc' ? 1.0 : -1.0 }
@@ -750,7 +751,8 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
 
                   /** Prepare query to get users reads book details */
                   const search: any = { _id: { $in: [...bookIds] } }
-                  if (author) { search.author = author }
+                  if (author) { search['author._id'] = Types.ObjectId(author) }
+                  if (star) { search.star = Number(star) }
 
                   /** Get user reads books details by users reads books ids */
                   const data = await bookService.getAllBookSummaries(0, 0, search, { 'createdAt': -1.0 }, true)

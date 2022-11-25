@@ -752,6 +752,7 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   /** Prepare query to get users reads book details */
                   const search: any = { _id: { $in: [...bookIds] } }
                   if (author) { search['author._id'] = Types.ObjectId(author) }
+                  if (star) { search.star = Number(star) }
 
                   /** Get user reads books details by users reads books ids */
                   const data = await bookService.getAllBookSummaries(0, 0, search, { 'createdAt': -1.0 }, true)

@@ -671,7 +671,7 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   const search: any = {
                         _id: { $in: bookId ? [bookId] : userObj.libraries.saved }
                   }
-                  if (author) { search.author = author }
+                  if (author) { search['author._id'] = Types.ObjectId(author) }
                   if (star) { search.star = Number(star) }
                   const data = await bookService.getAllBookSummaries(
                         0, 0, search, { 'createdAt': String(sort || 'ASC').toLowerCase() === 'asc' ? 1.0 : -1.0 }
@@ -702,7 +702,7 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                               $in: bookId ? [bookId] : userObj.libraries.completed
                         }
                   }
-                  if (author) { search.author = author }
+                  if (author) { search['author._id'] = Types.ObjectId(author) }
                   if (star) { search.star = Number(star) }
                   const data = await bookService.getAllBookSummaries(
                         0, 0, search, { 'createdAt': String(sort || 'ASC').toLowerCase() === 'asc' ? 1.0 : -1.0 }

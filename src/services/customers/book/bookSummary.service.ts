@@ -1,7 +1,6 @@
 import { BookSummaryModel, BookAuthorModel, UserModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
-import { randomNumberInRange } from '../../../lib/utils/utils'
 import usersService from '../users/user.service'
 import ratingService from './rating.service'
 
@@ -71,7 +70,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                 description: oneItem.description,
                 author: oneItem.author[0] || {},
                 overview: oneItem.overview,
-                views: oneItem.views || randomNumberInRange(10000, 20000),
+                views: oneItem.views || 0,
                 bookFor: oneItem.bookFor,
                 bookMark: !!saved?.find(b => String(b) === String(oneItem?._id)),
                 coverImageBackground: oneItem.coverImageBackground,
@@ -208,7 +207,7 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                         bookMark: libraries?.saved?.find(
                             b => String(b) === String(oneItem._id)
                         ) ? true : false,
-                        'views': oneItem.views || randomNumberInRange(10000, 20000),
+                        'views': oneItem.views || 0,
                     }
                 }
                 ))
@@ -234,7 +233,7 @@ const getOneBookSummaryByFilter = async (query: any) => {
         }
         data.totalStar = ratings[String(data._id)]?.averageStar || 3,
             data.isRate = !!ratings[String(data._id)]?.isRate
-        data.views = data.views || randomNumberInRange(10000, 20000)
+        data.views = data.views || 0
         data.bookMark = libraries?.saved?.find(b => String(b) === String(data?._id)) ? true : false
         data.reads = Number((libBookChapters?.length ? (100 * libBookChapters?.length) / data?.chapters?.length : 0).toFixed(0))
         return data
@@ -473,7 +472,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                 author: oneItem.author[0],
                 bookMark: isSaved,
                 isRate: !!ratings[String(oneItem._id)]?.isRate,
-                views: oneItem.views || randomNumberInRange(10000, 20000),
+                views: oneItem.views || 0,
                 totalStar: ratings[String(oneItem._id)]?.averageStar || 3,
                 reads: Number(
                     (

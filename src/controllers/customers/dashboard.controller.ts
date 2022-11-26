@@ -11,7 +11,7 @@ import ratingService from '../../services/customers/book/rating.service'
 import smallGroupService from '../../services/customers/smallGroup/smallGroup.service'
 import { responseMessage } from '../../constants/message.constant'
 import { awsBucket, dataLimit } from '../../constants/app.constant'
-import { randomNumberInRange, sortArrayObject } from '../../lib/utils/utils'
+import { sortArrayObject } from '../../lib/utils/utils'
 import config from '../../../config'
 import userService from '../../services/customers/users/user.service';
 
@@ -167,7 +167,7 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
                         author: oneBook.book.author,
                         overview: oneBook.book.overview,
                         description: oneBook.book.description,
-                        views: oneBook.book.views || randomNumberInRange(10000, 20000),
+                        views: oneBook.book.views || 0,
                         bookFor: oneBook.book.bookFor,
                         reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / oneBook.book?.chapters?.length : 0).toFixed(0)),
                         bookMark,

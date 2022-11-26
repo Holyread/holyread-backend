@@ -7,6 +7,7 @@ import { UserModel } from './user.model'
 
 import { RatingModel } from './rating.model'
 
+import { RevenueModel } from './revenue.model'
 import { SettingModel } from './setting.model'
 import { HandoutsModel } from './handouts.model'
 
@@ -56,6 +57,7 @@ export {
   UserModel,
   RatingModel,
   SettingModel,
+  RevenueModel,
   HandoutsModel,
   ShareImageModel,
   ReadsOfDayModel,

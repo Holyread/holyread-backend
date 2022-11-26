@@ -1,9 +1,10 @@
 import cron from 'cron';
 
 import config from "../../config";
+import { awsBucket } from '../constants/app.constant';
 import { dailyDevotional } from '../constants/cron.constants'
-import { decodeHTMLEntities, groupByKey, pushNotification } from '../lib/utils/utils';
 import { ReadsOfDayModel, SettingModel, UserModel } from '../models';
+import { groupByKey, pushNotification } from '../lib/utils/utils';
 
 const start = async () => {
       try {
@@ -16,12 +17,11 @@ const start = async () => {
             /** Get Read of days */
             const readOfDay = await ReadsOfDayModel.findOne({
                   displayAt: { $gte: new Date(start), $lte: new Date(end) }
-            }).select('description').lean().exec();
+            }).select('title description image').lean().exec();
             if (!readOfDay) {
                   console.log('JOB(🔴) Daily devotional execution stop due to no reads found');
                   return;
             }
-            readOfDay.description = decodeHTMLEntities(readOfDay?.description?.trim()?.replace(/<[^>]+>/g, '').substring(0, 100))
 
             const users = await UserModel.find({
                   status: 'Active',
@@ -61,8 +61,15 @@ const start = async () => {
                                     tokenSet.add(
                                           pushNotification(
                                                 item?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
-                                                'Your Daily Pick is ready! 🔔',
-                                                `${readOfDay.description} 📚📚📚`
+                                                '🔔 Your Daily Pick is ready! 🔑',
+                                                `📒 📕 📙 ${readOfDay.title} 🔖 `,
+                                                JSON.stringify({
+                                                      dailyDevotional: {
+                                                            _id: readOfDay._id,
+                                                            description: readOfDay.description,
+                                                            image: awsBucket[config.NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + readOfDay.image
+                                                      }
+                                                })
                                           ).catch(() => { return undefined; })
                                     )
                               })

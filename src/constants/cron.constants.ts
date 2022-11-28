@@ -17,7 +17,7 @@ export const dailyDevotional = {
             Months: '*',
             DayOfWeek: '*',
       },
-      JOBRESTRICTENV: ['local','production'], // 'local','development','production'
+      JOBRESTRICTENV: ['local'], // 'local','development','production'
 }
 
 export const renewalReminder = {
@@ -28,7 +28,7 @@ export const renewalReminder = {
             Months: '*',
             DayOfWeek: '*',
       },
-      JOBRESTRICTENV: ['local', 'production'], // 'local','development','production'
+      JOBRESTRICTENV: ['local'], // 'local','development','production'
 }
 
 export const syncProfits = {
@@ -39,5 +39,5 @@ export const syncProfits = {
             Months: '*',
             DayOfWeek: '*',
       },
-      JOBRESTRICTENV: ['local', 'production'], // 'local','development','production'
+      JOBRESTRICTENV: ['local'], // 'local','development','production'
 }

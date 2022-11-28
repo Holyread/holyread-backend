@@ -138,20 +138,33 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
 const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.query.token as string
-    const decryptToken: any = verifyToken(token)
-    const code = decryptToken.code
-    const email = decryptToken.email
+    let user: any;
+    let body: any = {};
+    if (!req?.query?.token || !req?.query?.code) {
+      return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+    }
+
+    if (token) {
+      const decryptToken: any = verifyToken(token)
+      body.email = decryptToken.email
+      body.verificationCode = decryptToken.code
+    }  {
+      body.verificationCode = req.query.code;
+    }
+
     /** Get user from db */
-    const user: any = await usersService.getOneUserByFilter({ verificationCode: code, email })
+    user = await usersService.getOneUserByFilter(body)
     if (!user) {
       return next(Boom.notFound(authControllerResponse.getUserError))
     }
-    let body: any = {
+
+    body = {
       verified: true,
       status: 'Active',
       device: user.referralUserId && req.query.device ? req.query.device : user.device,
       $unset: { verificationCode: 1 }
     }
+
     if (!user.inAppSubscription && user.device === 'web' && !user.referralUserId) {
       const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
       if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
@@ -159,7 +172,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       }
 
       /** Create stripe customer */
-      const customer = await stripeSubscriptionService.createCustomer(email)
+      const customer = await stripeSubscriptionService.createCustomer(user.email)
       /** Create stripe subscription */
       const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
       body.stripe = {
@@ -180,7 +193,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     /** Get welcome email template */
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.welcomeToHolyreads })
     const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
-    let html = `<p>Dear ${email.split('@')[0]},</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]}/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+    let html = `<p>Dear ${user.email.split('@')[0]},</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]}/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { loginURL: `${origins[NODE_ENV]}/account/login` }
@@ -190,7 +203,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       }
     }
     /** sent welcome email */
-    const result = await sentEmail(email, subject, html);
+    const result = await sentEmail(user.email, subject, html);
     if (!result) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
     }

@@ -417,7 +417,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       /** sent wellcome notification in app */
       pushNotification(tokens, title, description)
       if (data?.notification?.subscription && body.subscription && body.inAppSubscription)
-        pushNotification(tokens, 'Holyreads Subscription', `Holyreads ${subscriptionDetails.title} subscription has been activated! 🎉`)
+        pushNotification(tokens, 'Holy Reads Subscription', `Holy Reads ${subscriptionDetails.title} subscription has been activated! 🎉`)
     }
     if (!newBody.inAppSubscription) return;
     const now = new Date();

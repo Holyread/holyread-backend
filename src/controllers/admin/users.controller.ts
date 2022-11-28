@@ -46,7 +46,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
         const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.customerRegistration })
         const subject = emailTemplateDetails.subject || 'Account Verification'
-        let html = `<p>Dear ${body.email.split('@')[0]}, You have registerd on holyreads by admin <b><p>Your account details are as below:</p><p>email: ${body.email}</p><p>password: ${password}</p></b><b>Please click <a href=${link}>here</a> to verify your email and activate your account.</b></p>`
+        let html = `<p>Dear ${body.email.split('@')[0]}, You have registerd on holy reads by admin <b><p>Your account details are as below:</p><p>email: ${body.email}</p><p>password: ${password}</p></b><b>Please click <a href=${link}>here</a> to verify your email and activate your account.</b></p>`
 
         if (emailTemplateDetails && emailTemplateDetails.content) {
             const contentData = { email: body.email, password, username: body.firstName + ' ' + body.lastName, link }
@@ -97,7 +97,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         const title = 'Welcome to Holy Reads';
         const description = 'Enjoy summaries of bestselling Christian books';
         await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
-        const createSubscriptionTitle = 'Holyreads Subscription'
+        const createSubscriptionTitle = 'Holy Reads Subscription'
         const createSubscriptionDesc = `${subscriptionDetails.title} Subscription activated successfully`
         await notificationsService.createNotification({ userId: data._id, type: 'setting', notification: { title: createSubscriptionTitle, description: createSubscriptionDesc } })
         fetchNotifications(io.sockets, { _id: data._id })

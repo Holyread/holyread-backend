@@ -113,7 +113,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   await transactionsService.createTransaction(transaction)
                   /** Sent subscription activation email */
                   await sentSubscriptionEmail()
-                  Promise.all([sentNotification('Holyreads Subscription', `Holy reads ${subscriptionDetails.title} Subscription activated successfully 🎉`)])
+                  Promise.all([sentNotification('Holy Reads Subscription', `Holy Reads ${subscriptionDetails.title} Subscription activated successfully 🎉`)])
                   return response.status(200)
             }
 
@@ -152,7 +152,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   return next(Boom.badRequest('Failed to sent an cancel subscription email'))
             }
             response.status(200)
-            Promise.all([sentNotification('Holyreads Subscription Cancelled ⛔', `Your Holy Reads ${subscriptionDetails.title} Subscription Cancelled`)])
+            Promise.all([sentNotification('Holy Reads Subscription Cancelled ⛔', `Your Holy Reads ${subscriptionDetails.title} Subscription Cancelled`)])
       } catch (e: any) {
             return next(Boom.badData(e.message))
       }

@@ -98,7 +98,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         const description = 'Enjoy summaries of bestselling Christian books';
         await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
         const createSubscriptionTitle = 'Holy Reads Subscription'
-        const createSubscriptionDesc = `${subscriptionDetails.title} Subscription activated successfully`
+        const createSubscriptionDesc = `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} Subscription activated successfully`
         await notificationsService.createNotification({ userId: data._id, type: 'setting', notification: { title: createSubscriptionTitle, description: createSubscriptionDesc } })
         fetchNotifications(io.sockets, { _id: data._id })
     } catch (e: any) {

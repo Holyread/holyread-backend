@@ -113,7 +113,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   await transactionsService.createTransaction(transaction)
                   /** Sent subscription activation email */
                   await sentSubscriptionEmail()
-                  Promise.all([sentNotification('Holy Reads Subscription', `Holy Reads ${subscriptionDetails.title} Subscription activated successfully 🎉`)])
+                  Promise.all([sentNotification('Holy Reads Subscription', `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} Subscription activated successfully 🎉`)])
                   return response.status(200)
             }
 

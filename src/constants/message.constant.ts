@@ -37,7 +37,7 @@ export const responseMessage = {
         blessFriendSuccess: 'User Invited successfully, we\'ve sent your user details on your email',
         blessFriendSubscriptionError: 'Bless friend subscription details missing or not found',
         sentVerifyEmailFailure: 'Failed to send verification email',
-        verifyEmailSuccess: 'verification link already sended on your register email',
+        verifyEmailSuccess: 'verification email already sent, in case not received then please click resend verification email',
         sentSubscriptionEmailFilure: 'Failed to sent subscription plan details on email',
         missingSectionParams: 'Missing section params',
         addShareImage: 'Share image uploaded successfully',

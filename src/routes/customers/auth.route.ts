@@ -6,11 +6,12 @@ const router: Router = express.Router()
 
 router.post('/signUp', authController.signUpUser)
 router.get('/signUp/verify', authController.verifyUserSignUp)
+router.post('/verify-password', authController.verifyPassword)
+router.post('/signUp/resend', authController.resendSignUpEmail)
 router.post('/login', customerLogin, authController.signInUser)
-router.post('/oauth-login', customerLogin, authController.oAuthLogin)
-router.post('/oauth-signin/app', customerLogin, authController.appOAuthSignIn)
 router.post('/oauth-signup/app', authController.appOAuthSignUp)
 router.post('/forgot-password', authController.forgotPassoword)
-router.post('/verify-password', authController.verifyPassword)
+router.post('/oauth-login', customerLogin, authController.oAuthLogin)
+router.post('/oauth-signin/app', customerLogin, authController.appOAuthSignIn)
 
 export default router

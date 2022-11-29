@@ -426,7 +426,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             await usersService.updateUser({ _id: userObj._id }, body)
             /** sent email for subscription status updated */
             const notificationTitle = 'Holy Reads Subscription'
-            const notificationDescription = emailTemplatesTitles.customer.subscriptionActivated ? 'Subscription activated' : 'Subscription cancelled'
+            const notificationDescription = emailTemplatesTitles.customer.subscriptionActivated ? `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} Subscription activated` : 'Subscription cancelled'
             if (isAppSubscriptionStatus && subscriptionDetails) {
                   const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: req.body.inAppSubscription.status === 'Active' ? emailTemplatesTitles.customer.subscriptionActivated : emailTemplatesTitles.customer.subscriptionCancelled })
                   const sub = emailTemplateDetails.subject || `Holy Reads Subscription ${req.body.inAppSubscription.status}`
@@ -1119,7 +1119,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   }
             }
             const notificationTitle = 'Holy Reads Subscription'
-            const notificationDescription = `Holy Reads ${subscriptionDetails.title} subscription has been activated! 🎉`
+            const notificationDescription = `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} subscription has been activated! 🎉`
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
             fetchNotifications(io.sockets, { _id: userObj._id })
 

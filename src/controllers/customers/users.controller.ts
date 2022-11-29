@@ -244,7 +244,7 @@ const verifyEmailAuth = async (req: Request, res: Response, next: NextFunction) 
                   return next(Boom.notFound(authControllerResponse.sentVerifyEmailFailure))
             }
             const title = 'Email auth enabled';
-            const description = 'Now you can access holyreads by using your email and password';
+            const description = 'Now you can access holy reads by using your email and password';
             await notificationsService.createNotification({ userId: user._id, type: 'setting', notification: { title, description } })
             fetchNotifications(io.sockets, { _id: user._id })
             res.status(200).send({ message: authControllerResponse.emailAuthEnabledSuccess })
@@ -425,11 +425,11 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             }
             await usersService.updateUser({ _id: userObj._id }, body)
             /** sent email for subscription status updated */
-            const notificationTitle = 'Holyreads Subscription'
+            const notificationTitle = 'Holy Reads Subscription'
             const notificationDescription = emailTemplatesTitles.customer.subscriptionActivated ? 'Subscription activated' : 'Subscription cancelled'
             if (isAppSubscriptionStatus && subscriptionDetails) {
                   const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: req.body.inAppSubscription.status === 'Active' ? emailTemplatesTitles.customer.subscriptionActivated : emailTemplatesTitles.customer.subscriptionCancelled })
-                  const sub = emailTemplateDetails.subject || `Holyreads Subscription ${req.body.inAppSubscription.status}`
+                  const sub = emailTemplateDetails.subject || `Holy Reads Subscription ${req.body.inAppSubscription.status}`
                   let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have ${req.body.inAppSubscription.status} the subscription.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
                   let now = userObj?.inAppSubscription?.createdAt
                   let subscriptionEndDate;
@@ -1118,8 +1118,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         html = htmlData
                   }
             }
-            const notificationTitle = 'Holyreads Subscription'
-            const notificationDescription = `Holyreads ${subscriptionDetails.title} subscription has been activated! 🎉`
+            const notificationTitle = 'Holy Reads Subscription'
+            const notificationDescription = `Holy Reads ${subscriptionDetails.title} subscription has been activated! 🎉`
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
             fetchNotifications(io.sockets, { _id: userObj._id })
 

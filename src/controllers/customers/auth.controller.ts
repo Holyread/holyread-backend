@@ -140,7 +140,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     const token = req.query.token as string
     let user: any;
     let body: any = {};
-    if (!req?.query?.token || !req?.query?.code) {
+    if (!req?.query?.token && !req?.query?.code) {
       return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
     }
 
@@ -148,7 +148,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       const decryptToken: any = verifyToken(token)
       body.email = decryptToken.email
       body.verificationCode = decryptToken.code
-    }  {
+    } {
       body.verificationCode = req.query.code;
     }
 
@@ -251,7 +251,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     }
     await usersService.updateUser({ _id: user._id }, { verificationCode })
     res.status(200).send({
-      message: adminControllerResponse.sendCodeSuccess
+      message: adminControllerResponse.sendVerificationEmailSuccess
     })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -582,13 +582,58 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
   }
 }
 
+/** Resend signUp Email */
+const resendSignUpEmail = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const params: { email: string } = req.body
+    const user = await usersService.getOneUserByFilter({ email: params.email })
+
+    if (!user) {
+      return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
+    }
+    if (user && user.verified) {
+      return next(Boom.conflict(authControllerResponse.userAlreadyVerifiedError))
+    }
+
+    const verificationCode = user.verificationCode || Math.floor(1000 + Math.random() * 9000)
+    const token: string = getToken({ code: String(verificationCode), email: params.email })
+    const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
+    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
+    const subject = emailTemplateDetails?.subject || 'Account Verification'
+    let html = `<p>Dear ${params.email.split('@')[0]},</p><p>Thank you for registering with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${params.email}</p><p>Please click <a href="${link}">Here</a> to verify your registration.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+
+    if (emailTemplateDetails && emailTemplateDetails.content) {
+      const contentData = { link, code: verificationCode, username: params.email.split('@')[0] }
+      const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+      if (htmlData) {
+        html = htmlData
+      }
+    }
+
+    const result = await sentEmail(params.email, subject, html);
+    if (!result) {
+      return next(Boom.badData(adminControllerResponse.sentEmailFailure))
+    }
+
+    res.status(200).send({
+      message: adminControllerResponse.sendVerificationEmailSuccess
+    })
+
+    usersService.updateUser({ _id: user._id }, { verificationCode })
+  } catch (e: any) {
+    next(Boom.badData(e.message))
+  }
+}
+
+
 export default {
   signInUser,
-  verifyUserSignUp,
   signUpUser,
-  forgotPassoword,
+  oAuthLogin,
   verifyPassword,
   appOAuthSignUp,
   appOAuthSignIn,
-  oAuthLogin,
+  forgotPassoword,
+  verifyUserSignUp,
+  resendSignUpEmail,
 }

@@ -154,6 +154,9 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
 
     if (token) {
       const decryptToken: any = verifyToken(token)
+      if (!decryptToken.code) {
+        return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+      }
       body.email = decryptToken.email
       body.verificationCode = decryptToken.code
     } {

@@ -36,7 +36,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
 
             return next(
                 Boom.forbidden(
-                    'Device limit reached, please logout from previews one device',
+                    'You have used this Holy Reads account on 3 devices. Please log out from one of your devices and try again.',
                     {
                         token,
                         devices: userDetails?.maxDevices

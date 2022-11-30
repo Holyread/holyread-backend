@@ -85,14 +85,14 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             const notifications = await notificationsService.getUserNotifications({ userId: userObj._id })
             userObj.notifications = notifications
             res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
-            
+
             if (!userObj.libraries) {
                   const libraries = await userService.createUserLibrary({
                         saved: [],
                         completed: [],
                         view: [],
                         smallGroups: [],
-                        reading: [], 
+                        reading: [],
                   })
                   userObj.libraries = libraries?._id
             }
@@ -166,24 +166,27 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
             }
             const userObj = Object.assign({}, req.user)
             const emailUser = await usersService.getOneUserByFilter({ email, _id: { '$ne': userObj._id } })
+            
             if (emailUser) {
                   return next(Boom.conflict(authControllerResponse.emailAlreadyUsedError))
             }
             if (userObj.email && userObj.password && userObj.email === email) {
                   return res.status(200).send({ message: authControllerResponse.emailAuthExist })
             }
+
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
             const token: string = getToken({ code: String(verificationCode), email, password: encrypt(password), _id: userObj._id })
             const link: string = `${origins[NODE_ENV]}/account/verify-user?email-auth=true&token=${token}`
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthVerification })
             const sub = emailTemplateDetails.subject || 'Customer Email Auth Verification'
-            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth.</p><p>Please click <a href="${link}">Here</a> to verify your new email auth.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth.</p><p>Please click this code ${verificationCode} <!-- <a href="${link}">Here</a> --> to verify your new email auth.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
+                        link,
+                        code: verificationCode,
                         username: email.split('@')[0],
-                        link
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
                   if (htmlData) {
@@ -205,12 +208,42 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
 /** Verify Email Auth */
 const verifyEmailAuth = async (req: Request, res: Response, next: NextFunction) => {
       try {
-            const token = req.query.token as string
-            const decryptToken: any = verifyToken(token)
-            const code = decryptToken.code
-            const email = decryptToken.email
-            const password = decryptToken.password
-            const _id = decryptToken._id
+            const token = req?.query?.token as string
+
+            if (!token && !req?.query?.code) {
+                  return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+            }
+
+            if (
+                  !token &&
+                  req?.query?.code &&
+                  (
+                        !req?.body?.email ||
+                        !req?.body?.password
+                  )
+            ) {
+                  return next(Boom.notAcceptable(authControllerResponse.missingEmailOrPasswordError))
+            }
+
+            if (
+                  !token &&
+                  req?.query?.code &&
+                  !req?.query?._id
+            ) {
+                  return next(Boom.notAcceptable(authControllerResponse.missingIdParamError))
+            }
+
+            const decryptToken: any = token && verifyToken(token)
+
+            if (token && !decryptToken._id) {
+                  return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+            }
+
+            const _id = token ? decryptToken._id : req.query._id
+            const code = token ? decryptToken.code : req.query.code
+            const email = token ? decryptToken.email : req.body.email
+            const password = token ? decrypt(decryptToken.password) : req.body.password
+
             /** Get user from db */
             const user: any = await usersService.getOneUserByFilter({ verificationCode: code, _id })
             if (!user) {
@@ -222,7 +255,7 @@ const verifyEmailAuth = async (req: Request, res: Response, next: NextFunction) 
                   status: 'Active',
                   $unset: { verificationCode: 1 },
                   email,
-                  password: decrypt(password)
+                  password: password
             })
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthEnabled })
@@ -300,7 +333,7 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
                                                       new Date(
                                                             createdAt
                                                       )
-                                                      .getDate() + 3
+                                                            .getDate() + 3
                                                 )
                                     )
                               )
@@ -503,8 +536,8 @@ const getEncodeImage = async (req: Request | any, res: Response, next: NextFunct
             if (req.body.image) {
                   req.body.image = await imageUrlToBase64(req.body.image);
             }
-            return res.status(200).send({ 
-                  message: authControllerResponse.encodeImageSuccess, data: { image: req.body.image } 
+            return res.status(200).send({
+                  message: authControllerResponse.encodeImageSuccess, data: { image: req.body.image }
             })
       } catch (e: any) {
             return next(Boom.badData(e.message))

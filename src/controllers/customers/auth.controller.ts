@@ -144,12 +144,21 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
     }
 
+    if (
+      req?.query?.code &&
+      !req?.query?.email &&
+      !req?.query?.token
+    ) {
+      return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
+    }
+
     if (token) {
       const decryptToken: any = verifyToken(token)
       body.email = decryptToken.email
       body.verificationCode = decryptToken.code
     } {
       body.verificationCode = req.query.code;
+      body.email = req.query.email;
     }
 
     /** Get user from db */

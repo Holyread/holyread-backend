@@ -587,16 +587,42 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   delete req.body.bookId
                   delete req.body.chapter
             }
+            const addToReads = async () => {
+                  const readingObj = await userObj.libraries?.reading?.find(oneRead => String(oneRead.bookId) === req.body.bookId)
+                  if (!readingObj) {
+                        if (!userObj?.libraries?.reading) {
+                              userObj.libraries.reading = []
+                        }
+                        userObj.libraries.reading.push({
+                              updatedAt: new Date(),
+                              bookId: Types.ObjectId(req.body.bookId),
+                              chaptersCompleted: [],
+                        })
+                        await usersService.updateUserLibrary({ _id: query._id }, userObj.libraries)
+                        return;
+                  }
+                  await userService.updateUserLibrary(
+                        {
+                              _id: query._id,
+                              'reading.bookId': Types.ObjectId(req.body.bookId)
+                        },
+                        {
+                              '$set': {
+                                    'reading.$.updatedAt': new Date()
+                              }
+                        }
+                  );
+            }
             if (section === 'view') {
                   const bookSummary = await bookService.findBook({ _id: req.body.bookId })
                   if (!bookSummary) {
                         return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
                   }
                   const viewObj = userObj.libraries?.view?.find(bookItem => String(bookItem.bookId) === req.body.bookId)
+                  if (!userObj?.libraries) {
+                        userObj.libraries = {}
+                  }
                   if (!viewObj) {
-                        if (!userObj?.libraries) {
-                              userObj.libraries = {}
-                        }
                         if (!userObj?.libraries?.view) {
                               userObj.libraries.view = []
                         }
@@ -610,6 +636,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
 
                   query['view.bookId'] = req.body.bookId
                   req.body['$set'] = { 'view.$.bookId': req.body.bookId }
+                  await addToReads()
                   delete req.body.bookId
             }
             /** Add to User small group */

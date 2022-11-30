@@ -631,6 +631,7 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                               createdAt: new Date()
                         })
                         await usersService.updateUserLibrary(query, userObj.libraries)
+                        await addToReads()
                         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
                   }
 

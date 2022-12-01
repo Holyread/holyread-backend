@@ -30,7 +30,7 @@ router.get('/', customerPassport, getUserAccount)
 router.delete('/', customerPassport, deleteUser)
 router.post('/logout', customerPassport, logout)
 
-router.post('/email-auth/verify', verifyEmailAuth)
+router.post('/email-auth/verify', customerPassport, verifyEmailAuth)
 
 router.post('/query', customerPassport, submitQuery)
 router.put('/', customerPassport, updateUserAccount)

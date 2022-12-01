@@ -113,9 +113,50 @@ const getBlessFriend = async (req: Request | any, res: Response, next: NextFunct
       }
 }
 
+const getChangePasswordCode = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const userObj = Object.assign({}, req.user)
+            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.forgotPassword })
+            const verificationCode = Math.floor(1000 + Math.random() * 9000)
+            const sub = 'Change Password Verification'
+            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have requested a password change on Holy Read. Please enter this code ${verificationCode} to finish verification step</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            
+            if (emailTemplateDetails && emailTemplateDetails.content) {
+                  const contentData = {
+                        username: userObj.email.split('@')[0],
+                        otp: verificationCode
+                  }
+                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  if (htmlData) {
+                        html = htmlData
+                  }
+            }
+            
+            await sentEmail(userObj.email, sub, html);
+            await usersService.updateUser(
+                  { _id: userObj._id },
+                  { 
+                        'codes.changePassword': {
+                              code: verificationCode,
+                              expiredIn: new Date(
+                                    new Date()
+                                          .setMinutes(
+                                                new Date()
+                                                      .getMinutes() + 5
+                                          )
+                              )
+                        }
+                  }
+            )
+            res.status(200).send({ message: authControllerResponse.chnagePasswordRequest })
+      } catch (e: any) {
+            next(Boom.badData(e.message))
+      }
+}
+
 const changePassword = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const { password, newPassword }: { password: string, newPassword: string } = req.body;
+            const { password, newPassword, code }: { password: string, newPassword: string, code: number } = req.body;
             const userObj = Object.assign({}, req.user)
             if (!password || (newPassword && userObj?.password !== encrypt(password || ''))) {
                   return next(Boom.badData(authControllerResponse.userInvalidPasswordError))
@@ -126,15 +167,25 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             ) {
                   return next(Boom.badData(authControllerResponse.userSamePasswordError))
             }
-            await usersService.updateUser({ _id: userObj._id }, { password: newPassword || password })
+            if (
+                  !userObj?.codes?.changePassword?.code ||
+                  userObj?.codes?.changePassword?.code !== code
+            ) {
+                  return next(Boom.notAcceptable(authControllerResponse.invalidCodeError))
+            }
+            if (new Date(userObj?.codes?.changePassword?.expiredIn).getTime() < new Date().getTime()) {
+                  return next(Boom.resourceGone(authControllerResponse.codeExpiredError))
+            }
+
+            await usersService.updateUser({ _id: userObj._id }, { password: newPassword || password, $unset: { 'codes.changePassword': 1 } })
             const notificationTitle = 'Change Password'
             const notificationDescription = 'Password Changed Successfully'
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
             fetchNotifications(io.sockets, { _id: userObj._id })
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.changePassword })
 
-            const sub = emailTemplateDetails.subject || 'Change Password'
-            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have requested a password change on Holyread that succeed.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            const sub = emailTemplateDetails.subject || 'Holy Reads Password Changed'
+            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have requested a password change on Holy Reads that succeed.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
@@ -1290,5 +1341,6 @@ export {
       updateUserAccount,
       updateUserLibrary,
       getUserSubscription,
+      getChangePasswordCode,
       getShareOptionImageUrl,
 }

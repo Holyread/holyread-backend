@@ -11,6 +11,7 @@ import {
   subscribePlan,
   updateHandout,
   getUserAccount,
+  getEncodeImage,
   getBlessFriend,
   changePassword,
   getUserLibrary,
@@ -19,18 +20,17 @@ import {
   updateUserAccount,
   updateUserLibrary,
   getUserSubscription,
+  getChangePasswordCode,
   getShareOptionImageUrl,
-  getEncodeImage,
 } from '../../controllers/customers/users.controller'
 
 const router: Router = express.Router()
 
-router.get('/', customerPassport, getUserAccount)
 
 router.delete('/', customerPassport, deleteUser)
 router.post('/logout', customerPassport, logout)
 
-router.post('/email-auth/verify', customerPassport, verifyEmailAuth)
+router.get('/', customerPassport, getUserAccount)
 
 router.post('/query', customerPassport, submitQuery)
 router.put('/', customerPassport, updateUserAccount)
@@ -51,6 +51,8 @@ router.get('/bless-friend/:email', customerPassport, getBlessFriend)
 router.patch('/handout/:smallGroup', customerPassport, updateHandout)
 
 router.post('/encode-image', customerPassport, getEncodeImage)
+router.post('/email-auth/verify', customerPassport, verifyEmailAuth)
+router.get('/change-password/code', customerPassport, getChangePasswordCode)
 router.post('/share-options-image', customerPassport, getShareOptionImageUrl)
 
 export default router

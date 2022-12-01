@@ -122,6 +122,7 @@ export type createUserType = {
     },
     device: string,
     maxDevices: [string],
+    codes: Object,
     timeZone?: string,
     createdAt: Date,
     updatedAt: Date,
@@ -185,6 +186,7 @@ export type getUserType = {
     },
     device: string,
     maxDevices: [string],
+    codes: Object,
     timeZone?: string,
     createdAt: Date,
     updatedAt: Date,
@@ -254,6 +256,7 @@ export const UserSchema = new Schema({
             return new Date()
         },
     },
+    codes: { type: Object },
     updatedAt: { type: Date },
     lastSeen: { type: Date },
 }, { strict: 'throw' })

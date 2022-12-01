@@ -7,8 +7,8 @@ import { BookSummaryModel } from '../models/index'
             const books = await BookSummaryModel.find(
                   {
                         $or: [
-                              { views: { $gte: 8 } },
-                              { views: { $lt: 9 } }
+                              { views: { $exists: false } },
+                              { views: 0 }
                         ]
                   }
             ).lean();

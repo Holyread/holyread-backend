@@ -206,17 +206,17 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
 }
 
 /** Verify Email Auth */
-const verifyEmailAuth = async (req: Request, res: Response, next: NextFunction) => {
+const verifyEmailAuth = async (req: any, res: Response, next: NextFunction) => {
       try {
             const token = req?.query?.token as string
 
-            if (!token && !req?.query?.code) {
+            if (!token && !req?.body?.code) {
                   return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
             }
 
             if (
                   !token &&
-                  req?.query?.code &&
+                  req?.body?.code &&
                   (
                         !req?.body?.email ||
                         !req?.body?.password
@@ -225,22 +225,14 @@ const verifyEmailAuth = async (req: Request, res: Response, next: NextFunction) 
                   return next(Boom.notAcceptable(authControllerResponse.missingEmailOrPasswordError))
             }
 
-            if (
-                  !token &&
-                  req?.query?.code &&
-                  !req?.query?._id
-            ) {
-                  return next(Boom.notAcceptable(authControllerResponse.missingIdParamError))
-            }
-
             const decryptToken: any = token && verifyToken(token)
 
             if (token && !decryptToken._id) {
                   return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
             }
 
-            const _id = token ? decryptToken._id : req.query._id
-            const code = token ? decryptToken.code : req.query.code
+            const _id = token ? decryptToken._id : req.user._id
+            const code = token ? decryptToken.code : req.body.code
             const email = token ? decryptToken.email : req.body.email
             const password = token ? decrypt(decryptToken.password) : req.body.password
 
@@ -1163,7 +1155,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             }
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
-            const sub = emailTemplateDetails.subject || 'Holyreads Subscription'
+            const sub = emailTemplateDetails.subject || 'Holy Reads Subscription'
             let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {

@@ -21,7 +21,6 @@ export const responseMessage = {
         userNotAuthorizationError: 'Incorrect credentials or Wrong password',
         missingSocialAccountError: '💬 Your account is not registered with us, please do signup with social media account',
         missingEmailOrPasswordError: 'Email or password is missing',
-        missingIdParamError: 'id param is missing',
         missingEmailError: 'Email is required',
         missingAppleEmailError: 'Go to iCloud > Password and Security > App using apple ID > Stop using apple ID.',
         emailAlreadyUsedError: 'Email already used',

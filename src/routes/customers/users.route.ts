@@ -52,7 +52,7 @@ router.patch('/handout/:smallGroup', customerPassport, updateHandout)
 
 router.post('/encode-image', customerPassport, getEncodeImage)
 router.post('/email-auth/verify', customerPassport, verifyEmailAuth)
-router.post('/change-password/code', customerPassport, getChangePasswordCode)
+router.get('/change-password/code', customerPassport, getChangePasswordCode)
 router.post('/share-options-image', customerPassport, getShareOptionImageUrl)
 
 export default router

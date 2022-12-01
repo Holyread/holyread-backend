@@ -115,17 +115,7 @@ const getBlessFriend = async (req: Request | any, res: Response, next: NextFunct
 
 const getChangePasswordCode = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const { password, newPassword }: { password: string, newPassword: string } = req.body;
             const userObj = Object.assign({}, req.user)
-            if (!password || (newPassword && userObj?.password !== encrypt(password || ''))) {
-                  return next(Boom.badData(authControllerResponse.userInvalidPasswordError))
-            }
-            if (
-                  (!newPassword && userObj?.password === encrypt(password || '')) ||
-                  (newPassword && userObj?.password === encrypt(newPassword || ''))
-            ) {
-                  return next(Boom.badData(authControllerResponse.userSamePasswordError))
-            }
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.forgotPassword })
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
             const sub = 'Change Password Verification'

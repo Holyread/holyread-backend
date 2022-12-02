@@ -56,6 +56,7 @@ export interface IUser extends mongoose.Document {
         planId?: string,
         createdAt?: Date,
         planRenewRemindAt?: Date,
+        expiredAt: Date
     },
     device: string,
     maxDevices: [string],
@@ -119,6 +120,7 @@ export type createUserType = {
         planId?: string,
         createdAt?: Date,
         planRenewRemindAt?: Date,
+        expiredAt: Date
     },
     device: string,
     maxDevices: [string],
@@ -183,6 +185,7 @@ export type getUserType = {
         planId?: string,
         createdAt?: Date,
         planRenewRemindAt?: Date,
+        expiredAt: Date
     },
     device: string,
     maxDevices: [string],
@@ -245,6 +248,7 @@ export const UserSchema = new Schema({
         planId: { type: String },
         createdAt: { type: Date },
         planRenewRemindAt: { type: Date },
+        expiredAt: { type: Date }
     },
     inAppSubscription: { type: Object }, // default key - createdAt(Date)
     inAppSubscriptionStatus: { type: String },

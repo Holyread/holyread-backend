@@ -121,7 +121,7 @@ const start = async () => {
                               timeBefore24 =
                                     now.getTime() - (1000 * 60 * 60 * 24);
 
-                        if (!subscription?.id && !user.inAppSubscription?.createdAt) {
+                        if (!subscription?.id && !user.inAppSubscription?.expiredAt) {
                               return;
                         }
 
@@ -136,31 +136,15 @@ const start = async () => {
                               )
                         ) { return; }
 
-                        else if (user?.inAppSubscription) {
-                              let now = new Date(user?.inAppSubscription?.createdAt), subscriptionEndDate;
+                        else if (user?.inAppSubscription?.expiredAt) {
 
-                              switch (user.subscription.duration) {
-                                    case "Year":
-                                          subscriptionEndDate = now.setMonth(now.getMonth() + 12);
-                                          break;
-                                    case "Half Year":
-                                          subscriptionEndDate = now.setMonth(now.getMonth() + 6);
-                                          break;
-                                    default:
-                                          subscriptionEndDate = now.setMonth(now.getMonth() + 1);
-                                          break;
-                              }
                               if (
                                     /** If notified within 24 hours then skip */
                                     (new Date(user?.inAppSubscription?.planRenewRemindeAt)?.getTime() > timeBefore24) ||
-                                    subscriptionEndDate > timeAfter24
+                                    new Date(user?.inAppSubscription?.expiredAt).getTime() > timeAfter24
                               ) { return }
                         }
                         const message = {
-                              trailing: {
-                                    title: 'Holy Reads Renewal Reminder ⏳',
-                                    description: `Holy Reads gently reminds to you that, Your ${user?.subscription?.title} trail will upgrade as active plan from the tomorrow ✨`
-                              },
                               active: {
                                     title: 'Holy Reads Renewal Reminder ⏳',
                                     description: `Holy Reads gently reminds to you that, Your ${user?.subscription?.title} plan will upgrade tomorrow ✨`
@@ -169,12 +153,12 @@ const start = async () => {
 
                         emailPromises.push(
                               sentSubscriptionEmail(
-                                    user, message[subscription.status || 'active'].title, message[subscription.status || 'active'].description
+                                    user, message['active'].title, message['active'].description
                               ).catch(() => { return undefined; })
                         )
                         notificationPromises.push(
                               sentNotification(
-                                    message[subscription.status || 'active'].title, message[subscription.status || 'active'].description, user
+                                    message['active'].title, message['active'].description, user
                               ).catch(() => { return undefined; })
                         )
 

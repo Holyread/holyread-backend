@@ -436,7 +436,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
             = await ratingService
                 .getBooksRatings(
                     result[0].page.map(
-                        i => i.book && i.book._id
+                        i => i?._id
                     )
                     .filter(i => i) as [string],
                     global.currentUser._id

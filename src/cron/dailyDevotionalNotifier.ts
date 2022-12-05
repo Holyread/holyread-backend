@@ -62,7 +62,7 @@ const start = async () => {
                                           pushNotification(
                                                 item?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
                                                 '🔔 Your Daily Pick is ready! 🔑',
-                                                `📒 📕 📙 ${readOfDay.title} 🔖 `,
+                                                `📙 ${readOfDay.title} 🔖 `,
                                                 JSON.stringify({
                                                       dailyDevotional: {
                                                             _id: readOfDay._id,

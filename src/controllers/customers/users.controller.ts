@@ -493,7 +493,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   body.oAuth = oAuth.filter(i => i.provider !== req.body.provider)
             }
             const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: userObj.subscription });
-            const isAppSubscriptionStatus = ['Cancelled', 'Active'].includes(req.body.inAppSubscription?.status) && !!userObj?.inAppSubscriptionStatus && !!req.body.inAppSubscription?.status !== userObj?.inAppSubscriptionStatus
+            const isAppSubscriptionStatus = !!subscriptionDetails && ['Cancelled', 'Active'].includes(req.body.inAppSubscription?.status) && !!userObj?.inAppSubscriptionStatus && !!req.body.inAppSubscription?.status !== userObj?.inAppSubscriptionStatus
 
             /** update in App subscription status */
             if (isAppSubscriptionStatus && subscriptionDetails) {
@@ -502,7 +502,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             await usersService.updateUser({ _id: userObj._id }, body)
             /** sent email for subscription status updated */
             const notificationTitle = 'Holy Reads Subscription'
-            const notificationDescription = emailTemplatesTitles.customer.subscriptionActivated ? `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} Subscription activated` : 'Subscription cancelled'
+            const notificationDescription = isAppSubscriptionStatus && emailTemplatesTitles.customer.subscriptionActivated ? `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} Subscription activated` : 'Subscription cancelled'
             if (isAppSubscriptionStatus && subscriptionDetails) {
                   const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: req.body.inAppSubscription.status === 'Active' ? emailTemplatesTitles.customer.subscriptionActivated : emailTemplatesTitles.customer.subscriptionCancelled })
                   const sub = emailTemplateDetails.subject || `Holy Reads Subscription ${req.body.inAppSubscription.status}`

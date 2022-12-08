@@ -85,14 +85,14 @@ const getUserAccount = async (req: Request | any, res: Response, next: NextFunct
             const notifications = await notificationsService.getUserNotifications({ userId: userObj._id })
             userObj.notifications = notifications
             res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
-            
+
             if (!userObj.libraries) {
                   const libraries = await userService.createUserLibrary({
                         saved: [],
                         completed: [],
                         view: [],
                         smallGroups: [],
-                        reading: [], 
+                        reading: [],
                   })
                   userObj.libraries = libraries?._id
             }
@@ -113,9 +113,50 @@ const getBlessFriend = async (req: Request | any, res: Response, next: NextFunct
       }
 }
 
+const getChangePasswordCode = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const userObj = Object.assign({}, req.user)
+            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.forgotPassword })
+            const verificationCode = Math.floor(1000 + Math.random() * 9000)
+            const sub = 'Change Password Verification'
+            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have requested a password change on Holy Read. Please enter this code ${verificationCode} to finish verification step</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            
+            if (emailTemplateDetails && emailTemplateDetails.content) {
+                  const contentData = {
+                        username: userObj.email.split('@')[0],
+                        otp: verificationCode
+                  }
+                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  if (htmlData) {
+                        html = htmlData
+                  }
+            }
+            
+            await sentEmail(userObj.email, sub, html);
+            await usersService.updateUser(
+                  { _id: userObj._id },
+                  { 
+                        'codes.changePassword': {
+                              code: verificationCode,
+                              expiredIn: new Date(
+                                    new Date()
+                                          .setMinutes(
+                                                new Date()
+                                                      .getMinutes() + 5
+                                          )
+                              )
+                        }
+                  }
+            )
+            res.status(200).send({ message: authControllerResponse.chnagePasswordRequest })
+      } catch (e: any) {
+            next(Boom.badData(e.message))
+      }
+}
+
 const changePassword = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const { password, newPassword }: { password: string, newPassword: string } = req.body;
+            const { password, newPassword, code }: { password: string, newPassword: string, code: number } = req.body;
             const userObj = Object.assign({}, req.user)
             if (!password || (newPassword && userObj?.password !== encrypt(password || ''))) {
                   return next(Boom.badData(authControllerResponse.userInvalidPasswordError))
@@ -126,15 +167,25 @@ const changePassword = async (req: Request | any, res: Response, next: NextFunct
             ) {
                   return next(Boom.badData(authControllerResponse.userSamePasswordError))
             }
-            await usersService.updateUser({ _id: userObj._id }, { password: newPassword || password })
+            if (
+                  !userObj?.codes?.changePassword?.code ||
+                  userObj?.codes?.changePassword?.code !== code
+            ) {
+                  return next(Boom.notAcceptable(authControllerResponse.invalidCodeError))
+            }
+            if (new Date(userObj?.codes?.changePassword?.expiredIn).getTime() < new Date().getTime()) {
+                  return next(Boom.resourceGone(authControllerResponse.codeExpiredError))
+            }
+
+            await usersService.updateUser({ _id: userObj._id }, { password: newPassword || password, $unset: { 'codes.changePassword': 1 } })
             const notificationTitle = 'Change Password'
             const notificationDescription = 'Password Changed Successfully'
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
             fetchNotifications(io.sockets, { _id: userObj._id })
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.changePassword })
 
-            const sub = emailTemplateDetails.subject || 'Change Password'
-            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have requested a password change on Holyread that succeed.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            const sub = emailTemplateDetails.subject || 'Holy Reads Password Changed'
+            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have requested a password change on Holy Reads that succeed.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
@@ -166,24 +217,27 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
             }
             const userObj = Object.assign({}, req.user)
             const emailUser = await usersService.getOneUserByFilter({ email, _id: { '$ne': userObj._id } })
+            
             if (emailUser) {
                   return next(Boom.conflict(authControllerResponse.emailAlreadyUsedError))
             }
             if (userObj.email && userObj.password && userObj.email === email) {
                   return res.status(200).send({ message: authControllerResponse.emailAuthExist })
             }
+
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
             const token: string = getToken({ code: String(verificationCode), email, password: encrypt(password), _id: userObj._id })
             const link: string = `${origins[NODE_ENV]}/account/verify-user?email-auth=true&token=${token}`
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthVerification })
             const sub = emailTemplateDetails.subject || 'Customer Email Auth Verification'
-            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth.</p><p>Please click <a href="${link}">Here</a> to verify your new email auth.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth.</p><p>Please click this code ${verificationCode} <!-- <a href="${link}">Here</a> --> to verify your new email auth.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
+                        link,
+                        code: verificationCode,
                         username: email.split('@')[0],
-                        link
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
                   if (htmlData) {
@@ -203,14 +257,36 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
 }
 
 /** Verify Email Auth */
-const verifyEmailAuth = async (req: Request, res: Response, next: NextFunction) => {
+const verifyEmailAuth = async (req: any, res: Response, next: NextFunction) => {
       try {
-            const token = req.query.token as string
-            const decryptToken: any = verifyToken(token)
-            const code = decryptToken.code
-            const email = decryptToken.email
-            const password = decryptToken.password
-            const _id = decryptToken._id
+            const token = req?.query?.token as string
+
+            if (!token && !req?.body?.code) {
+                  return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+            }
+
+            if (
+                  !token &&
+                  req?.body?.code &&
+                  (
+                        !req?.body?.email ||
+                        !req?.body?.password
+                  )
+            ) {
+                  return next(Boom.notAcceptable(authControllerResponse.missingEmailOrPasswordError))
+            }
+
+            const decryptToken: any = token && verifyToken(token)
+
+            if (token && !decryptToken._id) {
+                  return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+            }
+
+            const _id = token ? decryptToken._id : req.user._id
+            const code = token ? decryptToken.code : req.body.code
+            const email = token ? decryptToken.email : req.body.email
+            const password = token ? decrypt(decryptToken.password) : req.body.password
+
             /** Get user from db */
             const user: any = await usersService.getOneUserByFilter({ verificationCode: code, _id })
             if (!user) {
@@ -222,7 +298,7 @@ const verifyEmailAuth = async (req: Request, res: Response, next: NextFunction) 
                   status: 'Active',
                   $unset: { verificationCode: 1 },
                   email,
-                  password: decrypt(password)
+                  password: password
             })
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthEnabled })
@@ -244,7 +320,7 @@ const verifyEmailAuth = async (req: Request, res: Response, next: NextFunction) 
                   return next(Boom.notFound(authControllerResponse.sentVerifyEmailFailure))
             }
             const title = 'Email auth enabled';
-            const description = 'Now you can access holyreads by using your email and password';
+            const description = 'Now you can access holy reads by using your email and password';
             await notificationsService.createNotification({ userId: user._id, type: 'setting', notification: { title, description } })
             fetchNotifications(io.sockets, { _id: user._id })
             res.status(200).send({ message: authControllerResponse.emailAuthEnabledSuccess })
@@ -300,7 +376,7 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
                                                       new Date(
                                                             createdAt
                                                       )
-                                                      .getDate() + 3
+                                                            .getDate() + 3
                                                 )
                                     )
                               )
@@ -417,7 +493,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   body.oAuth = oAuth.filter(i => i.provider !== req.body.provider)
             }
             const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: userObj.subscription });
-            const isAppSubscriptionStatus = ['Cancelled', 'Active'].includes(req.body.inAppSubscription?.status) && !!userObj?.inAppSubscriptionStatus && !!req.body.inAppSubscription?.status !== userObj?.inAppSubscriptionStatus
+            const isAppSubscriptionStatus = !!subscriptionDetails && ['Cancelled', 'Active'].includes(req.body.inAppSubscription?.status) && !!userObj?.inAppSubscriptionStatus && !!req.body.inAppSubscription?.status !== userObj?.inAppSubscriptionStatus
 
             /** update in App subscription status */
             if (isAppSubscriptionStatus && subscriptionDetails) {
@@ -425,11 +501,11 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             }
             await usersService.updateUser({ _id: userObj._id }, body)
             /** sent email for subscription status updated */
-            const notificationTitle = 'Holyreads Subscription'
-            const notificationDescription = emailTemplatesTitles.customer.subscriptionActivated ? 'Subscription activated' : 'Subscription cancelled'
+            const notificationTitle = 'Holy Reads Subscription'
+            const notificationDescription = isAppSubscriptionStatus && emailTemplatesTitles.customer.subscriptionActivated ? `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} Subscription activated` : 'Subscription cancelled'
             if (isAppSubscriptionStatus && subscriptionDetails) {
                   const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: req.body.inAppSubscription.status === 'Active' ? emailTemplatesTitles.customer.subscriptionActivated : emailTemplatesTitles.customer.subscriptionCancelled })
-                  const sub = emailTemplateDetails.subject || `Holyreads Subscription ${req.body.inAppSubscription.status}`
+                  const sub = emailTemplateDetails.subject || `Holy Reads Subscription ${req.body.inAppSubscription.status}`
                   let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have ${req.body.inAppSubscription.status} the subscription.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
                   let now = userObj?.inAppSubscription?.createdAt
                   let subscriptionEndDate;
@@ -503,8 +579,8 @@ const getEncodeImage = async (req: Request | any, res: Response, next: NextFunct
             if (req.body.image) {
                   req.body.image = await imageUrlToBase64(req.body.image);
             }
-            return res.status(200).send({ 
-                  message: authControllerResponse.encodeImageSuccess, data: { image: req.body.image } 
+            return res.status(200).send({
+                  message: authControllerResponse.encodeImageSuccess, data: { image: req.body.image }
             })
       } catch (e: any) {
             return next(Boom.badData(e.message))
@@ -587,16 +663,42 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   delete req.body.bookId
                   delete req.body.chapter
             }
+            const addToReads = async () => {
+                  const readingObj = await userObj.libraries?.reading?.find(oneRead => String(oneRead.bookId) === req.body.bookId)
+                  if (!readingObj) {
+                        if (!userObj?.libraries?.reading) {
+                              userObj.libraries.reading = []
+                        }
+                        userObj.libraries.reading.push({
+                              updatedAt: new Date(),
+                              bookId: Types.ObjectId(req.body.bookId),
+                              chaptersCompleted: [],
+                        })
+                        await usersService.updateUserLibrary({ _id: query._id }, userObj.libraries)
+                        return;
+                  }
+                  await userService.updateUserLibrary(
+                        {
+                              _id: query._id,
+                              'reading.bookId': Types.ObjectId(req.body.bookId)
+                        },
+                        {
+                              '$set': {
+                                    'reading.$.updatedAt': new Date()
+                              }
+                        }
+                  );
+            }
             if (section === 'view') {
                   const bookSummary = await bookService.findBook({ _id: req.body.bookId })
                   if (!bookSummary) {
                         return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
                   }
                   const viewObj = userObj.libraries?.view?.find(bookItem => String(bookItem.bookId) === req.body.bookId)
+                  if (!userObj?.libraries) {
+                        userObj.libraries = {}
+                  }
                   if (!viewObj) {
-                        if (!userObj?.libraries) {
-                              userObj.libraries = {}
-                        }
                         if (!userObj?.libraries?.view) {
                               userObj.libraries.view = []
                         }
@@ -605,11 +707,13 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                               createdAt: new Date()
                         })
                         await usersService.updateUserLibrary(query, userObj.libraries)
+                        await addToReads()
                         return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
                   }
 
                   query['view.bookId'] = req.body.bookId
                   req.body['$set'] = { 'view.$.bookId': req.body.bookId }
+                  await addToReads()
                   delete req.body.bookId
             }
             /** Add to User small group */
@@ -1102,7 +1206,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             }
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
-            const sub = emailTemplateDetails.subject || 'Holyreads Subscription'
+            const sub = emailTemplateDetails.subject || 'Holy Reads Subscription'
             let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
@@ -1118,8 +1222,8 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         html = htmlData
                   }
             }
-            const notificationTitle = 'Holyreads Subscription'
-            const notificationDescription = `Holyreads ${subscriptionDetails.title} subscription has been activated! 🎉`
+            const notificationTitle = 'Holy Reads Subscription'
+            const notificationDescription = `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} subscription has been activated! 🎉`
             await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
             fetchNotifications(io.sockets, { _id: userObj._id })
 
@@ -1237,5 +1341,6 @@ export {
       updateUserAccount,
       updateUserLibrary,
       getUserSubscription,
+      getChangePasswordCode,
       getShareOptionImageUrl,
 }

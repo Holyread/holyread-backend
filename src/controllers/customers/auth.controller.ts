@@ -66,7 +66,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
     const subject = emailTemplateDetails?.subject || 'Account Verification'
-    let html = `<p>Dear ${body.email.split('@')[0]},</p><p>Thank you for registering with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${body.email}</p><p>Please click <a href="${link}">Here</a> to verify your registration.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+    let html = `<p>Dear ${body.email.split('@')[0]},</p><p>Thank you for registering with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${body.email}</p><p>Please enter this code ${verificationCode} <!-- <a href="${link}">Here</a> --> to verify your registration.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { link, code: verificationCode, username: body.email.split('@')[0] }
       const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
@@ -138,20 +138,45 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
 const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.query.token as string
-    const decryptToken: any = verifyToken(token)
-    const code = decryptToken.code
-    const email = decryptToken.email
+    let user: any;
+    let body: any = {};
+    if (!req?.query?.token && !req?.query?.code) {
+      return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+    }
+
+    if (
+      req?.query?.code &&
+      !req?.query?.email &&
+      !req?.query?.token
+    ) {
+      return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
+    }
+
+    if (token) {
+      const decryptToken: any = verifyToken(token)
+      if (!decryptToken.code) {
+        return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+      }
+      body.email = decryptToken.email
+      body.verificationCode = decryptToken.code
+    } {
+      body.verificationCode = req.query.code;
+      body.email = req.query.email;
+    }
+
     /** Get user from db */
-    const user: any = await usersService.getOneUserByFilter({ verificationCode: code, email })
+    user = await usersService.getOneUserByFilter(body)
     if (!user) {
       return next(Boom.notFound(authControllerResponse.getUserError))
     }
-    let body: any = {
+
+    body = {
       verified: true,
       status: 'Active',
       device: user.referralUserId && req.query.device ? req.query.device : user.device,
       $unset: { verificationCode: 1 }
     }
+
     if (!user.inAppSubscription && user.device === 'web' && !user.referralUserId) {
       const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
       if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
@@ -159,7 +184,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       }
 
       /** Create stripe customer */
-      const customer = await stripeSubscriptionService.createCustomer(email)
+      const customer = await stripeSubscriptionService.createCustomer(user.email)
       /** Create stripe subscription */
       const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
       body.stripe = {
@@ -180,7 +205,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     /** Get welcome email template */
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.welcomeToHolyreads })
     const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
-    let html = `<p>Dear ${email.split('@')[0]},</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]}/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+    let html = `<p>Dear ${user.email.split('@')[0]},</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]}/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { loginURL: `${origins[NODE_ENV]}/account/login` }
@@ -190,7 +215,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       }
     }
     /** sent welcome email */
-    const result = await sentEmail(email, subject, html);
+    const result = await sentEmail(user.email, subject, html);
     if (!result) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
     }
@@ -238,7 +263,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     }
     await usersService.updateUser({ _id: user._id }, { verificationCode })
     res.status(200).send({
-      message: adminControllerResponse.sendCodeSuccess
+      message: adminControllerResponse.sendVerificationEmailSuccess
     })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -404,7 +429,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       /** sent wellcome notification in app */
       pushNotification(tokens, title, description)
       if (data?.notification?.subscription && body.subscription && body.inAppSubscription)
-        pushNotification(tokens, 'Holyreads Subscription', `Holyreads ${subscriptionDetails.title} subscription has been activated! 🎉`)
+        pushNotification(tokens, 'Holy Reads Subscription', `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} subscription has been activated! 🎉`)
     }
     if (!newBody.inAppSubscription) return;
     const now = new Date();
@@ -569,13 +594,58 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
   }
 }
 
+/** Resend signUp Email */
+const resendSignUpEmail = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const params: { email: string } = req.body
+    const user = await usersService.getOneUserByFilter({ email: params.email })
+
+    if (!user) {
+      return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
+    }
+    if (user && user.verified) {
+      return next(Boom.conflict(authControllerResponse.userAlreadyVerifiedError))
+    }
+
+    const verificationCode = user.verificationCode || Math.floor(1000 + Math.random() * 9000)
+    const token: string = getToken({ code: String(verificationCode), email: params.email })
+    const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
+    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
+    const subject = emailTemplateDetails?.subject || 'Account Verification'
+    let html = `<p>Dear ${params.email.split('@')[0]},</p><p>Thank you for registering with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${params.email}</p><p>Please click <a href="${link}">Here</a> to verify your registration.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+
+    if (emailTemplateDetails && emailTemplateDetails.content) {
+      const contentData = { link, code: verificationCode, username: params.email.split('@')[0] }
+      const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+      if (htmlData) {
+        html = htmlData
+      }
+    }
+
+    const result = await sentEmail(params.email, subject, html);
+    if (!result) {
+      return next(Boom.badData(adminControllerResponse.sentEmailFailure))
+    }
+
+    res.status(200).send({
+      message: adminControllerResponse.sendVerificationEmailSuccess
+    })
+
+    usersService.updateUser({ _id: user._id }, { verificationCode })
+  } catch (e: any) {
+    next(Boom.badData(e.message))
+  }
+}
+
+
 export default {
   signInUser,
-  verifyUserSignUp,
   signUpUser,
-  forgotPassoword,
+  oAuthLogin,
   verifyPassword,
   appOAuthSignUp,
   appOAuthSignIn,
-  oAuthLogin,
+  forgotPassoword,
+  verifyUserSignUp,
+  resendSignUpEmail,
 }

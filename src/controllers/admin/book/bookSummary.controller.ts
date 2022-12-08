@@ -58,6 +58,7 @@ const addSummary = async (req: Request, res: Response, next: NextFunction) => {
             body.videoFile = s3File.name
             body.videoFileSize = s3File.size
         }
+        body.views = randomNumberInRange(5, 15);
         const data = await bookSummaryService.createBookSummary(body)
         res.status(200).send({
             message: bookSummaryControllerResponse.createBookSummarySuccess,

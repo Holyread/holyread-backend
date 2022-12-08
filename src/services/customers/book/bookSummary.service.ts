@@ -53,7 +53,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
         delete search.star;
 
         const star = search.star;
-        const count = result[0].total[0].count
+        const count = result[0].total[0]?.count || 0
         const ratings = await ratingService.getBooksRatings(result[0]?.page?.map(i => i && i._id).filter(i => i) as [string], global.currentUser._id)
         const summaries = new Set()
         const libraries = await usersService.getUserLibrary({ _id: global?.currentUser?.libraries })
@@ -436,7 +436,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
             = await ratingService
                 .getBooksRatings(
                     result[0].page.map(
-                        i => i.book && i.book._id
+                        i => i?._id
                     )
                     .filter(i => i) as [string],
                     global.currentUser._id

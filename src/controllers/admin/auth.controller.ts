@@ -39,7 +39,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
       return next(Boom.badData(adminControllerResponse.updateCodeFailure))
     }
     res.status(200).send({
-      message: adminControllerResponse.sendCodeSuccess
+      message: adminControllerResponse.sendVerificationEmailSuccess
     })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -70,7 +70,7 @@ const resendSignInOtp = async (req: Request, res: Response, next: NextFunction) 
       return next(Boom.badData(adminControllerResponse.sentEmailFailure))
     }
     res.status(200).send({
-      message: adminControllerResponse.sendCodeSuccess
+      message: adminControllerResponse.sendVerificationEmailSuccess
     })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -122,7 +122,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     }
     await usersService.updateUser({ _id: user._id }, { verificationCode })
     res.status(200).send({
-      message: adminControllerResponse.sendCodeSuccess
+      message: adminControllerResponse.sendVerificationEmailSuccess
     })
   } catch (e: any) {
     next(Boom.badData(e.message))

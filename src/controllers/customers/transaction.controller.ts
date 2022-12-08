@@ -15,6 +15,7 @@ import transactionsService from '../../services/customers/users/transactions.ser
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service';
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
 import notificationsService from '../../services/customers/notifications/notifications.service';
+import { SubscriptionsModel } from '../../models';
 
 /** Create transaction */
 const createTransaction = async (request: Request, response: Response, next: NextFunction) => {
@@ -37,6 +38,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   reason: '',
                   device: 'web'
             }
+            userService.updateUser({ _id: user._id }, { 'stripe.expiredAt': transaction.planExpiredAt })
             /** Send and push notification */
             const sentNotification = async (notificationTitle: string, notificationDescription: string) => {
                   await notificationsService.createNotification({ userId: user._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
@@ -113,7 +115,13 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   await transactionsService.createTransaction(transaction)
                   /** Sent subscription activation email */
                   await sentSubscriptionEmail()
-                  Promise.all([sentNotification('Holyreads Subscription', `Holy reads ${subscriptionDetails.title} Subscription activated successfully 🎉`)])
+                  Promise.all([
+                        sentNotification(
+                              'Holy Reads Subscription',
+                              `Holy Reads ${subscriptionDetails.duration.includes('Half')
+                                    ? subscriptionDetails.duration
+                                    : '1 ' + subscriptionDetails.duration} Subscription activated successfully 🎉`)
+                  ])
                   return response.status(200)
             }
 
@@ -152,7 +160,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   return next(Boom.badRequest('Failed to sent an cancel subscription email'))
             }
             response.status(200)
-            Promise.all([sentNotification('Holyreads Subscription Cancelled ⛔', `Your Holy Reads ${subscriptionDetails.title} Subscription Cancelled`)])
+            Promise.all([sentNotification('Holy Reads Subscription Cancelled ⛔', `Your Holy Reads ${subscriptionDetails.title} Subscription Cancelled`)])
       } catch (e: any) {
             return next(Boom.badData(e.message))
       }
@@ -511,7 +519,8 @@ const createAppTransaction = async (request: Request, response: Response, next: 
                   { 
                         inAppSubscription:{
                               ...user.inAppSubscription,
-                              ...inAppPurchaseBody
+                              ...inAppPurchaseBody,
+                              expiredAt: new Date(v2TransactionInfo.expiresDate * 1000)
                         },
                         inAppSubscriptionStatus
                   })
@@ -641,8 +650,48 @@ const createGoogleTransaction = async (request: Request, response: Response, nex
                   default:
                         break;
             }
+            const subscriptions = await SubscriptionsModel.find({}).lean().exec();
+            const getMonths = (subscription) => {
+                  const duration = subscriptions.find(
+                        s => String(s._id) == subscription
+                  )?.duration;
 
-            await userService.updateUser({ _id: user._id }, { inAppSubscription: { ...user.inAppSubscription, ...inAppPurchaseBody }, inAppSubscriptionStatus })
+                  let months = 1;
+                  switch (duration) {
+                        case 'Month':
+                              months = 1;
+                              break;
+                        case 'Half Year':
+                              months = 6;
+                              break;
+                        case 'Year':
+                              months = 12;
+                              break;
+                        default:
+                              break;
+                  }
+                  return months;
+            }
+            let expiredAt = user?.inAppSubscription?.expiredAt;
+            if (decodedPurchaseToken?.purchaseTime) {
+                  const date = Number(decodedPurchaseToken.purchaseTime)
+                  expiredAt = new Date(date)
+                  expiredAt.setMonth(
+                        new Date(date).getMonth() + getMonths(user?.subscription)
+                  );
+            }
+
+            await userService.updateUser(
+                  { _id: user._id },
+                  {
+                        inAppSubscription: {
+                              ...user.inAppSubscription,
+                              ...inAppPurchaseBody,
+                              expiredAt: new Date(expiredAt)
+                        },
+                        inAppSubscriptionStatus
+                  }
+            )
             response.status(200).send({ message: 'OK' });
       } catch (e: any) {
             return next(Boom.badData(e.message))

@@ -79,7 +79,7 @@ export const emailTemplatesTitles = {
         sendInvitation: 'Send Invitation',
         changePassword: 'Change Password',
         registration: 'Customer Registration',
-        HolyreadsSupport: 'Holyreads Support',
+        HolyreadsSupport: 'Holy Reads Support',
         HolyreadsPlanUpgrade: 'Renewal Reminder',
         chooseSubscription: 'Choose Subscription',
         forgotPassword: 'Customer Forgot Password',

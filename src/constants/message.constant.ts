@@ -50,7 +50,7 @@ export const responseMessage = {
         submitQuerySuccess: 'Your message was sent successfully, Thanks.',
         bookRatingSuccess: 'Thanks for rate this book 🙂',
         userAuthorisedAsAdmin: 'User authorised as admin, please use another email',
-        kindleEmailNotExistError: 'To send summaries to your kindle account, go to connected services and add kindle email.',
+        kindleEmailNotExistError: 'You need to add your Kindle email first. Please click here.',
         emailAuthEnabledSuccess: 'Your email auth enabled',
         emailAuthExist: 'Your email auth already enabled',
         socialLinkError: 'Account already linked by some one else, please contact administrator',

@@ -84,7 +84,8 @@ const createTransaction = async (request: Request, response: Response, next: Nex
             transaction.amount = {
                   subtotal: (latestInvoice?.subtotal | 0) / 100,
                   tax: (latestInvoice?.tax | 0) / 100,
-                  total: (latestInvoice?.total | 0) / 100
+                  total: (latestInvoice?.total | 0) / 100,
+                  discount: (latestInvoice?.total_discount_amounts[0]?.amount | 0) / 100,
             }
             transaction.invoiceAt = latestInvoice.created && new Date(latestInvoice.created * 1000)
             transaction.statusTransitions = latestInvoice.status_transitions

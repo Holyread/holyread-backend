@@ -12,7 +12,7 @@ export const responseMessage = {
         savedBook: 'Saved to My favorite',
         unSavedBook: 'Removed from My Favorite',
         markAsCompletedBook: 'Book mark as completed',
-        userAlreadyExistError: 'User already exist',
+        userAlreadyExistError: 'User already exists',
         userAlreadyVerifiedError: 'User already verified',
         getUserSuccess: 'User fetched successfully',
         getUsersSuccess: 'users fetched successfully',

@@ -42,7 +42,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
                 return next(Boom.forbidden('User not verfied'));
             }
             if (
-                false &&
+                false && 
                 !req.path.includes('logout') &&
                 !userDetails.maxDevices.includes(req?.headers?.device) &&
                 userDetails?.maxDevices?.length >= (maxDeviceLogin || 3)

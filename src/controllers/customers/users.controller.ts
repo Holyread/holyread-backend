@@ -1163,7 +1163,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         await usersService.updateUser({ _id: userObj._id }, { 'stripe.customerId': customer.id })
                   }
                   if (!userObj?.stripe?.subscriptionId) {
-                        subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod)
+                        subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod, 'active')
                         subscriptionEndDate = new Date(subscription.current_period_end * 1000)
                   } else {
                         await stripeSubscriptionService.updateSubscription(subscriptionDetails.stripePlanId, userObj.stripe.subscriptionId, userObj.stripe.customerId, req.body.paymentMethod)
@@ -1191,7 +1191,6 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         'stripe.createdAt': new Date(),
                         subscription: subscriptionDetails._id
                   }
-
             }
             await usersService.updateUser({ _id: userObj._id }, body)
 

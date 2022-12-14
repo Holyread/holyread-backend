@@ -115,7 +115,8 @@ const updateSubscription = async (planId: string, subscriptionId: string, custom
                   items: [{
                         id: subscription.items.data[0].id,
                         price: planId,
-                  }]
+                  }],
+                  trial_end: 'now'
             });
       } catch (error: any) {
             throw new Error(error)

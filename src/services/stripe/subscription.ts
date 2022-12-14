@@ -218,7 +218,8 @@ const updateSubscription = async (params: {
                   items: [{
                         id: subscription.items.data[0].id,
                         price: params.planId,
-                  }]
+                  }],
+                  trial_end: 'now'
             }
             if (params.coupon) {
                   body.coupon = params.coupon

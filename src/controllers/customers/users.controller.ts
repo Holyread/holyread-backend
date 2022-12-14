@@ -1173,7 +1173,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                               planId: subscriptionDetails.stripePlanId,
                               customerId: userObj.stripe.customerId,
                               paymentMethod: req.body.paymentMethod,
-                              coupon: req.body.coupon || 'DngHhevP',
+                              coupon: req.body.coupon,
                               status: 'active'
                         })
                         subscriptionEndDate = new Date(subscription.current_period_end * 1000)
@@ -1183,7 +1183,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                               subscriptionId: userObj.stripe.subscriptionId,
                               customerId: userObj.stripe.customerId,
                               paymentMethod: req.body.paymentMethod,
-                              coupon: req.body.coupon || 'DngHhevP'
+                              coupon: req.body.coupon
                         })
                         subscription = await stripeSubscriptionService.retrieveSubscription(userObj.stripe.subscriptionId)
                         subscriptionEndDate = new Date(subscription.current_period_end * 1000)

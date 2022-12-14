@@ -94,10 +94,19 @@ const getAllCoupons = async (request: Request, response: Response, next: NextFun
             searchFilter = {
                 $or: [
                     { code: await getSearchRegexp(params.search) },
-                    { discount: params.search },
-                    { duration: params.search },
+                    { duration: await getSearchRegexp(params.search) },
                 ]
             }
+        }
+        if (
+            params.search &&
+            (Number(params.search) || Number(params.search) == 0)
+        ) {
+            searchFilter['$or'] = [
+                ...searchFilter['$or'],
+                { discount: params.search },
+                { durationInMonths: params.search }
+            ]
         }
 
         const couponsSorting = [];
@@ -110,6 +119,9 @@ const getAllCoupons = async (request: Request, response: Response, next: NextFun
                 break;
             case 'duration':
                 couponsSorting.push(['duration', params.order || 'ASC']);
+                break;
+            case 'durationInMonths':
+                couponsSorting.push(['durationInMonths', params.order || 'ASC']);
                 break;
             case 'expireDate':
                 couponsSorting.push(['expireDate', params.order || 'ASC']);

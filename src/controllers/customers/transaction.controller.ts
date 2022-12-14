@@ -26,8 +26,8 @@ const createTransaction = async (request: Request, response: Response, next: Nex
             if (!session) return next(Boom.badRequest())
 
             const user = await userService.getOneUserByFilter({ 'stripe.customerId': session.customer })
-            if (!user) return next(Boom.notAcceptable())
-
+            if (!user || !user?.subscription) return next(Boom.notAcceptable())
+            response.status(200).send({ message: 'OK' });
             const transaction: any = {
                   userId: user._id,
                   latestInvoice: session?.latest_invoice,
@@ -107,8 +107,8 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   transaction.paymentMethod = paymentMethod?.card
             }
             /** Trail subscription does not required transation yet */
-            if (session.status === 'trailing') {
-                  return response.status(200)
+            if (session.status === 'trialing') {
+                  return
             }
 
             /** No trail subscription */
@@ -123,7 +123,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                                     ? subscriptionDetails.duration
                                     : '1 ' + subscriptionDetails.duration} Subscription activated successfully 🎉`)
                   ])
-                  return response.status(200)
+                  return
             }
 
             if (paymentIntent?.status === 'requires_payment_method') {
@@ -139,7 +139,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
             const status = ['past_due', 'unpaid', 'canceled', 'incomplete', 'incomplete_expired']
 
             if (event?.type !== 'customer.subscription.updated' || !status.includes(session?.status)) {
-                  return response.status(200);
+                  return
             }
 
             /** Failed payment transaction * sent cancel subscription email */
@@ -158,9 +158,9 @@ const createTransaction = async (request: Request, response: Response, next: Nex
 
             const result = await sentEmail(user.email, sub, html);
             if (!result) {
-                  return next(Boom.badRequest('Failed to sent an cancel subscription email'))
+                  console.log('Failed to sent an cancel subscription email')
+                  return;
             }
-            response.status(200)
             Promise.all([sentNotification('Holy Reads Subscription Cancelled ⛔', `Your Holy Reads ${subscriptionDetails.title} Subscription Cancelled`)])
       } catch (e: any) {
             return next(Boom.badData(e.message))

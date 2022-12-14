@@ -48,7 +48,7 @@ export const responseMessage = {
         submitQueryError: 'Failed to send your message, please try letter or contact administrator by other way',
         paymentStatusPending: 'Payment status is pending, please contact administrator',
         submitQuerySuccess: 'Your message was sent successfully, Thanks.',
-        bookRatingSuccess: 'Thanks for rate this book 🙂',
+        bookRatingSuccess: 'Thanks for rate this summary 🙂',
         userAuthorisedAsAdmin: 'User authorised as admin, please use another email',
         kindleEmailNotExistError: 'To send summaries to your kindle account, go to connected services and add kindle email.',
         emailAuthEnabledSuccess: 'Your email auth enabled',

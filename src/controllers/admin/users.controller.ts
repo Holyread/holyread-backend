@@ -95,7 +95,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             }
         })
         const title = 'Welcome to Holy Reads';
-        const description = 'Enjoy summaries of bestselling Christian books';
+        const description = 'Welcome to Holy Reads Summarizing the best of Christian publishing for your busy schedule';
         await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
         const createSubscriptionTitle = 'Holy Reads Subscription'
         const createSubscriptionDesc = `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} Subscription activated successfully`

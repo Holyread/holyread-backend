@@ -199,7 +199,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     await usersService.updateUser({ _id: user._id }, body)
 
     const title = 'Welcome to Holy Reads 🎉';
-    const description = 'Enjoy summaries of bestselling Christian books 📚';
+    const description = 'Welcome to Holy Reads Summarizing the best of Christian publishing for your busy schedule 📚';
     await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title, description } })
 
     /** Get welcome email template */
@@ -398,7 +398,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     const data: any = await usersService.createUser(newBody)
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
     const title = 'Welcome to Holy Reads 🎉';
-    const description = 'Enjoy summaries of bestselling Christian books 📚';
+    const description = 'Welcome to Holy Reads Summarizing the best of Christian publishing for your busy schedule 📚';
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
 
     /** Get welcome email template */
@@ -556,7 +556,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     const data: any = await usersService.createUser(newBody)
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
     const title = 'Welcome to Holy Reads 🎉';
-    const description = 'Enjoy summaries of bestselling Christian books 📚';
+    const description = 'Welcome to Holy Reads Summarizing the best of Christian publishing for your busy schedule 📚';
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
 
     /** Get welcome email template */

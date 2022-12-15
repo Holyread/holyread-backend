@@ -82,20 +82,111 @@ const updatePaymentMethod = async (customerId: string, paymentMethod: string) =>
       });
 }
 
-/** Create subscription */
-const createSubscription = async (planId: string, customerId: string, paymentMethod?: string, status?: string) => {
+const createCoupon = async (params: {
+      duration: string,
+      expireDate: Date,
+      percentOff: number,
+      durationInMonths?: number
+}) => {
       try {
-            if (paymentMethod) {
-                  await updatePaymentMethod(customerId, paymentMethod)
+            if (
+                  !params.percentOff ||
+                  params.percentOff < 0 ||
+                  params.percentOff > 100
+            ) {
+                  throw new Error('Invalid coupon discount.');
             }
-            const subscription = await stripe.subscriptions.create({
-                  customer: customerId,
+
+            const couponObj: any = {
+                  redeem_by: parseInt(String(new Date(params.expireDate).getTime() / 1000)),
+                  percent_off: params.percentOff,
+                  duration: params.duration || 'once',
+            };
+
+            if (params.duration === 'repeating') {
+                  couponObj.duration_in_months = params.durationInMonths;
+            }
+
+            const coupon = await stripe.coupons.create(couponObj);
+            return coupon;
+      } catch (error: any) {
+            throw new Error(error.message)
+      }
+};
+
+const getCouponList = async (list = [], startAfter = {}) => {
+      try {
+            const { data, has_more: hasMore }
+                  = await stripe.coupons.list({
+                        starting_after: startAfter,
+                        limit: 100
+                  });
+            list = list.concat(data);
+            startAfter = data[data.length - 1].id;
+            if (!hasMore) return list;
+            list = await getCouponList(list, data[data.length - 1].id);
+            return list;
+      } catch ({ message }) {
+            return [];
+      }
+};
+
+const getOneCoupon = async (id: string) => {
+      try {
+            if (!id) {
+                  throw new Error('Invalid coupon id.');
+            }
+            const coupon = await stripe.coupons.retrieve(id);
+            return coupon;
+      } catch ({ message }) {
+            return null;
+      }
+};
+
+const deleteCoupon = async (id: string) => {
+      try {
+            if (!id) {
+                  throw new Error('Invalid coupon id.');
+            }
+            await stripe.coupons.del(id);
+            return true;
+      } catch ({ message }) {
+            return false;
+      }
+};
+
+/** Create subscription */
+const createSubscription = async (params: {
+      planId: string,
+      customerId: string,
+      paymentMethod?: string,
+      status?: string,
+      coupon?: any
+}) => {
+      try {
+            if (params.paymentMethod) {
+                  await updatePaymentMethod(
+                        params.customerId,
+                        params.paymentMethod
+                  )
+            }
+            const body: any = {
+                  customer: params.customerId,
                   items: [
-                        { price: planId },
+                        { price: params.planId },
                   ],
                   expand: ['latest_invoice.payment_intent'],
-                  trial_period_days: status === 'active' ? 0 : 3
-            });
+                  trial_period_days: 0
+            }
+            if (params.coupon) {
+                  const couponList = await getCouponList();
+                  const couponCodes = couponList.map(coupon => coupon.id);
+                  if (
+                        !couponCodes.includes(params.coupon)
+                  ) throw new Error('Invalid coupon code');
+                  body.coupon = params.coupon
+            }
+            const subscription = await stripe.subscriptions.create(body);
             return subscription
       } catch (error: any) {
             throw new Error(error)
@@ -103,21 +194,40 @@ const createSubscription = async (planId: string, customerId: string, paymentMet
 }
 
 /** Update subscription */
-const updateSubscription = async (planId: string, subscriptionId: string, customerId?: string, paymentMethod?: string) => {
+const updateSubscription = async (params: {
+      planId: string,
+      subscriptionId: string,
+      customerId?: string,
+      paymentMethod?: string,
+      coupon?: any
+}) => {
       try {
-            const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-            if (paymentMethod) {
-                  await updatePaymentMethod(customerId, paymentMethod)
+            const subscription
+                  = await stripe.subscriptions.retrieve(
+                        params.subscriptionId
+                  );
+            if (params.paymentMethod) {
+                  await updatePaymentMethod(
+                        params.customerId,
+                        params.paymentMethod
+                  )
             }
-            await stripe.subscriptions.update(subscriptionId, {
+            const body: any = {
                   cancel_at_period_end: false,
                   proration_behavior: 'create_prorations',
                   items: [{
                         id: subscription.items.data[0].id,
-                        price: planId,
+                        price: params.planId,
                   }],
                   trial_end: 'now'
-            });
+            }
+            if (params.coupon) {
+                  body.coupon = params.coupon
+            }
+            await stripe.subscriptions.update(
+                  params.subscriptionId,
+                  body
+            );
       } catch (error: any) {
             throw new Error(error)
       }
@@ -187,13 +297,13 @@ const getInvoice = async (id: string) => {
 }
 
 /** Get invoices */
-const getInvoices = async (query: Object, invoices = [], starting_after={}) => {
+const getInvoices = async (query: Object, invoices = [], starting_after = {}) => {
       try {
             const { data, has_more }
                   = await stripe.invoices.list({ ...query, starting_after });
             invoices = invoices.concat(data || [])
             if (has_more) {
-                  starting_after = invoices[invoices.length-1].id;
+                  starting_after = invoices[invoices.length - 1].id;
                   getInvoices(query, invoices, starting_after)
             }
             return invoices;
@@ -203,13 +313,13 @@ const getInvoices = async (query: Object, invoices = [], starting_after={}) => {
 }
 
 /** Get refunds */
-const getRefunds = async (query: Object, refunds = [], starting_after={}) => {
+const getRefunds = async (query: Object, refunds = [], starting_after = {}) => {
       try {
             const { data, has_more }
                   = await stripe.refunds.list({ ...query, starting_after });
             refunds = refunds.concat(data || [])
             if (has_more) {
-                  starting_after = refunds[refunds.length-1].id;
+                  starting_after = refunds[refunds.length - 1].id;
                   getRefunds(query, refunds, starting_after)
             } else {
                   refunds.concat(data);
@@ -221,7 +331,7 @@ const getRefunds = async (query: Object, refunds = [], starting_after={}) => {
 }
 
 /** Retrive total profit */
-const retrieveProfit = async (duration='year') => {
+const retrieveProfit = async (duration = 'year') => {
       try {
             let now: Date | Number = new Date();
             now.setHours(0, 0, 0, 0);
@@ -245,10 +355,10 @@ const retrieveProfit = async (duration='year') => {
             delete query.status;
             const refunds = await getRefunds(query);
             const totalInvoice = invoices.reduce((p, c) => {
-                  return p + (c.total/100)
+                  return p + (c.total / 100)
             }, 0);
             const totalRefund = refunds.reduce((p, c) => {
-                  return c.status === 'succeed' ? (p + (c.amoun/100)) : p
+                  return c.status === 'succeed' ? (p + (c.amoun / 100)) : p
             }, 0);
             return Math.trunc(totalInvoice - totalRefund)
       } catch (error: any) {
@@ -279,6 +389,10 @@ const getPaymentMethod = async (id: string) => {
 export default {
       getInvoice,
       getCustomer,
+      createCoupon,
+      deleteCoupon,
+      getOneCoupon,
+      getCouponList,
       createWebhook,
       retrieveProfit,
       createCustomer,

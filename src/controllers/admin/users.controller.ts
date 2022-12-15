@@ -76,7 +76,9 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
                 return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
             }
             const customer = await stripeSubscriptionService.createCustomer(body.email as any)
-            const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
+            const subscription = await stripeSubscriptionService.createSubscription({
+                planId: subscriptionDetails.stripePlanId, customerId: customer.id
+            })
             newBody.stripe = {
                 planId: subscriptionDetails.stripePlanId,
                 subscriptionId: subscription.id,
@@ -202,10 +204,16 @@ const updateUser = async (req: Request | any, res: Response, next: NextFunction)
             let subscription;
             if (!userObj?.stripe?.subscriptionId) {
                 /** Create stripe subscription */
-                subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
+                subscription = await stripeSubscriptionService.createSubscription({
+                    planId: subscriptionDetails.stripePlanId,
+                    customerId: customer.id
+                })
             } else {
                 /** Update stripe subscription */
-                await stripeSubscriptionService.updateSubscription(subscriptionDetails.stripePlanId, userObj.stripe.subscriptionId)
+                await stripeSubscriptionService.updateSubscription({
+                    planId: subscriptionDetails.stripePlanId,
+                    subscriptionId: userObj.stripe.subscriptionId
+                })
                 subscription = await stripeSubscriptionService.retrieveSubscription(userObj.stripe.subscriptionId)
             }
             req.body['stripe.planId'] = subscriptionDetails.stripePlanId

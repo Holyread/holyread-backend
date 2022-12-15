@@ -5,6 +5,7 @@ import faq from './customers/faq.route'
 
 import auth from './customers/auth.route'
 import users from './customers/users.route'
+import coupons from './customers/coupons.route'
 
 import dashboard from './customers/dashboard.route'
 import authors from './customers/book/author.route'
@@ -25,6 +26,7 @@ router.use('/faq', faq)
 
 router.use('/auth', auth)
 router.use('/users', users)
+router.use('/coupons', coupons)
 
 router.use('/subscriptions', subscriptions)
 router.use('/expert-curated', expertCurated)

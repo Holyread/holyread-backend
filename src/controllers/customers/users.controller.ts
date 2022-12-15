@@ -120,7 +120,7 @@ const getChangePasswordCode = async (req: Request | any, res: Response, next: Ne
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
             const sub = 'Change Password Verification'
             let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have requested a password change on Holy Read. Please enter this code ${verificationCode} to finish verification step</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
-            
+
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
                         username: userObj.email.split('@')[0],
@@ -131,11 +131,11 @@ const getChangePasswordCode = async (req: Request | any, res: Response, next: Ne
                         html = htmlData
                   }
             }
-            
+
             await sentEmail(userObj.email, sub, html);
             await usersService.updateUser(
                   { _id: userObj._id },
-                  { 
+                  {
                         'codes.changePassword': {
                               code: verificationCode,
                               expiredIn: new Date(
@@ -217,7 +217,7 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
             }
             const userObj = Object.assign({}, req.user)
             const emailUser = await usersService.getOneUserByFilter({ email, _id: { '$ne': userObj._id } })
-            
+
             if (emailUser) {
                   return next(Boom.conflict(authControllerResponse.emailAlreadyUsedError))
             }
@@ -1018,7 +1018,13 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             let subscriptionEndDate;
             if (!body.inAppSubscription) {
                   const customer = await stripeSubscriptionService.createCustomer(body.email, req.body.token)
-                  const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id, req.body.paymentMethod, 'active')
+                  const subscription = await stripeSubscriptionService.createSubscription({
+                        planId: subscriptionDetails.stripePlanId,
+                        customerId: customer.id,
+                        paymentMethod: req.body.paymentMethod,
+                        status: 'active',
+                        coupon: req.body.coupon as any
+                  })
                   inviteUserBody.stripe = {
                         customerId: customer.id,
                         planId: subscriptionDetails.stripePlanId,
@@ -1163,10 +1169,22 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                         await usersService.updateUser({ _id: userObj._id }, { 'stripe.customerId': customer.id })
                   }
                   if (!userObj?.stripe?.subscriptionId) {
-                        subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, userObj.stripe.customerId, req.body.paymentMethod, 'active')
+                        subscription = await stripeSubscriptionService.createSubscription({
+                              planId: subscriptionDetails.stripePlanId,
+                              customerId: userObj.stripe.customerId,
+                              paymentMethod: req.body.paymentMethod,
+                              coupon: req.body.coupon,
+                              status: 'active'
+                        })
                         subscriptionEndDate = new Date(subscription.current_period_end * 1000)
                   } else {
-                        await stripeSubscriptionService.updateSubscription(subscriptionDetails.stripePlanId, userObj.stripe.subscriptionId, userObj.stripe.customerId, req.body.paymentMethod)
+                        await stripeSubscriptionService.updateSubscription({
+                              planId: subscriptionDetails.stripePlanId,
+                              subscriptionId: userObj.stripe.subscriptionId,
+                              customerId: userObj.stripe.customerId,
+                              paymentMethod: req.body.paymentMethod,
+                              coupon: req.body.coupon
+                        })
                         subscription = await stripeSubscriptionService.retrieveSubscription(userObj.stripe.subscriptionId)
                         subscriptionEndDate = new Date(subscription.current_period_end * 1000)
                   }

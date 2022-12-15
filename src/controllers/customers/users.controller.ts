@@ -350,7 +350,7 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
                                           _id: data.subscription
                                     })
 
-                        data.subscriptionStatus = data?.inAppSubscriptionStatus || 'trailing';
+                        data.subscriptionStatus = data?.inAppSubscriptionStatus || 'trialing';
                         if (data?.stripe?.subscriptionId) {
                               await stripeSubscriptionService
                                     .retrieveSubscription(

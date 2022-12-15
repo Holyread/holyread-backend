@@ -27,8 +27,8 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
             bookSearchFilter.search.categories = { $in: [Types.ObjectId(params.category as any)] }
         }
         if (params.search) {
-            bookSearchFilter.search['$or'] = [{title: await getSearchRegexp(params.search)}]
-            bookSearchFilter.search['$or'].push({'author.name': await getSearchRegexp(params.search) })
+            bookSearchFilter.search['$or'] = [{ title: await getSearchRegexp(params.search) }]
+            bookSearchFilter.search['$or'].push({ 'author.name': await getSearchRegexp(params.search) })
             authorSearchFilter.name = await getSearchRegexp(params.search)
         }
         if (params.author) {
@@ -61,12 +61,34 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
         let isPlanActive = false
-
-        if (req.user.inAppSubscription && req.user.inAppSubscriptionStatus === 'Active') {
+        let isPlanExpired = false
+        if (
+            req.user.inAppSubscription &&
+            [
+                'active',
+                'subscribed',
+                'did_renew',
+                'offer_redeemed'
+            ].includes(
+                req.user?.inAppSubscriptionStatus?.toLowerCase()
+            )
+        ) {
             isPlanActive = true
             // todo: count duration with createdAt
             // if duration already ended
             // then mark plan as inactive
+        } else if (
+            req.user.inAppSubscription &&
+            ![
+                'active',
+                'subscribed',
+                'did_renew',
+                'offer_redeemed'
+            ].includes(
+                req.user?.inAppSubscriptionStatus?.toLowerCase()
+            )
+        ) {
+            isPlanExpired = true
         }
 
         if (req.user?.stripe?.subscriptionId) {
@@ -75,9 +97,34 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                     .retrieveSubscription(
                         req.user.stripe.subscriptionId
                     )
-                isPlanActive = !!s?.id
-            } catch (e) {}
+                isPlanActive = s?.status === 'active'
+                isPlanExpired = !['active', 'trialing'].includes(s?.status?.toLowerCase())
+            } catch (e) { }
         }
+        if (
+            !req.user.inAppSubscription &&
+            !req.user?.stripe?.subscriptionId &&
+            new Date(
+                req.user.createdAt
+            )
+            .getTime()
+            <
+            new Date()
+                .setDate(
+                    new Date().getDate() - 3
+                )
+        ) {
+            isPlanExpired = true;
+        }
+
+        if (isPlanExpired) {
+            return next(
+                Boom.forbidden(
+                    bookSummaryControllerResponse.planExpiredError
+                )
+            )
+        }
+
         if (!isPlanActive) {
             /** Set today start and end */
             const start = new Date();

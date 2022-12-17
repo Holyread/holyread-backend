@@ -5,6 +5,7 @@ import faq     from './admin/faq.route'
 import auth    from './admin/auth.route'
 import users   from './admin/users.route'
 import admin   from './admin/admin.route'
+import coupon  from './admin/coupons.route'
 import setting from './admin/setting.route'
 import rating  from './admin/book/rating.route'
 import author  from './admin/book/author.route'
@@ -38,6 +39,7 @@ router.use('/account', adminPassport, admin)
 router.use('/author', adminPassport, author)
 
 router.use('/ratings', adminPassport, rating)
+router.use('/coupons', adminPassport, coupon)
 router.use('/setting', adminPassport, setting)
 
 router.use('/dashboard', adminPassport, dashboard)

@@ -71,7 +71,7 @@ export const dataLimit = {
 }
 
 export const originEmails = {
-    contactUs: 'holyreads@mailinator.com'
+    contactUs: 'info@holyreads.com'
 }
 
 export const emailTemplatesTitles = {

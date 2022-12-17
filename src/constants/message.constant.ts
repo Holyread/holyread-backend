@@ -12,7 +12,7 @@ export const responseMessage = {
         savedBook: 'Saved to My favorite',
         unSavedBook: 'Removed from My Favorite',
         markAsCompletedBook: 'Book mark as completed',
-        userAlreadyExistError: 'User already exist',
+        userAlreadyExistError: 'User already exists',
         userAlreadyVerifiedError: 'User already verified',
         getUserSuccess: 'User fetched successfully',
         getUsersSuccess: 'users fetched successfully',
@@ -48,7 +48,7 @@ export const responseMessage = {
         submitQueryError: 'Failed to send your message, please try letter or contact administrator by other way',
         paymentStatusPending: 'Payment status is pending, please contact administrator',
         submitQuerySuccess: 'Your message was sent successfully, Thanks.',
-        bookRatingSuccess: 'Thanks for rate this book 🙂',
+        bookRatingSuccess: 'Thanks for rate this summary 🙂',
         userAuthorisedAsAdmin: 'User authorised as admin, please use another email',
         kindleEmailNotExistError: 'You need to add your Kindle email first. Please click here.',
         emailAuthEnabledSuccess: 'Your email auth enabled',
@@ -109,6 +109,7 @@ export const responseMessage = {
         createBookSummaryFailure: 'Book summary already added',
         getBookSummaryFailure: 'Failed to fetch book summary details',
         trailPlanLimitError: 'Your daily limit exceed, please activate plan for access unlimited books summaries',
+        planExpiredError: 'Your plan expired, please activate plan for access unlimited books summaries',
         getBookSummaryDocFailure: 'Book reading file missing',
         recommendedBookError: 'Book is locked due to book exist in recommended list',
         sendBookToKindleSuccess: 'Book successfully sended to your kindle',
@@ -236,4 +237,12 @@ export const responseMessage = {
     handoutsControllerResponse: {
         updateHandoutSuccess: 'Handout updated successfully'
     },
+    couponsControllerResponse: {
+        couponCreateError: 'Failed to create coupon',
+        createCouponSuccess: 'Coupon created successfully',
+        getCouponFailure: 'Coupon does not exist',
+        fetchCouponSuccess: 'Coupon details fetched successfully',
+        fetchCouponsSuccess: 'Coupons list fetched successfully',
+        deleteCouponSuccess: 'Coupon removed successfully'
+    }
 }

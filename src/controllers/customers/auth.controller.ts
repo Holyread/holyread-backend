@@ -63,7 +63,12 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
 
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const token: string = getToken({ code: String(verificationCode), email: body.email })
-    const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
+
+    let link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
+    if (body.coupon) {
+      link = link + `&coupon=${body.coupon}`
+    }
+  
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
     const subject = emailTemplateDetails?.subject || 'Account Verification'
     let html = `<p>Dear ${body.email.split('@')[0]},</p><p>Thank you for registering with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${body.email}</p><p>Please enter this code ${verificationCode} <!-- <a href="${link}">Here</a> --> to verify your registration.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
@@ -186,7 +191,11 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       /** Create stripe customer */
       const customer = await stripeSubscriptionService.createCustomer(user.email)
       /** Create stripe subscription */
-      const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
+      const subscription = await stripeSubscriptionService.createSubscription({
+        planId: subscriptionDetails.stripePlanId,
+        customerId: customer.id,
+        coupon: req.query.coupon as any
+      })
       body.stripe = {
         planId: subscriptionDetails.stripePlanId,
         subscriptionId: subscription.id,
@@ -199,7 +208,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     await usersService.updateUser({ _id: user._id }, body)
 
     const title = 'Welcome to Holy Reads 🎉';
-    const description = 'Enjoy summaries of bestselling Christian books 📚';
+    const description = 'Welcome to Holy Reads Summarizing the best of Christian publishing for your busy schedule 📚';
     await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title, description } })
 
     /** Get welcome email template */
@@ -398,7 +407,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     const data: any = await usersService.createUser(newBody)
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
     const title = 'Welcome to Holy Reads 🎉';
-    const description = 'Enjoy summaries of bestselling Christian books 📚';
+    const description = 'Welcome to Holy Reads Summarizing the best of Christian publishing for your busy schedule 📚';
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
 
     /** Get welcome email template */
@@ -544,7 +553,11 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
 
     const customer = await stripeSubscriptionService.createCustomer(body.email as any)
     /** Create trial subscription */
-    const subscription = await stripeSubscriptionService.createSubscription(subscriptionDetails.stripePlanId, customer.id)
+    const subscription = await stripeSubscriptionService.createSubscription({
+      planId: subscriptionDetails.stripePlanId,
+      customerId: customer.id,
+      coupon: body.coupon as any
+    })
     newBody.stripe = {
       planId: subscriptionDetails.stripePlanId,
       subscriptionId: subscription.id,
@@ -556,7 +569,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     const data: any = await usersService.createUser(newBody)
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
     const title = 'Welcome to Holy Reads 🎉';
-    const description = 'Enjoy summaries of bestselling Christian books 📚';
+    const description = 'Welcome to Holy Reads Summarizing the best of Christian publishing for your busy schedule 📚';
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
 
     /** Get welcome email template */
@@ -597,7 +610,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
 /** Resend signUp Email */
 const resendSignUpEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const params: { email: string } = req.body
+    const params: { email: string, coupon: any } = req.body
     const user = await usersService.getOneUserByFilter({ email: params.email })
 
     if (!user) {
@@ -609,7 +622,10 @@ const resendSignUpEmail = async (req: Request, res: Response, next: NextFunction
 
     const verificationCode = user.verificationCode || Math.floor(1000 + Math.random() * 9000)
     const token: string = getToken({ code: String(verificationCode), email: params.email })
-    const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
+    let link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
+    if (params.coupon) {
+      link = link + `&coupon=${params.coupon}`
+    }
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
     const subject = emailTemplateDetails?.subject || 'Account Verification'
     let html = `<p>Dear ${params.email.split('@')[0]},</p><p>Thank you for registering with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${params.email}</p><p>Please click <a href="${link}">Here</a> to verify your registration.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
@@ -636,7 +652,6 @@ const resendSignUpEmail = async (req: Request, res: Response, next: NextFunction
     next(Boom.badData(e.message))
   }
 }
-
 
 export default {
   signInUser,

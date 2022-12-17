@@ -64,6 +64,7 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
                         subTotal: i?.amount?.subtotal || 0,
                         tax: i?.amount?.tax || 0,
                         total: i?.amount?.total || i.total,
+                        discount: i?.amount?.discount || 0,
                         device: i?.device
                   }
                   /** Replace negetive total to zero */

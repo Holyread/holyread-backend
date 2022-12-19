@@ -28,7 +28,7 @@ export const renewalReminder = {
             Months: '*',
             DayOfWeek: '*',
       },
-      JOBRESTRICTENV: ['local'], // 'local','development','production'
+      JOBRESTRICTENV: ['local','development','production'], // 'local','development','production'
 }
 
 export const syncProfits = {

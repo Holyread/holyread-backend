@@ -9,7 +9,7 @@ const createCoupon = async (
             redeem_by: number,
             percent_off: number,
             times_redeemed: number,
-            duration_in_months: number
+            max_redemptions: number
       }
 ) => {
       try {
@@ -20,7 +20,7 @@ const createCoupon = async (
                   redeemCount: body.times_redeemed,
                   createdAt: new Date(body.created * 1000),
                   updatedAt: new Date(body.created * 1000),
-                  durationInMonths: body.duration_in_months,
+                  maxRedemptions: body.max_redemptions || undefined,
                   expireDate: new Date(body.redeem_by * 1000),
             })
             return result.toJSON()

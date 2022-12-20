@@ -17,10 +17,11 @@ const addCoupon = async (req: Request, res: Response, next: NextFunction) => {
         const couponDetails
             = await stripeSubscriptionService
                 .createCoupon({
+                    id: body.code,
                     duration: body.duration || 'once',
                     expireDate: new Date(body.expireDate),
                     percentOff: Number(body.discount || 0),
-                    durationInMonths: Number(body.durationInMonths || 1)
+                    max_redemptions: body.max_redemptions
                 });
 
         if (!couponDetails?.id) {
@@ -105,7 +106,7 @@ const getAllCoupons = async (request: Request, response: Response, next: NextFun
             searchFilter['$or'] = [
                 ...searchFilter['$or'],
                 { discount: params.search },
-                { durationInMonths: params.search }
+                { maxRedemptions: params.search }
             ]
         }
 
@@ -120,8 +121,8 @@ const getAllCoupons = async (request: Request, response: Response, next: NextFun
             case 'duration':
                 couponsSorting.push(['duration', params.order || 'ASC']);
                 break;
-            case 'durationInMonths':
-                couponsSorting.push(['durationInMonths', params.order || 'ASC']);
+            case 'maxRedemptions':
+                couponsSorting.push(['maxRedemptions', params.order || 'ASC']);
                 break;
             case 'expireDate':
                 couponsSorting.push(['expireDate', params.order || 'ASC']);
@@ -130,7 +131,7 @@ const getAllCoupons = async (request: Request, response: Response, next: NextFun
                 couponsSorting.push(['createdAt', params.order || 'ASC']);
                 break;
             default:
-                couponsSorting.push(['expireDate', 'ASC']);
+                couponsSorting.push(['createdAt', 'DESC']);
                 break;
         }
 

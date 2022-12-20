@@ -13,7 +13,7 @@ const getOneCouponByFilter = async (query: any) => {
                               'discount',
                               'duration',
                               'expireDate',
-                              'durationInMonths',  
+                              'maxRedemptions',  
                         ])
                         .lean();
             return result
@@ -33,7 +33,7 @@ const getAllCoupons = async (skip: number, limit, search: object, sort) => {
                               'discount',
                               'duration',
                               'expireDate',
-                              'durationInMonths',
+                              'maxRedemptions',
                         ])
                         .skip(skip)
                         .limit(limit)

@@ -83,10 +83,11 @@ const updatePaymentMethod = async (customerId: string, paymentMethod: string) =>
 }
 
 const createCoupon = async (params: {
+      id?: any,
       duration: string,
       expireDate: Date,
       percentOff: number,
-      durationInMonths?: number
+      maxRedemptions?: number
 }) => {
       try {
             if (
@@ -98,13 +99,14 @@ const createCoupon = async (params: {
             }
 
             const couponObj: any = {
+                  id: params.id,
                   redeem_by: parseInt(String(new Date(params.expireDate).getTime() / 1000)),
                   percent_off: params.percentOff,
                   duration: params.duration || 'once',
             };
 
-            if (params.duration === 'repeating') {
-                  couponObj.duration_in_months = params.durationInMonths;
+            if (Number(params.maxRedemptions) > 0) {
+                  couponObj.max_redemptions = Number(params.maxRedemptions);
             }
 
             const coupon = await stripe.coupons.create(couponObj);

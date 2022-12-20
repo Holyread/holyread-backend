@@ -61,7 +61,7 @@ const getAllCoupons = async (request: Request, response: Response, next: NextFun
             searchFilter['$or'] = [
                 ...searchFilter['$or'],
                 { discount: params.search },
-                { durationInMonths: params.search }
+                { maxRedemptions: params.search }
             ]
         }
 

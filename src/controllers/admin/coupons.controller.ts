@@ -21,7 +21,7 @@ const addCoupon = async (req: Request, res: Response, next: NextFunction) => {
                     duration: body.duration || 'once',
                     expireDate: new Date(body.expireDate),
                     percentOff: Number(body.discount || 0),
-                    max_redemptions: body.max_redemptions
+                    maxRedemptions: body.maxRedemptions
                 });
 
         if (!couponDetails?.id) {

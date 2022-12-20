@@ -87,7 +87,7 @@ const createCoupon = async (params: {
       duration: string,
       expireDate: Date,
       percentOff: number,
-      max_redemptions?: number
+      maxRedemptions?: number
 }) => {
       try {
             if (
@@ -105,8 +105,8 @@ const createCoupon = async (params: {
                   duration: params.duration || 'once',
             };
 
-            if (Number(params.max_redemptions) > 0) {
-                  couponObj.max_redemptions = Number(params.max_redemptions);
+            if (Number(params.maxRedemptions) > 0) {
+                  couponObj.max_redemptions = Number(params.maxRedemptions);
             }
 
             const coupon = await stripe.coupons.create(couponObj);

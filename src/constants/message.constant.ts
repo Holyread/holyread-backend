@@ -109,6 +109,7 @@ export const responseMessage = {
         createBookSummaryFailure: 'Book summary already added',
         getBookSummaryFailure: 'Failed to fetch book summary details',
         trailPlanLimitError: 'Your daily limit exceed, please activate plan for access unlimited books summaries',
+        planExpiredError: 'Your plan expired, please activate plan for access unlimited books summaries',
         getBookSummaryDocFailure: 'Book reading file missing',
         recommendedBookError: 'Book is locked due to book exist in recommended list',
         sendBookToKindleSuccess: 'Book successfully sended to your kindle',

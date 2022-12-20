@@ -1,4 +1,4 @@
-import mongoose, {Schema} from 'mongoose'
+import mongoose, { Schema } from 'mongoose'
 
 mongoose.set('useCreateIndex', true)
 
@@ -8,7 +8,7 @@ export interface ICoupons extends mongoose.Document {
     redeemCount: number,
     discount: number, // stripe percent_off
     duration: 'once' | 'repeating' | 'forever',
-    durationInMonths: number
+    maxRedemptions: number
 }
 
 export type createCouponType = {
@@ -17,7 +17,7 @@ export type createCouponType = {
     redeemCount: number,
     discount: number,
     duration: 'once' | 'repeating' | 'forever',
-    durationInMonths: number
+    maxRedemptions: number
 }
 
 export type getCouponType = {
@@ -27,7 +27,7 @@ export type getCouponType = {
     redeemCount?: number,
     discount?: number,
     duration?: 'once' | 'repeating' | 'forever',
-    durationInMonths: number
+    maxRedemptions: number
 }
 
 export const CouponsSchema = new Schema({
@@ -60,7 +60,7 @@ export const CouponsSchema = new Schema({
             'repeating',
         ]
     },
-    durationInMonths: {
+    maxRedemptions: {
         type: Number
     },
     createdAt: {
@@ -68,8 +68,8 @@ export const CouponsSchema = new Schema({
             return new Date()
         },
     },
-    updatedAt: {type: Date},
-}, {strict: 'throw'})
+    updatedAt: { type: Date },
+}, { strict: 'throw' })
 
 export const CouponsModel
     = mongoose.model<ICoupons>(

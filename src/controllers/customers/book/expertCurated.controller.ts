@@ -16,15 +16,33 @@ const getOneExpertCurated = async (req: Request, res: Response, next: NextFuncti
     try {
         const id: any = req.params.id
         /** Get expert Curated from db */
-        const data: any = await expertCuratedService.getOneExpertCuratedByFilter({ _id: id })
+        const data: any = await expertCuratedService
+            .getOneExpertCuratedByFilter(
+                { _id: id }
+            )
         if (!data) {
-            return next(Boom.notFound(expertCuratedControllerResponse.getExpertCuratedFailure))
+            return next(
+                Boom.notFound(
+                    expertCuratedControllerResponse.getExpertCuratedFailure
+                )
+            )
         }
         if (data.image) {
             data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/' + data.image
         }
 
-        res.status(200).send({ message: expertCuratedControllerResponse.fetchExpertCuratedSuccess, data })
+        res.status(200).send({
+            message: expertCuratedControllerResponse.fetchExpertCuratedSuccess,
+            data
+        })
+        
+        /** Incress curated views */
+        expertCuratedService
+            .updateOneExpertCurated(
+                { '$inc': { views: 1 } },
+                { _id: id }
+            )
+        
     } catch (e: any) {
         next(Boom.badData(e.message))
     }

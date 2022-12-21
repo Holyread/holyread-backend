@@ -1,7 +1,6 @@
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { ExpertCuratedModel } from '../../../models/index'
-import { randomNumberInRange } from '../../../lib/utils/utils'
 
 const NODE_ENV = config.NODE_ENV
 
@@ -19,7 +18,7 @@ const getAllExpertCurateds = async (skip: number, limit, search: object, sort) =
                         awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/',
                         '$image'
                     ] },
-                    views: randomNumberInRange(1000, 5000),
+                    views: 1.0,
                     status: 1.0
                 }
             }
@@ -70,7 +69,18 @@ const getOneExpertCuratedByFilter = async (query: any) => {
     }
 }
 
+/** update expert Curated  by id */
+const updateOneExpertCurated = async (query: any, data: any) => {
+    try {
+        await ExpertCuratedModel.findOneAndUpdate(query, data).lean()
+        return true
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 export default {
     getAllExpertCurateds,
+    updateOneExpertCurated,
     getOneExpertCuratedByFilter
 };

@@ -63,7 +63,6 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
         await Promise.all(result[0]?.page?.map(async oneItem => {
             const totalStar = ratings[String(oneItem._id)]?.averageStar || 3
             if (star && star !== Math.trunc(totalStar)) return
-            console.log('heree', oneItem.views);
             summaries.add({
                 _id: oneItem._id,
                 coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneItem.coverImage,

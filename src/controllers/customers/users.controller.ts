@@ -543,7 +543,7 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             }
             res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
             const kindleTitle = userObj.kindleEmail ? 'Update Kindle Email' : 'Add Kindle Email'
-            const kindleDescription = userObj.kindleEmail ? 'Kindle email updated' : 'Kindle email Added'
+            const kindleDescription = userObj.kindleEmail ? 'Kindle email updated' : 'Kindle email added'
             if (req.body.kindleEmail) {
                   await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: kindleTitle, description: kindleDescription } })
                   fetchNotifications(io.sockets, { _id: userObj._id })

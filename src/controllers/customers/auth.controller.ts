@@ -164,9 +164,6 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       }
       body.email = decryptToken.email
       body.verificationCode = decryptToken.code
-    } {
-      body.verificationCode = req.query.code;
-      body.email = req.query.email;
     }
 
     /** Get user from db */

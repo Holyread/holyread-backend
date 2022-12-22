@@ -309,3 +309,23 @@ export const imageUrlToBase64 = async (imageUrl: string) => {
         return null;
     }
 }
+
+export const formattedDate = (
+    date: Date,
+    format?: {
+        day: any,
+        month: any,
+        year: any
+    }) => {
+    return date
+        .toLocaleDateString(
+            'en-GB',
+            format
+                ? format
+                : {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                }
+        )
+};

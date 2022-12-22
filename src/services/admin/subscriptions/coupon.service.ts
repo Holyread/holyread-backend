@@ -1,4 +1,5 @@
 import { CouponsModel } from '../../../models/index';
+import { formattedDate } from '../../../lib/utils/utils';
 
 /** Create Coupon */
 const createCoupon = async (
@@ -43,12 +44,6 @@ const getOneCouponByFilter = async (query: any) => {
 /** Get all Subscriptions for table */
 const getAllCoupons = async (skip: number, limit, search: object, sort) => {
       try {
-            const formattedDate = (date: Date) => {
-                  return date.toLocaleDateString('en-GB', {
-                        day: 'numeric', month: 'short', year: 'numeric'
-                  }).replace(/ /g, ' ')
-            };
-
             const coupons: any
                   = await CouponsModel
                         .find(search)
@@ -58,7 +53,7 @@ const getAllCoupons = async (skip: number, limit, search: object, sort) => {
                         .lean();
 
             await coupons.map(i => {
-                  i.expireDate = formattedDate(i.expireDate)
+                  i.expireDate = formattedDate(i.expireDate).replace(/ /g, ' ')
             })
 
             const count = await CouponsModel.find(search).count()

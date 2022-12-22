@@ -1,4 +1,4 @@
-import { getDates, sortArrayObject } from '../../../lib/utils/utils';
+import { formattedDate, getDates, sortArrayObject } from '../../../lib/utils/utils';
 import { TransactionsModel } from '../../../models/index'
 
 /** Get transaction by filter */
@@ -17,11 +17,6 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
                   .lean()
                   .exec();
 
-            const formattedDate = (date: Date) => {
-                  return date.toLocaleDateString('en-GB', {
-                        day: 'numeric', month: 'short', year: 'numeric'
-                  }).replace(/ /g, ' ')
-            };
             let transactions: any = new Set()
             result.map((i, index) => {
                   if (!i?.userId?.email) return;
@@ -51,7 +46,7 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
                   const data = {
                         _id: i._id,
                         email: i.userId?.email,
-                        date: formattedDate(i?.createdAt),
+                        date: formattedDate(i?.createdAt)?.replace(/ /g, ' '),
                         status: i?.status,
                         paymentLink: i?.paymentLink,
                         payment: i?.device === 'app' ? ['fa fa-mobile', 'InApp'] : ['fa-cc-' + i?.paymentMethod?.brand?.toLowerCase(), i?.paymentMethod?.brand || ''],
@@ -129,11 +124,6 @@ const getUserAnalytics = async (duration = 'year') => {
                   totalRevenue = 0;
 
             let revenues = [];
-            const formattedDate = (date: Date) => {
-                  return date.toLocaleDateString('en-GB', {
-                        day: 'numeric', month: 'numeric', year: 'numeric'
-                  }).replace(/ /g, '/')
-            };
 
             dates.map((i) => {
                   const iTransactions =
@@ -141,7 +131,7 @@ const getUserAnalytics = async (duration = 'year') => {
                               .filter(j =>
                                     new Date(j.createdAt).setHours(0, 0, 0, 0) === new Date(i).setHours(0, 0, 0, 0)
                               );
-      
+
                   let plan = 0;
                   let revenue = 0;
                   const user = new Set();
@@ -155,11 +145,17 @@ const getUserAnalytics = async (duration = 'year') => {
                         }
                         totalUsers++;
                   }
-                  totalPlans += plan; 
+                  totalPlans += plan;
                   plans.push(plan);
                   totalRevenue += revenue;
                   revenues.push(revenue.toFixed(2));
-                  titles.add(formattedDate(i));
+                  titles.add(
+                        formattedDate(i, {
+                              day: 'numeric',
+                              month: 'numeric',
+                              year: 'numeric'
+                        }).replace(/ /g, '/')
+                  );
                   users.push([...user].length);
             })
             return {

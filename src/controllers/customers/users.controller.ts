@@ -12,6 +12,7 @@ import {
       getTimeDiff,
       verifyToken,
       removeS3File,
+      formattedDate,
       uploadFileToS3,
       sortArrayObject,
       pushNotification,
@@ -1015,10 +1016,10 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
                   referralUserId: refUser._id,
                   device: body.device || 'web'
             }
-            let subscriptionEndDate;
+            let subscriptionEndDate, subscription;
             if (!body.inAppSubscription) {
                   const customer = await stripeSubscriptionService.createCustomer(body.email, req.body.token)
-                  const subscription = await stripeSubscriptionService.createSubscription({
+                  subscription = await stripeSubscriptionService.createSubscription({
                         planId: subscriptionDetails.stripePlanId,
                         customerId: customer.id,
                         paymentMethod: req.body.paymentMethod,
@@ -1109,12 +1110,12 @@ const blessFriend = async (req: any, res: Response, next: NextFunction) => {
             let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
-                  const localeDate = subscriptionEndDate?.toLocaleDateString()?.split('/')
                   const contentData = {
                         username: body.email.split('@')[0],
                         price: subscriptionDetails.price,
-                        endDate: `[${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)}]`,
-                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `1 ${subscriptionDetails.duration}`
+                        endDate: `[${formattedDate(subscriptionEndDate)}]`,
+                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `1 ${subscriptionDetails.duration}`,
+                        status: subscription.status || 'Active'
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
                   if (htmlData) {
@@ -1213,7 +1214,7 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             await usersService.updateUser({ _id: userObj._id }, body)
 
             if (!req.body?.inAppSubscription) {
-                  return res.status(200).send({
+                  res.status(200).send({
                         message: subscriptionsControllerResponse.createSubscriptionSuccess,
                         data: {
                               subscriptionStatus: subscription.status,
@@ -1227,12 +1228,15 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
-                  const localeDate = subscriptionEndDate?.toLocaleDateString()?.split('/')
+                  
                   const contentData = {
                         username: userObj.email.split('@')[0],
                         price: subscriptionDetails.price,
-                        endDate: `[${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)}]`,
-                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `1 ${subscriptionDetails.duration}`
+                        endDate: `[${formattedDate(subscriptionEndDate).replace(/ /g, ',')}]`,
+                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half')
+                              ? subscriptionDetails.duration
+                              : `1 ${subscriptionDetails.duration}`,
+                        status: subscription?.status || 'Active'
                   }
                   const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
                   if (htmlData) {

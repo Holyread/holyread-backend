@@ -28,32 +28,55 @@ import {
 } from '../../constants/app.constant'
 
 import { io } from '../../app';
-import { responseMessage } from '../../constants/message.constant'
-import { fetchNotifications } from '../../controllers/customers/notification.controller'
 
-import config from '../../../config'
-import authService from '../../services/admin/users/user.service'
-import userService from '../../services/customers/users/user.service';
-import usersService from '../../services/customers/users/user.service';
-import ratingService from '../../services/customers/book/rating.service';
+import { responseMessage }
+      from '../../constants/message.constant'
+import { fetchNotifications }
+      from '../../controllers/customers/notification.controller'
 
-import stripeSubscriptionService from '../../services/stripe/subscription';
+import config
+      from '../../../config'
+import authService
+      from '../../services/admin/users/user.service'
+import userService
+      from '../../services/customers/users/user.service';
+import usersService
+      from '../../services/customers/users/user.service';
+import ratingService
+      from '../../services/customers/book/rating.service';
 
-import bookService from '../../services/customers/book/bookSummary.service';
-import handoutsService from '../../services/customers/smallGroup/handouts.service';
-import transactionsService from '../../services/customers/users/transactions.service';
-import highLightsService from '../../services/customers/highLights/highLights.service';
-import smallGroupService from '../../services/customers/smallGroup/smallGroup.service';
-import subscriptionService from '../../services/admin/subscriptions/subscriptions.service';
-import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service';
-import notificationsService from '../../services/customers/notifications/notifications.service';
+import stripeSubscriptionService
+      from '../../services/stripe/subscription';
+
+import bookService
+      from '../../services/customers/book/bookSummary.service';
+import handoutsService
+      from '../../services/customers/smallGroup/handouts.service';
+import transactionsService
+      from '../../services/customers/users/transactions.service';
+import highLightsService
+      from '../../services/customers/highLights/highLights.service';
+import smallGroupService
+      from '../../services/customers/smallGroup/smallGroup.service';
+import subscriptionService
+      from '../../services/admin/subscriptions/subscriptions.service';
+import emailTemplateService
+      from '../../services/admin/emailTemplate/emailTemplate.service';
+import notificationsService
+      from '../../services/customers/notifications/notifications.service';
 
 const NODE_ENV = config.NODE_ENV
-const authControllerResponse = responseMessage.authControllerResponse
-const handoutsControllerResponse = responseMessage.handoutsControllerResponse
-const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
-const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
-const subscriptionsControllerResponse = responseMessage.subscriptionsControllerResponse
+
+const authControllerResponse
+      = responseMessage.authControllerResponse
+const handoutsControllerResponse
+      = responseMessage.handoutsControllerResponse
+const smallGroupControllerResponse
+      = responseMessage.smallGroupControllerResponse
+const bookSummaryControllerResponse
+      = responseMessage.bookSummaryControllerResponse
+const subscriptionsControllerResponse
+      = responseMessage.subscriptionsControllerResponse
 
 const s3Bucket = {
       region: awsBucket.region,
@@ -62,72 +85,161 @@ const s3Bucket = {
 }
 
 /**  Get one user by id */
-const getUserAccount = async (req: Request | any, res: Response, next: NextFunction) => {
+const getUserAccount = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             /** Get current user */
             let userObj: any = Object.assign({}, req.user)
             if (userObj.image) {
-                  userObj.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + userObj.image
+                  userObj.image
+                        = `${awsBucket[NODE_ENV].s3BaseURL}/users/${userObj.image}`
             }
             userObj.isEmailLinked = !!userObj.password
-            let subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: userObj.subscription })
+
+            let subscriptionDetails
+                  = await subscriptionService
+                        .getOneSubscriptionByFilter({
+                              _id: userObj.subscription
+                        })
+
             /** set default subscription end date with 3 days trail */
-            let subscriptionEndDate = new Date(userObj.createdAt).getTime() + (3 * 24 * 60 * 60 * 1000);
+            let subscriptionEndDate
+                  = new Date(userObj.createdAt)
+                        .getTime() + (3 * 24 * 60 * 60 * 1000);
+
             if (subscriptionDetails?._id) {
-                  let months = subscriptionDetails.duration === 'Month' ? 1 : subscriptionDetails.duration === 'Half Year' ? 6 : 12;
-                  const createdAt = userObj?.inAppSubscription?.createdAt || userObj?.stripe?.createdAt || new Date()
-                  subscriptionEndDate = new Date(createdAt).setMonth(new Date(createdAt).getMonth() + months)
+                  let months
+                        = subscriptionDetails.duration === 'Month'
+                              ? 1 : subscriptionDetails.duration === 'Half Year'
+                                    ? 6 : 12;
+
+                  const createdAt
+                        = userObj?.inAppSubscription?.createdAt
+                        || userObj?.stripe?.createdAt || new Date();
+
+                  subscriptionEndDate
+                        = new Date(createdAt).setMonth(
+                              new Date(createdAt).getMonth() + months
+                        )
             }
-            userObj.subscriptionEndsIn = getTimeDiff(String(new Date()), String(new Date(subscriptionEndDate)))
+            userObj.subscriptionEndsIn
+                  = getTimeDiff(
+                        String(new Date()),
+                        String(new Date(subscriptionEndDate))
+                  )
+
             delete userObj.password
             delete userObj.smallGroups
             delete userObj.verificationCode
             delete userObj.stripe
-            const notifications = await notificationsService.getUserNotifications({ userId: userObj._id })
+
+            const notifications
+                  = await notificationsService
+                        .getUserNotifications({ userId: userObj._id })
+
             userObj.notifications = notifications
-            res.status(200).send({ message: authControllerResponse.getUserSuccess, data: userObj })
+            res.status(200).send({
+                  message: authControllerResponse.getUserSuccess,
+                  data: userObj
+            })
 
             if (!userObj.libraries) {
-                  const libraries = await userService.createUserLibrary({
-                        saved: [],
-                        completed: [],
-                        view: [],
-                        smallGroups: [],
-                        reading: [],
-                  })
+                  const libraries = await userService
+                        .createUserLibrary({
+                              saved: [],
+                              completed: [],
+                              view: [],
+                              smallGroups: [],
+                              reading: [],
+                        })
+
                   userObj.libraries = libraries?._id
             }
-            await userService.updateUser({ _id: userObj._id }, { lastSeen: new Date(), libraries: userObj.libraries });
+            await userService.updateUser(
+                  { _id: userObj._id },
+                  {
+                        lastSeen: new Date(),
+                        libraries: userObj.libraries
+                  }
+            );
       } catch (e: any) {
             next(Boom.badData(e.message))
       }
 }
 
 /**  Get one user by id */
-const getBlessFriend = async (req: Request | any, res: Response, next: NextFunction) => {
+const getBlessFriend = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             /** Get current user */
-            let userObj: any = await usersService.getOneUserByFilter({ email: req.params.email })
-            res.status(200).send({ message: authControllerResponse.getUserSuccess, data: { email: userObj?.email || null } })
+            let userObj: any
+                  = await usersService
+                        .getOneUserByFilter({ email: req.params.email })
+
+            res.status(200).send({
+                  message: authControllerResponse.getUserSuccess,
+                  data: { email: userObj?.email || null }
+            })
       } catch (e: any) {
             next(Boom.badData(e.message))
       }
 }
 
-const getChangePasswordCode = async (req: Request | any, res: Response, next: NextFunction) => {
+const getChangePasswordCode = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             const userObj = Object.assign({}, req.user)
-            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.forgotPassword })
+            const emailTemplateDetails
+                  = await emailTemplateService
+                        .getOneEmailTemplateByFilter({
+                              title: emailTemplatesTitles.customer.forgotPassword
+                        })
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
             const sub = 'Change Password Verification'
-            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have requested a password change on Holy Read. Please enter this code ${verificationCode} to finish verification step</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let html = `
+                  <p>Dear ${userObj.email.split('@')[0]},</p>
+                  <p>
+                        You have requested a password change on Holy Read.
+                        Please enter this code ${verificationCode} to
+                        finish verification step
+                  </p>
+                  <p>
+                        Should you have any questions or
+                        if any of your details change,
+                        please contact us.
+                  </p>
+                  <p>
+                        Best regards,<br>Holy Reads
+                  </p>
+                  <p>
+                        <strong>
+                              ( ***&nbsp; Please do not reply to this email ***&nbsp; )
+                        </strong>
+                  </p>
+            `
 
-            if (emailTemplateDetails && emailTemplateDetails.content) {
+            if (
+                  emailTemplateDetails &&
+                  emailTemplateDetails.content
+            ) {
                   const contentData = {
                         username: userObj.email.split('@')[0],
                         otp: verificationCode
                   }
-                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  const htmlData
+                        = await compileHtml(
+                              emailTemplateDetails.content,
+                              contentData
+                        )
                   if (htmlData) {
                         html = htmlData
                   }
@@ -141,76 +253,179 @@ const getChangePasswordCode = async (req: Request | any, res: Response, next: Ne
                               code: verificationCode,
                               expiredIn: new Date(
                                     new Date()
-                                          .setMinutes(
-                                                new Date()
-                                                      .getMinutes() + 5
-                                          )
+                                          .setMinutes(new Date().getMinutes() + 5)
                               )
                         }
                   }
             )
-            res.status(200).send({ message: authControllerResponse.chnagePasswordRequest })
+            res.status(200).send({
+                  message: authControllerResponse.chnagePasswordRequest
+            })
       } catch (e: any) {
             next(Boom.badData(e.message))
       }
 }
 
-const changePassword = async (req: Request | any, res: Response, next: NextFunction) => {
+const changePassword = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
-            const { password, newPassword, code }: { password: string, newPassword: string, code: number } = req.body;
+            const {
+                  code,
+                  password,
+                  newPassword,
+            }: {
+                  code: number,
+                  password: string,
+                  newPassword: string,
+            } = req.body;
+
             const userObj = Object.assign({}, req.user)
-            if (!password || (newPassword && userObj?.password !== encrypt(password || ''))) {
-                  return next(Boom.badData(authControllerResponse.userInvalidPasswordError))
-            }
             if (
-                  (!newPassword && userObj?.password === encrypt(password || '')) ||
-                  (newPassword && userObj?.password === encrypt(newPassword || ''))
+                  !password
+                  ||
+                  (
+                        newPassword &&
+                        userObj?.password !== encrypt(password || '')
+                  )
             ) {
-                  return next(Boom.badData(authControllerResponse.userSamePasswordError))
+                  return next(
+                        Boom.badData(
+                              authControllerResponse.userInvalidPasswordError
+                        )
+                  )
             }
             if (
-                  !userObj?.codes?.changePassword?.code ||
+                  (
+                        !newPassword &&
+                        userObj?.password === encrypt(password || '')
+                  )
+                  ||
+                  (
+                        newPassword &&
+                        userObj?.password === encrypt(newPassword || '')
+                  )
+            ) {
+                  return next(
+                        Boom.badData(authControllerResponse.userSamePasswordError)
+                  )
+            }
+            if (
+                  !userObj?.codes?.changePassword?.code
+                  ||
                   userObj?.codes?.changePassword?.code !== code
             ) {
-                  return next(Boom.notAcceptable(authControllerResponse.invalidCodeError))
+                  return next(
+                        Boom.notAcceptable(authControllerResponse.invalidCodeError)
+                  )
             }
-            if (new Date(userObj?.codes?.changePassword?.expiredIn).getTime() < new Date().getTime()) {
-                  return next(Boom.resourceGone(authControllerResponse.codeExpiredError))
+            if (
+                  new Date(userObj?.codes?.changePassword?.expiredIn).getTime()
+                  <
+                  new Date().getTime()
+            ) {
+                  return next(
+                        Boom.resourceGone(authControllerResponse.codeExpiredError)
+                  )
             }
 
-            await usersService.updateUser({ _id: userObj._id }, { password: newPassword || password, $unset: { 'codes.changePassword': 1 } })
+            await usersService.updateUser(
+                  { _id: userObj._id },
+                  {
+                        password: newPassword || password,
+                        $unset: {
+                              'codes.changePassword': 1
+                        }
+                  }
+            )
             const notificationTitle = 'Change Password'
             const notificationDescription = 'Password Changed Successfully'
-            await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
+
+            await notificationsService.createNotification(
+                  {
+                        userId: userObj._id,
+                        type: 'setting',
+                        notification: {
+                              title: notificationTitle,
+                              description: notificationDescription
+                        }
+                  }
+            )
+
             fetchNotifications(io.sockets, { _id: userObj._id })
-            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.changePassword })
+
+            const emailTemplateDetails
+                  = await emailTemplateService
+                        .getOneEmailTemplateByFilter({
+                              title: emailTemplatesTitles.customer.changePassword
+                        })
 
             const sub = emailTemplateDetails.subject || 'Holy Reads Password Changed'
-            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have requested a password change on Holy Reads that succeed.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let html = `
+                  <p>
+                        Dear ${userObj.email.split('@')[0]},
+                  </p>
+                  <p>
+                        You have requested a password change on Holy Reads that succeed.
+                  </p>
+                  <p>
+                        Should you have any questions or if any of your details change, please contact us.
+                  </p>
+                  <p>
+                        Best regards,<br>Holy Reads
+                  </p>
+                  <p>
+                        <strong>
+                              ( ***&nbsp; Please do not reply to this email ***&nbsp; )
+                        </strong>
+                  </p>
+            `
 
-            if (emailTemplateDetails && emailTemplateDetails.content) {
+            if (
+                  emailTemplateDetails &&
+                  emailTemplateDetails.content
+            ) {
                   const contentData = {
                         username: userObj.email.split('@')[0],
                   }
-                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  const htmlData
+                        = await compileHtml(
+                              emailTemplateDetails.content,
+                              contentData
+                        )
                   if (htmlData) {
                         html = htmlData
                   }
             }
 
             await sentEmail(userObj.email, sub, html);
-            res.status(200).send({ message: authControllerResponse.passwordUpdateSuccess })
+            res.status(200).send({
+                  message: authControllerResponse.passwordUpdateSuccess
+            })
             /** Push notification */
-            if (userObj?.pushTokens?.length && userObj?.notification?.push) {
+            if (
+                  userObj?.pushTokens?.length &&
+                  userObj?.notification?.push
+            ) {
                   const tokens = userObj.pushTokens.map(i => i.token)
-                  pushNotification(tokens, notificationTitle, notificationDescription)
+                  pushNotification(
+                        tokens,
+                        notificationTitle,
+                        notificationDescription
+                  )
             }
       } catch (e: any) {
             next(Boom.badData(e.message))
       }
 }
 
-const emailAuth = async (req: Request | any, res: Response, next: NextFunction) => {
+const emailAuth = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             const { email, password }: { email: string, password: string } = req.body;
             if (!email || !password) {
@@ -258,40 +473,74 @@ const emailAuth = async (req: Request | any, res: Response, next: NextFunction) 
 }
 
 /** Verify Email Auth */
-const verifyEmailAuth = async (req: any, res: Response, next: NextFunction) => {
+const verifyEmailAuth = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             const token = req?.query?.token as string
 
             if (!token && !req?.body?.code) {
-                  return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+                  /** Return status 406 not acceptable */
+                  return next(
+                        Boom.notAcceptable(
+                              authControllerResponse.invalidCodeOrTokenError
+                        )
+                  )
             }
 
             if (
                   !token &&
                   req?.body?.code &&
                   (
-                        !req?.body?.email ||
+                        !req?.body?.email
+                        ||
                         !req?.body?.password
                   )
             ) {
-                  return next(Boom.notAcceptable(authControllerResponse.missingEmailOrPasswordError))
+                  /** Return status 406 not acceptable */
+                  return next(
+                        Boom.notAcceptable(
+                              authControllerResponse.missingEmailOrPasswordError
+                        )
+                  )
             }
 
             const decryptToken: any = token && verifyToken(token)
 
             if (token && !decryptToken._id) {
-                  return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+                  /** Return status 406 not acceptable */
+                  return next(
+                        Boom.notAcceptable(
+                              authControllerResponse.invalidCodeOrTokenError
+                        )
+                  )
             }
 
-            const _id = token ? decryptToken._id : req.user._id
-            const code = token ? decryptToken.code : req.body.code
-            const email = token ? decryptToken.email : req.body.email
-            const password = token ? decrypt(decryptToken.password) : req.body.password
+            const _id = token
+                  ? decryptToken._id : req.user._id
+            const code = token
+                  ? decryptToken.code : req.body.code
+            const email = token
+                  ? decryptToken.email : req.body.email
+            const password = token
+                  ? decrypt(decryptToken.password) : req.body.password
 
             /** Get user from db */
-            const user: any = await usersService.getOneUserByFilter({ verificationCode: code, _id })
+            const user: any
+                  = await usersService
+                        .getOneUserByFilter({
+                              verificationCode: code, _id
+                        })
+
             if (!user) {
-                  return next(Boom.notFound(authControllerResponse.getUserError))
+                  /** Return status 404 not found */
+                  return next(
+                        Boom.notFound(
+                              authControllerResponse.getUserError
+                        )
+                  )
             }
 
             await usersService.updateUser({ _id: user._id }, {
@@ -302,15 +551,42 @@ const verifyEmailAuth = async (req: any, res: Response, next: NextFunction) => {
                   password: password
             })
 
-            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthEnabled })
-            const sub = emailTemplateDetails.subject || 'Customer Email Auth Enabled'
-            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth that succeed.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            const emailTemplateDetails = await emailTemplateService
+                  .getOneEmailTemplateByFilter({
+                        title: emailTemplatesTitles.customer.emailAuthEnabled
+                  })
+
+            const sub = emailTemplateDetails.subject
+                  || 'Customer Email Auth Enabled'
+
+            let html = `
+                  <p>
+                        Dear ${email.split('@')[0]},
+                  </p>
+                  <p>
+                        you requested for email auth that succeed.
+                  </p>
+                  <p>
+                        Should you have any questions or if any of your details change, please contact us.
+                  </p>
+                  <p>
+                        Best regards,<br>Holy Reads
+                  </p>
+                  <p>
+                        <strong>
+                              ( ***&nbsp; Please do not reply to this email ***&nbsp; )
+                        </strong>
+                  </p>
+            `
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
                         username: email.split('@')[0]
                   }
-                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  const htmlData = await compileHtml(
+                        emailTemplateDetails.content,
+                        contentData
+                  )
                   if (htmlData) {
                         html = htmlData
                   }
@@ -318,15 +594,38 @@ const verifyEmailAuth = async (req: any, res: Response, next: NextFunction) => {
 
             const result = await sentEmail(email, sub, html);
             if (!result) {
-                  return next(Boom.notFound(authControllerResponse.sentVerifyEmailFailure))
+                  /** Return status 404 not found */
+                  return next(
+                        Boom.notFound(
+                              authControllerResponse.sentVerifyEmailFailure
+                        )
+                  )
             }
+
             const title = 'Email auth enabled';
             const description = 'Now you can access holy reads by using your email and password';
-            await notificationsService.createNotification({ userId: user._id, type: 'setting', notification: { title, description } })
+
+            await notificationsService
+                  .createNotification({
+                        userId: user._id,
+                        type: 'setting',
+                        notification: {
+                              title,
+                              description
+                        }
+                  })
+
             fetchNotifications(io.sockets, { _id: user._id })
-            res.status(200).send({ message: authControllerResponse.emailAuthEnabledSuccess })
+            res.status(200).send({
+                  message: authControllerResponse.emailAuthEnabledSuccess
+            })
             /** Push notification */
-            if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
+            if (
+                  user &&
+                  user.pushTokens &&
+                  user.pushTokens.length &&
+                  user?.notification?.push
+            ) {
                   const tokens = user.pushTokens.map(i => i.token)
                   pushNotification(tokens, title, description)
             }
@@ -336,70 +635,66 @@ const verifyEmailAuth = async (req: any, res: Response, next: NextFunction) => {
 }
 
 /**  Get user subscription by user id */
-const getUserSubscription = async (req: Request | any, res: Response, next: NextFunction) => {
+const getUserSubscription = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             /** Get current user */
             let data: any = Object.assign({}, req.user)
-            let subscriptionEndDate
-                  = new Date(data.createdAt)
-                        .getTime() + (3 * 24 * 60 * 60 * 1000);
+            let subscriptionEndDate = new Date(
+                  data.createdAt
+            )
+                  .getTime() + (3 * 24 * 60 * 60 * 1000);
+
             if (data.subscription) {
                   try {
-                        data.subscription
-                              = await subscriptionService
-                                    .getOneSubscriptionByFilter({
-                                          _id: data.subscription
-                                    })
+                        data.subscription = await subscriptionService
+                              .getOneSubscriptionByFilter({
+                                    _id: data.subscription
+                              })
 
                         data.subscriptionStatus = data?.inAppSubscriptionStatus || 'trialing';
                         if (data?.stripe?.subscriptionId) {
                               await stripeSubscriptionService
-                                    .retrieveSubscription(
-                                          data.stripe?.subscriptionId
-                                    ).then(res => {
+                                    .retrieveSubscription(data.stripe?.subscriptionId)
+                                    .then(res => {
                                           data.subscriptionStatus = res.status
                                     })
                         }
 
-                        const createdAt = data.subscriptionStatus === 'trialing' ?
-                              (data?.inAppSubscription?.createdAt ||
+                        const createdAt = data.subscriptionStatus === 'trialing'
+                              ? (
+                                    data?.inAppSubscription?.createdAt ||
                                     data?.stripe?.createdAt ||
-                                    data.createdAt) : data.createdAt;
+                                    data.createdAt
+                              ) : data.createdAt;
 
-                        data.trialEndsIn = data.subscriptionStatus === 'trialing' ? getTimeDiff(
-                              String(
-                                    new Date()
-                              ),
-                              String(
-                                    new Date(
-                                          new Date()
-                                                .setDate(
-                                                      new Date(
-                                                            createdAt
-                                                      )
-                                                            .getDate() + 3
-                                                )
-                                    )
-                              )
-                        ) : '0:0:0:0';
+                        data.trialEndsIn = data.subscriptionStatus === 'trialing'
+                              ? getTimeDiff(
+                                    String(new Date()),
+                                    String(new Date(
+                                          new Date().setDate(
+                                                new Date(createdAt).getDate() + 3
+                                          )
+                                    ))
+                              ) : '0:0:0:0';
 
                         /** set default subscription end date with 3 days trail */
                         if (data.subscription?._id) {
-                              let months
-                                    = data.subscription.duration === 'Month'
-                                          ? 1
-                                          : data.subscription.duration === 'Half Year'
-                                                ? 6 : 12;
-                              const createdAt
-                                    = data?.inAppSubscription?.createdAt ||
+                              let months = data.subscription.duration === 'Month'
+                                    ? 1 : data.subscription.duration === 'Half Year'
+                                          ? 6 : 12;
+
+                              const createdAt = data?.inAppSubscription?.createdAt ||
                                     data?.stripe?.createdAt ||
                                     new Date();
-                              subscriptionEndDate
-                                    = new Date(createdAt)
-                                          .setMonth(
-                                                new Date(createdAt)
-                                                      .getMonth() + months
-                                          )
+
+                              subscriptionEndDate = new Date(createdAt)
+                                    .setMonth(
+                                          new Date(createdAt).getMonth() + months
+                                    )
                         }
                   } catch ({ message }) {
                         /** Handle get subscription error here */
@@ -428,7 +723,11 @@ const getUserSubscription = async (req: Request | any, res: Response, next: Next
 }
 
 /** Update user account details */
-const updateUserAccount = async (req: Request | any, res: Response, next: NextFunction) => {
+const updateUserAccount = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             /** Get current user */
             let userObj: any = Object.assign({}, req.user)
@@ -437,14 +736,37 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                   firstName: req.body.firstName || userObj.firstName,
                   lastName: req.body.lastName || userObj.lastName,
                   notification: {
-                        push: typeof eval(req.body?.notification?.push) === 'boolean' ? req.body?.notification?.push : userObj?.notification?.push || false,
-                        email: typeof eval(req.body?.notification?.email) === 'boolean' ? req.body?.notification?.email : userObj?.notification?.email || false,
-                        inApp: typeof eval(req.body?.notification?.inApp) === 'boolean' ? req.body?.notification?.inApp : userObj?.notification?.inApp || false,
-                        subscription: typeof eval(req.body?.notification?.subscription) === 'boolean' ? req.body?.notification?.subscription : userObj?.notification?.subscription || false,
-                        dailyDevotional: typeof eval(req.body?.notification?.dailyDevotional) === 'boolean' ? req.body?.notification?.dailyDevotional : userObj?.notification?.dailyDevotional || false,
-                        offerAndDeal: typeof eval(req.body?.notification?.offerAndDeal) === 'boolean' ? req.body?.notification?.offerAndDeal : userObj?.notification?.offerAndDeal || false,
+                        push: typeof eval(req.body?.notification?.push) === 'boolean'
+                              ? req.body?.notification?.push
+                              : userObj?.notification?.push || false,
+
+                        email: typeof eval(req.body?.notification?.email) === 'boolean'
+                              ? req.body?.notification?.email
+                              : userObj?.notification?.email || false,
+
+                        inApp: typeof eval(req.body?.notification?.inApp) === 'boolean'
+                              ? req.body?.notification?.inApp
+                              : userObj?.notification?.inApp || false,
+
+                        subscription:
+                              typeof eval(req.body?.notification?.subscription) === 'boolean'
+                                    ? req.body?.notification?.subscription
+                                    : userObj?.notification?.subscription || false,
+
+                        dailyDevotional:
+                              typeof eval(req.body?.notification?.dailyDevotional) === 'boolean'
+                                    ? req.body?.notification?.dailyDevotional
+                                    : userObj?.notification?.dailyDevotional || false,
+
+                        offerAndDeal:
+                              typeof eval(req.body?.notification?.offerAndDeal) === 'boolean'
+                                    ? req.body?.notification?.offerAndDeal
+                                    : userObj?.notification?.offerAndDeal || false,
                   },
-                  downloadOverWifi: typeof eval(req.body?.downloadOverWifi) === 'boolean' ? req.body?.downloadOverWifi : userObj?.downloadOverWifi || false
+                  downloadOverWifi:
+                        typeof eval(req.body?.downloadOverWifi) === 'boolean'
+                              ? req.body?.downloadOverWifi
+                              : userObj?.downloadOverWifi || false
             }
 
             if (req.body.kindleEmail) {
@@ -458,43 +780,95 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             }
             if (req.body.image && req.body.image.includes('base64')) {
                   await removeS3File(userObj.image, s3Bucket)
-                  const s3File: any = await uploadFileToS3(req.body.image, 'profile', s3Bucket)
+
+                  const s3File: any = await uploadFileToS3(
+                        req.body.image, 'profile', s3Bucket
+                  )
                   body.image = s3File.name
             }
             if (req.body.image && req.body.image.startsWith('http')) {
                   body.image = userObj.image
             }
-            if (req.body.pushTokens && req.body.pushTokens.deviceId && req.body.pushTokens.token) {
+            if (
+                  req.body.pushTokens &&
+                  req.body.pushTokens.token &&
+                  req.body.pushTokens.deviceId
+            ) {
                   body.pushTokens = req.user.pushTokens || []
-                  const pushNotificationIndex = body.pushTokens.findIndex(item => item.deviceId === req.body.pushTokens.deviceId)
+                  const pushNotificationIndex = body.pushTokens
+                        .findIndex(
+                              item => item.deviceId === req.body.pushTokens.deviceId
+                        )
                   if (pushNotificationIndex > -1) {
-                        body.pushTokens[pushNotificationIndex].token = req.body.pushTokens.token
+                        body.pushTokens[pushNotificationIndex].token
+                              = req.body.pushTokens.token
                   } else {
-                        body.pushTokens.push({ deviceId: req.body.pushTokens.deviceId, token: req.body.pushTokens.token })
+                        body.pushTokens.push({
+                              deviceId: req.body.pushTokens.deviceId,
+                              token: req.body.pushTokens.token
+                        })
                   }
             }
             if (req.body.id && req.body.provider) {
-                  const userConflicts = await userService.getOneUserByFilter({ 'oAuth.clientId': req.body.id, _id: { '$ne': String(userObj._id) } })
+                  const userConflicts = await userService.getOneUserByFilter(
+                        {
+                              'oAuth.clientId': req.body.id,
+                              _id: { '$ne': String(userObj._id) }
+                        }
+                  )
                   if (userConflicts) {
-                        return next(Boom.conflict(authControllerResponse.socialLinkError))
+                        return next(
+                              Boom.conflict(authControllerResponse.socialLinkError)
+                        )
                   }
                   const oAuth = userObj.oAuth || []
                   const index = oAuth.findIndex(i => i.provider === req.body.provider)
-                  if (index < 0) oAuth.push({ provider: req.body.provider, clientId: req.body.id, email: req.body.oAuthEmail || '' })
+                  if (index < 0) {
+                        oAuth.push({
+                              provider: req.body.provider,
+                              clientId: req.body.id,
+                              email: req.body.oAuthEmail
+                                    || ''
+                        })
+                  }
                   else {
-                        oAuth[index] = { ...oAuth[index], clientId: req.body.id, email: req.body.oAuthEmail || oAuth[index].email || '' }
+                        oAuth[index] = {
+                              ...oAuth[index],
+                              clientId: req.body.id,
+                              email: req.body.oAuthEmail
+                                    || oAuth[index].email
+                                    || ''
+                        }
                   }
                   body.oAuth = oAuth
             }
             if (req.body.provider && req.body.action === 'unlink') {
                   const oAuth = userObj.oAuth || []
-                  if (oAuth.length === 1 && oAuth.find(i => i.provider === req.body.provider) && (!userObj.password || !userObj.email)) {
-                        return next(Boom.notFound(authControllerResponse.missingEmailAuthError))
+                  if (
+                        oAuth.length === 1 &&
+                        oAuth.find(i =>
+                              i.provider === req.body.provider) &&
+                        (!userObj.password || !userObj.email)
+                  ) {
+                        return next(
+                              Boom.notFound(
+                                    authControllerResponse.missingEmailAuthError
+                              )
+                        )
                   }
-                  body.oAuth = oAuth.filter(i => i.provider !== req.body.provider)
+                  body.oAuth = oAuth.filter(
+                        i => i.provider !== req.body.provider
+                  )
             }
-            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: userObj.subscription });
-            const isAppSubscriptionStatus = !!subscriptionDetails && ['Cancelled', 'Active'].includes(req.body.inAppSubscription?.status) && !!userObj?.inAppSubscriptionStatus && !!req.body.inAppSubscription?.status !== userObj?.inAppSubscriptionStatus
+            const subscriptionDetails = await subscriptionService
+                  .getOneSubscriptionByFilter({ _id: userObj.subscription });
+            const isAppSubscriptionStatus = !!subscriptionDetails
+                  &&
+                  ['Cancelled', 'Active']
+                        .includes(req.body.inAppSubscription?.status)
+                  && !!userObj?.inAppSubscriptionStatus
+                  && !!req.body.inAppSubscription?.status
+                  !== userObj?.inAppSubscriptionStatus
 
             /** update in App subscription status */
             if (isAppSubscriptionStatus && subscriptionDetails) {
@@ -503,22 +877,58 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
             await usersService.updateUser({ _id: userObj._id }, body)
             /** sent email for subscription status updated */
             const notificationTitle = 'Holy Reads Subscription'
-            const notificationDescription = isAppSubscriptionStatus && emailTemplatesTitles.customer.subscriptionActivated ? `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} Subscription activated` : 'Subscription cancelled'
+            const notificationDescription = isAppSubscriptionStatus &&
+                  emailTemplatesTitles.customer.subscriptionActivated
+                  ? `Holy Reads ${subscriptionDetails.duration.includes('Half')
+                        ? subscriptionDetails.duration
+                        : '1 ' + subscriptionDetails.duration} Subscription activated`
+                  : 'Subscription cancelled';
+
             if (isAppSubscriptionStatus && subscriptionDetails) {
-                  const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: req.body.inAppSubscription.status === 'Active' ? emailTemplatesTitles.customer.subscriptionActivated : emailTemplatesTitles.customer.subscriptionCancelled })
-                  const sub = emailTemplateDetails.subject || `Holy Reads Subscription ${req.body.inAppSubscription.status}`
-                  let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have ${req.body.inAppSubscription.status} the subscription.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+                  const emailTemplateDetails = await emailTemplateService
+                        .getOneEmailTemplateByFilter({
+                              title: req.body.inAppSubscription.status === 'Active'
+                                    ? emailTemplatesTitles.customer.subscriptionActivated
+                                    : emailTemplatesTitles.customer.subscriptionCancelled
+                        })
+                  const sub = emailTemplateDetails.subject
+                        || `Holy Reads Subscription ${req.body.inAppSubscription.status}`
+                  let html = `
+                        <p>
+                              Dear ${userObj.email.split('@')[0]},
+                        </p>
+                        <p>
+                              You have ${req.body.inAppSubscription.status} the subscription.
+                        </p>
+                        <p>
+                              Should you have any questions or if any of your details change, please contact us.
+                        </p>
+                        <p>
+                              Best regards,<br>Holy Reads
+                        </p>
+                        <p>
+                              <strong>
+                                    ( ***&nbsp; Please do not reply to this email ***&nbsp; )
+                              </strong>
+                        </p>
+                  `
                   let now = userObj?.inAppSubscription?.createdAt
                   let subscriptionEndDate;
                   switch (subscriptionDetails.duration) {
                         case "Year":
-                              subscriptionEndDate = new Date(now.setMonth(now.getMonth() + 12));
+                              subscriptionEndDate = new Date(
+                                    now.setMonth(now.getMonth() + 12)
+                              );
                               break;
                         case "Half Year":
-                              subscriptionEndDate = new Date(now.setMonth(now.getMonth() + 6));
+                              subscriptionEndDate = new Date(
+                                    now.setMonth(now.getMonth() + 6)
+                              );
                               break;
                         default:
-                              subscriptionEndDate = new Date(now.setMonth(now.getMonth() + 1));
+                              subscriptionEndDate = new Date(
+                                    now.setMonth(now.getMonth() + 1)
+                              );
                               break;
                   }
 
@@ -528,68 +938,134 @@ const updateUserAccount = async (req: Request | any, res: Response, next: NextFu
                               endDate: subscriptionEndDate,
                               price: subscriptionDetails.price,
                         }
-                        const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                        const htmlData = await compileHtml(
+                              emailTemplateDetails.content, contentData
+                        )
                         if (htmlData) {
                               html = htmlData
                         }
                   }
 
-                  await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
+                  await notificationsService.createNotification({
+                        userId: userObj._id,
+                        type: 'setting',
+                        notification: {
+                              title: notificationTitle,
+                              description: notificationDescription
+                        }
+                  })
                   fetchNotifications(io.sockets, { _id: userObj._id })
 
                   const result = await sentEmail(userObj.email, sub, html);
                   if (!result) {
-                        return next(Boom.badData(authControllerResponse.sentSubscriptionEmailFilure))
+                        return next(
+                              Boom.badData(
+                                    authControllerResponse.sentSubscriptionEmailFilure
+                              )
+                        )
                   }
             }
-            res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
-            const kindleTitle = userObj.kindleEmail ? 'Update Kindle Email' : 'Add Kindle Email'
-            const kindleDescription = userObj.kindleEmail ? 'Kindle email updated' : 'Kindle email added'
+            res.status(200).send({
+                  message: authControllerResponse.userUpdateSuccess
+            })
+            const kindleTitle = userObj.kindleEmail
+                  ? 'Update Kindle Email' : 'Add Kindle Email'
+            const kindleDescription = userObj.kindleEmail
+                  ? 'Kindle email updated' : 'Kindle email added'
             if (req.body.kindleEmail) {
-                  await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: kindleTitle, description: kindleDescription } })
-                  fetchNotifications(io.sockets, { _id: userObj._id })
+                  await notificationsService
+                        .createNotification({
+                              userId: userObj._id,
+                              type: 'setting',
+                              notification: {
+                                    title: kindleTitle,
+                                    description: kindleDescription
+                              }
+                        })
+                  fetchNotifications(
+                        io.sockets,
+                        { _id: userObj._id }
+                  )
             }
             /** Push notification */
-            if (userObj.pushTokens.length && userObj?.notification?.push) {
+            if (
+                  userObj.pushTokens.length &&
+                  userObj?.notification?.push
+            ) {
                   const tokens = userObj.pushTokens.map(i => i.token)
-                  req.body.kindleEmail && pushNotification(tokens, kindleTitle, kindleDescription)
-                  isAppSubscriptionStatus && userObj?.notification?.subscription && pushNotification(tokens, notificationTitle, notificationDescription)
+                  req.body.kindleEmail
+                        && pushNotification(
+                              tokens,
+                              kindleTitle,
+                              kindleDescription
+                        )
+                  isAppSubscriptionStatus
+                        && userObj?.notification?.subscription
+                        && pushNotification(
+                              tokens,
+                              notificationTitle,
+                              notificationDescription
+                        )
             }
-      } catch (e: any) {
-            return next(Boom.badData(e.message))
+      } catch ({ message }) {
+            return next(Boom.badData(message as string))
       }
 }
 
 /** get share option image url */
-const getShareOptionImageUrl = async (req: Request | any, res: Response, next: NextFunction) => {
+const getShareOptionImageUrl = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             if (req.body.image) {
-                  const s3File: any = await uploadFileToS3(req.body.image, 'share-image', { ...s3Bucket, documentDirectory: 'users/share-options' })
+                  const s3File: any = await uploadFileToS3(
+                        req.body.image,
+                        'share-image',
+                        {
+                              ...s3Bucket,
+                              documentDirectory: 'users/share-options'
+                        }
+                  )
                   req.body.image = s3File.name
             }
-            const imageUrl: string = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.usersDirectory + '/share-options/' + req.body.image
-            return res.status(200).send({ message: authControllerResponse.addShareImage, data: { image: imageUrl } })
-      } catch (e: any) {
-            return next(Boom.badData(e.message))
+            const imageUrl: string
+                  = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.usersDirectory + '/share-options/' + req.body.image
+            return res.status(200).send({
+                  message: authControllerResponse.addShareImage,
+                  data: { image: imageUrl }
+            })
+      } catch ({ message }) {
+            return next(Boom.badData(message as string))
       }
 }
 
 /** get encode image */
-const getEncodeImage = async (req: Request | any, res: Response, next: NextFunction) => {
+const getEncodeImage = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             if (req.body.image) {
                   req.body.image = await imageUrlToBase64(req.body.image);
             }
             return res.status(200).send({
-                  message: authControllerResponse.encodeImageSuccess, data: { image: req.body.image }
+                  message: authControllerResponse.encodeImageSuccess,
+                  data: { image: req.body.image }
             })
-      } catch (e: any) {
-            return next(Boom.badData(e.message))
+      } catch ({ message }) {
+            return next(Boom.badData(message as string))
       }
 }
 
 /** Update user library details */
-const updateUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
+const updateUserLibrary = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             const { type, section } = req.query as any
 
@@ -598,19 +1074,27 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
             const userObj: any = Object.assign({}, req.user)
 
             if (!section) {
-                  return next(Boom.notFound(authControllerResponse.missingSectionParams))
+                  return next(
+                        Boom.notFound(
+                              authControllerResponse.missingSectionParams
+                        )
+                  )
             }
 
             const query: any = { _id: userObj.libraries }
             userObj.libraries = await usersService.getUserLibrary(query)
 
             if (section === 'completed') {
-                  req.body['$addToSet'] = { 'completed': req.body.completed }
+                  req.body['$addToSet'] = {
+                        'completed': req.body.completed
+                  }
                   delete req.body.completed
                   message = authControllerResponse.markAsCompletedBook
             }
             if (type === 'add' && section === 'saved') {
-                  req.body['$addToSet'] = { 'saved': req.body.saved }
+                  req.body['$addToSet'] = {
+                        'saved': req.body.saved
+                  }
                   delete req.body.saved
                   message = authControllerResponse.savedBook
             }
@@ -620,12 +1104,23 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   message = authControllerResponse.unSavedBook
             }
             if (section === 'reading') {
-                  const bookSummary = await bookService.findBook({ _id: req.body.bookId, 'chapters._id': req.body.chapter })
+                  const bookSummary = await bookService.findBook({
+                        _id: req.body.bookId,
+                        'chapters._id': req.body.chapter
+                  })
                   if (!bookSummary) {
-                        return next(Boom.notFound(bookSummaryControllerResponse.chapterNotExist))
+                        return next(Boom.notFound(
+                              bookSummaryControllerResponse.chapterNotExist
+                        ))
                   }
 
-                  const readingObj = await userObj.libraries?.reading?.find(oneRead => String(oneRead.bookId) === req.body.bookId)
+                  const readingObj = await userObj
+                        .libraries
+                        ?.reading
+                        ?.find(
+                              oneRead => String(oneRead.bookId) === req.body.bookId
+                        )
+
                   if (!readingObj) {
                         if (!userObj?.libraries) {
                               userObj.libraries = {}
@@ -638,7 +1133,10 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                               bookId: req.body.bookId,
                               chaptersCompleted: [req.body.chapter],
                         })
-                        await usersService.updateUserLibrary(query, userObj.libraries)
+                        await usersService.updateUserLibrary(
+                              query,
+                              userObj.libraries
+                        )
                         return res
                               .status(200)
                               .send({
@@ -665,7 +1163,12 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   delete req.body.chapter
             }
             const addToReads = async () => {
-                  const readingObj = await userObj.libraries?.reading?.find(oneRead => String(oneRead.bookId) === req.body.bookId)
+                  const readingObj = await userObj
+                        .libraries
+                        ?.reading
+                        ?.find(
+                              oneRead => String(oneRead.bookId) === req.body.bookId
+                        )
                   if (!readingObj) {
                         if (!userObj?.libraries?.reading) {
                               userObj.libraries.reading = []
@@ -675,7 +1178,10 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                               bookId: Types.ObjectId(req.body.bookId),
                               chaptersCompleted: [],
                         })
-                        await usersService.updateUserLibrary({ _id: query._id }, userObj.libraries)
+                        await usersService.updateUserLibrary(
+                              { _id: query._id },
+                              userObj.libraries
+                        )
                         return;
                   }
                   await userService.updateUserLibrary(
@@ -691,11 +1197,20 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                   );
             }
             if (section === 'view') {
-                  const bookSummary = await bookService.findBook({ _id: req.body.bookId })
+                  const bookSummary = await bookService.findBook({
+                        _id: req.body.bookId
+                  })
                   if (!bookSummary) {
-                        return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
+                        return next(
+                              Boom.notFound(
+                                    bookSummaryControllerResponse.getBookSummaryFailure
+                              )
+                        )
                   }
-                  const viewObj = userObj.libraries?.view?.find(bookItem => String(bookItem.bookId) === req.body.bookId)
+                  const viewObj = userObj
+                        .libraries
+                        ?.view
+                        ?.find(bookItem => String(bookItem.bookId) === req.body.bookId)
                   if (!userObj?.libraries) {
                         userObj.libraries = {}
                   }
@@ -707,25 +1222,35 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
                               bookId: req.body.bookId,
                               createdAt: new Date()
                         })
-                        await usersService.updateUserLibrary(query, userObj.libraries)
+                        await usersService.updateUserLibrary(
+                              query, userObj.libraries
+                        )
                         await addToReads()
-                        return res.status(200).send({ message: authControllerResponse.userUpdateSuccess })
+                        return res.status(200).send({
+                              message: authControllerResponse.userUpdateSuccess
+                        })
                   }
 
                   query['view.bookId'] = req.body.bookId
-                  req.body['$set'] = { 'view.$.bookId': req.body.bookId }
+                  req.body['$set'] = {
+                        'view.$.bookId': req.body.bookId
+                  }
                   await addToReads()
                   delete req.body.bookId
             }
             /** Add to User small group */
             if (type === 'add' && section === 'smallGroup') {
-                  req.body['$addToSet'] = { 'smallGroups': req.body.smallGroup }
+                  req.body['$addToSet'] = {
+                        'smallGroups': req.body.smallGroup
+                  }
                   delete req.body.smallGroup
                   message = authControllerResponse.savedBook
             }
             /** Delete from User small group */
             if (type === 'delete' && section === 'smallGroup') {
-                  req.body['$pull'] = { 'smallGroups': req.body.smallGroup }
+                  req.body['$pull'] = {
+                        'smallGroups': req.body.smallGroup
+                  }
                   delete req.body.smallGroup
                   message = authControllerResponse.unSavedBook
             }
@@ -733,13 +1258,17 @@ const updateUserLibrary = async (req: Request | any, res: Response, next: NextFu
             await usersService.updateUserLibrary(query, req.body)
             return res.status(200).send({ message })
 
-      } catch (e: any) {
-            return next(Boom.badData(e.message))
+      } catch ({ message }) {
+            return next(Boom.badData(message as string))
       }
 }
 
 /**  Get one user library by library id */
-const getUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
+const getUserLibrary = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             const {
                   sort,
@@ -753,7 +1282,9 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
 
             /** Get current user */
             let userObj: any = Object.assign({}, req.user)
-            userObj.libraries = await usersService.getUserLibrary({ _id: userObj.libraries })
+            userObj.libraries = await usersService.getUserLibrary({
+                  _id: userObj.libraries
+            })
             if (bookId && !section) {
                   const book = userObj?.libraries?.saved?.find(
                         id => String(id) === bookId
@@ -774,17 +1305,32 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
 
             if (section === 'saved' && userObj?.libraries?.saved?.length) {
                   const search: any = {
-                        _id: { $in: bookId ? [bookId] : userObj.libraries.saved }
+                        _id: {
+                              $in: bookId ? [bookId] : userObj.libraries.saved
+                        }
                   }
-                  if (author) { search['author._id'] = Types.ObjectId(author) }
-                  if (star) { search.star = Number(star) }
+                  if (author) {
+                        search['author._id'] = Types.ObjectId(author)
+                  }
+                  if (star) {
+                        search.star = Number(star)
+                  }
                   const data = await bookService.getAllBookSummaries(
-                        0, 0, search, { 'createdAt': String(sort || 'ASC').toLowerCase() === 'asc' ? 1.0 : -1.0 }
+                        0,
+                        0,
+                        search,
+                        {
+                              'createdAt': String(sort || 'ASC')
+                                    .toLowerCase() === 'asc' ? 1.0 : -1.0
+                        }
                   )
                   if (data.summaries?.length) {
-                        data.summaries = userObj.libraries.saved.reverse().map(oi => {
-                              return data.summaries.find(si => String(si._id) === String(oi))
-                        }).filter(i => i)
+                        data.summaries = userObj.libraries.saved
+                              .reverse().map(oi => {
+                                    return data.summaries.find(
+                                          si => String(si._id) === String(oi)
+                                    )
+                              }).filter(i => i)
 
                         if (sort)
                               data.summaries = sortArrayObject(
@@ -792,7 +1338,11 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                               )
 
                         data.count = data.summaries.length
-                        data.summaries = data.summaries.slice(Number(skip), Number(skip) + Number(limit))
+                        data.summaries = data.summaries
+                              .slice(
+                                    Number(skip),
+                                    Number(skip) + Number(limit)
+                              )
                   }
                   res.status(200).send({
                         message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
@@ -807,23 +1357,46 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                               $in: bookId ? [bookId] : userObj.libraries.completed
                         }
                   }
-                  if (author) { search['author._id'] = Types.ObjectId(author) }
-                  if (star) { search.star = Number(star) }
+                  if (author) {
+                        search['author._id'] = Types.ObjectId(author)
+                  }
+                  if (star) {
+                        search.star = Number(star)
+                  }
                   const data = await bookService.getAllBookSummaries(
-                        0, 0, search, { 'createdAt': String(sort || 'ASC').toLowerCase() === 'asc' ? 1.0 : -1.0 }
+                        0,
+                        0,
+                        search,
+                        {
+                              'createdAt': String(sort || 'ASC')
+                                    .toLowerCase() === 'asc' ? 1.0 : -1.0
+                        }
                   )
                   if (data.summaries?.length) {
-                        data.summaries = userObj.libraries.completed.reverse().map(oi => {
-                              return data.summaries.find(si => String(si._id) === String(oi))
-                        }).filter(i => i)
+                        data.summaries = userObj
+                              .libraries
+                              .completed
+                              .reverse()
+                              .map(oi => {
+                                    return data.summaries.find(
+                                          si => String(si._id) === String(oi)
+                                    )
+                              })
+                              .filter(i => i)
 
                         if (sort)
                               data.summaries = sortArrayObject(
-                                    data.summaries, 'title', sort.toLowerCase()
+                                    data.summaries,
+                                    'title',
+                                    sort.toLowerCase()
                               )
 
                         data.count = data.summaries.length
-                        data.summaries = data.summaries.slice(Number(skip), Number(skip) + Number(limit))
+                        data.summaries = data.summaries
+                              .slice(
+                                    Number(skip),
+                                    Number(skip) + Number(limit)
+                              )
                   }
                   res.status(200).send({
                         message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
@@ -855,12 +1428,24 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   }
 
                   /** Prepare query to get users reads book details */
-                  const search: any = { _id: { $in: [...bookIds] } }
-                  if (author) { search['author._id'] = Types.ObjectId(author) }
-                  if (star) { search.star = Number(star) }
+                  const search: any = {
+                        _id: { $in: [...bookIds] }
+                  }
+                  if (author) {
+                        search['author._id'] = Types.ObjectId(author)
+                  }
+                  if (star) {
+                        search.star = Number(star)
+                  }
 
                   /** Get user reads books details by users reads books ids */
-                  const data = await bookService.getAllBookSummaries(0, 0, search, { 'createdAt': -1.0 }, true)
+                  const data = await bookService.getAllBookSummaries(
+                        0,
+                        0,
+                        search,
+                        { 'createdAt': -1.0 },
+                        true
+                  )
 
                   /** sort summary by latest reads based on user libraries readings */
                   const summaries = new Set()
@@ -894,7 +1479,11 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                         data.summaries, 'updatedAt', 'desc'
                   )
                   data.count = data.summaries.length
-                  data.summaries = data.summaries.slice(Number(skip), Number(skip) + Number(limit))
+                  data.summaries = data.summaries
+                        .slice(
+                              Number(skip),
+                              Number(skip) + Number(limit)
+                        )
                   res.status(200).send({
                         message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
                         data
@@ -905,18 +1494,57 @@ const getUserLibrary = async (req: Request | any, res: Response, next: NextFunct
                   message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
                   data: []
             })
-      } catch (e: any) {
-            next(Boom.badData(e.message))
+      } catch ({ message }) {
+            next(Boom.badData(message as string))
       }
 }
 
-const submitQuery = async (req: Request | any, res: Response, next: NextFunction) => {
+const submitQuery = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
-            const { subject, message }: { subject: string, message: string } = req.body;
+            const {
+                  subject,
+                  message
+            }: {
+                  subject: string,
+                  message: string
+            } = req.body;
+
             const userObj = Object.assign({}, req.user)
-            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.customerInquiry })
+            const emailTemplateDetails = await emailTemplateService
+                  .getOneEmailTemplateByFilter({
+                        title: emailTemplatesTitles.admin.customerInquiry
+                  })
             const sub = emailTemplateDetails.subject || 'Customer Inquiry'
-            let html = `<p>Hello Admin,</p><p>You receive a support message from user.</p><p>Email : ${userObj.email}</p><p>Phone Number : ${userObj.contactNumber || ''}</p><p>Subject : ${subject}</p><p>Message : ${message}</p><p>Best regards,</p><p>${userObj.email.split('@')[0]}</p>`
+            let html = `
+                  <p>
+                        Hello Admin,
+                  </p>
+                  <p>
+                        You receive a support message from user.
+                  </p>
+                  <p>
+                        Email : ${userObj.email}
+                  </p>
+                  <p>
+                        Phone Number : ${userObj.contactNumber || ''}
+                  </p>
+                  <p>
+                        Subject : ${subject}
+                  </p>
+                  <p>
+                        Message : ${message}
+                  </p>
+                  <p>
+                        Best regards,
+                  </p>
+                  <p>
+                        ${userObj.email.split('@')[0]}
+                  </p>
+            `
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
@@ -926,28 +1554,64 @@ const submitQuery = async (req: Request | any, res: Response, next: NextFunction
                         subject,
                         message
                   }
-                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  const htmlData = await compileHtml(
+                        emailTemplateDetails.content,
+                        contentData
+                  )
                   if (htmlData) {
                         html = htmlData
                   }
             }
-            const result = await sentEmail(originEmails.contactUs, sub, html);
+            const result = await sentEmail(
+                  originEmails.contactUs,
+                  sub,
+                  html
+            );
             if (!result) {
-                  return next(Boom.badData(authControllerResponse.submitQueryError))
+                  return next(
+                        Boom.badData(
+                              authControllerResponse.submitQueryError
+                        )
+                  )
             }
-            res.status(200).send({ message: authControllerResponse.submitQuerySuccess })
-      } catch (e: any) {
-            next(Boom.badData(e.message))
+            res.status(200).send({
+                  message: authControllerResponse.submitQuerySuccess
+            })
+      } catch ({ message }) {
+            next(Boom.badData(message as string))
       }
 }
 
-const submitFeedback = async (req: Request | any, res: Response, next: NextFunction) => {
+const submitFeedback = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
-            const { title, feedback }: { title: string, feedback: string } = req.body;
+            const {
+                  title,
+                  feedback
+            }: {
+                  title: string,
+                  feedback: string
+            } = req.body;
             const userObj = Object.assign({}, req.user)
-            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.customerFeedback })
+            const emailTemplateDetails = await emailTemplateService
+                  .getOneEmailTemplateByFilter({
+                        title: emailTemplatesTitles.admin.customerFeedback
+                  })
             const sub = emailTemplateDetails.subject || 'Customer Feedback'
-            let html = `<p>You've received a feedback from ${userObj.email}.</p><p>Title : ${title}</p><p>Feedback : ${feedback}</p>`
+            let html = `
+                  <p>
+                        You've received a feedback from ${userObj.email}.
+                  </p>
+                  <p>
+                        Title : ${title}
+                  </p>
+                  <p>
+                        Feedback : ${feedback}
+                  </p>
+            `
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
@@ -955,191 +1619,446 @@ const submitFeedback = async (req: Request | any, res: Response, next: NextFunct
                         title,
                         feedback
                   }
-                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  const htmlData = await compileHtml(
+                        emailTemplateDetails.content, contentData
+                  )
                   if (htmlData) {
                         html = htmlData
                   }
             }
-            const result = await sentEmail(originEmails.contactUs, sub, html);
+            const result = await sentEmail(
+                  originEmails.contactUs, sub, html
+            );
             if (!result) {
-                  return next(Boom.badData(authControllerResponse.submitQueryError))
+                  return next(
+                        Boom.badData(
+                              authControllerResponse.submitQueryError
+                        )
+                  )
             }
-            res.status(200).send({ message: authControllerResponse.submitQuerySuccess })
-      } catch (e: any) {
-            next(Boom.badData(e.message))
+            res.status(200).send({
+                  message: authControllerResponse.submitQuerySuccess
+            })
+      } catch ({ message }) {
+            next(Boom.badData(message as string))
       }
 }
 
-const updateRating = async (req: Request | any, res: Response, next: NextFunction) => {
+const updateRating = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
-            const { star, description, bookId }: { star: number, description: string, bookId: string } = req.body;
+            const {
+                  star,
+                  bookId,
+                  description,
+            }: {
+                  star: number,
+                  bookId: string,
+                  description: string,
+            } = req.body;
+
             const userObj = Object.assign({}, req.user)
-            await ratingService.updateRating({ star, description, bookId, userId: userObj._id });
-            res.status(200).send({ message: authControllerResponse.bookRatingSuccess })
+            await ratingService.updateRating({
+                  star,
+                  bookId,
+                  description,
+                  userId: userObj._id
+            });
+
+            res.status(200).send({
+                  message: authControllerResponse.bookRatingSuccess
+            })
       } catch (e: any) {
             next(Boom.badData(e.message))
       }
 }
 
 /** Add User by referral */
-const blessFriend = async (req: any, res: Response, next: NextFunction) => {
+const blessFriend = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             const body = req.body
             body.email = body.friendEmail
             delete body.friendEmail
-            const refUser: any = await usersService.getOneUserByFilter({ email: req.user.email })
+            const refUser: any = await usersService
+                  .getOneUserByFilter({
+                        email: req.user.email
+                  })
             if (!refUser) {
-                  return next(Boom.notFound(authControllerResponse.getReferralUserError))
+                  return next(
+                        Boom.notFound(
+                              authControllerResponse.getReferralUserError
+                        )
+                  )
             }
             /** Get user from db */
-            const inviteUser: any = await usersService.getOneUserByFilter({ email: body.email })
+            const inviteUser: any = await usersService
+                  .getOneUserByFilter({ email: body.email })
             if (inviteUser) {
-                  return next(Boom.conflict(authControllerResponse.userAlreadyExistError))
+                  return next(
+                        Boom.conflict(
+                              authControllerResponse.userAlreadyExistError
+                        )
+                  )
             }
-            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscription })
+            const subscriptionDetails = await subscriptionService
+                  .getOneSubscriptionByFilter({
+                        _id: body.subscription
+                  })
             if (!subscriptionDetails) {
-                  return next(Boom.notFound(authControllerResponse.blessFriendSubscriptionError))
+                  /** Return status code 404 not found */
+                  return next(
+                        Boom.notFound(
+                              authControllerResponse.blessFriendSubscriptionError
+                        )
+                  )
             }
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
-            const token: string = getToken({ code: String(verificationCode), email: body.email })
+            const token: string = getToken({
+                  code: String(verificationCode),
+                  email: body.email
+            })
             const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
 
             const inviteUserBody: any = {
                   image: '',
-                  email: body.email,
-                  password: body.password,
                   type: 'User',
-                  status: 'Deactive',
                   verified: false,
                   verificationCode,
-                  subscription: subscriptionDetails._id,
+                  email: body.email,
+                  status: 'Deactive',
+                  password: body.password,
                   referralUserId: refUser._id,
-                  device: body.device || 'web'
+                  device: body.device || 'web',
+                  subscription: subscriptionDetails._id,
             }
             let subscriptionEndDate, subscription;
             if (!body.inAppSubscription) {
-                  const customer = await stripeSubscriptionService.createCustomer(body.email, req.body.token)
+                  const customer = await stripeSubscriptionService
+                        .createCustomer(
+                              body.email,
+                              req.body.token
+                        )
                   subscription = await stripeSubscriptionService.createSubscription({
-                        planId: subscriptionDetails.stripePlanId,
-                        customerId: customer.id,
-                        paymentMethod: req.body.paymentMethod,
                         status: 'active',
-                        coupon: req.body.coupon as any
+                        customerId: customer.id,
+                        coupon: req.body.coupon as any,
+                        paymentMethod: req.body.paymentMethod,
+                        planId: subscriptionDetails.stripePlanId,
                   })
                   inviteUserBody.stripe = {
+                        createdAt: new Date(),
                         customerId: customer.id,
-                        planId: subscriptionDetails.stripePlanId,
                         subscriptionId: subscription.id,
-                        createdAt: new Date()
+                        planId: subscriptionDetails.stripePlanId,
                   }
                   subscriptionEndDate = new Date(subscription.current_period_end * 1000)
                   if (subscription.status === 'trialing') {
                         let now = new Date(subscriptionEndDate)
                         switch (subscriptionDetails.duration) {
                               case "Year":
-                                    subscriptionEndDate = new Date(now.setMonth(now.getMonth() + 12));
+                                    subscriptionEndDate = new Date(
+                                          now.setMonth(now.getMonth() + 12)
+                                    );
                                     break;
                               case "Half Year":
-                                    subscriptionEndDate = new Date(now.setMonth(now.getMonth() + 6));
+                                    subscriptionEndDate = new Date(
+                                          now.setMonth(now.getMonth() + 6)
+                                    );
                                     break;
                               default:
-                                    subscriptionEndDate = new Date(now.setMonth(now.getMonth() + 1));
+                                    subscriptionEndDate = new Date(
+                                          now.setMonth(now.getMonth() + 1)
+                                    );
                                     break;
                         }
                   }
             } else {
-                  inviteUserBody.inAppSubscription = { ...body.inAppSubscription, createdAt: new Date() }
+                  inviteUserBody.inAppSubscription = {
+                        ...body.inAppSubscription,
+                        createdAt: new Date()
+                  }
                   inviteUserBody.inAppSubscriptionStatus = 'Active'
                   let now = new Date()
                   switch (subscriptionDetails.duration) {
                         case "Year":
-                              subscriptionEndDate = new Date(now.setMonth(new Date().getMonth() + 12));
+                              subscriptionEndDate = new Date(
+                                    now.setMonth(new Date().getMonth() + 12)
+                              );
                               break;
                         case "Half Year":
-                              subscriptionEndDate = new Date(now.setMonth(new Date().getMonth() + 6));
+                              subscriptionEndDate = new Date(
+                                    now.setMonth(new Date().getMonth() + 6)
+                              );
                               break;
                         default:
-                              subscriptionEndDate = new Date(now.setMonth(new Date().getMonth() + 1));
+                              subscriptionEndDate = new Date(
+                                    now.setMonth(new Date().getMonth() + 1)
+                              );
                               break;
                   }
             }
-            const invitedUserDetails = await authService.createUser(inviteUserBody)
+            const invitedUserDetails = await authService
+                  .createUser(inviteUserBody)
             if (!invitedUserDetails || !invitedUserDetails._id) {
-                  return next(Boom.notFound(authControllerResponse.createUserFailed))
+                  /** Return status code 404 not found */
+                  return next(
+                        Boom.notFound(
+                              authControllerResponse.createUserFailed
+                        )
+                  )
             }
 
-            const sendEmailTemplate = await emailTemplateService.getAllEmailTemplates(0, 0, { title: { $in: [emailTemplatesTitles.customer.sendInvitation, emailTemplatesTitles.customer.blessFriend] } }, [])
-            const blessFriendTemplate = sendEmailTemplate.count && sendEmailTemplate.emailTemplates.find(oneTemplate => oneTemplate.title === emailTemplatesTitles.customer.blessFriend)
-            const sendInvitationTemplate = sendEmailTemplate.count && sendEmailTemplate.emailTemplates.find(oneTemplate => oneTemplate.title === emailTemplatesTitles.customer.sendInvitation)
+            const sendEmailTemplate = await emailTemplateService
+                  .getAllEmailTemplates(
+                        0,
+                        0,
+                        {
+                              title: {
+                                    $in: [
+                                          emailTemplatesTitles.customer.sendInvitation,
+                                          emailTemplatesTitles.customer.blessFriend
+                                    ]
+                              }
+                        },
+                        []
+                  )
+            const blessFriendTemplate = sendEmailTemplate.count
+                  && sendEmailTemplate.emailTemplates.find(
+                        oneTemplate =>
+                              oneTemplate.title
+                              ===
+                              emailTemplatesTitles.customer.blessFriend
+                  )
+            const sendInvitationTemplate = sendEmailTemplate.count
+                  && sendEmailTemplate
+                        .emailTemplates
+                        .find(oneTemplate =>
+                              oneTemplate.title
+                              ===
+                              emailTemplatesTitles.customer.sendInvitation
+                        )
 
-            const blessFriendSubject = blessFriendTemplate?.subject || 'Customer Registration Bless Friend'
-            const sendInvitationSubject = sendInvitationTemplate?.subject || 'Send Invitation'
+            const blessFriendSubject = blessFriendTemplate?.subject
+                  || 'Customer Registration Bless Friend'
+            const sendInvitationSubject = sendInvitationTemplate?.subject
+                  || 'Send Invitation'
 
-            let blessFriendHtml = `<p>Dear ${refUser.email.split('@')[0]},</p><p>Thank you for registered with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${body.email}<br>Password: ${body.password}</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
-            let sentInvitationHtml = `<p>Dear ${body.email.split('@')[0]}</p><p>${refUser.email.split('@')[0]} invited you to connect on Holy Reads</p><p>Your customer account details are below:</p><p>Email : ${body.email}<br>Password: ${body.password}</p><p>Please click <a href=${link}>Here</a> to accept invite.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let blessFriendHtml = `     
+                  <p>
+                        Dear ${refUser.email.split('@')[0]},
+                  </p>
+                  <p>
+                        Thank you for registered with Holy Reads.
+                  </p>
+                  <p>
+                        Your customer account details are below:
+                  </p>
+                  <p>
+                        Email : ${body.email}<br>Password: ${body.password}
+                  </p>
+                  <p>
+                        Should you have any questions or if any of your details change, please contact us.
+                  </p>
+                  <p>
+                        Best regards,<br>Holy reads
+                  </p>
+                  <p>
+                        <strong>
+                              ( ***&nbsp; Please do not reply to this email ***&nbsp; )
+                        </strong>
+                  </p>
+            `
+            let sentInvitationHtml = `
+                  <p>
+                        Dear ${body.email.split('@')[0]}
+                  </p>
+                  <p>
+                        ${refUser.email.split('@')[0]} invited you to connect on Holy Reads
+                  </p>
+                  <p>
+                        Your customer account details are below:
+                  </p>
+                  <p>
+                        Email : ${body.email}<br>Password: ${body.password}
+                  </p>
+                  <p>
+                        Please click <a href=${link}>Here</a> to accept invite.
+                  </p>
+                  <p>
+                        Should you have any questions or if any of your details change, please contact us.
+                  </p>
+                  <p>
+                        Best regards,<br>Holy reads
+                  </p>
+                  <p>
+                        <strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong><
+                  /p>
+            `
 
             if (blessFriendTemplate && blessFriendTemplate.content) {
-                  const contentData = { email: body.email, username: refUser.email.substr(0, refUser.email.indexOf('@')), plan: subscriptionDetails.duration + 'ly' }
-                  const htmlData = await compileHtml(blessFriendTemplate.content, contentData)
+                  const contentData = {
+                        email: body.email,
+                        username: refUser
+                              .email
+                              .substr(
+                                    0, refUser.email.indexOf('@')
+                              ),
+                        plan: subscriptionDetails.duration + 'ly'
+                  }
+                  const htmlData = await compileHtml(
+                        blessFriendTemplate.content,
+                        contentData
+                  )
                   if (htmlData) {
                         blessFriendHtml = htmlData
                   }
             }
-            if (sendInvitationTemplate && sendInvitationTemplate.content) {
-                  const contentData = { sendername: refUser.email.split('@')[0], link, email: body.email, password: body.password, plan: subscriptionDetails.duration + 'ly' }
-                  const htmlData = await compileHtml(sendInvitationTemplate.content, contentData)
+            if (
+                  sendInvitationTemplate &&
+                  sendInvitationTemplate.content
+            ) {
+                  const contentData = {
+                        link,
+                        email: body.email,
+                        password: body.password,
+                        sendername: refUser.email.split('@')[0],
+                        plan: subscriptionDetails.duration + 'ly'
+                  }
+                  const htmlData = await compileHtml(
+                        sendInvitationTemplate.content,
+                        contentData
+                  )
                   if (htmlData) {
                         sentInvitationHtml = htmlData
                   }
             }
-            const blessFriendEmailResult = await sentEmail(refUser.email, blessFriendSubject, blessFriendHtml);
-            const sendInvitationResult = await sentEmail(body.email, sendInvitationSubject, sentInvitationHtml);
+            const blessFriendEmailResult = await sentEmail(
+                  refUser.email,
+                  blessFriendSubject,
+                  blessFriendHtml
+            );
+            const sendInvitationResult = await sentEmail(
+                  body.email,
+                  sendInvitationSubject,
+                  sentInvitationHtml
+            );
             if (!blessFriendEmailResult || !sendInvitationResult) {
-                  return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
+                  /** Return 422 status code unprocessable entity */
+                  return next(
+                        Boom.badData(
+                              authControllerResponse.sentVerifyEmailFailure
+                        )
+                  )
             }
 
-            await notificationsService.createNotification({ userId: invitedUserDetails._id, type: 'setting', notification: { title: 'Holy Reads Invitation 🎁', description: refUser.email.split('@')[0] + ' invited to you ✨' } })
+            await notificationsService.createNotification({
+                  userId: invitedUserDetails._id,
+                  type: 'setting',
+                  notification: {
+                        title: 'Holy Reads Invitation 🎁',
+                        description: refUser.email.split('@')[0] + ' invited to you ✨'
+                  }
+            })
             fetchNotifications(io.sockets, { _id: invitedUserDetails._id })
 
             if (!inviteUserBody?.inAppSubscription) {
-                  return res.status(200).send({ message: authControllerResponse.blessFriendSuccess })
+                  return res.status(200).send({
+                        message: authControllerResponse.blessFriendSuccess
+                  })
             }
 
-            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
+            const emailTemplateDetails = await emailTemplateService
+                  .getOneEmailTemplateByFilter({
+                        title: emailTemplatesTitles.customer.chooseSubscription
+                  })
             const sub = emailTemplateDetails.subject || 'Subscription'
-            let html = `<p>Dear ${body.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let html = `
+                  <p>
+                        Dear ${body.email.split('@')[0]},
+                  </p>
+                  <p>
+                        You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.
+                  </p>
+                  <p>
+                        Should you have any questions or if any of your details change, please contact us.
+                  </p>
+                  <p>
+                        Best regards,<br>Holy Reads
+                  </p>
+                  <p>
+                        <strong>
+                              ( ***&nbsp; Please do not reply to this email ***&nbsp; )
+                        </strong>
+                  </p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
-                        username: body.email.split('@')[0],
                         price: subscriptionDetails.price,
+                        username: body.email.split('@')[0],
+                        status: subscription.status || 'Active',
                         endDate: `[${formattedDate(subscriptionEndDate)}]`,
-                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `1 ${subscriptionDetails.duration}`,
-                        status: subscription.status || 'Active'
+                        duration: subscriptionDetails
+                              ?.duration
+                              ?.toLowerCase()
+                              ?.includes('half')
+                                    ? subscriptionDetails.duration
+                                    : `1 ${subscriptionDetails.duration}`
                   }
-                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  const htmlData = await compileHtml(
+                        emailTemplateDetails.content,
+                        contentData
+                  )
                   if (htmlData) {
                         html = htmlData
                   }
             }
-            const result = await sentEmail(body.email, sub, html);
+            const result = await sentEmail(
+                  body.email,
+                  sub,
+                  html
+            );
             if (!result) {
-                  return next(Boom.badData(authControllerResponse.sentSubscriptionEmailFilure))
+                  return next(
+                        Boom.badData(
+                              authControllerResponse.sentSubscriptionEmailFilure
+                        )
+                  )
             }
 
-            res.status(200).send({ message: authControllerResponse.blessFriendSuccess })
+            res.status(200).send({
+                  message: authControllerResponse.blessFriendSuccess
+            })
       } catch (e: any) {
             next(Boom.badData(e.message))
       }
 }
 
 /** subscribe plan */
-const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
+const subscribePlan = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             const userObj = req.user
-            const subscriptionDetails = await subscriptionService.getOneSubscriptionByFilter({ _id: req.body.subscription })
+            const subscriptionDetails = await subscriptionService
+                  .getOneSubscriptionByFilter({
+                        _id: req.body.subscription
+                  })
             if (!subscriptionDetails) {
-                  return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
+                  /** Return status code 404 not found */
+                  return next(
+                        Boom.notFound(
+                              subscriptionsControllerResponse.getSubscriptionFailure
+                        )
+                  )
             }
             let body: any = {};
             let subscription;
@@ -1147,68 +2066,97 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             if (req.body.inAppSubscription) {
                   body = {
                         subscription: req.body.subscription,
-                        inAppSubscription: { ...req.body.inAppSubscription, createdAt: new Date() },
+                        inAppSubscription: {
+                              ...req.body.inAppSubscription,
+                              createdAt: new Date()
+                        },
                         inAppSubscriptionStatus: 'Active',
                   }
                   let now = new Date()
                   switch (subscriptionDetails.duration) {
                         case "Year":
-                              subscriptionEndDate = new Date(now.setMonth(new Date().getMonth() + 12));
+                              subscriptionEndDate = new Date(
+                                    now.setMonth(new Date().getMonth() + 12)
+                              );
                               break;
                         case "Half Year":
-                              subscriptionEndDate = new Date(now.setMonth(new Date().getMonth() + 6));
+                              subscriptionEndDate = new Date(
+                                    now.setMonth(new Date().getMonth() + 6)
+                              );
                               break;
                         default:
-                              subscriptionEndDate = new Date(now.setMonth(new Date().getMonth() + 1));
+                              subscriptionEndDate = new Date(
+                                    now.setMonth(new Date().getMonth() + 1)
+                              );
                               break;
                   }
             } else {
                   if (!userObj?.stripe?.customerId) {
-                        const customer = await stripeSubscriptionService.createCustomer(userObj.email, req.body.token)
+                        const customer = await stripeSubscriptionService
+                              .createCustomer(
+                                    userObj.email,
+                                    req.body.token
+                              )
                         if (!userObj.stripe) { userObj.stripe = {} }
                         userObj.stripe.customerId = customer.id
-                        await usersService.updateUser({ _id: userObj._id }, { 'stripe.customerId': customer.id })
+                        await usersService.updateUser(
+                              { _id: userObj._id },
+                              { 'stripe.customerId': customer.id }
+                        )
                   }
                   if (!userObj?.stripe?.subscriptionId) {
                         subscription = await stripeSubscriptionService.createSubscription({
-                              planId: subscriptionDetails.stripePlanId,
+                              status: 'active',
+                              coupon: req.body.coupon,
                               customerId: userObj.stripe.customerId,
                               paymentMethod: req.body.paymentMethod,
-                              coupon: req.body.coupon,
-                              status: 'active'
+                              planId: subscriptionDetails.stripePlanId,
                         })
-                        subscriptionEndDate = new Date(subscription.current_period_end * 1000)
+                        subscriptionEndDate = new Date(
+                              subscription.current_period_end * 1000
+                        )
                   } else {
                         await stripeSubscriptionService.updateSubscription({
-                              planId: subscriptionDetails.stripePlanId,
-                              subscriptionId: userObj.stripe.subscriptionId,
+                              coupon: req.body.coupon,
                               customerId: userObj.stripe.customerId,
                               paymentMethod: req.body.paymentMethod,
-                              coupon: req.body.coupon
+                              planId: subscriptionDetails.stripePlanId,
+                              subscriptionId: userObj.stripe.subscriptionId,
                         })
-                        subscription = await stripeSubscriptionService.retrieveSubscription(userObj.stripe.subscriptionId)
-                        subscriptionEndDate = new Date(subscription.current_period_end * 1000)
+                        subscription = await stripeSubscriptionService
+                              .retrieveSubscription(
+                                    userObj.stripe.subscriptionId
+                              )
+                        subscriptionEndDate = new Date(
+                              subscription.current_period_end * 1000
+                        )
                   }
                   if (subscription.status === 'trialing') {
                         let now = new Date(subscriptionEndDate)
                         switch (subscriptionDetails.duration) {
                               case "Year":
-                                    subscriptionEndDate = new Date(now.setMonth(now.getMonth() + 12));
+                                    subscriptionEndDate = new Date(
+                                          now.setMonth(now.getMonth() + 12)
+                                    );
                                     break;
                               case "Half Year":
-                                    subscriptionEndDate = new Date(now.setMonth(now.getMonth() + 6));
+                                    subscriptionEndDate = new Date(
+                                          now.setMonth(now.getMonth() + 6)
+                                    );
                                     break;
                               default:
-                                    subscriptionEndDate = new Date(now.setMonth(now.getMonth() + 1));
+                                    subscriptionEndDate = new Date(
+                                          now.setMonth(now.getMonth() + 1)
+                                    );
                                     break;
                         }
                   }
                   /** add stripe details into body */
                   body = {
-                        'stripe.planId': subscriptionDetails.stripePlanId,
-                        'stripe.subscriptionId': subscription.id,
                         'stripe.createdAt': new Date(),
-                        subscription: subscriptionDetails._id
+                        subscription: subscriptionDetails._id,
+                        'stripe.subscriptionId': subscription.id,
+                        'stripe.planId': subscriptionDetails.stripePlanId,
                   }
             }
             await usersService.updateUser({ _id: userObj._id }, body)
@@ -1223,34 +2171,77 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
                   })
             }
 
-            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.chooseSubscription })
+            const emailTemplateDetails = await emailTemplateService
+                  .getOneEmailTemplateByFilter({
+                        title: emailTemplatesTitles.customer.chooseSubscription
+                  })
             const sub = emailTemplateDetails.subject || 'Holy Reads Subscription'
-            let html = `<p>Dear ${userObj.email.split('@')[0]},</p><p>You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let html = `
+                  <p>
+                        Dear ${userObj.email.split('@')[0]},
+                  </p>
+                  <p>
+                        You have subscribed to ${subscriptionDetails.title} Plan for ${subscriptionDetails.duration} days on ${subscriptionDetails.title} basis.
+                  </p>
+                  <p>
+                        Should you have any questions or if any of your details change, please contact us.
+                  </p>
+                  <p>
+                        Best regards,<br>Holy Reads
+                  </p>
+                  <p>
+                        <strong>
+                              ( ***&nbsp; Please do not reply to this email ***&nbsp; )
+                        </strong>
+                  </p>
+            `
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
-                  
+
                   const contentData = {
-                        username: userObj.email.split('@')[0],
                         price: subscriptionDetails.price,
+                        username: userObj.email.split('@')[0],
+                        status: subscription?.status || 'Active',
                         endDate: `[${formattedDate(subscriptionEndDate).replace(/ /g, ',')}]`,
                         duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half')
                               ? subscriptionDetails.duration
                               : `1 ${subscriptionDetails.duration}`,
-                        status: subscription?.status || 'Active'
                   }
-                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  const htmlData = await compileHtml(
+                        emailTemplateDetails.content,
+                        contentData
+                  )
                   if (htmlData) {
                         html = htmlData
                   }
             }
             const notificationTitle = 'Holy Reads Subscription'
-            const notificationDescription = `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} subscription has been activated! 🎉`
-            await notificationsService.createNotification({ userId: userObj._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
-            fetchNotifications(io.sockets, { _id: userObj._id })
+            const notificationDescription = `
+                  Holy Reads ${
+                        subscriptionDetails.duration.includes('Half')
+                              ? subscriptionDetails.duration
+                              : '1 ' + subscriptionDetails.duration
+                  } subscription has been activated! 🎉`
+            await notificationsService.createNotification({
+                  userId: userObj._id,
+                  type: 'setting',
+                  notification: {
+                        title: notificationTitle,
+                        description: notificationDescription
+                  }
+            })
+            fetchNotifications(
+                  io.sockets,
+                  { _id: userObj._id }
+            )
 
             const result = await sentEmail(userObj.email, sub, html);
             if (!result) {
-                  return next(Boom.badData(authControllerResponse.sentSubscriptionEmailFilure))
+                  return next(
+                        Boom.badData(
+                              authControllerResponse.sentSubscriptionEmailFilure
+                        )
+                  )
             }
 
             res.status(200).send({
@@ -1262,82 +2253,168 @@ const subscribePlan = async (req: any, res: Response, next: NextFunction) => {
             })
 
             /** Push notification */
-            if (req.user.pushTokens.length && userObj?.notification?.push && userObj?.notification?.subscription) {
+            if (
+                  req.user.pushTokens.length &&
+                  userObj?.notification?.push &&
+                  userObj?.notification?.subscription
+            ) {
                   const tokens = req.user.pushTokens.map(i => i.token)
-                  pushNotification(tokens, notificationTitle, notificationDescription)
+                  pushNotification(
+                        tokens,
+                        notificationTitle,
+                        notificationDescription
+                  )
             }
-      } catch (e: any) {
-            next(Boom.badData(e.message))
+      } catch ({ message }) {
+            next(Boom.badData(message as string))
       }
 }
 
 /** Remove User */
-const deleteUser = async (req: Request | any, res: Response, next: NextFunction) => {
+const deleteUser = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             const userObj: any = req.user
             await usersService.deleteUser(userObj._id)
-            res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
+            res.status(200).send({
+                  message: authControllerResponse.deleteUserSuccess
+            })
             if (userObj && userObj.image) {
                   removeS3File(userObj.image, s3Bucket)
             }
             if (userObj?.stripe?.subscriptionId) {
-                  stripeSubscriptionService.cancelSubscription(userObj.stripe.subscriptionId)
+                  stripeSubscriptionService
+                        .cancelSubscription(
+                              userObj.stripe.subscriptionId
+                        )
             }
             Promise.all([
-                  ratingService.deleteRatings({ userId: userObj._id }),
-                  highLightsService.deleteHighLights({ userId: userObj._id }),
-                  transactionsService.deleteTransaction({ userId: userObj._id }),
-                  notificationsService.deleteNotifications({ userId: userObj._id }),
+                  ratingService.deleteRatings({
+                        userId: userObj._id
+                  }),
+                  highLightsService.deleteHighLights({
+                        userId: userObj._id
+                  }),
+                  transactionsService.deleteTransaction({
+                        userId: userObj._id
+                  }),
+                  notificationsService.deleteNotifications({
+                        userId: userObj._id
+                  }),
             ])
-      } catch (e: any) {
-            return next(Boom.badData(e.message))
+      } catch ({ message }) {
+            return next(
+                  Boom.badData(message as string)
+            )
       }
 }
 
 /** Update user account details */
-const logout = async (req: Request | any, res: Response, next: NextFunction) => {
+const logout = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
             /** Get current user */
             let userObj: any = Object.assign({}, req.user)
             let maxDevices = [];
             /** Logout from specific device */
             if (req.body.deviceId) {
-                  maxDevices = userObj.maxDevices?.filter(item => item !== req.body.deviceId)
+                  maxDevices = userObj.maxDevices?.filter(
+                        item => item !== req.body.deviceId
+                  )
             }
-            await usersService.updateUser({ _id: userObj._id }, { maxDevices })
-            res.status(200).send({ message: authControllerResponse.userLogoutSuccess })
-      } catch (e: any) {
-            return next(Boom.badData(e.message))
+            await usersService.updateUser(
+                  { _id: userObj._id },
+                  { maxDevices }
+            )
+            res.status(200).send({
+                  message: authControllerResponse.userLogoutSuccess
+            })
+      } catch ({ message }) {
+            return next(Boom.badData(message as string))
       }
 }
 
-const updateHandout = async (req: Request | any, res: Response, next: NextFunction) => {
+const updateHandout = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
       try {
-            const smallGroup = await smallGroupService.getSmallGroupForHandout({ _id: req.params.smallGroup })
+            const smallGroup = await smallGroupService
+                  .getSmallGroupForHandout({
+                        _id: req.params.smallGroup
+                  })
             if (!smallGroup) {
-                  return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure))
+                  /** Return status code 404 not found */
+                  return next(
+                        Boom.notFound(
+                              smallGroupControllerResponse.getSmallGroupFailure
+                        )
+                  )
             }
-            req.body.question = Number(req?.body?.question) >= 0 ? Number(req.body.question) : -1
-            const { question, answer }: { question: number, answer: string } = req.body;
-            if (!smallGroup?.questions?.length || !smallGroup?.questions[question]) {
-                  return res.status(200).send({ message: handoutsControllerResponse.updateHandoutSuccess })
+            req.body.question = Number(req?.body?.question) >= 0
+                  ? Number(req.body.question)
+                  : -1
+            const {
+                  question,
+                  answer
+            }: {
+                  question: number,
+                  answer: string
+            } = req.body;
+            if (
+                  !smallGroup?.questions?.length
+                  ||
+                  !smallGroup?.questions[question]
+            ) {
+                  return res.status(200).send({
+                        message: handoutsControllerResponse.updateHandoutSuccess
+                  })
             }
 
-            const handout = await handoutsService.getHandout({ user: req.user._id, smallGroup: smallGroup._id });
-            let query = { user: req.user._id, smallGroup: smallGroup._id };
-            let body: any = { answers: [{ answer, question }] };
+            const handout = await handoutsService
+                  .getHandout({
+                        user: req.user._id,
+                        smallGroup: smallGroup._id
+                  });
+            let query = {
+                  user: req.user._id,
+                  smallGroup: smallGroup._id
+            };
+            let body: any = {
+                  answers: [{ answer, question }]
+            };
 
             let ans = handout?.answers?.find(i => i.question === question)
             if (handout && !ans) {
-                  body = { '$push': { 'answers': { answer, question } } }
+                  body = {
+                        '$push': {
+                              'answers': {
+                                    answer,
+                                    question
+                              }
+                        }
+                  }
             }
             else if (ans) {
-                  body = { '$set': { 'answers.$.answer': answer } }
+                  body = {
+                        '$set': {
+                              'answers.$.answer': answer
+                        }
+                  }
                   query['answers.question'] = question
             }
 
             await handoutsService.updateHandout(query, body);
-            res.status(200).send({ message: handoutsControllerResponse.updateHandoutSuccess })
+            res.status(200).send({
+                  message: handoutsControllerResponse.updateHandoutSuccess
+            })
       } catch (e: any) {
             next(Boom.badData(e.message))
       }

@@ -360,12 +360,29 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         :
         emailUser.oAuth[index] = { ...emailUser.oAuth[index], email: body.email }
 
-      await usersService.updateUser({ _id: emailUser._id }, { oAuth: emailUser.oAuth })
+      await usersService.updateUser(
+        { _id: emailUser._id },
+        {
+          oAuth: emailUser.oAuth,
+          status: 'Active',
+          verified: true
+        }
+      )
 
-      const token: string = getToken({ email: emailUser.email, 'oauthClientId': body.id, id: emailUser._id })
+      const token: string = getToken({
+        email: emailUser.email,
+        'oauthClientId': body.id,
+        id: emailUser._id
+      })
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
-        data: { _id: emailUser._id, email: emailUser.email || '', token, type: emailUser.type, userName: emailUser.email.split('@')[0] || '' }
+        data: {
+          token,
+          _id: emailUser._id,
+          type: emailUser.type,
+          email: emailUser.email || '',
+          userName: emailUser.email.split('@')[0] || ''
+        }
       })
     }
     let base64: any;
@@ -465,36 +482,88 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
 const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
   try {
     const body: any = req.body
-    if (!body.id || !body.provider) {
-      return next(Boom.notFound(authControllerResponse.missingoAuthKeyError))
+    if (
+      !body.id ||
+      !body.provider
+    ) {
+      return next(
+        Boom.notFound(
+          authControllerResponse.missingoAuthKeyError
+        )
+      )
     }
-    if (!body.email && body.provider.toLowerCase() === 'apple') {
-      return next(Boom.notFound(authControllerResponse.missingAppleEmailError))
+    if (
+      !body.email &&
+      body.provider.toLowerCase() === 'apple'
+    ) {
+      return next(
+        Boom.notFound(
+          authControllerResponse.missingAppleEmailError
+        )
+      )
     }
     if (!body.email) {
-      return next(Boom.notFound(authControllerResponse.missingEmailError))
+      return next(
+        Boom.notFound(
+          authControllerResponse.missingEmailError
+        )
+      )
     }
 
-    const query: any = { 'oAuth.clientId': body.id, 'oAuth.provider': body.provider }
+    const query: any = {
+      'oAuth.clientId': body.id,
+      'oAuth.provider': body.provider
+    }
     const user: any = await usersService.getOneUserByFilter(query)
     if (user?.type === 'Admin') {
-      return next(Boom.unauthorized(authControllerResponse.userNotAuthorizationError))
+      return next(
+        Boom.unauthorized(
+          authControllerResponse.userNotAuthorizationError
+        )
+      )
     }
 
-    const emailUser: any = await usersService.getOneUserByFilter({ email: body.email })
-    const isEmailConflicts = emailUser && String(emailUser._id) !== String(user?._id) ? true : false
+    const emailUser: any = await usersService
+      .getOneUserByFilter({ email: body.email })
+
+    const isEmailConflicts = (
+      emailUser
+      &&
+      String(emailUser._id) !== String(user?._id)
+    ) ? true : false
+
     if (user) {
-      user.email = !user.email && !isEmailConflicts ? body.email : user.email
-      const index = user.oAuth.findIndex(i => i.provider === body.provider)
+      user.email = !user.email && !isEmailConflicts
+          ? body.email : user.email
+
+      const index = user.oAuth.findIndex(
+        i => i.provider === body.provider
+      )
       /** set email if email does not exist */
       user.oAuth[index] = { ...user.oAuth[index], email: user.email }
 
-      await usersService.updateUser({ _id: user._id }, { oAuth: user.oAuth, email: user.email })
+      await usersService.updateUser({ _id: user._id }, {
+        oAuth: user.oAuth,
+        email: user.email,
+        status: 'Active',
+        verified: true,
+      })
 
-      const token: string = getToken({ email: user.email, 'oauthClientId': body.id, id: user._id })
+      const token: string = getToken({
+        id: user._id,
+        email: user.email,
+        'oauthClientId': body.id,
+      })
+
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
-        data: { _id: user._id, email: user.email, token, type: user.type, userName: user?.email?.split('@')[0] || '' }
+        data: {
+          token,
+          _id: user._id,
+          type: user.type,
+          email: user.email,
+          userName: user?.email?.split('@')[0] || ''
+        }
       })
     }
     /** if emailuser exist then link oauth */
@@ -508,14 +577,35 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
           clientId: body.id,
           default: emailUser?.oAuth?.length ? false : true
         })
-        : emailUser.oAuth[index] = { ...emailUser.oAuth[index], clientId: body.id, email: body.email }
+        : emailUser.oAuth[index] = {
+          ...emailUser.oAuth[index],
+          clientId: body.id,
+          email: body.email
+        }
 
-      await usersService.updateUser({ _id: emailUser._id }, { oAuth: emailUser.oAuth })
+      await usersService.updateUser(
+        { _id: emailUser._id },
+        {
+          oAuth: emailUser.oAuth,
+          status: 'Active',
+          verified: true,
+        }
+      )
 
-      const token: string = getToken({ email: emailUser.email, 'oauthClientId': body.id, id: emailUser._id })
+      const token: string = getToken({
+        email: emailUser.email,
+        'oauthClientId': body.id,
+        id: emailUser._id
+      })
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
-        data: { _id: emailUser._id, email: emailUser.email, token, type: emailUser.type, userName: emailUser?.email?.split('@')[0] || '' }
+        data: {
+          token,
+          _id: emailUser._id,
+          type: emailUser.type,
+          email: emailUser.email,
+          userName: emailUser?.email?.split('@')[0] || ''
+        }
       })
     }
 
@@ -544,12 +634,24 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       device: 'web',
       email: body.email
     }
-    const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
-    if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-      return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
+
+    const subscriptionDetails = await subscriptionsService
+      .getOneSubscriptionByFilter({ duration: 'Month' })
+
+    if (
+      !subscriptionDetails ||
+      !subscriptionDetails.stripePlanId
+    ) {
+      return next(
+        Boom.notFound(
+          subscriptionsControllerResponse.getSubscriptionFailure
+        )
+      )
     }
 
-    const customer = await stripeSubscriptionService.createCustomer(body.email as any)
+    const customer = await stripeSubscriptionService
+      .createCustomer(body.email as any)
+
     /** Create trial subscription */
     const subscription = await stripeSubscriptionService.createSubscription({
       planId: subscriptionDetails.stripePlanId,
@@ -565,18 +667,60 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     newBody.subscription = subscriptionDetails._id
 
     const data: any = await usersService.createUser(newBody)
-    const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
+    const token: string = getToken({
+      email: data.email,
+      'oauthClientId': body.id,
+      id: data._id
+    })
     const title = 'Welcome to Holy Reads 🎉';
     const description = 'Welcome to Holy Reads Summarizing the best of Christian publishing for your busy schedule 📚';
-    await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
+    await notificationsService.createNotification({
+      userId: data._id,
+      type: 'user',
+      notification: {
+        title,
+        description
+      }
+    })
 
     /** Get welcome email template */
-    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.welcomeToHolyreads })
+    const emailTemplateDetails = await emailTemplateService
+      .getOneEmailTemplateByFilter({
+        title: emailTemplatesTitles.customer.welcomeToHolyreads
+      })
+
     const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
-    let html = `<p>Dear ${body.email.split('@')[0]},</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]}/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+    let html = `
+      <p>
+        Dear ${body.email.split('@')[0]},
+      </p>
+      <p>
+        Welcome To Holy Reads
+      </p><br />
+      <p>
+        We’re excited to have you get started. Just press the button below.
+      </p><br />
+      <p>
+        <button><a href="${origins[NODE_ENV]}/account/login">Here</a></button>
+      </p>
+      <p>
+        Should you have any questions or if any of your details change, please contact us.
+      </p>
+      <p>
+        Best regards,<br>Holy Reads
+      </p>
+      <p>
+        <strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong>
+      </p>
+    `;
+
     if (emailTemplateDetails && emailTemplateDetails.content) {
-      const contentData = { loginURL: `${origins[NODE_ENV]}/account/login` }
-      const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+      const contentData = {
+        loginURL: `${origins[NODE_ENV]}/account/login`
+      }
+      const htmlData = await compileHtml(
+        emailTemplateDetails.content, contentData
+      )
       if (htmlData) {
         html = htmlData
       }
@@ -585,19 +729,42 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     /** sent welcome email */
     const result = await sentEmail(body.email, subject, html);
     if (!result) {
-      return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
+      return next(
+        Boom.badData(
+          authControllerResponse.sentVerifyEmailFailure
+        )
+      )
     }
 
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
-      data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: body?.email?.split('@')[0] || '' }
+      data: {
+        token,
+        _id: data._id,
+        type: newBody.type,
+        email: data.email || '',
+        userName: body?.email?.split('@')[0] || ''
+      }
     })
 
     /** Push notification */
-    if (data && data.pushTokens && data.pushTokens.length && data?.notification?.push) {
+    if (
+      data &&
+      data.pushTokens &&
+      data.pushTokens.length &&
+      data?.notification?.push
+    ) {
       const tokens = data.pushTokens.map(i => i.token)
-      pushNotification(tokens, title, description)
-      pushNotification(tokens, 'Holy Reads Free Plan 🔔', 'Enjoy 3 Days free trial with holy reads best summaries📚')
+      pushNotification(
+        tokens,
+        title,
+        description
+      )
+      pushNotification(
+        tokens,
+        'Holy Reads Free Plan 🔔',
+        'Enjoy 3 Days free trial with holy reads best summaries📚'
+      )
     }
 
   } catch (e: any) {

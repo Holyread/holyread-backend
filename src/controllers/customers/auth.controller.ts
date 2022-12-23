@@ -68,7 +68,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     if (body.coupon) {
       link = link + `&coupon=${body.coupon}`
     }
-  
+
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
     const subject = emailTemplateDetails?.subject || 'Account Verification'
     let html = `<p>Dear ${body.email.split('@')[0]},</p><p>Thank you for registering with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${body.email}</p><p>Please enter this code ${verificationCode} <!-- <a href="${link}">Here</a> --> to verify your registration.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
@@ -144,7 +144,6 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
   try {
     const token = req.query.token as string
     let user: any;
-    let body: any = {};
     if (!req?.query?.token && !req?.query?.code) {
       return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
     }
@@ -156,6 +155,8 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     ) {
       return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
     }
+
+    let body: any = { email: req?.query?.email, verificationCode: req?.query?.code };
 
     if (token) {
       const decryptToken: any = verifyToken(token)

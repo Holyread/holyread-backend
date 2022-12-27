@@ -27,4 +27,3 @@ import { randomNumberInRange } from '../lib/utils/utils'
       }
       return true;
 })();
-

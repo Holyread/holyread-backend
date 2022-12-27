@@ -41,10 +41,15 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                   }
             }))
 
-            console.log('Confirm payment intents successfully');
+            console.log(
+                  'Confirm payment intents successfully'
+            );
 
-      } catch (e: any) {
-            console.log('Confirm payment intent script execution failed - ', e)
+      } catch ({ message }) {
+            console.log(
+                  'Confirm payment intent script execution failed, Error: ',
+                  message
+            )
       }
       return true;
 })();

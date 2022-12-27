@@ -447,7 +447,7 @@ const emailAuth = async (
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthVerification })
             const sub = emailTemplateDetails.subject || 'Customer Email Auth Verification'
-            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth.</p><p>Please click this code ${verificationCode} <!-- <a href="${link}">Here</a> --> to verify your new email auth.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth.</p><p>Please enter this code ${verificationCode} <!-- <a href="${link}">Here</a> --> to verify your new email auth.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
@@ -592,8 +592,8 @@ const verifyEmailAuth = async (
                   }
             }
 
-            const result = await sentEmail(email, sub, html);
-            if (!result) {
+            const result = false && await sentEmail(email, sub, html);
+            if (false && !result) {
                   /** Return status 404 not found */
                   return next(
                         Boom.notFound(

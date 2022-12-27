@@ -368,6 +368,39 @@ const retrieveProfit = async (duration = 'year') => {
       }
 }
 
+const confirmPaymentIntent = async (
+      paymentIntentId: string,
+      paymentMethodId: string
+) => {
+      try {
+            const paymentIntent = await stripe.paymentIntents.confirm(
+                  paymentIntentId,
+                  { payment_method: paymentMethodId }
+            );
+            return paymentIntent
+      } catch ({ message }) {
+            console.log(message)
+            return false
+      }
+}
+
+const getPaymentIntents = async (list = [], startAfter = {}) => {
+      try {
+            const { data, has_more: hasMore }
+                  = await stripe.paymentIntents.list({
+                        starting_after: startAfter,
+                        limit: 100
+                  });
+            list = list.concat(data);
+            startAfter = data[data.length - 1].id;
+            if (!hasMore) return list;
+            list = await getPaymentIntents(list, data[data.length - 1].id);
+            return list;
+      } catch ({ message }) {
+            return [];
+      }
+};
+
 /** Get payment intent by id */
 const getPaymentIntent = async (id: string) => {
       try {
@@ -400,8 +433,10 @@ export default {
       createCustomer,
       getPaymentIntent,
       getPaymentMethod,
+      getPaymentIntents,
       cancelSubscription,
       createSubscription,
       updateSubscription,
+      confirmPaymentIntent,
       retrieveSubscription,
 }

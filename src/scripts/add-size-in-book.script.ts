@@ -1,3 +1,13 @@
+/**
+ * Script used for add size for books audio and video 
+ * This script was required in past due to some bug 
+ * 
+ * when admin tried to update book chapter
+ * at that time audio has been removed 
+ * in above case we was need this script
+ * now issue has been solved so script not rquired yet
+ */
+
 import aws from 'aws-sdk'
 
 import { BookSummaryModel } from '../models/index'
@@ -14,42 +24,93 @@ import { awsBucket } from '../constants/app.constant';
                   region: awsBucket.region,
             })
             /** Get S3 bucket files contents  */
-            
+
             const query = {
                   '$or': [
-                        { 'videoFileSize': { '$exists': false } },
-                        { 'chapters.size': { '$exists': false } },
+                        { 
+                              'videoFileSize': {
+                                    '$exists': false
+                              }
+                        },
+                        {
+                              'chapters.size': {
+                                    '$exists': false
+                              }
+                        },
                   ]
             }
-            const sizeLessBookList = await BookSummaryModel.find(query).lean().exec();
+            const sizeLessBookList = await BookSummaryModel
+                  .find(query)
+                  .lean()
+                  .exec();
 
             await Promise.all(sizeLessBookList.map(async (oneBook) => {
                   try {
-                        if (oneBook.videoFile && !oneBook.videoFileSize) {
+                        if (
+                              oneBook.videoFile &&
+                              !oneBook.videoFileSize
+                        ) {
                               const s3BooksContents = await s3.listObjects({
                                     Bucket: 'holyreads-develop',
                                     Prefix: `books/video/${oneBook.videoFile}`
                               }).promise();
-                              oneBook.videoFileSize = s3BooksContents.Contents.find(oneContent => oneContent.Key.includes('video/' + oneBook.videoFile))?.Size || 0
+
+                              oneBook.videoFileSize = s3BooksContents
+                                    .Contents
+                                    .find(
+                                          oneContent => 
+                                                oneContent
+                                                      .Key
+                                                      .includes(
+                                                            'video/' + oneBook.videoFile
+                                                      )
+                                    )?.Size || 0
                         }
                         await Promise.all(oneBook.chapters.map(async (oneChapter) => {
-                              if (oneChapter.audioFile && !oneChapter.size) {
+                              if (
+                                    oneChapter.audioFile &&
+                                    !oneChapter.size
+                              ) {
                                     const s3BooksContents = await s3.listObjects({
                                           Bucket: 'holyreads-develop',
                                           Prefix: `books/audio/${oneChapter.audioFile}`
                                     }).promise();
-                                    oneChapter.size = s3BooksContents.Contents.find(oneContent => oneContent.Key.includes('audio/' + oneChapter.audioFile))?.Size || 0
+
+                                    oneChapter.size = s3BooksContents
+                                          .Contents
+                                          .find(
+                                                oneContent =>
+                                                      oneContent
+                                                            .Key
+                                                            .includes(
+                                                                  'audio/' + oneChapter.audioFile
+                                                            )
+                                          )?.Size || 0
                               }
                         }))
-                        await BookSummaryModel.findOneAndUpdate({ _id: oneBook._id }, oneBook)
-                  } catch (error) {
-                        console.log('Error on book size updates - ', 'book - ', oneBook._id, '- error is - ', error)
+                        await BookSummaryModel.findOneAndUpdate(
+                              { _id: oneBook._id },
+                              oneBook
+                        )
+                  } catch ({ message }) {
+                        console.log(
+                              'Error on book size updates, Error is: ',
+                              'book - ',
+                              oneBook._id,
+                              '- error is - ',
+                              message
+                        )
                   }
             }));
-            console.log('Book size added successfully')
+            console.log(
+                  'Book size added successfully'
+            )
 
-      } catch (e: any) {
-            console.log('Add size in book script execution failed - ', e)
+      } catch ({ message }) {
+            console.log(
+                  'Add size in book script execution failed, Error is: ',
+                  message
+            )
       }
       return true;
 })();

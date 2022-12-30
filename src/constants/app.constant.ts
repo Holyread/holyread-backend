@@ -71,7 +71,9 @@ export const dataLimit = {
 }
 
 export const originEmails = {
-    contactUs: 'info@holyreads.com'
+    kindle: 'kindle@holyreads.com',
+    contactUs: 'info@holyreads.com',
+    marketing: 'noreply@holyreads.com',
 }
 
 export const emailTemplatesTitles = {

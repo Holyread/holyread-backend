@@ -18,7 +18,11 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                   stripe: { $exists: true }
             }).lean().exec();
 
-            const subscriptions = await SubscriptionsModel.find({}).lean().exec();
+            const subscriptions = await SubscriptionsModel
+                  .find({})
+                  .lean()
+                  .exec();
+
             const getMonths = (subscription) => {
                   const duration = subscriptions.find(
                         s => String(s._id) == subscription
@@ -43,68 +47,120 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
             await Promise.all(appStoreUsers.map(async (item: any) => {
                   try {
                         let body = {}
-                        
-                        if (item?.inAppSubscription?.transaction?.expiresDate) {
+
+                        if (
+                              item
+                                    ?.inAppSubscription
+                                    ?.transaction
+                                    ?.expiresDate
+                        ) {
                               const inAppSubscriptionStatus
                                     = (
                                           new Date(
-                                                item.inAppSubscription.transaction.expiresDate
+                                                item
+                                                      .inAppSubscription
+                                                      .transaction
+                                                      .expiresDate
                                           ).getTime()
-                                          < 
+                                          <
                                           new Date().getTime()
                                     )
-                                    ? 'Cancel'
-                                    : item.inAppSubscriptionStatus;
+                                          ? 'Cancel'
+                                          : item.inAppSubscriptionStatus;
 
                               body = {
                                     'inAppSubscription.expiredAt': new Date(
-                                          item.inAppSubscription.transaction.expiresDate
+                                          item
+                                                .inAppSubscription
+                                                .transaction
+                                                .expiresDate
                                     ),
                                     inAppSubscriptionStatus
                               }
                         }
-                        else if (item?.inAppSubscription?.transactionDate) {
-                              if (item?.inAppSubscriptionStatus !== 'Active') {
+                        else if (
+                              item
+                                    ?.inAppSubscription
+                                    ?.transactionDate
+                        ) {
+                              if (
+                                    item?.inAppSubscriptionStatus
+                                    !==
+                                    'Active'
+                              ) {
                                     return;
                               }
-                              const date = Number(item?.inAppSubscription?.transactionDate)
+
+                              const date = Number(
+                                    item?.inAppSubscription?.transactionDate
+                              )
+
                               const expiredAt = new Date(date)
+
                               expiredAt.setMonth(
-                                    new Date(date).getMonth() + getMonths(item?.subscription)
+                                    new Date(
+                                          date
+                                    ).getMonth()
+                                    +
+                                    getMonths(
+                                          item?.subscription
+                                    )
                               );
                               const inAppSubscriptionStatus
                                     = (
-                                          new Date(expiredAt).getTime()
-                                          < 
-                                          new Date().getTime()
+                                          new Date(
+                                                expiredAt
+                                          )
+                                                .getTime()
+                                          <
+                                          new Date()
+                                                .getTime()
                                     )
-                                    ? 'Cancel'
-                                    : item.inAppSubscriptionStatus;
+                                          ? 'Cancel'
+                                          : item.inAppSubscriptionStatus;
                               body = {
                                     'inAppSubscription.expiredAt': expiredAt,
                                     inAppSubscriptionStatus
                               }
                         }
-      
+
                         await UserModel.updateOne(
                               { _id: item._id },
                               body
                         )
-                  } catch ({ message }) {}
+                  } catch ({ message }) { }
             }))
 
             await Promise.all(googleStoreUsers.map(async (item: any) => {
                   try {
-                        let dataAndroid = JSON.parse(item?.inAppSubscription?.dataAndroid || '{}')
+                        let dataAndroid = JSON.parse(
+                              item?.inAppSubscription?.dataAndroid
+                              ||
+                              '{}'
+                        )
+
                         let body = {};
                         if (dataAndroid.purchaseTime) {
                               const date = Number(dataAndroid.purchaseTime)
                               const expiredAt = new Date(date)
                               expiredAt.setMonth(
-                                    new Date(date).getMonth() + getMonths(item?.subscription)
+                                    new Date(
+                                          date
+                                    )
+                                          .getMonth()
+                                    +
+                                    getMonths(
+                                          item?.subscription
+                                    )
                               );
                               const inAppSubscriptionStatus
-                                    = new Date(expiredAt).getTime() < new Date().getTime()
+                                    = new Date(
+                                          expiredAt
+                                    )
+                                          .getTime()
+                                          <
+                                          new Date()
+                                                .getTime()
                                           ? 'Cancel'
                                           : item.inAppSubscriptionStatus
 
@@ -120,13 +176,25 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                               const date = Number(item?.inAppSubscription?.transactionDate)
                               const expiredAt = new Date(date)
                               expiredAt.setMonth(
-                                    new Date(date).getMonth() + getMonths(item?.subscription)
+                                    new Date(
+                                          date
+                                    )
+                                          .getMonth()
+                                    +
+                                    getMonths(
+                                          item?.subscription
+                                    )
                               );
                               const inAppSubscriptionStatus
-                                    = new Date(expiredAt).getTime() < new Date().getTime()
+                                    = new Date(
+                                          expiredAt
+                                    ).getTime()
+                                          <
+                                          new Date()
+                                                .getTime()
                                           ? 'Cancel'
                                           : item.inAppSubscriptionStatus
-                              
+
                               body = {
                                     'inAppSubscription.expiredAt': expiredAt,
                                     inAppSubscriptionStatus
@@ -136,34 +204,41 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                               { _id: item._id },
                               body
                         )
-                  } catch ({ message }) {}
+                  } catch ({ message }) { }
             }))
 
             await Promise.all(webUsers.map(async (item: any) => {
                   try {
                         if (!item?.stripe?.subscriptionId) { return; }
-                        
+
                         const stripeSubscription
                               = await stripeSubscriptionServices
                                     .retrieveSubscription(
                                           item.stripe.subscriptionId
                                     )
-                        stripeSubscription?.current_period_end &&
+
+                        stripeSubscription?.current_period_end
+                              &&
                               await UserModel.updateOne(
                                     { _id: item._id },
                                     {
                                           'stripe.expiredAt': new Date(
-                                                stripeSubscription.current_period_end * 1000
+                                                stripeSubscription
+                                                      .current_period_end
+                                                *
+                                                1000
                                           )
                                     }
                               )
-                  } catch ({ message }) {}
+                  } catch ({ message }) { }
             }))
 
             console.log('expiry date added successfully');
 
       } catch (e: any) {
-            console.log('Set expiry date script execution failed - ', e)
+            console.log(
+                  'Set expiry date script execution failed, Error is: ', e
+                  )
       }
       return true;
 })();

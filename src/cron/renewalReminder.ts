@@ -2,7 +2,7 @@ import cron from 'cron';
 
 import { fetchNotifications } from '../controllers/customers/notification.controller';
 import { pushNotification, compileHtml, sentEmail } from '../lib/utils/utils';
-import { emailTemplatesTitles, origins } from '../constants/app.constant';
+import { emailTemplatesTitles, originEmails, origins } from '../constants/app.constant';
 import { renewalReminder } from '../constants/cron.constants';
 import { UserModel, getUserType } from '../models/user.model';
 import { io } from '../app';
@@ -38,7 +38,7 @@ const sentSubscriptionEmail = async (user, title, description) => {
                   await emailTemplateService.getOneEmailTemplateByFilter({
                         title: emailTemplatesTitles.customer.HolyreadsPlanUpgrade
                   }),
-                  sub = emailTemplateDetails?.subject || `Holy Reads Renewal Reminder`;
+                  subject = emailTemplateDetails?.subject || `Holy Reads Renewal Reminder`;
 
             let html = `<p>Dear ${user.email.split('@')[0]},</p><p></p>${description}<p> Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
@@ -58,7 +58,12 @@ const sentSubscriptionEmail = async (user, title, description) => {
                   if (htmlData) { html = htmlData }
             }
 
-            const result = await sentEmail(user.email, sub, html);
+            const result = await sentEmail({
+                  from: originEmails.marketing,
+                  to: user.email,
+                  subject,
+                  html
+            });
             
             if (!result) {
                   console.log('Failed to sent an renewal reminder email');

@@ -5,7 +5,7 @@ import { Types } from 'mongoose'
 import bookSummaryService from '../../../services/customers/book/bookSummary.service'
 import bookAuthorService from '../../../services/admin/book/author.service'
 import { responseMessage } from '../../../constants/message.constant'
-import { awsBucket, dataLimit } from '../../../constants/app.constant'
+import { awsBucket, dataLimit, originEmails } from '../../../constants/app.constant'
 import { getSearchRegexp, sentEmail } from '../../../lib/utils/utils'
 import config from '../../../../config'
 import userService from '../../../services/customers/users/user.service';
@@ -193,7 +193,17 @@ const sendSummaryToKindle = async (req: any, res: Response, next: NextFunction) 
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryDocFailure))
         }
         const fileLink = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/reads/' + data.bookReadFile
-        const sentEmailRes = await sentEmail(req.user.kindleEmail, 'Convert', 'Sent book to kindle', data.bookReadFile, fileLink, true)
+
+        const sentEmailRes = await sentEmail({
+            fileLink,
+            subject: 'Convert',
+            sentToKindle: true,
+            to: req.user.kindleEmail,
+            from: originEmails.kindle,
+            html: 'Sent book to kindle',
+            fileName: data.bookReadFile,
+        })
+
         if (!sentEmailRes) {
             return next(Boom.badRequest(bookSummaryControllerResponse.sendBookToKindleEmailFailure))
         }

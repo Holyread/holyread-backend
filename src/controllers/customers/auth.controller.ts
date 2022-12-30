@@ -5,7 +5,7 @@ import { encrypt, getToken, verifyToken, sentEmail, pushNotification, imageUrlTo
 import usersService from '../../services/admin/users/user.service'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
-import { origins, emailTemplatesTitles } from '../../constants/app.constant'
+import { origins, emailTemplatesTitles, originEmails } from '../../constants/app.constant'
 import { uploadFileToS3, compileHtml } from '../../lib/utils/utils'
 import { awsBucket } from '../../constants/app.constant'
 import config from '../../../config'
@@ -81,7 +81,12 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     }
 
     /** sent email for account verification */
-    const result = await sentEmail(body.email, subject, html);
+    const result = await sentEmail({
+      from: originEmails.marketing,
+      to: body.email,
+      subject,
+      html
+    });
     if (!result) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
     }
@@ -221,8 +226,15 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
         html = htmlData
       }
     }
+
     /** sent welcome email */
-    const result = await sentEmail(user.email, subject, html);
+    const result = await sentEmail({
+      from: originEmails.marketing,
+      to: user.email,
+      subject,
+      html
+    });
+
     if (!result) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
     }
@@ -264,7 +276,14 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
         html = htmlData
       }
     }
-    const result = await sentEmail(email, subject, html);
+
+    const result = await sentEmail({
+      from: originEmails.marketing,
+      to: email,
+      subject,
+      html
+    });
+
     if (!result) {
       return next(Boom.badData(adminControllerResponse.sendCodeFailure))
     }
@@ -437,8 +456,15 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         html = htmlData
       }
     }
+
     /** sent welcome email */
-    const result = await sentEmail(body.email, subject, html);
+    const result = await sentEmail({
+      from: originEmails.marketing,
+      to: body.email,
+      subject,
+      html
+    });
+
     if (!result) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
     }
@@ -534,7 +560,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
 
     if (user) {
       user.email = !user.email && !isEmailConflicts
-          ? body.email : user.email
+        ? body.email : user.email
 
       const index = user.oAuth.findIndex(
         i => i.provider === body.provider
@@ -727,7 +753,13 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     }
 
     /** sent welcome email */
-    const result = await sentEmail(body.email, subject, html);
+    const result = await sentEmail({
+      from: originEmails.marketing,
+      to: body.email,
+      subject,
+      html
+    });
+  
     if (!result) {
       return next(
         Boom.badData(
@@ -803,7 +835,13 @@ const resendSignUpEmail = async (req: Request, res: Response, next: NextFunction
       }
     }
 
-    const result = await sentEmail(params.email, subject, html);
+    const result = await sentEmail({
+      from: originEmails.marketing,
+      to: params.email,
+      subject,
+      html
+    });
+
     if (!result) {
       return next(Boom.badData(adminControllerResponse.sentEmailFailure))
     }

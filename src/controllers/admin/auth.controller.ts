@@ -1,11 +1,13 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
-import { encrypt, getToken } from '../../lib/utils/utils'
+
 import usersService from '../../services/admin/users/user.service'
-import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
-import { sentEmail, compileHtml } from '../../lib/utils/utils'
 import { responseMessage } from '../../constants/message.constant'
-import { emailTemplatesTitles } from '../../constants/app.constant'
+
+import { emailTemplatesTitles, originEmails } from '../../constants/app.constant'
+import { sentEmail, compileHtml, encrypt, getToken } from '../../lib/utils/utils'
+
+import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
@@ -30,7 +32,13 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
         html = htmlData
       }
     }
-    const result = await sentEmail(params.email, subject, html);
+    const result = await sentEmail({
+      from: originEmails.marketing,
+      to: params.email,
+      subject,
+      html
+    });
+
     if (!result) {
       return next(Boom.badData(adminControllerResponse.sentEmailFailure))
     }
@@ -65,7 +73,12 @@ const resendSignInOtp = async (req: Request, res: Response, next: NextFunction) 
         html = htmlData
       }
     }
-    const result = await sentEmail(params.email, subject, html);
+    const result = await sentEmail({
+      from: originEmails.marketing,
+      to: params.email,
+      subject,
+      html
+    });
     if (!result) {
       return next(Boom.badData(adminControllerResponse.sentEmailFailure))
     }
@@ -116,7 +129,13 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
         html = htmlData
       }
     }
-    const result = await sentEmail(email, subject, html);
+    const result = await sentEmail({
+      from: originEmails.marketing,
+      to: email,
+      subject,
+      html
+    });
+  
     if (!result) {
       return next(Boom.badData(adminControllerResponse.updateCodeFailure))
     }

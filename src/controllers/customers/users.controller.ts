@@ -204,7 +204,7 @@ const getChangePasswordCode = async (
                               title: emailTemplatesTitles.customer.forgotPassword
                         })
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
-            const sub = 'Change Password Verification'
+            const subject = 'Change Password Verification'
             let html = `
                   <p>Dear ${userObj.email.split('@')[0]},</p>
                   <p>
@@ -245,7 +245,13 @@ const getChangePasswordCode = async (
                   }
             }
 
-            await sentEmail(userObj.email, sub, html);
+            await sentEmail({
+                  from: originEmails.marketing,
+                  to: userObj.email,
+                  subject,
+                  html
+            });
+
             await usersService.updateUser(
                   { _id: userObj._id },
                   {
@@ -362,7 +368,7 @@ const changePassword = async (
                               title: emailTemplatesTitles.customer.changePassword
                         })
 
-            const sub = emailTemplateDetails.subject || 'Holy Reads Password Changed'
+            const subject = emailTemplateDetails.subject || 'Holy Reads Password Changed'
             let html = `
                   <p>
                         Dear ${userObj.email.split('@')[0]},
@@ -400,7 +406,12 @@ const changePassword = async (
                   }
             }
 
-            await sentEmail(userObj.email, sub, html);
+            await sentEmail({
+                  from: originEmails.marketing,
+                  to: userObj.email,
+                  subject,
+                  html
+            });
             res.status(200).send({
                   message: authControllerResponse.passwordUpdateSuccess
             })
@@ -446,8 +457,8 @@ const emailAuth = async (
             const link: string = `${origins[NODE_ENV]}/account/verify-user?email-auth=true&token=${token}`
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthVerification })
-            const sub = emailTemplateDetails.subject || 'Customer Email Auth Verification'
-            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth.</p><p>Please click this code ${verificationCode} <!-- <a href="${link}">Here</a> --> to verify your new email auth.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            const subject = emailTemplateDetails.subject || 'Customer Email Auth Verification'
+            let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth.</p><p>Please enter this code ${verificationCode} <!-- <a href="${link}">Here</a> --> to verify your new email auth.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
@@ -461,7 +472,12 @@ const emailAuth = async (
                   }
             }
 
-            const result = await sentEmail(email, sub, html);
+            const result = await sentEmail({
+                  from: originEmails.marketing,
+                  to: email,
+                  subject,
+                  html
+            });
             if (!result) {
                   return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
             }
@@ -527,6 +543,20 @@ const verifyEmailAuth = async (
             const password = token
                   ? decrypt(decryptToken.password) : req.body.password
 
+            const existingEmailUser = await userService.getOneUserByFilter({
+                  email,
+                  _id: { $ne: _id }
+            })
+
+            if (existingEmailUser) {
+                  /** Return status 409 conflict */
+                  return next(
+                        Boom.conflict(
+                              authControllerResponse.emailAlreadyUsedError
+                        )
+                  )
+            }
+
             /** Get user from db */
             const user: any
                   = await usersService
@@ -556,7 +586,7 @@ const verifyEmailAuth = async (
                         title: emailTemplatesTitles.customer.emailAuthEnabled
                   })
 
-            const sub = emailTemplateDetails.subject
+            const subject = emailTemplateDetails.subject
                   || 'Customer Email Auth Enabled'
 
             let html = `
@@ -592,8 +622,13 @@ const verifyEmailAuth = async (
                   }
             }
 
-            const result = await sentEmail(email, sub, html);
-            if (!result) {
+            const result = false && await sentEmail({
+                  from: originEmails.marketing,
+                  to: email,
+                  subject,
+                  html
+            });
+            if (false && !result) {
                   /** Return status 404 not found */
                   return next(
                         Boom.notFound(
@@ -891,7 +926,7 @@ const updateUserAccount = async (
                                     ? emailTemplatesTitles.customer.subscriptionActivated
                                     : emailTemplatesTitles.customer.subscriptionCancelled
                         })
-                  const sub = emailTemplateDetails.subject
+                  const subject = emailTemplateDetails.subject
                         || `Holy Reads Subscription ${req.body.inAppSubscription.status}`
                   let html = `
                         <p>
@@ -956,7 +991,12 @@ const updateUserAccount = async (
                   })
                   fetchNotifications(io.sockets, { _id: userObj._id })
 
-                  const result = await sentEmail(userObj.email, sub, html);
+                  const result = await sentEmail({
+                        from: originEmails.marketing,
+                        to: userObj.email,
+                        subject,
+                        html
+                  });
                   if (!result) {
                         return next(
                               Boom.badData(
@@ -1562,11 +1602,13 @@ const submitQuery = async (
                         html = htmlData
                   }
             }
-            const result = await sentEmail(
-                  originEmails.contactUs,
-                  sub,
+            const result = await sentEmail({
+                  from: originEmails.contactUs,
+                  to: originEmails.contactUs,
+                  subject: sub,
                   html
-            );
+            });
+
             if (!result) {
                   return next(
                         Boom.badData(
@@ -1600,7 +1642,7 @@ const submitFeedback = async (
                   .getOneEmailTemplateByFilter({
                         title: emailTemplatesTitles.admin.customerFeedback
                   })
-            const sub = emailTemplateDetails.subject || 'Customer Feedback'
+            const subject = emailTemplateDetails.subject || 'Customer Feedback'
             let html = `
                   <p>
                         You've received a feedback from ${userObj.email}.
@@ -1626,9 +1668,14 @@ const submitFeedback = async (
                         html = htmlData
                   }
             }
-            const result = await sentEmail(
-                  originEmails.contactUs, sub, html
-            );
+
+            const result = await sentEmail({
+                  from: originEmails.contactUs,
+                  to: originEmails.contactUs,
+                  subject,
+                  html
+            });
+
             if (!result) {
                   return next(
                         Boom.badData(
@@ -1636,6 +1683,7 @@ const submitFeedback = async (
                         )
                   )
             }
+
             res.status(200).send({
                   message: authControllerResponse.submitQuerySuccess
             })
@@ -1939,16 +1987,21 @@ const blessFriend = async (
                         sentInvitationHtml = htmlData
                   }
             }
-            const blessFriendEmailResult = await sentEmail(
-                  refUser.email,
-                  blessFriendSubject,
-                  blessFriendHtml
-            );
-            const sendInvitationResult = await sentEmail(
-                  body.email,
-                  sendInvitationSubject,
-                  sentInvitationHtml
-            );
+
+            const blessFriendEmailResult = await sentEmail({
+                  from: originEmails.marketing,
+                  to: refUser.email,
+                  subject: blessFriendSubject,
+                  html: blessFriendHtml
+            });
+
+            const sendInvitationResult = await sentEmail({
+                  from: originEmails.marketing,
+                  to: body.email,
+                  subject: sendInvitationSubject,
+                  html: sentInvitationHtml
+            });
+
             if (!blessFriendEmailResult || !sendInvitationResult) {
                   /** Return 422 status code unprocessable entity */
                   return next(
@@ -1978,7 +2031,7 @@ const blessFriend = async (
                   .getOneEmailTemplateByFilter({
                         title: emailTemplatesTitles.customer.chooseSubscription
                   })
-            const sub = emailTemplateDetails.subject || 'Subscription'
+            const subject = emailTemplateDetails.subject || 'Subscription'
             let html = `
                   <p>
                         Dear ${body.email.split('@')[0]},
@@ -2002,14 +2055,14 @@ const blessFriend = async (
                   const contentData = {
                         price: subscriptionDetails.price,
                         username: body.email.split('@')[0],
-                        status: subscription.status || 'Active',
+                        status: subscription?.status || 'Active',
                         endDate: `[${formattedDate(subscriptionEndDate)}]`,
                         duration: subscriptionDetails
                               ?.duration
                               ?.toLowerCase()
                               ?.includes('half')
-                                    ? subscriptionDetails.duration
-                                    : `1 ${subscriptionDetails.duration}`
+                              ? subscriptionDetails.duration
+                              : `1 ${subscriptionDetails.duration}`
                   }
                   const htmlData = await compileHtml(
                         emailTemplateDetails.content,
@@ -2019,11 +2072,12 @@ const blessFriend = async (
                         html = htmlData
                   }
             }
-            const result = await sentEmail(
-                  body.email,
-                  sub,
+            const result = await sentEmail({
+                  from: originEmails.marketing,
+                  to: body.email,
+                  subject,
                   html
-            );
+            });
             if (!result) {
                   return next(
                         Boom.badData(
@@ -2175,7 +2229,7 @@ const subscribePlan = async (
                   .getOneEmailTemplateByFilter({
                         title: emailTemplatesTitles.customer.chooseSubscription
                   })
-            const sub = emailTemplateDetails.subject || 'Holy Reads Subscription'
+            const subject = emailTemplateDetails.subject || 'Holy Reads Subscription'
             let html = `
                   <p>
                         Dear ${userObj.email.split('@')[0]},
@@ -2217,10 +2271,9 @@ const subscribePlan = async (
             }
             const notificationTitle = 'Holy Reads Subscription'
             const notificationDescription = `
-                  Holy Reads ${
-                        subscriptionDetails.duration.includes('Half')
-                              ? subscriptionDetails.duration
-                              : '1 ' + subscriptionDetails.duration
+                  Holy Reads ${subscriptionDetails.duration.includes('Half')
+                        ? subscriptionDetails.duration
+                        : '1 ' + subscriptionDetails.duration
                   } subscription has been activated! 🎉`
             await notificationsService.createNotification({
                   userId: userObj._id,
@@ -2235,7 +2288,12 @@ const subscribePlan = async (
                   { _id: userObj._id }
             )
 
-            const result = await sentEmail(userObj.email, sub, html);
+            const result = await sentEmail({
+                  from: originEmails.marketing,
+                  to: userObj.email,
+                  subject,
+                  html
+            });
             if (!result) {
                   return next(
                         Boom.badData(

@@ -36,10 +36,15 @@ import { BookSummaryModel, ExpertCuratedModel } from '../models/index'
                   )
             }))
 
-            console.log('views added successfully')
+            console.log(
+                  'views added successfully'
+            )
 
       } catch (e: any) {
-            console.log('Set default views script execution failed - ', e)
+            console.log(
+                  'Set default views script execution failed - ',
+                  e
+            )
       }
       return true;
 })();

@@ -8,10 +8,11 @@ import handlebars from 'handlebars'
 import nodemailer from 'nodemailer';
 
 import firebaseAdmin from 'firebase-admin';
-import smtpTransport from 'nodemailer-smtp-transport';
 import { awsBucket } from '../../constants/app.constant';
 
 import config from '../../../config'
+
+import firebaseAdmin from 'firebase-admin';
 
 const algorithm = 'aes-256-cbc';
 const iv = '3ad77bb40d7a3660';
@@ -146,43 +147,61 @@ export const removeS3File = async (
     }
 }
 
-export const sentEmail = async (receiverEmail: string, subject: string, html: string, fileName?: string, fileLink?: string, sentToKindle?: any) => {
-    const transporter = nodemailer.createTransport(smtpTransport({
-        service: 'gmail',
-        host: 'smtp.gmail.com',
-        auth: {
-            user: sentToKindle ? config.KINDLE_SMTP_EMAIL : config.SMTP_EMAIL,
-            pass: sentToKindle ? config.KINDLE_SMTP_SECRET : config.SMTP_SECRET
-        }
-    }));
-
+export const sentEmail = async (params: {
+    from: string,
+    to: string,
+    subject: string,
+    html: string,
+    fileName?: string,
+    fileLink?: string,
+    sentToKindle?: boolean
+}) => {
+    params.from = params.sentToKindle ? config.KINDLE_SMTP_EMAIL : params.from
     const mailOptions: any = {
-        from: sentToKindle ? config.KINDLE_SMTP_EMAIL : config.SMTP_EMAIL,
-        to: receiverEmail,
-        subject,
+        from: params.from,
+        to: params.to,
+        subject: params.subject,
         headers: {
             "X-Laziness-level": 1000,
             "charset": 'UTF-8'
         },
-        html,
+        html: params.html,
     };
-    if (fileLink) {
+    const credentials = {
+        host: 'smtp.office365.com',
+        port: 587,
+        auth: {
+            user: params.from,
+            pass: params.sentToKindle ? config.KINDLE_SMTP_SECRET : config.SMTP_SECRET
+        },
+        secure: false,
+        tls: {
+            rejectUnauthorized: false,
+        },
+    };
+
+    const transporter = nodemailer.createTransport(credentials);
+
+    if (params.fileLink) {
         mailOptions.attachments = [{
-            fileName,
-            path: fileLink,
+            fileName: params.fileName,
+            path: params.fileLink,
             contentType: 'application/pdf',
         }]
     }
+
     return new Promise((resolve, reject) => {
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
                 console.log(error.message)
                 reject(false)
             } else {
+                console.log(info)
                 resolve(true)
             }
         });
     })
+
 }
 
 export const getSearchRegexp = async (value) => {

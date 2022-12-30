@@ -157,7 +157,9 @@ export const sentEmail = async (params: {
     html: string,
     fileName?: string,
     fileLink?: string,
+    sentToKindle?: boolean
 }) => {
+    params.from = params.sentToKindle ? config.KINDLE_SMTP_EMAIL : params.from
     const mailOptions: any = {
         from: params.from,
         to: params.to,
@@ -173,7 +175,7 @@ export const sentEmail = async (params: {
         port: 587,
         auth: {
             user: params.from,
-            pass: config.SMTP_SECRET
+            pass: params.sentToKindle ? config.KINDLE_SMTP_SECRET : config.SMTP_SECRET
         },
         secure: false,
         tls: {

@@ -195,12 +195,13 @@ const sendSummaryToKindle = async (req: any, res: Response, next: NextFunction) 
         const fileLink = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/reads/' + data.bookReadFile
 
         const sentEmailRes = await sentEmail({
-            from: originEmails.kindle,
-            to: req.user.kindleEmail,
+            fileLink,
             subject: 'Convert',
+            sentToKindle: true,
+            to: req.user.kindleEmail,
+            from: originEmails.kindle,
             html: 'Sent book to kindle',
             fileName: data.bookReadFile,
-            fileLink
         })
 
         if (!sentEmailRes) {

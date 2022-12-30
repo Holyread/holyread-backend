@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 
 import { io } from '../../app';
 import { fetchNotifications } from './notification.controller';
-import { emailTemplatesTitles } from '../../constants/app.constant';
+import { emailTemplatesTitles, originEmails } from '../../constants/app.constant';
 import { compileHtml, pushNotification, sentEmail } from '../../lib/utils/utils';
 
 import stripeSubscriptionService from '../../services/stripe/subscription'
@@ -36,9 +36,19 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   total: (session?.plan?.amount || 0) / 100,
                   status: session?.status,
                   reason: '',
-                  device: 'web'
+                  device: 'web',
+                  stripeSubscriptionId: session.id,
+                  event: event.id,
+                  planId: session?.plan?.id
             }
-            userService.updateUser({ _id: user._id }, { 'stripe.expiredAt': transaction.planExpiredAt })
+            userService.updateUser(
+                  { _id: user._id },
+                  {
+                        'stripe.expiredAt': transaction.planExpiredAt,
+                        'stripe.subscriptionId': session.id,
+                        'stripe.customer': session.customer,
+                        'stripe.planId': transaction.planId,
+                  })
             /** Send and push notification */
             const sentNotification = async (notificationTitle: string, notificationDescription: string) => {
                   await notificationsService.createNotification({ userId: user._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
@@ -53,7 +63,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
             const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: user.subscription })
             const sentSubscriptionEmail = async () => {
                   const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.subscriptionActivated })
-                  const sub = emailTemplateDetails.subject || `Holy Reads Subscription Activated`
+                  const subject = emailTemplateDetails.subject || `Holy Reads Subscription Activated`
                   let html = `<p>Dear ${user.email.split('@')[0]},</p><p>Your holy reads subscription activated successfully.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
                   if (emailTemplateDetails && emailTemplateDetails.content) {
                         const localeDate = transaction.planExpiredAt?.toLocaleDateString()?.split('/')
@@ -69,7 +79,12 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                               html = htmlData
                         }
                   }
-                  const result = await sentEmail(user.email, sub, html);
+                  const result = await sentEmail({
+                        from: originEmails.marketing,
+                        to: user.email,
+                        subject,
+                        html
+                  });
                   if (!result) {
                         return next(Boom.badRequest('Failed to sent an subscription email'))
                   }
@@ -106,6 +121,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   const paymentMethod = await stripeSubscriptionService.getPaymentMethod(customer?.invoice_settings?.default_payment_method)
                   transaction.paymentMethod = paymentMethod?.card
             }
+      
             /** Trail subscription does not required transation yet */
             if (session.status === 'trialing') {
                   return
@@ -144,7 +160,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
 
             /** Failed payment transaction * sent cancel subscription email */
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.subscriptionCancelled })
-            const sub = emailTemplateDetails.subject || `Holy Reads Subscription Cancelled`
+            const subject = emailTemplateDetails.subject || `Holy Reads Subscription Cancelled`
             let html = `<p>Dear ${user.email.split('@')[0]},</p><p>Your holy reads subscription cancelled.</p><p>Please click this <a href=${transaction?.paymentLink}>link</a> to reactive your subscription</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
@@ -156,7 +172,12 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   }
             }
 
-            const result = await sentEmail(user.email, sub, html);
+            const result = await sentEmail({
+                  from: originEmails.marketing,
+                  to: user.email,
+                  subject,
+                  html
+            });
             if (!result) {
                   console.log('Failed to sent an cancel subscription email')
                   return;

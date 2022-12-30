@@ -237,7 +237,8 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
 
       } catch (e: any) {
             console.log(
-                  'Set expiry date script execution failed, Error is: ', e)
+                  'Set expiry date script execution failed, Error is: ', e
+                  )
       }
       return true;
 })();

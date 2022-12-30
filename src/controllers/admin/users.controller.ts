@@ -7,7 +7,7 @@ import stripeSubscriptionService from '../../services/stripe/subscription'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
 import { removeS3File, uploadFileToS3, getSearchRegexp, sentEmail, compileHtml, getToken } from '../../lib/utils/utils'
-import { awsBucket, dataTable, emailTemplatesTitles, origins } from '../../constants/app.constant'
+import { awsBucket, dataTable, emailTemplatesTitles, originEmails, origins } from '../../constants/app.constant'
 import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
 import { io } from '../../app';
@@ -55,7 +55,14 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
                 html = htmlData
             }
         }
-        const result = await sentEmail(body.email, subject, html);
+
+        const result = await sentEmail({
+            from: originEmails.marketing,
+            to: body.email,
+            subject,
+            html
+        });
+
         if (!result) {
             return next(Boom.badData(adminControllerResponse.sentEmailFailure))
         }

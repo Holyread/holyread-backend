@@ -558,14 +558,14 @@ const createGoogleTransaction = async (request: Request, response: Response, nex
             const body = request.body;
             const header = request.headers;
             await transactionsService.createAppTransaction({
-                  result: { body, header }
+                  result: { body, header, type: 'Android' }
             })
 
-            if (!body?.data) {
+            if (!body?.message?.data) {
                   return next(Boom.notFound('data is null'))
             }
 
-            const encodeDataBuff = Buffer.from(body.data, 'base64');
+            const encodeDataBuff = Buffer.from(body.message.data, 'base64');
             const decodedData: any = JSON.parse(encodeDataBuff.toString());
 
             if (!decodedData?.SubscriptionNotification) {

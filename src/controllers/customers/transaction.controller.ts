@@ -121,7 +121,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   const paymentMethod = await stripeSubscriptionService.getPaymentMethod(customer?.invoice_settings?.default_payment_method)
                   transaction.paymentMethod = paymentMethod?.card
             }
-      
+
             /** Trail subscription does not required transation yet */
             if (session.status === 'trialing') {
                   return
@@ -538,8 +538,8 @@ const createAppTransaction = async (request: Request, response: Response, next: 
 
             await userService.updateUser(
                   { _id: user._id },
-                  { 
-                        inAppSubscription:{
+                  {
+                        inAppSubscription: {
                               ...user.inAppSubscription,
                               ...inAppPurchaseBody,
                               expiredAt: new Date(v2TransactionInfo.expiresDate * 1000)
@@ -556,123 +556,188 @@ const createAppTransaction = async (request: Request, response: Response, next: 
 const createGoogleTransaction = async (request: Request, response: Response, next: NextFunction) => {
       try {
             const body = request.body;
-            const header = request.headers;
-            await transactionsService.createAppTransaction({
-                  result: { body, header }
-            })
+            // const header = request.headers;
+            // await transactionsService.createAppTransaction({
+            //       result: { body, header }
+            // })
 
-            if (!body?.data) {
+            if (!body?.message?.data) {
                   return next(Boom.notFound('data is null'))
             }
 
-            const encodeDataBuff = Buffer.from(body.data, 'base64');
+            const encodeDataBuff = Buffer.from(body.message.data, 'base64');
             const decodedData: any = JSON.parse(encodeDataBuff.toString());
 
-            if (!decodedData?.SubscriptionNotification) {
-                  return next(Boom.badData('SubscriptionNotification is null or is not valid'));
+            if (
+                  !decodedData?.SubscriptionNotification
+                  &&
+                  (
+                        !decodedData?.SubscriptionNotification
+                        ||
+                        decodedData?.oneTimeProductNotification
+                  )
+            ) {
+                  return response
+                        .status(200)
+                        .send({
+                              message:
+                                    'Test or one time product notification received'
+                        });
+            }
+            if (
+                  !decodedData?.SubscriptionNotification
+            ) {
+                  return next(
+                        Boom.badData(
+                              'SubscriptionNotification is null or is not valid'
+                        )
+                  );
             }
 
-            let subscriptionNotification = decodedData.subscriptionNotification;
+            let subscriptionNotification =
+                  decodedData.subscriptionNotification;
 
-            const user = await userService.getOneUserByFilter({ 'inAppSubscription.purchaseToken': subscriptionNotification.purchaseToken })
+            const user = await userService
+                  .getOneUserByFilter({
+                        'inAppSubscription.purchaseToken':
+                              subscriptionNotification
+                                    .purchaseToken
+                  })
+
             if (!user) {
-                  return next(Boom.notFound('User details not found'));
+                  return next(
+                        Boom.notFound(
+                              'User details not found'
+                        )
+                  );
             }
-            const encodePurchaseTokenBuffer = Buffer.from(subscriptionNotification.purchaseToken, 'base64');
-            const decodedPurchaseToken: any = JSON.parse(encodePurchaseTokenBuffer.toString());
+            const encodePurchaseTokenBuffer = Buffer.from(
+                  subscriptionNotification.purchaseToken,
+                  'base64'
+            );
+            const decodedPurchaseToken: any = JSON.parse(
+                  encodePurchaseTokenBuffer.toString()
+            );
 
             let inAppSubscriptionStatus = user.inAppSubscriptionStatus;
+
             const inAppPurchaseBody = {
                   ...user.inAppSubscription,
                   subscriptionNotification,
-                  purchaseToken: subscriptionNotification.purchaseToken,
-                  transactionReceipt: JSON.stringify(decodedPurchaseToken),
-                  transactionId: decodedPurchaseToken.orderId,
-                  transactionDate: decodedPurchaseToken.purchaseTime,
                   productId: decodedPurchaseToken.productId,
+                  transactionId: decodedPurchaseToken.orderId,
                   dataAndroid: JSON.stringify(decodedPurchaseToken),
-                  autoRenewingAndroid: decodedPurchaseToken.autoRenewing,
-                  isAcknowledgedAndroid: decodedPurchaseToken.acknowledged,
+                  transactionDate: decodedPurchaseToken.purchaseTime,
                   packageNameAndroid: decodedPurchaseToken.packageName,
+                  purchaseToken: subscriptionNotification.purchaseToken,
+                  autoRenewingAndroid: decodedPurchaseToken.autoRenewing,
+                  transactionReceipt: JSON.stringify(decodedPurchaseToken),
+                  isAcknowledgedAndroid: decodedPurchaseToken.acknowledged,
                   purchaseStateAndroid: subscriptionNotification.notificationType
             }
+
             switch (subscriptionNotification.notificationType) {
                   case 1:
                         /*
-                              (1) SUBSCRIPTION_RECOVERED - A subscription was recovered from account hold.
+                              (1) SUBSCRIPTION_RECOVERED
+                              - A subscription was recovered from account hold.
                         */
 
                         break;
                   case 2:
                         /*
-                              (2) SUBSCRIPTION_RENEWED - An active subscription was renewed.
+                              (2) SUBSCRIPTION_RENEWED
+                              - An active subscription was renewed.
                         */
                         inAppSubscriptionStatus = 'Active'
                         break;
                   case 3:
                         /*
-                              (3) SUBSCRIPTION_CANCELED - A subscription was either voluntarily or involuntarily cancelled. For voluntary cancellation, sent when the user cancels.
+                              (3) SUBSCRIPTION_CANCELED
+                              - A subscription was either voluntarily
+                                or involuntarily cancelled.
+                                For voluntary cancellation, sent when the user cancels.
                         */
                         inAppSubscriptionStatus = 'Cancelled'
                         break;
                   case 4:
                         /*
-                              (4) SUBSCRIPTION_PURCHASED - A new subscription was purchased.
+                              (4) SUBSCRIPTION_PURCHASED
+                              - A new subscription was purchased.
                         */
                         inAppSubscriptionStatus = 'Active'
                         break;
                   case 5:
                         /*
-                              (5) SUBSCRIPTION_ON_HOLD - A subscription has entered account hold (if enabled).
+                              (5) SUBSCRIPTION_ON_HOLD
+                              - A subscription has entered account hold (if enabled).
                         */
                         break;
                   case 6:
                         /* 
-                              (6) SUBSCRIPTION_IN_GRACE_PERIOD - A subscription has entered grace period (if enabled).
+                              (6) SUBSCRIPTION_IN_GRACE_PERIOD
+                              - A subscription has entered grace period (if enabled).
                         */
                         break;
                   case 7:
                         /*
-                              (7) SUBSCRIPTION_RESTARTED - User has restored their subscription from Play > Account > Subscriptions. The subscription was canceled but had not expired yet when the user restores. For more information, see [Restorations](/google/play/billing/subscriptions#restore).
+                              (7) SUBSCRIPTION_RESTARTED
+                              - User has restored their subscription from
+                                Play > Account > Subscriptions.
+                                The subscription was canceled but had not expired yet
+                                when the user restores. For more information,
+                                see [Restorations](/google/play/billing/subscriptions#restore).
                         */
                         inAppSubscriptionStatus = 'Active'
                         break;
                   case 8:
                         /* 
-                              (8) SUBSCRIPTION_PRICE_CHANGE_CONFIRMED - A subscription price change has successfully been confirmed by the user.
+                              (8) SUBSCRIPTION_PRICE_CHANGE_CONFIRMED
+                              - A subscription price change has successfully
+                                been confirmed by the user.
                         */
                         break;
                   case 9:
                         /*
-                              (9) SUBSCRIPTION_DEFERRED - A subscription's recurrence time has been extended.
+                              (9) SUBSCRIPTION_DEFERRED
+                              - A subscription's recurrence time has been extended.
                         */
                         break;
                   case 10:
                         /*
-                              (10) SUBSCRIPTION_PAUSED - A subscription has been paused.
+                              (10) SUBSCRIPTION_PAUSED
+                              - A subscription has been paused.
                         */
                         break;
                   case 11:
                         /*
-                              (11) SUBSCRIPTION_PAUSE_SCHEDULE_CHANGED - A subscription pause schedule has been changed.
+                              (11) SUBSCRIPTION_PAUSE_SCHEDULE_CHANGED
+                              - A subscription pause schedule has been changed.
                         */
                         break;
                   case 12:
                         /*
-                              (12) SUBSCRIPTION_REVOKED - A subscription has been revoked from the user before the expiration time.
+                              (12) SUBSCRIPTION_REVOKED
+                              - A subscription has been revoked from
+                                the user before the expiration time.
                         */
                         inAppSubscriptionStatus = 'Cancelled'
                         break;
                   case 13:
                         /*
-                              (13) SUBSCRIPTION_EXPIRED - A subscription has expired.
+                              (13) SUBSCRIPTION_EXPIRED
+                              - A subscription has expired.
                         */
                         inAppSubscriptionStatus = 'Cancelled'
                         break;
                   default:
                         break;
             }
-            const subscriptions = await SubscriptionsModel.find({}).lean().exec();
+            const subscriptions = await SubscriptionsModel
+                  .find({})
+                  .lean()
+                  .exec();
+
             const getMonths = (subscription) => {
                   const duration = subscriptions.find(
                         s => String(s._id) == subscription
@@ -694,9 +759,14 @@ const createGoogleTransaction = async (request: Request, response: Response, nex
                   }
                   return months;
             }
+
             let expiredAt = user?.inAppSubscription?.expiredAt;
+
             if (decodedPurchaseToken?.purchaseTime) {
-                  const date = Number(decodedPurchaseToken.purchaseTime)
+                  const date = Number(
+                        decodedPurchaseToken.purchaseTime
+                  )
+
                   expiredAt = new Date(date)
                   expiredAt.setMonth(
                         new Date(date).getMonth() + getMonths(user?.subscription)
@@ -714,10 +784,17 @@ const createGoogleTransaction = async (request: Request, response: Response, nex
                         inAppSubscriptionStatus
                   }
             )
-            response.status(200).send({ message: 'OK' });
-      } catch (e: any) {
-            return next(Boom.badData(e.message))
+            response.status(200)
+                  .send({
+                        message: 'OK'
+                  });
+      } catch ({ message }) {
+            return next(Boom.badData(message as string))
       }
 }
 
-export { createTransaction, createAppTransaction, createGoogleTransaction };
+export {
+      createTransaction,
+      createAppTransaction,
+      createGoogleTransaction
+};

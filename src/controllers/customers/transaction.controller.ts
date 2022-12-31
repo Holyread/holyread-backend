@@ -121,7 +121,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   const paymentMethod = await stripeSubscriptionService.getPaymentMethod(customer?.invoice_settings?.default_payment_method)
                   transaction.paymentMethod = paymentMethod?.card
             }
-      
+
             /** Trail subscription does not required transation yet */
             if (session.status === 'trialing') {
                   return
@@ -556,10 +556,10 @@ const createAppTransaction = async (request: Request, response: Response, next: 
 const createGoogleTransaction = async (request: Request, response: Response, next: NextFunction) => {
       try {
             const body = request.body;
-            const header = request.headers;
-            await transactionsService.createAppTransaction({
-                  result: { body, header }
-            })
+            // const header = request.headers;
+            // await transactionsService.createAppTransaction({
+            //       result: { body, header }
+            // })
 
             if (!body?.message?.data) {
                   return next(Boom.notFound('data is null'))

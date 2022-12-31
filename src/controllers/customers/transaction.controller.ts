@@ -188,7 +188,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
       }
 }
 
-// /** Create transaction */
+/** Create transaction */
 const createAppTransaction = async (request: Request, response: Response, next: NextFunction) => {
       try {
             const body = request.body;
@@ -556,10 +556,10 @@ const createAppTransaction = async (request: Request, response: Response, next: 
 const createGoogleTransaction = async (request: Request, response: Response, next: NextFunction) => {
       try {
             const body = request.body;
-            // const header = request.headers;
-            // await transactionsService.createAppTransaction({
-            //       result: { body, header }
-            // })
+            const header = request.headers;
+            await transactionsService.createAppTransaction({
+                  result: { body, header }
+            })
 
             if (!body?.message?.data) {
                   return next(Boom.notFound('data is null'))

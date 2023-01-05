@@ -2220,6 +2220,8 @@ const subscribePlan = async (
                         message: subscriptionsControllerResponse.createSubscriptionSuccess,
                         data: {
                               subscriptionStatus: subscription.status,
+                              paymentIntentId: subscription?.latest_invoice?.payment_intent?.id,
+                              clientSecret: subscription?.latest_invoice?.payment_intent?.client_secret,
                               customerEmail: userObj.email
                         }
                   })

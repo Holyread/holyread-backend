@@ -7,6 +7,37 @@ const stripe = require('stripe')(config.STRIPE_SECRET);
 const retrieveSubscription = async (id: string) => {
       try {
             const subscription = await stripe.subscriptions.retrieve(id);
+            if (
+                  !subscription
+                        ?.latest_invoice
+                        ?.id
+                  ) {
+                  try {
+                        subscription.latest_invoice =
+                              await stripe.invoices.retrieve(
+                                    subscription
+                                          ?.latest_invoice
+                              )
+                        if (
+                              subscription
+                                    ?.latest_invoice
+                                    ?.payment_intent
+                              ) {
+                              subscription.latest_invoice.payment_intent
+                                    = await stripe.paymentIntents.retrieve(
+                                          subscription
+                                                .latest_invoice
+                                                .payment_intent
+                                    )
+                              console.log(subscription.latest_invoice.payment_intent)
+                        }
+                  } catch ({ message }) {
+                        console.log(
+                              'Failed to fetch invoice details',
+                              message
+                        )
+                  }
+            }
             return subscription
       } catch (error: any) {
             throw new Error(error)
@@ -177,6 +208,7 @@ const createSubscription = async (params: {
                   items: [
                         { price: params.planId },
                   ],
+                  payment_behavior: 'default_incomplete',
                   expand: ['latest_invoice.payment_intent'],
                   trial_period_days: params.status === 'active' ? 0 : 3
             }
@@ -221,6 +253,7 @@ const updateSubscription = async (params: {
                         id: subscription.items.data[0].id,
                         price: params.planId,
                   }],
+                  payment_behavior: 'default_incomplete',
                   trial_end: 'now'
             }
             if (params.coupon) {
@@ -231,7 +264,7 @@ const updateSubscription = async (params: {
                   body
             );
       } catch (error: any) {
-            throw new Error(error)
+                  throw new Error(error)
       }
 }
 
@@ -281,7 +314,8 @@ const createWebhook = async () => {
 
       const enabled_events: String[] = [
             'customer.subscription.updated',
-            'customer.subscription.created'
+            'customer.subscription.created',
+            'invoice.payment_succeeded'
       ];
       await stripe.webhookEndpoints.create({ url, enabled_events });
       console.log('Subscription webhook created successfully')
@@ -437,6 +471,7 @@ export default {
       cancelSubscription,
       createSubscription,
       updateSubscription,
+      updatePaymentMethod,
       confirmPaymentIntent,
       retrieveSubscription,
 }

@@ -8,6 +8,9 @@ import { fetchNotifications } from './notification.controller';
 import { emailTemplatesTitles, originEmails } from '../../constants/app.constant';
 import { compileHtml, pushNotification, sentEmail } from '../../lib/utils/utils';
 
+import config from '../../../config';
+import { SubscriptionsModel } from '../../models';
+
 import stripeSubscriptionService from '../../services/stripe/subscription'
 
 import userService from '../../services/customers/users/user.service';
@@ -15,7 +18,8 @@ import transactionsService from '../../services/customers/users/transactions.ser
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service';
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
 import notificationsService from '../../services/customers/notifications/notifications.service';
-import { SubscriptionsModel } from '../../models';
+
+const stripe = require('stripe')(config.STRIPE_SECRET);
 
 /** Create transaction */
 const createTransaction = async (request: Request, response: Response, next: NextFunction) => {
@@ -27,12 +31,11 @@ const createTransaction = async (request: Request, response: Response, next: Nex
 
             const user = await userService.getOneUserByFilter({ 'stripe.customerId': session.customer })
             if (!user || !user?.subscription) return next(Boom.notAcceptable())
+
             response.status(200).send({ message: 'OK' });
             const transaction: any = {
                   userId: user._id,
                   latestInvoice: session?.latest_invoice,
-                  planCreatedAt: new Date(session?.current_period_start * 1000),
-                  planExpiredAt: new Date(session?.current_period_end * 1000),
                   total: (session?.plan?.amount || 0) / 100,
                   status: session?.status,
                   reason: '',
@@ -41,14 +44,24 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   event: event.id,
                   planId: session?.plan?.id
             }
-            userService.updateUser(
-                  { _id: user._id },
-                  {
-                        'stripe.expiredAt': transaction.planExpiredAt,
-                        'stripe.subscriptionId': session.id,
-                        'stripe.customer': session.customer,
-                        'stripe.planId': transaction.planId,
-                  })
+            if (session?.current_period_start) {
+                  transaction.planCreatedAt =
+                        new Date(session?.current_period_start * 1000)
+            }
+            if (session?.current_period_end) {
+                  transaction.planExpiredAt =
+                        new Date(session?.current_period_end * 1000)
+            }
+            if (event.type !== 'invoice.payment_succeeded') {
+                  userService.updateUser(
+                        { _id: user._id },
+                        {
+                              'stripe.expiredAt': transaction.planExpiredAt,
+                              'stripe.subscriptionId': session.id,
+                              'stripe.customerId': session.customer,
+                              'stripe.planId': transaction.planId,
+                        })
+            }
             /** Send and push notification */
             const sentNotification = async (notificationTitle: string, notificationDescription: string) => {
                   await notificationsService.createNotification({ userId: user._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
@@ -74,7 +87,10 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                               duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `1 ${subscriptionDetails.duration}`,
                               status: transaction?.status
                         }
-                        const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                        const htmlData = await compileHtml(
+                              emailTemplateDetails.content,
+                              contentData
+                        )
                         if (htmlData) {
                               html = htmlData
                         }
@@ -86,39 +102,107 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                         html
                   });
                   if (!result) {
-                        return next(Boom.badRequest('Failed to sent an subscription email'))
+                        return next(
+                              Boom.badRequest(
+                                    'Failed to sent an subscription email'
+                              )
+                        )
                   }
             }
             /** Get latest invoice details */
-            const latestInvoice = await stripeSubscriptionService.getInvoice(session?.latest_invoice)
-            transaction.account = {
-                  country: latestInvoice.account_country,
-                  name: latestInvoice.account_name,
-                  taxIds: latestInvoice.account_tax_ids,
+            const latestInvoice = await stripeSubscriptionService
+                  .getInvoice(
+                        session?.latest_invoice
+                  )
+            let paymentIntent;
+            if (latestInvoice?.id) {
+                  transaction.account = {
+                        country: latestInvoice?.account_country,
+                        name: latestInvoice?.account_name,
+                        taxIds: latestInvoice?.account_tax_ids,
+                  }
+                  transaction.amount = {
+                        subtotal: (latestInvoice?.subtotal | 0) / 100,
+                        tax: (latestInvoice?.tax | 0) / 100,
+                        total: (latestInvoice?.total | 0) / 100,
+                        discount: (
+                              latestInvoice
+                                    ?.total_discount_amounts[0]
+                                    ?.amount | 0
+                        ) / 100,
+                  }
+                  transaction.invoiceAt =
+                        latestInvoice.created
+                        &&
+                        new Date(latestInvoice.created * 1000)
+
+                  transaction.statusTransitions = latestInvoice.status_transitions
+                  transaction.customer = {
+                        email: latestInvoice.customer_email,
+                        name: latestInvoice.customer_name,
+                        phone: latestInvoice.customer_phone,
+                        shipping: latestInvoice.customer_shipping
+                  }
+
+                  paymentIntent = await stripeSubscriptionService.getPaymentIntent(
+                        latestInvoice?.payment_intent || session['payment_intent']
+                  );
             }
-            transaction.amount = {
-                  subtotal: (latestInvoice?.subtotal | 0) / 100,
-                  tax: (latestInvoice?.tax | 0) / 100,
-                  total: (latestInvoice?.total | 0) / 100,
-                  discount: (latestInvoice?.total_discount_amounts[0]?.amount | 0) / 100,
-            }
-            transaction.invoiceAt = latestInvoice.created && new Date(latestInvoice.created * 1000)
-            transaction.statusTransitions = latestInvoice.status_transitions
-            transaction.customer = {
-                  email: latestInvoice.customer_email,
-                  name: latestInvoice.customer_name,
-                  phone: latestInvoice.customer_phone,
-                  shipping: latestInvoice.customer_shipping
+            if (event.type === 'invoice.payment_succeeded') {
+                  // The subscription automatically activates after successful payment
+                  // Set the payment method used to pay the first invoice
+                  // as the default payment method for that subscription
+                  const subscription_id = session['subscription']
+                  const payment_intent_id = session['payment_intent']
+
+                  // Retrieve the payment intent used to pay the subscription
+                  const payment_intent =
+                        await stripeSubscriptionService.getPaymentIntent(
+                              payment_intent_id
+                        );
+
+                  try {
+                        // await stripeSubscriptionService.updatePaymentMethod(
+                        //       session.customer,
+                        //       payment_intent.payment_method
+                        // )
+                        await stripe.subscriptions.update(
+                              subscription_id,
+                              {
+                                    default_payment_method: payment_intent.payment_method,
+                              },
+                        );
+
+                        console.log(
+                              "Default payment method set for subscription:",
+                              payment_intent.payment_method
+                        );
+                  } catch (err) {
+                        console.log(
+                              '⚠️ Falied to update the default payment method for subscription:',
+                              subscription_id
+                        );
+                  }
             }
 
-            const paymentIntent = await stripeSubscriptionService.getPaymentIntent(
-                  latestInvoice?.payment_intent
-            );
             transaction.paymentLink = latestInvoice?.hosted_invoice_url
-            transaction.paymentMethod = (await stripeSubscriptionService.getPaymentMethod(paymentIntent?.payment_method))?.card
+            transaction.paymentMethod = (
+                  await stripeSubscriptionService
+                        .getPaymentMethod(
+                              paymentIntent?.payment_method
+                        )
+            )?.card
             if (!transaction.paymentMethod) {
-                  const customer = await stripeSubscriptionService.getCustomer(session.customer)
-                  const paymentMethod = await stripeSubscriptionService.getPaymentMethod(customer?.invoice_settings?.default_payment_method)
+                  const customer =
+                        await stripeSubscriptionService
+                              .getCustomer(session.customer)
+                  const paymentMethod =
+                        await stripeSubscriptionService
+                              .getPaymentMethod(
+                                    customer
+                                          ?.invoice_settings
+                                          ?.default_payment_method
+                              )
                   transaction.paymentMethod = paymentMethod?.card
             }
 
@@ -137,7 +221,8 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                               'Holy Reads Subscription',
                               `Holy Reads ${subscriptionDetails.duration.includes('Half')
                                     ? subscriptionDetails.duration
-                                    : '1 ' + subscriptionDetails.duration} Subscription activated successfully 🎉`)
+                                    : '1 ' + subscriptionDetails.duration
+                              } Subscription activated successfully 🎉`)
                   ])
                   return
             }
@@ -149,24 +234,87 @@ const createTransaction = async (request: Request, response: Response, next: Nex
             const now: Date = new Date()
             /** Set reason on payment failed */
             if (transaction?.paymentMethod) {
-                  const isCardExpired = !!(transaction?.paymentMethod?.exp_month > (now.getMonth() + 1) && (transaction?.paymentMethod?.exp_year >= now.getFullYear()))
-                  transaction.reason = isCardExpired ? 'Card Expired' : 'Decline Payment'
+                  const isCardExpired = !!(
+                        (
+                              transaction?.paymentMethod?.exp_month
+                              >
+                              (now.getMonth() + 1)
+                        )
+                        &&
+                        (
+                              transaction?.paymentMethod?.exp_year
+                              >= now.getFullYear()
+                        )
+                  )
+                  transaction.reason =
+                        isCardExpired ? 'Card Expired' : 'Decline Payment'
             }
-            const status = ['past_due', 'unpaid', 'canceled', 'incomplete', 'incomplete_expired']
+            const status = [
+                  'past_due',
+                  'unpaid',
+                  'canceled',
+                  'incomplete',
+                  'incomplete_expired'
+            ]
 
-            if (event?.type !== 'customer.subscription.updated' || !status.includes(session?.status)) {
+            if (
+                  event?.type !== 'customer.subscription.updated'
+                  ||
+                  !status.includes(session?.status)
+            ) {
                   return
             }
 
             /** Failed payment transaction * sent cancel subscription email */
-            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.subscriptionCancelled })
-            const subject = emailTemplateDetails.subject || `Holy Reads Subscription Cancelled`
-            let html = `<p>Dear ${user.email.split('@')[0]},</p><p>Your holy reads subscription cancelled.</p><p>Please click this <a href=${transaction?.paymentLink}>link</a> to reactive your subscription</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
-            if (emailTemplateDetails && emailTemplateDetails.content) {
+            const emailTemplateDetails =
+                  await emailTemplateService
+                        .getOneEmailTemplateByFilter({
+                              title: emailTemplatesTitles
+                                    .customer
+                                    .subscriptionCancelled
+                        })
+
+            const subject = emailTemplateDetails.subject
+                  || `Holy Reads Subscription Cancelled`
+
+            let html = `
+                  <p>
+                        Dear ${user.email.split('@')[0]},
+                  </p>
+                  <p>
+                        Your holy reads subscription cancelled.
+                  </p>
+                  <p>
+                        Please click this
+                              <a href=${transaction?.paymentLink}>
+                                    link
+                              </a>
+                        to reactive your subscription
+                  </p>
+                  <p>
+                        Should you have any questions or if any of your details change, please contact us.
+                  </p>
+                  <p>
+                        Best regards,
+                              <br>Holy Reads
+                  </p>
+                  <p>
+                        <strong>
+                              ( ***&nbsp; Please do not reply to this email ***&nbsp; )
+                        </strong>
+                  </p>`
+            if (
+                  emailTemplateDetails
+                  &&
+                  emailTemplateDetails.content
+            ) {
                   const contentData = {
                         link: transaction?.paymentLink
                   }
-                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  const htmlData = await compileHtml(
+                        emailTemplateDetails.content,
+                        contentData
+                  )
                   if (htmlData) {
                         html = htmlData
                   }
@@ -179,12 +327,23 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   html
             });
             if (!result) {
-                  console.log('Failed to sent an cancel subscription email')
+                  console.log(
+                        'Failed to sent an cancel subscription email'
+                  )
                   return;
             }
-            Promise.all([sentNotification('Holy Reads Subscription Cancelled ⛔', `Your Holy Reads ${subscriptionDetails.title} Subscription Cancelled`)])
+            Promise.all([
+                  sentNotification(
+                        'Holy Reads Subscription Cancelled ⛔',
+                        `Your Holy Reads ${subscriptionDetails.title} Subscription Cancelled`
+                  )
+            ])
       } catch (e: any) {
-            return next(Boom.badData(e.message))
+            return next(
+                  Boom.badData(
+                        e.message
+                  )
+            )
       }
 }
 

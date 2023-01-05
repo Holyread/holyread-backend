@@ -264,7 +264,7 @@ const updateSubscription = async (params: {
                   body
             );
       } catch (error: any) {
-            throw new Error(error)
+                  throw new Error(error)
       }
 }
 

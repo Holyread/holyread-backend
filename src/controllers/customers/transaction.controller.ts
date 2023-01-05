@@ -52,15 +52,16 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   transaction.planExpiredAt =
                         new Date(session?.current_period_end * 1000)
             }
-
-            userService.updateUser(
-                  { _id: user._id },
-                  {
-                        'stripe.expiredAt': transaction.planExpiredAt,
-                        'stripe.subscriptionId': session.id,
-                        'stripe.customerId': session.customer,
-                        'stripe.planId': transaction.planId,
-                  })
+            if (event.type !== 'invoice.payment_succeeded') {
+                  userService.updateUser(
+                        { _id: user._id },
+                        {
+                              'stripe.expiredAt': transaction.planExpiredAt,
+                              'stripe.subscriptionId': session.id,
+                              'stripe.customerId': session.customer,
+                              'stripe.planId': transaction.planId,
+                        })
+            }
             /** Send and push notification */
             const sentNotification = async (notificationTitle: string, notificationDescription: string) => {
                   await notificationsService.createNotification({ userId: user._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })

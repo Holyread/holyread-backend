@@ -2220,6 +2220,7 @@ const subscribePlan = async (
                         message: subscriptionsControllerResponse.createSubscriptionSuccess,
                         data: {
                               subscriptionStatus: subscription.status,
+                              subscription,
                               customerEmail: userObj.email
                         }
                   })

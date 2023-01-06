@@ -11,7 +11,7 @@ const retrieveSubscription = async (id: string) => {
                   !subscription
                         ?.latest_invoice
                         ?.id
-                  ) {
+            ) {
                   try {
                         subscription.latest_invoice =
                               await stripe.invoices.retrieve(
@@ -22,7 +22,7 @@ const retrieveSubscription = async (id: string) => {
                               subscription
                                     ?.latest_invoice
                                     ?.payment_intent
-                              ) {
+                        ) {
                               subscription.latest_invoice.payment_intent
                                     = await stripe.paymentIntents.retrieve(
                                           subscription
@@ -264,7 +264,7 @@ const updateSubscription = async (params: {
                   body
             );
       } catch (error: any) {
-                  throw new Error(error)
+            throw new Error(error)
       }
 }
 
@@ -455,6 +455,18 @@ const getPaymentMethod = async (id: string) => {
       }
 }
 
+/** Create ephemeral key  */
+const createEphemeralKey = async (customerId: string) => {
+      try {
+            return await stripe.ephemeralKeys.create(
+                  { customer: customerId },
+                  { apiVersion: '2020-03-02' }
+            );
+      } catch (error) {
+            return null
+      }
+}
+
 export default {
       getInvoice,
       getCustomer,
@@ -468,6 +480,7 @@ export default {
       getPaymentIntent,
       getPaymentMethod,
       getPaymentIntents,
+      createEphemeralKey,
       cancelSubscription,
       createSubscription,
       updateSubscription,

@@ -2216,13 +2216,18 @@ const subscribePlan = async (
             await usersService.updateUser({ _id: userObj._id }, body)
 
             if (!req.body?.inAppSubscription) {
+                  const ephemeralKey = await stripeSubscriptionService.createEphemeralKey(
+                        userObj.stripe.customerId
+                  );
                   res.status(200).send({
                         message: subscriptionsControllerResponse.createSubscriptionSuccess,
                         data: {
                               subscriptionStatus: subscription.status,
                               paymentIntentId: subscription?.latest_invoice?.payment_intent?.id,
                               clientSecret: subscription?.latest_invoice?.payment_intent?.client_secret,
-                              customerEmail: userObj.email
+                              customerEmail: userObj.email,
+                              customerId: userObj?.stripe?.customerId,
+                              ephemeralKey: ephemeralKey?.secret
                         }
                   })
             }

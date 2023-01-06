@@ -211,7 +211,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         const contentData = {
                               username: user.email.split('@')[0],
                               price: transaction.total,
-                              endDate: `[${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)}]`,
+                              endDate: `${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)}`,
                               duration: subscriptionDetails
                                     ?.duration
                                     ?.toLowerCase()

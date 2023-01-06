@@ -2056,7 +2056,7 @@ const blessFriend = async (
                         price: subscriptionDetails.price,
                         username: body.email.split('@')[0],
                         status: subscription?.status || 'Active',
-                        endDate: `[${formattedDate(subscriptionEndDate)}]`,
+                        endDate: `${formattedDate(subscriptionEndDate)}`,
                         duration: subscriptionDetails
                               ?.duration
                               ?.toLowerCase()
@@ -2263,7 +2263,7 @@ const subscribePlan = async (
                         price: subscriptionDetails.price,
                         username: userObj.email.split('@')[0],
                         status: subscription?.status || 'Active',
-                        endDate: `[${formattedDate(subscriptionEndDate).replace(/ /g, ',')}]`,
+                        endDate: `${formattedDate(subscriptionEndDate).replace(/ /g, ',')}`,
                         duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half')
                               ? subscriptionDetails.duration
                               : `1 ${subscriptionDetails.duration}`,

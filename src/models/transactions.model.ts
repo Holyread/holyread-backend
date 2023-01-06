@@ -18,7 +18,8 @@ export interface ITransactions extends mongoose.Document {
     amount?: {
         subtotal: Number,
         tax?: string,
-        total: Number
+        total: Number,
+        discount?: Number
     },
     statusTransitions?: { type: Object },
     customer?: {
@@ -52,7 +53,8 @@ export type createTransationsType = {
     amount?: {
         subtotal: Number,
         tax?: string,
-        total: Number
+        total: Number,
+        discount?: Number
     },
     statusTransitions?: { type: Object },
     customer?: {
@@ -86,7 +88,8 @@ export type getTransactionsType = {
     amount?: {
         subtotal: Number,
         tax?: string,
-        total: Number
+        total: Number,
+        discount?: Number
     },
     statusTransitions?: { type: Object },
     customer?: {
@@ -125,7 +128,8 @@ export const TransactionsSchema = new Schema({
     amount: {
         subtotal: Number,
         tax: String,
-        total: Number
+        total: Number,
+        discount: Number
     },
     statusTransitions: { type: Object },
     customer: {

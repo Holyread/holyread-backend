@@ -29,7 +29,6 @@ const retrieveSubscription = async (id: string) => {
                                                 .latest_invoice
                                                 .payment_intent
                                     )
-                              console.log(subscription.latest_invoice.payment_intent)
                         }
                   } catch ({ message }) {
                         console.log(
@@ -289,8 +288,8 @@ const getWebHookList = async () => {
 /** Delete webhooks */
 const deleteWebHook = async (id) => {
       try {
-            const { deleted } = await stripe.webhookEndpoints.del(id);
-            return deleted;
+            // const { deleted } = await stripe.webhookEndpoints.del(id);
+            // return deleted;
       } catch (e) {
             return null;
       }

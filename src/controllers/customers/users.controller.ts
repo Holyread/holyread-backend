@@ -2219,7 +2219,7 @@ const subscribePlan = async (
                   const ephemeralKey = await stripeSubscriptionService.createEphemeralKey(
                         userObj.stripe.customerId
                   );
-                  res.status(200).send({
+                  return res.status(200).send({
                         message: subscriptionsControllerResponse.createSubscriptionSuccess,
                         data: {
                               subscriptionStatus: subscription.status,

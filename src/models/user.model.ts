@@ -243,8 +243,8 @@ export const UserSchema = new Schema({
     referralUserId: { type: Schema.Types.ObjectId, ref: 'user' },
     kindleEmail: { type: String },
     stripe: {
-        subscriptionId: { type: String },
-        customerId: { type: String },
+        subscriptionId: { type: String, index: true },
+        customerId: { type: String, index: true },
         planId: { type: String },
         createdAt: { type: Date },
         planRenewRemindAt: { type: Date },

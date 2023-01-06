@@ -29,10 +29,25 @@ const createTransaction = async (request: Request, response: Response, next: Nex
             /** invalid request */
             if (!session) return next(Boom.badRequest())
 
-            const user = await userService.getOneUserByFilter({ 'stripe.customerId': session.customer })
-            if (!user || !user?.subscription) return next(Boom.notAcceptable())
-
+            const user = await userService.getOneUserByFilter({
+                  'stripe.customerId': session.customer
+            })
+            if (!user || !user?.subscription) {
+                  return next(Boom.notAcceptable())
+            }
             response.status(200).send({ message: 'OK' });
+
+            /** Trail or incomplete subscription does not required transation yet */
+            if (
+                  [
+                        'trialing',
+                        'incomplete'
+                  ]
+                  .includes(
+                        session?.status
+                  )
+            ) { return }
+
             const transaction: any = {
                   userId: user._id,
                   latestInvoice: session?.latest_invoice,
@@ -44,15 +59,18 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   event: event.id,
                   planId: session?.plan?.id
             }
+
             if (session?.current_period_start) {
                   transaction.planCreatedAt =
                         new Date(session?.current_period_start * 1000)
             }
+
             if (session?.current_period_end) {
                   transaction.planExpiredAt =
                         new Date(session?.current_period_end * 1000)
             }
-            if (event.type !== 'invoice.payment_succeeded') {
+
+            if ('invoice.payment_succeeded' !== event.type) {
                   userService.updateUser(
                         { _id: user._id },
                         {
@@ -62,22 +80,71 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                               'stripe.planId': transaction.planId,
                         })
             }
+
             /** Send and push notification */
-            const sentNotification = async (notificationTitle: string, notificationDescription: string) => {
-                  await notificationsService.createNotification({ userId: user._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
+            const sentNotification = async (
+                  notificationTitle: string,
+                  notificationDescription: string
+            ) => {
+                  await notificationsService.createNotification({
+                        userId: user._id,
+                        type: 'setting',
+                        notification: {
+                              title: notificationTitle,
+                              description: notificationDescription
+                        }
+                  })
+
                   fetchNotifications(io.sockets, { _id: user._id })
                   /** Push notification */
-                  if (user.pushTokens.length && user?.notification?.push && user?.notification?.subscription) {
+                  if (
+                        user.pushTokens.length
+                        && user?.notification?.push
+                        && user?.notification?.subscription
+                  ) {
                         const tokens = user.pushTokens.map(i => i.token)
-                        pushNotification(tokens, notificationTitle, notificationDescription)
+
+                        pushNotification(
+                              tokens,
+                              notificationTitle,
+                              notificationDescription
+                        )
                   }
             }
             /** Sent subscription activation email */
-            const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: user.subscription })
+            const subscriptionDetails = await subscriptionsService
+                        .getOneSubscriptionByFilter({
+                              _id: user.subscription
+                        })
+
             const sentSubscriptionEmail = async () => {
-                  const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.subscriptionActivated })
-                  const subject = emailTemplateDetails.subject || `Holy Reads Subscription Activated`
-                  let html = `<p>Dear ${user.email.split('@')[0]},</p><p>Your holy reads subscription activated successfully.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+                  const emailTemplateDetails = await emailTemplateService
+                        .getOneEmailTemplateByFilter({
+                              title: emailTemplatesTitles.customer.subscriptionActivated
+                        })
+
+                  const subject = emailTemplateDetails.subject
+                        || `Holy Reads Subscription Activated`
+                  let html = `
+                        <p>
+                              Dear ${user.email.split('@')[0]},
+                        </p>
+                        <p>
+                              Your holy reads subscription activated successfully.
+                        </p>
+                        <p>
+                              Should you have any questions or if any of your details change, please contact us.
+                        </p>
+                        <p>
+                              Best regards,
+                              <br>Holy Reads
+                        </p>
+                        <p>
+                              <strong>
+                                    ( ***&nbsp; Please do not reply to this email ***&nbsp; )
+                              </strong>
+                        </p>
+                  `
                   if (emailTemplateDetails && emailTemplateDetails.content) {
                         const localeDate = transaction.planExpiredAt?.toLocaleDateString()?.split('/')
                         const contentData = {
@@ -162,10 +229,6 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                         );
 
                   try {
-                        // await stripeSubscriptionService.updatePaymentMethod(
-                        //       session.customer,
-                        //       payment_intent.payment_method
-                        // )
                         await stripe.subscriptions.update(
                               subscription_id,
                               {
@@ -183,6 +246,7 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                               subscription_id
                         );
                   }
+                  return;
             }
 
             transaction.paymentLink = latestInvoice?.hosted_invoice_url
@@ -206,12 +270,8 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   transaction.paymentMethod = paymentMethod?.card
             }
 
-            /** Trail subscription does not required transation yet */
-            if (session.status === 'trialing') {
-                  return
-            }
 
-            /** No trail subscription */
+            /** Process active subscription */
             if (session.status === 'active') {
                   await transactionsService.createTransaction(transaction)
                   /** Sent subscription activation email */
@@ -253,7 +313,6 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   'past_due',
                   'unpaid',
                   'canceled',
-                  'incomplete',
                   'incomplete_expired'
             ]
 

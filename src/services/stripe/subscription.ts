@@ -288,8 +288,8 @@ const getWebHookList = async () => {
 /** Delete webhooks */
 const deleteWebHook = async (id) => {
       try {
-            // const { deleted } = await stripe.webhookEndpoints.del(id);
-            // return deleted;
+            const { deleted } = await stripe.webhookEndpoints.del(id);
+            return deleted;
       } catch (e) {
             return null;
       }

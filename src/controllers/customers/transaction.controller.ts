@@ -22,30 +22,53 @@ import notificationsService from '../../services/customers/notifications/notific
 const stripe = require('stripe')(config.STRIPE_SECRET);
 
 /** Create transaction */
-const createTransaction = async (request: Request, response: Response, next: NextFunction) => {
+const createTransaction = async (
+      request: Request,
+      response: Response,
+      next: NextFunction
+) => {
       try {
             const event = request.body;
             const session = event?.data?.object;
             /** invalid request */
-            if (!session) return next(Boom.badRequest())
+            if (!session) {
+                  return next(Boom.badRequest())
+            }
 
             const user = await userService.getOneUserByFilter({
                   'stripe.customerId': session.customer
             })
-            if (!user || !user?.subscription) {
-                  return next(Boom.notAcceptable())
-            }
+
+            if (
+                  !user
+                  ||
+                  !user?.subscription
+            ) { return next(Boom.notAcceptable()) }
+
+            processTransaction(user, session, event)
+
             response.status(200).send({ message: 'OK' });
 
+      } catch (e: any) {
+            return next(
+                  Boom.badData(
+                        e.message
+                  )
+            )
+      }
+}
+
+const processTransaction = async (user: any, session: any, event: any) => {
+      try {
             /** Trail or incomplete subscription does not required transation yet */
             if (
                   [
                         'trialing',
                         'incomplete'
                   ]
-                  .includes(
-                        session?.status
-                  )
+                        .includes(
+                              session?.status
+                        )
             ) { return }
 
             if (event.type === 'invoice.payment_succeeded') {
@@ -147,9 +170,9 @@ const createTransaction = async (request: Request, response: Response, next: Nex
             }
             /** Sent subscription activation email */
             const subscriptionDetails = await subscriptionsService
-                        .getOneSubscriptionByFilter({
-                              _id: user.subscription
-                        })
+                  .getOneSubscriptionByFilter({
+                        _id: user.subscription
+                  })
 
             const sentSubscriptionEmail = async () => {
                   const emailTemplateDetails = await emailTemplateService
@@ -180,12 +203,21 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                         </p>
                   `
                   if (emailTemplateDetails && emailTemplateDetails.content) {
-                        const localeDate = transaction.planExpiredAt?.toLocaleDateString()?.split('/')
+                        const localeDate = transaction
+                              ?.planExpiredAt
+                              ?.toLocaleDateString()
+                              ?.split('/')
+
                         const contentData = {
                               username: user.email.split('@')[0],
                               price: transaction.total,
                               endDate: `[${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)}]`,
-                              duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `1 ${subscriptionDetails.duration}`,
+                              duration: subscriptionDetails
+                                    ?.duration
+                                    ?.toLowerCase()
+                                    ?.includes('half')
+                                          ? subscriptionDetails.duration
+                                          : `1 ${subscriptionDetails.duration}`,
                               status: transaction?.status
                         }
                         const htmlData = await compileHtml(
@@ -203,11 +235,10 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                         html
                   });
                   if (!result) {
-                        return next(
-                              Boom.badRequest(
-                                    'Failed to sent an subscription email'
-                              )
+                        console.log(
+                              'Failed to sent an subscription email'
                         )
+                        return
                   }
             }
             /** Get latest invoice details */
@@ -399,16 +430,18 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   )
             ])
       } catch (e: any) {
-            return next(
-                  Boom.badData(
-                        e.message
-                  )
+            console.log(
+                  e.message
             )
       }
 }
 
 /** Create transaction */
-const createAppTransaction = async (request: Request, response: Response, next: NextFunction) => {
+const createAppTransaction = async (
+      request: Request,
+      response: Response,
+      next: NextFunction
+) => {
       try {
             const body = request.body;
             const header = request.headers;
@@ -772,7 +805,11 @@ const createAppTransaction = async (request: Request, response: Response, next: 
 }
 
 // /** Create transaction */
-const createGoogleTransaction = async (request: Request, response: Response, next: NextFunction) => {
+const createGoogleTransaction = async (
+      request: Request,
+      response: Response,
+      next: NextFunction
+) => {
       try {
             const body = request.body;
             const header = request.headers;

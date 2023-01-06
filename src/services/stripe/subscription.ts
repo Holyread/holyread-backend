@@ -29,7 +29,6 @@ const retrieveSubscription = async (id: string) => {
                                                 .latest_invoice
                                                 .payment_intent
                                     )
-                              console.log(subscription.latest_invoice.payment_intent)
                         }
                   } catch ({ message }) {
                         console.log(

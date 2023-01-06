@@ -117,14 +117,16 @@ const getUserAccount = async (
                                     ? 6 : 12;
 
                   const createdAt
-                        = userObj?.inAppSubscription?.createdAt
-                        || userObj?.stripe?.createdAt || new Date();
+                        = userObj?.stripe?.createdAt
+                        || userObj?.inAppSubscription?.createdAt
+                        || new Date();
 
                   subscriptionEndDate
                         = new Date(createdAt).setMonth(
                               new Date(createdAt).getMonth() + months
                         )
             }
+
             userObj.subscriptionEndsIn
                   = getTimeDiff(
                         String(new Date()),
@@ -696,14 +698,15 @@ const getUserSubscription = async (
                                     .retrieveSubscription(data.stripe?.subscriptionId)
                                     .then(res => {
                                           data.subscriptionStatus = res.status
+                                          data.inAppSubscriptionStatus = res.status
                                     })
                         }
 
                         const createdAt = data.subscriptionStatus === 'trialing'
                               ? (
-                                    data?.inAppSubscription?.createdAt ||
-                                    data?.stripe?.createdAt ||
-                                    data.createdAt
+                                    data?.stripe?.createdAt
+                                    || data?.inAppSubscription?.createdAt
+                                    || data.createdAt
                               ) : data.createdAt;
 
                         data.trialEndsIn = data.subscriptionStatus === 'trialing'
@@ -722,9 +725,9 @@ const getUserSubscription = async (
                                     ? 1 : data.subscription.duration === 'Half Year'
                                           ? 6 : 12;
 
-                              const createdAt = data?.inAppSubscription?.createdAt ||
-                                    data?.stripe?.createdAt ||
-                                    new Date();
+                              const createdAt = data?.stripe?.createdAt
+                                    || data?.inAppSubscription?.createdAt
+                                    || new Date();
 
                               subscriptionEndDate = new Date(createdAt)
                                     .setMonth(
@@ -2056,7 +2059,7 @@ const blessFriend = async (
                         price: subscriptionDetails.price,
                         username: body.email.split('@')[0],
                         status: subscription?.status || 'Active',
-                        endDate: `[${formattedDate(subscriptionEndDate)}]`,
+                        endDate: `${formattedDate(subscriptionEndDate)}`,
                         duration: subscriptionDetails
                               ?.duration
                               ?.toLowerCase()
@@ -2263,7 +2266,7 @@ const subscribePlan = async (
                         price: subscriptionDetails.price,
                         username: userObj.email.split('@')[0],
                         status: subscription?.status || 'Active',
-                        endDate: `[${formattedDate(subscriptionEndDate).replace(/ /g, ',')}]`,
+                        endDate: `${formattedDate(subscriptionEndDate).replace(/ /g, ',')}`,
                         duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half')
                               ? subscriptionDetails.duration
                               : `1 ${subscriptionDetails.duration}`,

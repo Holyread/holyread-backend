@@ -2280,8 +2280,7 @@ const subscribePlan = async (
                   }
             }
             const notificationTitle = 'Holy Reads Subscription'
-            const notificationDescription = `
-                  Holy Reads ${subscriptionDetails.duration.includes('Half')
+            const notificationDescription = `Holy Reads ${subscriptionDetails.duration.includes('Half')
                         ? subscriptionDetails.duration
                         : '1 ' + subscriptionDetails.duration
                   } subscription has been activated! 🎉`

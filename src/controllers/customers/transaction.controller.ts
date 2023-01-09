@@ -70,6 +70,46 @@ const processTransaction = async (user: any, session: any, event: any) => {
                               session?.status
                         )
             ) { return }
+                              
+            if (event.type === 'payment_intent.succeeded') {
+                  // The subscription automatically activates after successful payment
+                  // Set the payment method used to pay the first invoice
+                  // as the default payment method for that subscription
+                  const subscription_id = session['subscription']
+                  const payment_intent_id = session['payment_intent']
+
+                  // Retrieve the payment intent used to pay the subscription
+                  const payment_intent =
+                        await stripeSubscriptionService.getPaymentIntent(
+                              payment_intent_id
+                        );
+
+                  await userService.updateUser(
+                        { 'stripe.paymentIntent': payment_intent.id },
+                        {
+                              'inAppSubscriptionStatus': 'active'
+                        })
+
+                  try {
+                        await stripe.subscriptions.update(
+                              subscription_id,
+                              {
+                                    default_payment_method: payment_intent.payment_method,
+                              },
+                        );
+
+                        console.log(
+                              "Default payment method set for subscription:",
+                              payment_intent.payment_method
+                        );
+                  } catch (err) {
+                        console.log(
+                              '⚠️ Falied to update the default payment method for subscription:',
+                              subscription_id
+                        );
+                  }
+                  return;
+            }
 
             if (event.type === 'invoice.payment_succeeded') {
                   // The subscription automatically activates after successful payment

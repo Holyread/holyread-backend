@@ -78,6 +78,7 @@ export const responseMessage = {
     },
     subscriptionsControllerResponse: {
         createSubscriptionSuccess: 'Subscription added successfully',
+        createPaymentSheetSuccess: 'Payment sheet created successfully',
         updateSubscriptionSuccess: 'Subscription updated successfully',
         deleteSubscriptionSuccess: 'Subscription deleted successfully',
         fetchSubscriptionSuccess: 'Subscription details fetched successfully',

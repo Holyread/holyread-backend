@@ -401,6 +401,18 @@ const retrieveProfit = async (duration = 'year') => {
       }
 }
 
+const createPaymentIntent = async (data: any) => {
+      try {
+            const paymentIntent = await stripe.paymentIntents.create({
+                  ...data
+            });
+            return paymentIntent
+      } catch ({ message }) {
+            console.log(message)
+            return false
+      }
+}
+
 const confirmPaymentIntent = async (
       paymentIntentId: string,
       paymentMethodId: string
@@ -479,10 +491,11 @@ export default {
       getPaymentIntent,
       getPaymentMethod,
       getPaymentIntents,
-      createEphemeralKey,
       cancelSubscription,
       createSubscription,
+      createEphemeralKey,
       updateSubscription,
+      createPaymentIntent,
       updatePaymentMethod,
       confirmPaymentIntent,
       retrieveSubscription,

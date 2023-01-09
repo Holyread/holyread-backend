@@ -701,6 +701,17 @@ const getUserSubscription = async (
                                           data.inAppSubscriptionStatus = res.status
                                     })
                         }
+                        else if (data?.stripe?.paymentIntent) {
+                              await stripeSubscriptionService
+                                    .getPaymentIntent(data.stripe?.paymentIntent)
+                                    .then(res => {
+                                          if (res.status === 'succeeded') {
+                                                data.inAppSubscriptionStatus = 'active'
+                                          } else {
+                                                data.inAppSubscriptionStatus = res.status    
+                                          }
+                                    })
+                        }
 
                         const createdAt = data.subscriptionStatus === 'trialing'
                               ? (

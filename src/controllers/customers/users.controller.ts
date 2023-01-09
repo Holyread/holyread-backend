@@ -2098,6 +2098,81 @@ const blessFriend = async (
 }
 
 /** subscribe plan */
+const paymentSheet = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
+      try {
+            const userObj = req.user
+            const subscriptionDetails = await subscriptionService
+                  .getOneSubscriptionByFilter({
+                        _id: req.body.subscription
+                  })
+            if (!subscriptionDetails) {
+                  /** Return status code 404 not found */
+                  return next(
+                        Boom.notFound(
+                              subscriptionsControllerResponse.getSubscriptionFailure
+                        )
+                  )
+            }
+            if (!userObj?.stripe?.customerId) {
+                  const customer = await stripeSubscriptionService
+                        .createCustomer(
+                              userObj.email,
+                              req.body.token
+                        )
+                  if (!userObj.stripe) { userObj.stripe = {} }
+                  userObj.stripe.customerId = customer.id
+                  await usersService.updateUser(
+                        { _id: userObj._id },
+                        { 'stripe.customerId': customer.id }
+                  )
+            }
+            let body: any = {};
+
+            const ephemeralKey = await stripeSubscriptionService.createEphemeralKey(
+                  userObj.stripe.customerId
+            );
+
+            const paymentIntent = await stripeSubscriptionService.createPaymentIntent({
+                  amount: Number(subscriptionDetails.price) * 1000,
+                  currency: 'usd',
+                  customer: userObj.stripe.customerId,
+                  automatic_payment_methods: {
+                        enabled: true,
+                  },
+            });
+
+            /** add stripe details into body */
+            body = {
+                  'stripe.createdAt': new Date(),
+                  subscription: subscriptionDetails._id,
+                  'stripe.planId': subscriptionDetails.stripePlanId,
+                  'stripe.paymentIntent': paymentIntent?.id,
+                  'stripe.ephemeralKey': ephemeralKey?.id
+            }
+
+            await usersService.updateUser({ _id: userObj._id }, body)
+
+            res.status(200).send({
+                  message: subscriptionsControllerResponse.createPaymentSheetSuccess,
+                  data: {
+                        paymentIntentId: paymentIntent?.id,
+                        clientSecret: paymentIntent?.client_secret,
+                        customerEmail: userObj.email,
+                        customerId: userObj?.stripe?.customerId,
+                        ephemeralKey: ephemeralKey?.secret
+                  }
+            })
+
+      } catch ({ message }) {
+            next(Boom.badData(message as string))
+      }
+}
+
+/** subscribe plan */
 const subscribePlan = async (
       req: Request | any,
       res: Response,
@@ -2281,8 +2356,8 @@ const subscribePlan = async (
             }
             const notificationTitle = 'Holy Reads Subscription'
             const notificationDescription = `Holy Reads ${subscriptionDetails.duration.includes('Half')
-                        ? subscriptionDetails.duration
-                        : '1 ' + subscriptionDetails.duration
+                  ? subscriptionDetails.duration
+                  : '1 ' + subscriptionDetails.duration
                   } subscription has been activated! 🎉`
             await notificationsService.createNotification({
                   userId: userObj._id,
@@ -2494,6 +2569,7 @@ export {
       submitQuery,
       blessFriend,
       updateRating,
+      paymentSheet,
       subscribePlan,
       updateHandout,
       submitFeedback,

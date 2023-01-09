@@ -2097,7 +2097,7 @@ const blessFriend = async (
       }
 }
 
-/** subscribe plan */
+/** Create payment sheet */
 const paymentSheet = async (
       req: Request | any,
       res: Response,
@@ -2137,7 +2137,7 @@ const paymentSheet = async (
             );
 
             const paymentIntent = await stripeSubscriptionService.createPaymentIntent({
-                  amount: Number(subscriptionDetails.price) * 1000,
+                  amount: Number(subscriptionDetails.price) * 100,
                   currency: 'usd',
                   customer: userObj.stripe.customerId,
                   automatic_payment_methods: {

@@ -70,7 +70,84 @@ const processTransaction = async (user: any, session: any, event: any) => {
                               session?.status
                         )
             ) { return }
-                              
+
+            /** Sent subscription activation email */
+            const subscriptionDetails = await subscriptionsService
+                  .getOneSubscriptionByFilter({
+                        _id: user.subscription
+                  })
+
+            const sentSubscriptionEmail = async (
+                  planExpiredAt?: Date,
+                  total?: number,
+                  status?: string
+            ) => {
+                  const emailTemplateDetails = await emailTemplateService
+                        .getOneEmailTemplateByFilter({
+                              title: emailTemplatesTitles.customer.subscriptionActivated
+                        })
+
+                  const subject = emailTemplateDetails.subject
+                        || `Holy Reads Subscription Activated`
+                  let html = `
+                        <p>
+                              Dear ${user.email.split('@')[0]},
+                        </p>
+                        <p>
+                              Your holy reads subscription activated successfully.
+                        </p>
+                        <p>
+                              Should you have any questions or if any of your details change, please contact us.
+                        </p>
+                        <p>
+                              Best regards,
+                              <br>Holy Reads
+                        </p>
+                        <p>
+                              <strong>
+                                    ( ***&nbsp; Please do not reply to this email ***&nbsp; )
+                              </strong>
+                        </p>
+                  `
+                  if (emailTemplateDetails && emailTemplateDetails.content) {
+                        const localeDate = planExpiredAt
+                              ?.toLocaleDateString()
+                              ?.split('/')
+
+                        const contentData = {
+                              username: user.email.split('@')[0],
+                              price: total,
+                              endDate: `${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)}`,
+                              duration: subscriptionDetails
+                                    ?.duration
+                                    ?.toLowerCase()
+                                    ?.includes('half')
+                                    ? subscriptionDetails.duration
+                                    : `1 ${subscriptionDetails.duration}`,
+                              status
+                        }
+                        const htmlData = await compileHtml(
+                              emailTemplateDetails.content,
+                              contentData
+                        )
+                        if (htmlData) {
+                              html = htmlData
+                        }
+                  }
+                  const result = await sentEmail({
+                        from: originEmails.marketing,
+                        to: user.email,
+                        subject,
+                        html
+                  });
+                  if (!result) {
+                        console.log(
+                              'Failed to sent an subscription email'
+                        )
+                        return
+                  }
+            }
+
             if (event.type === 'payment_intent.succeeded') {
 
                   // Retrieve the payment intent used to pay the subscription
@@ -88,7 +165,64 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         {
                               'inAppSubscriptionStatus': 'Active'
                         })
+                  let now = new Date(paymentIntent.created * 1000), planExpiredAt: any;
 
+                  switch (subscriptionDetails.duration) {
+                        case "Year":
+                              planExpiredAt = new Date(
+                                    now.setMonth(new Date().getMonth() + 12)
+                              );
+                              break;
+                        case "Half Year":
+                              planExpiredAt = new Date(
+                                    now.setMonth(new Date().getMonth() + 6)
+                              );
+                              break;
+                        default:
+                              planExpiredAt = new Date(
+                                    now.setMonth(new Date().getMonth() + 1)
+                              );
+                              break;
+                  }
+                  const amount = session?.amount / 100 || Number(subscriptionDetails.price)
+                  await sentSubscriptionEmail(
+                        planExpiredAt,
+                        amount,
+                        'Active'
+                  )
+                  let charge = session?.charges?.data[0]
+                  let transaction: any = {
+                        userId: user._id,
+                        latestInvoice: session?.invoice,
+                        total: amount,
+                        status: session?.status,
+                        reason: '',
+                        device: 'app',
+                        event: event.id,
+                        planId: subscriptionDetails.planId,
+                        planCreatedAt: now,
+                        planExpiredAt,
+                        paymentLink: charge?.receipt_url,
+                        paymentMethod: charge?.payment_method_details?.card,
+                        account: {
+                              country: charge?.billing_details?.address?.country,
+                              name: charge?.billing_details?.name
+                        },
+                        amount: {
+                              subtotal: (session?.amount_received | 0) / 100,
+                              tax: (session?.application_fee_amount | 0) / 100,
+                              total: (session?.amount | 0) / 100,
+                              discount: 0
+                        },
+                        invoiceAt: now,
+                        customer: {
+                              email: charge?.billing_details?.email,
+                              name: charge?.billing_details?.name,
+                              phone: charge?.billing_details?.phone,
+                              shipping: charge?.billing_details
+                        }
+                  }
+                  await transactionsService.createTransaction(transaction)
                   return;
             }
 
@@ -126,7 +260,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                   return;
             }
 
-            const transaction: any = {
+            let transaction: any = {
                   userId: user._id,
                   latestInvoice: session?.latest_invoice,
                   total: (session?.plan?.amount || 0) / 100,
@@ -189,79 +323,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         )
                   }
             }
-            /** Sent subscription activation email */
-            const subscriptionDetails = await subscriptionsService
-                  .getOneSubscriptionByFilter({
-                        _id: user.subscription
-                  })
 
-            const sentSubscriptionEmail = async () => {
-                  const emailTemplateDetails = await emailTemplateService
-                        .getOneEmailTemplateByFilter({
-                              title: emailTemplatesTitles.customer.subscriptionActivated
-                        })
-
-                  const subject = emailTemplateDetails.subject
-                        || `Holy Reads Subscription Activated`
-                  let html = `
-                        <p>
-                              Dear ${user.email.split('@')[0]},
-                        </p>
-                        <p>
-                              Your holy reads subscription activated successfully.
-                        </p>
-                        <p>
-                              Should you have any questions or if any of your details change, please contact us.
-                        </p>
-                        <p>
-                              Best regards,
-                              <br>Holy Reads
-                        </p>
-                        <p>
-                              <strong>
-                                    ( ***&nbsp; Please do not reply to this email ***&nbsp; )
-                              </strong>
-                        </p>
-                  `
-                  if (emailTemplateDetails && emailTemplateDetails.content) {
-                        const localeDate = transaction
-                              ?.planExpiredAt
-                              ?.toLocaleDateString()
-                              ?.split('/')
-
-                        const contentData = {
-                              username: user.email.split('@')[0],
-                              price: transaction.total,
-                              endDate: `${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)}`,
-                              duration: subscriptionDetails
-                                    ?.duration
-                                    ?.toLowerCase()
-                                    ?.includes('half')
-                                          ? subscriptionDetails.duration
-                                          : `1 ${subscriptionDetails.duration}`,
-                              status: transaction?.status
-                        }
-                        const htmlData = await compileHtml(
-                              emailTemplateDetails.content,
-                              contentData
-                        )
-                        if (htmlData) {
-                              html = htmlData
-                        }
-                  }
-                  const result = await sentEmail({
-                        from: originEmails.marketing,
-                        to: user.email,
-                        subject,
-                        html
-                  });
-                  if (!result) {
-                        console.log(
-                              'Failed to sent an subscription email'
-                        )
-                        return
-                  }
-            }
             /** Get latest invoice details */
             const latestInvoice = await stripeSubscriptionService
                   .getInvoice(
@@ -328,7 +390,11 @@ const processTransaction = async (user: any, session: any, event: any) => {
             if (session.status === 'active') {
                   await transactionsService.createTransaction(transaction)
                   /** Sent subscription activation email */
-                  await sentSubscriptionEmail()
+                  await sentSubscriptionEmail(
+                        transaction?.planExpiredAt,
+                        transaction.total,
+                        transaction.status
+                  )
                   Promise.all([
                         sentNotification(
                               'Holy Reads Subscription',

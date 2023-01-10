@@ -17,6 +17,7 @@ import {
       sortArrayObject,
       pushNotification,
       imageUrlToBase64,
+      capitalizeFirstLetter,
 } from '../../lib/utils/utils'
 
 import {
@@ -698,7 +699,7 @@ const getUserSubscription = async (
                                     .retrieveSubscription(data.stripe?.subscriptionId)
                                     .then(res => {
                                           data.subscriptionStatus = res.status
-                                          data.inAppSubscriptionStatus = res.status
+                                          data.inAppSubscriptionStatus = capitalizeFirstLetter(res.status)
                                     })
                         }
                         else if (data?.stripe?.paymentIntent) {
@@ -706,7 +707,7 @@ const getUserSubscription = async (
                                     .getPaymentIntent(data.stripe?.paymentIntent)
                                     .then(res => {
                                           if (res.status === 'succeeded') {
-                                                data.inAppSubscriptionStatus = 'active'
+                                                data.inAppSubscriptionStatus = 'Active'
                                           } else {
                                                 data.inAppSubscriptionStatus = res.status    
                                           }

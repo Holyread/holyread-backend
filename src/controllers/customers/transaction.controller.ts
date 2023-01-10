@@ -72,42 +72,23 @@ const processTransaction = async (user: any, session: any, event: any) => {
             ) { return }
                               
             if (event.type === 'payment_intent.succeeded') {
-                  // The subscription automatically activates after successful payment
-                  // Set the payment method used to pay the first invoice
-                  // as the default payment method for that subscription
-                  const subscription_id = session['subscription']
-                  const payment_intent_id = session['payment_intent']
 
                   // Retrieve the payment intent used to pay the subscription
-                  const payment_intent =
+                  const paymentIntent =
                         await stripeSubscriptionService.getPaymentIntent(
-                              payment_intent_id
+                              session?.id
                         );
 
+                  if (!paymentIntent?.id) {
+                        return;
+                  }
+
                   await userService.updateUser(
-                        { 'stripe.paymentIntent': payment_intent.id },
+                        { 'stripe.paymentIntent': paymentIntent.id },
                         {
                               'inAppSubscriptionStatus': 'active'
                         })
 
-                  try {
-                        await stripe.subscriptions.update(
-                              subscription_id,
-                              {
-                                    default_payment_method: payment_intent.payment_method,
-                              },
-                        );
-
-                        console.log(
-                              "Default payment method set for subscription:",
-                              payment_intent.payment_method
-                        );
-                  } catch (err) {
-                        console.log(
-                              '⚠️ Falied to update the default payment method for subscription:',
-                              subscription_id
-                        );
-                  }
                   return;
             }
 

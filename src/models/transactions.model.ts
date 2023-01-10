@@ -13,7 +13,7 @@ export interface ITransactions extends mongoose.Document {
     account?: {
         country: string,
         name: string,
-        taxIds: string,
+        taxIds?: string,
     },
     amount?: {
         subtotal: Number,
@@ -33,6 +33,7 @@ export interface ITransactions extends mongoose.Document {
     paymentLink?: string,
     device: string,
     stripeSubscriptionId?: string,
+    paymentIntentId?: string,
     event?: string,
     planId?: string
 }
@@ -69,7 +70,8 @@ export type createTransationsType = {
     device: string,
     stripeSubscriptionId?: string,
     event?: string,
-    planId?: string
+    planId?: string,
+    paymentIntentId?: string,
 }
 
 export type getTransactionsType = {
@@ -104,7 +106,8 @@ export type getTransactionsType = {
     device: string,
     stripeSubscriptionId?: string,
     event?: string,
-    planId?: string
+    planId?: string,
+    paymentIntentId?: string,
 }
 
 export const TransactionsSchema = new Schema({
@@ -144,7 +147,8 @@ export const TransactionsSchema = new Schema({
     device: { type: String, enum: ['web', 'app'], required: true },
     stripeSubscriptionId: { type: String },
     event: { type: String },
-    planId: { type: String }
+    planId: { type: String },
+    paymentIntentId: { type: String },
 }, { strict: 'throw', timestamps: true })
 
 TransactionsSchema.index({ createdAt: -1 });

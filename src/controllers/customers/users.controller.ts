@@ -2142,7 +2142,6 @@ const paymentSheet = async (
                         { 'stripe.customerId': customer.id }
                   )
             }
-            let body: any = {};
 
             const ephemeralKey = await stripeSubscriptionService.createEphemeralKey(
                   userObj.stripe.customerId
@@ -2155,18 +2154,13 @@ const paymentSheet = async (
                   automatic_payment_methods: {
                         enabled: true,
                   },
+                  /** Store new plan details in metadata */
+                  metadata: {
+                        planId: subscriptionDetails.stripePlanId,
+                        ephemeralKey: ephemeralKey?.id,
+                        hrSubscriptionId: String(subscriptionDetails._id)
+                  }
             });
-
-            /** add stripe details into body */
-            body = {
-                  'stripe.createdAt': new Date(),
-                  subscription: subscriptionDetails._id,
-                  'stripe.planId': subscriptionDetails.stripePlanId,
-                  'stripe.paymentIntent': paymentIntent?.id,
-                  'stripe.ephemeralKey': ephemeralKey?.id
-            }
-
-            await usersService.updateUser({ _id: userObj._id }, body)
 
             res.status(200).send({
                   message: subscriptionsControllerResponse.createPaymentSheetSuccess,

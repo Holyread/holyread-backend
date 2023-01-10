@@ -70,11 +70,16 @@ const processTransaction = async (user: any, session: any, event: any) => {
                               session?.status
                         )
             ) { return }
+            
+            let subscriptionId = user?.subscription
+            if (event.type === 'payment_intent.succeeded') {
+                  subscriptionId = session.metadata.hrSubscriptionId
+            }
 
             /** Sent subscription activation email */
             const subscriptionDetails = await subscriptionsService
                   .getOneSubscriptionByFilter({
-                        _id: user.subscription
+                        _id: subscriptionId
                   })
 
             const sentSubscriptionEmail = async (
@@ -160,11 +165,6 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         return;
                   }
 
-                  await userService.updateUser(
-                        { 'stripe.paymentIntent': paymentIntent.id },
-                        {
-                              'inAppSubscriptionStatus': 'Active'
-                        })
                   let now = new Date(paymentIntent.created * 1000), planExpiredAt: any;
 
                   switch (subscriptionDetails.duration) {
@@ -184,6 +184,17 @@ const processTransaction = async (user: any, session: any, event: any) => {
                               );
                               break;
                   }
+                  await userService.updateUser(
+                        { 'stripe.customerId': user.stripe.customerId },
+                        {
+                              'inAppSubscriptionStatus': 'Active',
+                              'inAppSubscription.transaction.expiresDate': new Date(planExpiredAt).getTime(),
+                              'stripe.createdAt': now,
+                              subscription: subscriptionDetails._id,
+                              'stripe.planId': session.metadata?.planId,
+                              'stripe.paymentIntent': paymentIntent?.id,
+                              'stripe.ephemeralKey': session.metadata?.ephemeralKey
+                        })
                   const amount = session?.amount / 100 || Number(subscriptionDetails.price)
                   await sentSubscriptionEmail(
                         planExpiredAt,

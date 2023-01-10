@@ -86,7 +86,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                   await userService.updateUser(
                         { 'stripe.paymentIntent': paymentIntent.id },
                         {
-                              'inAppSubscriptionStatus': 'active'
+                              'inAppSubscriptionStatus': 'Active'
                         })
 
                   return;

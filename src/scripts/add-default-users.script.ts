@@ -38,6 +38,14 @@ const createBotBody: any = {
 /** Create Admin */
 (async (body: any) => {
       try {
+            await UserModel.updateMany(
+                  {
+                        inAppSubscriptionStatus: 'active'
+                  },
+                  {
+                        inAppSubscriptionStatus: 'Active'
+                  }
+            )
             /** Create bot user */
             await UserModel.findOneAndUpdate(
                   { email: createBotBody.email },

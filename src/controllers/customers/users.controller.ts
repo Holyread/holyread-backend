@@ -709,7 +709,7 @@ const getUserSubscription = async (
                                           if (res.status === 'succeeded') {
                                                 data.inAppSubscriptionStatus = 'Active'
                                           } else {
-                                                data.inAppSubscriptionStatus = res.status    
+                                                data.inAppSubscriptionStatus = res.status
                                           }
                                     })
                         }
@@ -2254,13 +2254,37 @@ const subscribePlan = async (
                               subscription.current_period_end * 1000
                         )
                   } else {
-                        await stripeSubscriptionService.updateSubscription({
-                              coupon: req.body.coupon,
-                              customerId: userObj.stripe.customerId,
-                              paymentMethod: req.body.paymentMethod,
-                              planId: subscriptionDetails.stripePlanId,
-                              subscriptionId: userObj.stripe.subscriptionId,
-                        })
+                        const retrieveSubscription = await stripeSubscriptionService
+                              .retrieveSubscription(
+                                    userObj?.stripe?.subscriptionId
+                              )
+                        if (['incomplete'].includes(retrieveSubscription.status)) {
+                              await stripeSubscriptionService.cancelSubscription(
+                                    retrieveSubscription.id
+                              )
+                        }
+
+                        console.log(
+                              ['canceled', 'incomplete'].includes(retrieveSubscription.status),
+                              retrieveSubscription.status
+                        )
+                        if (['canceled', 'incomplete', 'incomplete_expired'].includes(retrieveSubscription.status)) {
+                              await stripeSubscriptionService.createSubscription({
+                                    status: 'active',
+                                    coupon: req.body.coupon,
+                                    customerId: userObj.stripe.customerId,
+                                    paymentMethod: req.body.paymentMethod,
+                                    planId: subscriptionDetails.stripePlanId,
+                              })
+                        } else {
+                              await stripeSubscriptionService.updateSubscription({
+                                    coupon: req.body.coupon,
+                                    customerId: userObj.stripe.customerId,
+                                    paymentMethod: req.body.paymentMethod,
+                                    planId: subscriptionDetails.stripePlanId,
+                                    subscriptionId: userObj.stripe.subscriptionId,
+                              })
+                        }
                         subscription = await stripeSubscriptionService
                               .retrieveSubscription(
                                     userObj.stripe.subscriptionId

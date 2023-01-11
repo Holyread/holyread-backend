@@ -42,7 +42,11 @@ const createTransaction = async (
             if (
                   !user
                   ||
-                  !user?.subscription
+                  (
+                        !user?.subscription
+                        &&
+                        !session?.metadata?.hrSubscriptionId
+                  )
             ) { return next(Boom.notAcceptable()) }
 
             processTransaction(user, session, event)
@@ -70,7 +74,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                               session?.status
                         )
             ) { return }
-            
+
             let subscriptionId = user?.subscription
             if (event.type === 'payment_intent.succeeded') {
                   subscriptionId = session.metadata.hrSubscriptionId

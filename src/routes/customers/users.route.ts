@@ -8,6 +8,7 @@ import {
   blessFriend,
   submitQuery,
   updateRating,
+  paymentSheet,
   subscribePlan,
   updateHandout,
   getUserAccount,
@@ -42,6 +43,7 @@ router.get('/library', customerPassport, getUserLibrary)
 
 router.post('/feedback', customerPassport, submitFeedback)
 router.post('/subscribe', customerPassport, subscribePlan)
+router.post('/payment-sheet', customerPassport, paymentSheet)
 
 router.post('/bless-friend', customerPassport, blessFriend)
 router.patch('/library', customerPassport, updateUserLibrary)

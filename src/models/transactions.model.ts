@@ -13,12 +13,13 @@ export interface ITransactions extends mongoose.Document {
     account?: {
         country: string,
         name: string,
-        taxIds: string,
+        taxIds?: string,
     },
     amount?: {
         subtotal: Number,
         tax?: string,
-        total: Number
+        total: Number,
+        discount?: Number
     },
     statusTransitions?: { type: Object },
     customer?: {
@@ -30,7 +31,11 @@ export interface ITransactions extends mongoose.Document {
     invoiceAt?: { type: Date },
     reason?: string,
     paymentLink?: string,
-    device: string
+    device: string,
+    stripeSubscriptionId?: string,
+    paymentIntentId?: string,
+    event?: string,
+    planId?: string
 }
 
 export type createTransationsType = {
@@ -49,7 +54,8 @@ export type createTransationsType = {
     amount?: {
         subtotal: Number,
         tax?: string,
-        total: Number
+        total: Number,
+        discount?: Number
     },
     statusTransitions?: { type: Object },
     customer?: {
@@ -61,7 +67,11 @@ export type createTransationsType = {
     invoiceAt?: { type: Date },
     reason?: string,
     paymentLink?: string,
-    device: string
+    device: string,
+    stripeSubscriptionId?: string,
+    event?: string,
+    planId?: string,
+    paymentIntentId?: string,
 }
 
 export type getTransactionsType = {
@@ -80,7 +90,8 @@ export type getTransactionsType = {
     amount?: {
         subtotal: Number,
         tax?: string,
-        total: Number
+        total: Number,
+        discount?: Number
     },
     statusTransitions?: { type: Object },
     customer?: {
@@ -92,7 +103,11 @@ export type getTransactionsType = {
     invoiceAt?: { type: Date },
     reason?: string,
     paymentLink?: string,
-    device: string
+    device: string,
+    stripeSubscriptionId?: string,
+    event?: string,
+    planId?: string,
+    paymentIntentId?: string,
 }
 
 export const TransactionsSchema = new Schema({
@@ -116,7 +131,8 @@ export const TransactionsSchema = new Schema({
     amount: {
         subtotal: Number,
         tax: String,
-        total: Number
+        total: Number,
+        discount: Number
     },
     statusTransitions: { type: Object },
     customer: {
@@ -128,7 +144,11 @@ export const TransactionsSchema = new Schema({
     invoiceAt: { type: Date },
     reason: { type: String, default: '' },
     paymentLink: { type: String, default: '' },
-    device: { type: String, enum: ['web', 'app'], required: true }
+    device: { type: String, enum: ['web', 'app'], required: true },
+    stripeSubscriptionId: { type: String },
+    event: { type: String },
+    planId: { type: String },
+    paymentIntentId: { type: String },
 }, { strict: 'throw', timestamps: true })
 
 TransactionsSchema.index({ createdAt: -1 });

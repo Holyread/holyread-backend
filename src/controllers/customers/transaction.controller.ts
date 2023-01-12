@@ -156,7 +156,10 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         return
                   }
             }
-
+            /**
+             * In App stripe payment succeed using holyreads payment sheet api
+             * Disabled webhook, not proceed yet
+             * */
             if (event.type === 'payment_intent.succeeded') {
 
                   // Retrieve the payment intent used to pay the subscription
@@ -241,14 +244,24 @@ const processTransaction = async (user: any, session: any, event: any) => {
                   return;
             }
 
-            if (event.type === 'invoice.payment_succeeded') {
-                  // The subscription automatically activates after successful payment
-                  // Set the payment method used to pay the first invoice
-                  // as the default payment method for that subscription
+            /**
+             * Incoming webhook on confirm card payment
+             * On subscription purchase from web and confirm payment
+             */
+            if (
+                  event.type === 'invoice.payment_succeeded' &&
+                  session['subscription'] &&
+                  session['payment_intent']
+            ) {
+                  /**
+                   * The subscription automatically activates after successful payment
+                   * Set the payment method used to pay the first invoice
+                   * as the default payment method for that subscription
+                   */
                   const subscription_id = session['subscription']
                   const payment_intent_id = session['payment_intent']
 
-                  // Retrieve the payment intent used to pay the subscription
+                  /* Retrieve the payment intent used to pay the subscription */
                   const payment_intent =
                         await stripeSubscriptionService.getPaymentIntent(
                               payment_intent_id

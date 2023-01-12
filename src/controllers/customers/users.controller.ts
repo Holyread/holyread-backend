@@ -699,10 +699,13 @@ const getUserSubscription = async (
                                     .retrieveSubscription(data.stripe?.subscriptionId)
                                     .then(res => {
                                           data.subscriptionStatus = res.status
+                                          if (res.status !== 'active') {
+                                                return;
+                                          }
                                           data.inAppSubscriptionStatus = capitalizeFirstLetter(res.status)
                                     })
                         }
-                        else if (data?.stripe?.paymentIntent) {
+                        else if (false && data?.stripe?.paymentIntent) {
                               await stripeSubscriptionService
                                     .getPaymentIntent(data.stripe?.paymentIntent)
                                     .then(res => {

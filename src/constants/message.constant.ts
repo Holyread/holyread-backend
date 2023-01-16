@@ -244,6 +244,7 @@ export const responseMessage = {
         getCouponFailure: 'Coupon does not exist',
         fetchCouponSuccess: 'Coupon details fetched successfully',
         fetchCouponsSuccess: 'Coupons list fetched successfully',
-        deleteCouponSuccess: 'Coupon removed successfully'
+        deleteCouponSuccess: 'Coupon removed successfully',
+        invalidCoupon: 'Coupon is not valid'
     }
 }

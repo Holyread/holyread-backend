@@ -70,6 +70,8 @@ const NODE_ENV = config.NODE_ENV
 
 const authControllerResponse
       = responseMessage.authControllerResponse
+const couponControllerResponse
+      = responseMessage.couponsControllerResponse
 const handoutsControllerResponse
       = responseMessage.handoutsControllerResponse
 const smallGroupControllerResponse
@@ -772,6 +774,40 @@ const getUserSubscription = async (
                   })
       } catch ({ message }) {
             next(Boom.badData(message as string))
+      }
+}
+
+const getCoupon = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
+      try {
+            let coupon = await stripeSubscriptionService
+                  .getOneCoupon(
+                        req.params.coupon
+                  )
+
+            if (!coupon?.valid) {
+                  /** Return status 404 not found */
+                  return next(
+                        Boom.preconditionFailed(
+                              couponControllerResponse.invalidCoupon
+                        )
+                  )
+            }
+
+            res.status(200).send({
+                  message: couponControllerResponse.fetchCouponSuccess,
+                  data: coupon
+            })
+
+      } catch ({ message }) {
+            return next(
+                  Boom.badData(
+                        message as string
+                  )
+            )
       }
 }
 
@@ -2267,11 +2303,15 @@ const subscribePlan = async (
                               )
                         }
 
-                        console.log(
-                              ['canceled', 'incomplete'].includes(retrieveSubscription.status),
-                              retrieveSubscription.status
-                        )
-                        if (['canceled', 'incomplete', 'incomplete_expired'].includes(retrieveSubscription.status)) {
+                        if (
+                              [
+                                    'canceled',
+                                    'incomplete',
+                                    'incomplete_expired'
+                              ].includes(
+                                    retrieveSubscription.status
+                              )
+                        ) {
                               await stripeSubscriptionService.createSubscription({
                                     status: 'active',
                                     coupon: req.body.coupon,
@@ -2327,18 +2367,28 @@ const subscribePlan = async (
             await usersService.updateUser({ _id: userObj._id }, body)
 
             if (!req.body?.inAppSubscription) {
-                  const ephemeralKey = await stripeSubscriptionService.createEphemeralKey(
-                        userObj.stripe.customerId
-                  );
+                  const ephemeralKey = await stripeSubscriptionService
+                        .createEphemeralKey(
+                              userObj.stripe.customerId
+                        );
                   return res.status(200).send({
                         message: subscriptionsControllerResponse.createSubscriptionSuccess,
                         data: {
                               subscriptionStatus: subscription.status,
-                              paymentIntentId: subscription?.latest_invoice?.payment_intent?.id,
-                              clientSecret: subscription?.latest_invoice?.payment_intent?.client_secret,
+                              paymentIntentId: subscription
+                                    ?.latest_invoice
+                                    ?.payment_intent
+                                    ?.id,
+                              clientSecret: subscription
+                                    ?.latest_invoice
+                                    ?.payment_intent
+                                    ?.client_secret,
                               customerEmail: userObj.email,
-                              customerId: userObj?.stripe?.customerId,
-                              ephemeralKey: ephemeralKey?.secret
+                              customerId: userObj
+                                    ?.stripe
+                                    ?.customerId,
+                              ephemeralKey: ephemeralKey
+                                    ?.secret
                         }
                   })
             }
@@ -2375,7 +2425,8 @@ const subscribePlan = async (
                         username: userObj.email.split('@')[0],
                         status: subscription?.status || 'Active',
                         endDate: `${formattedDate(subscriptionEndDate).replace(/ /g, ',')}`,
-                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half')
+                        duration: subscriptionDetails
+                              ?.duration?.toLowerCase()?.includes('half')
                               ? subscriptionDetails.duration
                               : `1 ${subscriptionDetails.duration}`,
                   }
@@ -2597,6 +2648,7 @@ const updateHandout = async (
 
 export {
       logout,
+      getCoupon,
       emailAuth,
       deleteUser,
       submitQuery,

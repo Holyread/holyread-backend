@@ -91,7 +91,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             isPlanExpired = true
         }
 
-        if (req.user?.stripe?.subscriptionId) {
+        if (!isPlanActive && req.user?.stripe?.subscriptionId) {
             try {
                 const s = await stripeSubscriptionService
                     .retrieveSubscription(

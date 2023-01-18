@@ -170,18 +170,30 @@ export const sentEmail = async (params: {
         },
         html: params.html,
     };
-    const credentials = {
-        host: 'smtp.office365.com',
-        port: 587,
+    let credentials: any = {
         auth: {
             user: params.from,
             pass: params.sentToKindle ? config.KINDLE_SMTP_SECRET : config.SMTP_SECRET
-        },
-        secure: false,
-        tls: {
-            rejectUnauthorized: false,
-        },
+        }
     };
+
+    if (!params.sentToKindle) {
+        credentials = {
+            ...credentials,
+            host: 'smtp.office365.com',
+            port: 587,
+            secure: false,
+            tls: {
+                rejectUnauthorized: false,
+            },
+        };
+    } else {
+        credentials = {
+            ...credentials,
+            service: 'gmail',
+            host: 'smtp.gmail.com'
+        }
+    }
 
     const transporter = nodemailer.createTransport(credentials);
 

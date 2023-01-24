@@ -2,17 +2,40 @@ import { formattedDate, getDates, sortArrayObject } from '../../../lib/utils/uti
 import { TransactionsModel } from '../../../models/index'
 
 /** Get transaction by filter */
-const getAllTransactions = async (skip: number, limit: number, search: any, sort: any) => {
+const getAllTransactions = async (
+      skip: number,
+      limit: number,
+      search: any,
+      sort: any
+) => {
       try {
             let result: any = await TransactionsModel
                   .find({})
-                  .select(
-                        'latestInvoice userId total status paymentMethod reason paymentLink createdAt customer amount account device'
-                  )
+                  .select([
+                        'total',
+                        'userId',
+                        'status',
+                        'reason',
+                        'device',
+                        'amount',
+                        'account',
+                        'customer',
+                        'createdAt',
+                        'paymentLink',
+                        'latestInvoice',
+                        'paymentMethod',
+                  ])
                   .populate({
                         path: 'userId',
-                        select: 'email inAppSubscription subscription',
-                        populate: { path: 'subscription', select: 'duration title saves price' }
+                        select: [
+                              'email',
+                              'inAppSubscription',
+                              'subscription'
+                        ],
+                        populate: {
+                              path: 'subscription',
+                              select: 'duration title saves price'
+                        }
                   })
                   .lean()
                   .exec();
@@ -47,15 +70,19 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
                         _id: i._id,
                         email: i.userId?.email,
                         date: formattedDate(i?.createdAt)?.replace(/ /g, ' '),
+                        createdAt: i?.createdAt,
                         status: i?.status,
                         paymentLink: i?.paymentLink,
                         payment: i?.device === 'app' ? ['fa fa-mobile', 'InApp'] : ['fa-cc-' + i?.paymentMethod?.brand?.toLowerCase(), i?.paymentMethod?.brand || ''],
                         reason: i.reason,
-                        latestInvoice: i.latestInvoice || 'in_' + (i?.userId?.inAppSubscription?.transactionId || i._id),
+                        latestInvoice: i.latestInvoice || 'in_' + i._id,
                         subscription: i?.userId?.subscription,
                         price: i?.userId?.subscription?.price,
                         account: i.account,
-                        customer: { ...i.customer, shipping: shipping && shipping?.line1 + ' ,' + shipping?.country + ' ' + shipping?.postal_code },
+                        customer: {
+                              ...i.customer,
+                              shipping: shipping && shipping?.line1 + ' ,' + shipping?.country + ' ' + shipping?.postal_code
+                        },
                         subTotal: i?.amount?.subtotal || 0,
                         tax: i?.amount?.tax || 0,
                         total: i?.amount?.total || i.total,
@@ -76,7 +103,11 @@ const getAllTransactions = async (skip: number, limit: number, search: any, sort
             })
             transactions = [...transactions].filter(i => i)
             /** sort by column */
-            transactions = sortArrayObject(transactions, sort[0][0], (sort[0][1]).toLowerCase())
+            transactions = sortArrayObject(
+                  transactions,
+                  sort[0][0] === 'date' ? 'createdAt' : sort[0][0],
+                  (sort[0][1]).toLowerCase()
+            )
             const count = transactions.length;
             transactions = transactions.slice(skip, skip + limit)
             return { count, transactions: [...transactions] }

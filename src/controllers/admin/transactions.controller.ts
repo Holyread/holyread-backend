@@ -38,7 +38,16 @@ const getAllTransactions = async (request: Request | any, response: Response, ne
         if (params.to) {
             params.to = new Date(params.to).setHours(23, 59, 59, 999)
         }
-        const data = await transactionsService.getAllTransactions(Number(skip), Number(limit), { keyword: params?.search?.trim()?.toLowerCase(), from: params.from, to: params.to }, trnSorting)
+        const data = await transactionsService.getAllTransactions(
+            Number(skip),
+            Number(limit),
+            {
+                keyword: params?.search?.trim()?.toLowerCase(),
+                from: params.from,
+                to: params.to
+            },
+            trnSorting
+        )
         response.status(200).json({ message: transactionsControllerResponse.getTransactionsSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))

@@ -1,14 +1,13 @@
-import * as dotenv from 'dotenv';
-dotenv.config();
+require ('dotenv').config();
 
 interface IConfig {
     DBURL: string,
     NODE_ENV: string,
     AWS_SECRET: string,
-    PORT: number | string,
-    AWS_ACCESSKEY: string,
-    STRIPE_SECRET: string,
     SMTP_SECRET: string,
+    AWS_ACCESSKEY: string,
+    PORT: number | string,
+    STRIPE_SECRET: string,
     KINDLE_SMTP_EMAIL: string,
     KINDLE_SMTP_SECRET: string,
 }

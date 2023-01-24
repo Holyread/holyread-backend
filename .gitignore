@@ -1,31 +1,14 @@
-# node-waf configuration
-.lock-wscript
-
-# Compiled binary addons (https://nodejs.org/api/addons.html)
-build/Release
+# comprase & build (ts to core js)
 dist/
+
 # Dependency directories
 node_modules/
-jspm_packages/
-
-# TypeScript v1 declaration files
-typings/
 
 # Optional npm cache directory
 .npm
 
 # dotenv environment variables file
 .env
-.env.test
-
-# Next.js build output
-.next
-
-# JetBrains
-.idea
-
-# VSCode
-.vscode
 
 # Packge lock
 package-lock.json

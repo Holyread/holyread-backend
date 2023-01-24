@@ -8,34 +8,33 @@ import cookieParser from 'cookie-parser'
 import firebaseAdmin from 'firebase-admin';
 
 import express, { Request, Response } from 'express'
-
 import './models/index'
 
 import adminRoutes
-  from './routes/admin.routes'
+from './routes/admin.routes'
 import webhookRoutes
-  from './routes/webhook.route'
+from './routes/webhook.route'
 import websiteRoutes
-  from './routes/website.routes'
+from './routes/website.routes'
 import customersRoutes
-  from './routes/customers.routes'
+from './routes/customers.routes'
 
 import config
-  from '../config'
+from '../config'
 import appConfig
-  from './lib/appConfig'
+from './lib/appConfig'
 
 import customerIoAuth
-  from './middleware/customers.io.passport'
+from './middleware/customers.io.passport'
 
 import { responseMessage }
-  from './constants/message.constant'
+from './constants/message.constant'
 
 import { allowedOrigins, fireStoreConfig }
-  from './constants/app.constant'
+from './constants/app.constant'
 
 import subscriptionService
-  from './services/stripe/subscription'
+from './services/stripe/subscription'
 
 const io = require('socket.io')();
 const app = express()

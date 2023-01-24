@@ -56,7 +56,9 @@ export interface IUser extends mongoose.Document {
         planId?: string,
         createdAt?: Date,
         planRenewRemindAt?: Date,
-        expiredAt: Date
+        expiredAt: Date,
+        paymentIntent?: String,
+        ephemeralKey?: String,
     },
     device: string,
     maxDevices: [string],
@@ -120,7 +122,9 @@ export type createUserType = {
         planId?: string,
         createdAt?: Date,
         planRenewRemindAt?: Date,
-        expiredAt: Date
+        expiredAt: Date,
+        paymentIntent?: String,
+        ephemeralKey?: String,
     },
     device: string,
     maxDevices: [string],
@@ -185,7 +189,9 @@ export type getUserType = {
         planId?: string,
         createdAt?: Date,
         planRenewRemindAt?: Date,
-        expiredAt: Date
+        expiredAt: Date,
+        paymentIntent?: String,
+        ephemeralKey?: String,
     },
     device: string,
     maxDevices: [string],
@@ -243,12 +249,14 @@ export const UserSchema = new Schema({
     referralUserId: { type: Schema.Types.ObjectId, ref: 'user' },
     kindleEmail: { type: String },
     stripe: {
-        subscriptionId: { type: String },
-        customerId: { type: String },
+        subscriptionId: { type: String, index: true },
+        customerId: { type: String, index: true },
         planId: { type: String },
         createdAt: { type: Date },
         planRenewRemindAt: { type: Date },
-        expiredAt: { type: Date }
+        expiredAt: { type: Date },
+        paymentIntent: { type: String },
+        ephemeralKey: { type: String },
     },
     inAppSubscription: { type: Object }, // default key - createdAt(Date)
     inAppSubscriptionStatus: { type: String },

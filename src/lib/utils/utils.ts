@@ -12,8 +12,6 @@ import { awsBucket } from '../../constants/app.constant';
 
 import config from '../../../config'
 
-import firebaseAdmin from 'firebase-admin';
-
 const algorithm = 'aes-256-cbc';
 const iv = '3ad77bb40d7a3660';
 const inputEncoding = 'utf8';
@@ -167,18 +165,30 @@ export const sentEmail = async (params: {
         },
         html: params.html,
     };
-    const credentials = {
-        host: 'smtp.office365.com',
-        port: 587,
+    let credentials: any = {
         auth: {
             user: params.from,
             pass: params.sentToKindle ? config.KINDLE_SMTP_SECRET : config.SMTP_SECRET
-        },
-        secure: false,
-        tls: {
-            rejectUnauthorized: false,
-        },
+        }
     };
+
+    if (!params.sentToKindle) {
+        credentials = {
+            ...credentials,
+            host: 'smtp.office365.com',
+            port: 587,
+            secure: false,
+            tls: {
+                rejectUnauthorized: false,
+            },
+        };
+    } else {
+        credentials = {
+            ...credentials,
+            service: 'gmail',
+            host: 'smtp.gmail.com'
+        }
+    }
 
     const transporter = nodemailer.createTransport(credentials);
 
@@ -343,6 +353,10 @@ export const formattedDate = (
                 }
         )
 };
+
+export const capitalizeFirstLetter = ([first = '', ...rest]) => {
+    return [first.toUpperCase(), ...rest].join('');
+}
 
 export const copyS3File = async ({
     oldKey,

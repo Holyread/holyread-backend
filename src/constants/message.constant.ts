@@ -36,30 +36,30 @@ export const responseMessage = {
         userLogoutSuccess: 'User logout successfully',
         createUserFailed: 'Failed to create user',
         verifyEmailRequest: 'Please check your email and activate your account',
-        chnagePasswordRequest: 'Please check your email and finish verification step for new password',
+        chnagePasswordRequest: 'Please check your email and finish verification step for new password.',
         blessFriendSuccess: 'User Invited successfully, we\'ve sent your user details on your email',
         blessFriendSubscriptionError: 'Bless friend subscription details missing or not found',
         sentVerifyEmailFailure: 'Failed to send verification email',
         verifyEmailSuccess: 'verification email already sent, in case not received then please click resend verification email',
-        sentSubscriptionEmailFilure: 'Failed to sent subscription plan details on email',
+        sentSubscriptionEmailFilure: 'Subscription plan details were not sent to your email.',
         missingSectionParams: 'Missing section params',
         addShareImage: 'Share image uploaded successfully',
         encodeImageSuccess: 'Image text generated successfully',
-        submitQueryError: 'Failed to send your message, please try letter or contact administrator by other way',
+        submitQueryError: 'Your message failed to send. Please try again later or contact administrator in another way.',
         paymentStatusPending: 'Payment status is pending, please contact administrator',
         submitQuerySuccess: 'Your message was sent successfully. Thanks!',
-        bookRatingSuccess: 'Thanks for rate this summary 🙂',
-        userAuthorisedAsAdmin: 'User authorised as admin, please use another email',
+        bookRatingSuccess: 'Thanks for rating this summary! 🙂',
+        userAuthorisedAsAdmin: 'User is authorized as admin. Please use another email.',
         kindleEmailNotExistError: 'You need to add your Kindle email first. Please click here.',
         emailAuthEnabledSuccess: 'Your email auth enabled',
         emailAuthExist: 'Your email auth already enabled',
-        socialLinkError: 'Account already linked by some one else, please contact administrator',
+        socialLinkError: 'User is authorized as admin. Please use another email.',
         invalidCodeOrTokenError: 'Invalid code or token provided'
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',
         createAdminSuccess: 'Admin added successfully',
-        AdminExistError: 'Admin already exist and verified',
+        AdminExistError: 'Admin already exists and is verified.',
         createAdminFailure: 'Failed to add admin',
         updateAdminSuccess: 'Admin updated successfully',
         deleteAdminSuccess: 'Admin deleted successfully',
@@ -67,17 +67,18 @@ export const responseMessage = {
         getAdminFailure: 'Admin does not exist',
         sendVerificationEmailSuccess: 'Verification email sent successfully',
         sendCodeFailure: 'Failed to send code',
-        verifyCodeSuccess: 'Code already sended on your email on your signUp request, please verify with code',
-        forgotPassowrdFailure: 'Failed to proceed your request, please try again',
+        verifyCodeSuccess: 'The code was already sent to your email when you signed up. Please verify with the code.',
+        forgotPassowrdFailure: 'Your request was not completed. Please try again.',
         updateCodeFailure: 'Failed to proceed verification code',
         codeVerificationFailure: 'Invalid code provided',
         failedToSendPassword: 'Failed to send password on email',
-        sentEmailFailure: 'Failed to send email, please try again',
+        sentEmailFailure: 'The email did not send. Please try again.',
         forgotPassowrdSuccess: 'Password updated successfully',
         passwordMissingError: 'Password is missing'
     },
     subscriptionsControllerResponse: {
         createSubscriptionSuccess: 'Subscription added successfully',
+        createPaymentSheetSuccess: 'Payment sheet created successfully',
         updateSubscriptionSuccess: 'Subscription updated successfully',
         deleteSubscriptionSuccess: 'Subscription deleted successfully',
         fetchSubscriptionSuccess: 'Subscription details fetched successfully',
@@ -104,16 +105,16 @@ export const responseMessage = {
         updateBookSummarySuccess: 'Book summary updated successfully',
         deleteBookSummarySuccess: 'Book summary deleted successfully',
         fetchBookSummarySuccess: 'Book summary details fetched successfully',
-        chapterNotExist: 'Book summary does not includes this chapter',
+        chapterNotExist: 'The summary does not include this takeaway.',
         fetchBookSummariesSuccess: 'Book summary list fetched successfully',
         createBookSummaryFailure: 'Book summary already added',
         getBookSummaryFailure: 'Failed to fetch book summary details',
-        trailPlanLimitError: 'Your daily limit exceed, please activate plan for access unlimited books summaries',
+        trailPlanLimitError: 'You have exceeded your daily limit. Please activate a plan to access unlimited books summaries.',
         planExpiredError: 'Your plan expired, please activate plan for access unlimited books summaries',
         getBookSummaryDocFailure: 'Book reading file missing',
-        recommendedBookError: 'Book is locked due to book exist in recommended list',
-        sendBookToKindleSuccess: 'Book successfully sended to your kindle',
-        sendBookToKindleEmailFailure: 'Failed to send book on your kindle email',
+        recommendedBookError: 'This summary is locked because it already exists in your recommended list.',
+        sendBookToKindleSuccess: 'The summary was successfully sent to your Kindle.',
+        sendBookToKindleEmailFailure: 'The summary was not sent to your Kindle email.',
         getBookRatingsSuccess: 'Book ratings fetched successfully'
     },
     dashboardControllerResponse: {
@@ -127,7 +128,7 @@ export const responseMessage = {
         fetchAuthorsSuccess: 'Authors list fetched successfully',
         createAuthorFailure: 'Author already added',
         getAuthorFailure: 'Failed to fetch author details',
-        authorHaveBooksError: 'First remove book from author profile',
+        authorHaveBooksError: 'First remove the summary from author profile.',
     },
     expertCuratedControllerResponse: {
         createExpertCuratedSuccess: 'Expert curated added successfully',
@@ -167,7 +168,7 @@ export const responseMessage = {
         getShareImageFailure: 'Failed to fetch share image details'
     },
     readsOfDayControllerResponse: {
-        createReadOfDaySuccess: 'Read of day added successfully',
+        createReadOfDaySuccess: 'Read of the Day added successfully.',
         updateReadOfDaySuccess: 'Read of day updated successfully',
         deleteReadOfDaySuccess: 'Read of day deleted successfully',
         fetchReadOfDaySuccess: 'Read of day details fetched successfully',
@@ -187,12 +188,12 @@ export const responseMessage = {
     },
     highLightsControllerResponse: {
         createHighLightSuccess: 'High light added successfully',
-        updateHighLightSuccess: 'High light updated successfully',
+        updateHighLightSuccess: 'Highlight updated successfully.',
         deleteHighLightSuccess: 'High light deleted successfully',
         fetchHighLightsSuccess: 'High lights list fetched successfully',
         invalidHighLightColor: 'Color value should be HEX',
         getHighLightFailure: 'Failed to fetch High light details',
-        invalidStartIndexError: 'Start index should be less then end index'
+        invalidStartIndexError: 'Start index should be less then end index.'
     },
     cmsControllerResponse: {
         createCmsSuccess: 'Cms added successfully',
@@ -243,6 +244,7 @@ export const responseMessage = {
         getCouponFailure: 'Coupon does not exist',
         fetchCouponSuccess: 'Coupon details fetched successfully',
         fetchCouponsSuccess: 'Coupons list fetched successfully',
-        deleteCouponSuccess: 'Coupon removed successfully'
+        deleteCouponSuccess: 'Coupon removed successfully',
+        invalidCoupon: 'Coupon is not valid'
     }
 }

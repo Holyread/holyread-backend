@@ -17,6 +17,7 @@ import {
       sortArrayObject,
       pushNotification,
       imageUrlToBase64,
+      capitalizeFirstLetter,
 } from '../../lib/utils/utils'
 
 import {
@@ -69,6 +70,8 @@ const NODE_ENV = config.NODE_ENV
 
 const authControllerResponse
       = responseMessage.authControllerResponse
+const couponControllerResponse
+      = responseMessage.couponsControllerResponse
 const handoutsControllerResponse
       = responseMessage.handoutsControllerResponse
 const smallGroupControllerResponse
@@ -117,14 +120,16 @@ const getUserAccount = async (
                                     ? 6 : 12;
 
                   const createdAt
-                        = userObj?.inAppSubscription?.createdAt
-                        || userObj?.stripe?.createdAt || new Date();
+                        = userObj?.stripe?.createdAt
+                        || userObj?.inAppSubscription?.createdAt
+                        || new Date();
 
                   subscriptionEndDate
                         = new Date(createdAt).setMonth(
                               new Date(createdAt).getMonth() + months
                         )
             }
+
             userObj.subscriptionEndsIn
                   = getTimeDiff(
                         String(new Date()),
@@ -696,14 +701,29 @@ const getUserSubscription = async (
                                     .retrieveSubscription(data.stripe?.subscriptionId)
                                     .then(res => {
                                           data.subscriptionStatus = res.status
+                                          if (res.status !== 'active') {
+                                                return;
+                                          }
+                                          data.inAppSubscriptionStatus = capitalizeFirstLetter(res.status)
+                                    })
+                        }
+                        else if (false && data?.stripe?.paymentIntent) {
+                              await stripeSubscriptionService
+                                    .getPaymentIntent(data.stripe?.paymentIntent)
+                                    .then(res => {
+                                          if (res.status === 'succeeded') {
+                                                data.inAppSubscriptionStatus = 'Active'
+                                          } else {
+                                                data.inAppSubscriptionStatus = res.status
+                                          }
                                     })
                         }
 
                         const createdAt = data.subscriptionStatus === 'trialing'
                               ? (
-                                    data?.inAppSubscription?.createdAt ||
-                                    data?.stripe?.createdAt ||
-                                    data.createdAt
+                                    data?.stripe?.createdAt
+                                    || data?.inAppSubscription?.createdAt
+                                    || data.createdAt
                               ) : data.createdAt;
 
                         data.trialEndsIn = data.subscriptionStatus === 'trialing'
@@ -722,9 +742,9 @@ const getUserSubscription = async (
                                     ? 1 : data.subscription.duration === 'Half Year'
                                           ? 6 : 12;
 
-                              const createdAt = data?.inAppSubscription?.createdAt ||
-                                    data?.stripe?.createdAt ||
-                                    new Date();
+                              const createdAt = data?.stripe?.createdAt
+                                    || data?.inAppSubscription?.createdAt
+                                    || new Date();
 
                               subscriptionEndDate = new Date(createdAt)
                                     .setMonth(
@@ -754,6 +774,40 @@ const getUserSubscription = async (
                   })
       } catch ({ message }) {
             next(Boom.badData(message as string))
+      }
+}
+
+const getCoupon = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
+      try {
+            let coupon = await stripeSubscriptionService
+                  .getOneCoupon(
+                        req.params.coupon
+                  )
+
+            if (!coupon?.valid) {
+                  /** Return status 404 not found */
+                  return next(
+                        Boom.preconditionFailed(
+                              couponControllerResponse.invalidCoupon
+                        )
+                  )
+            }
+
+            res.status(200).send({
+                  message: couponControllerResponse.fetchCouponSuccess,
+                  data: coupon
+            })
+
+      } catch ({ message }) {
+            return next(
+                  Boom.badData(
+                        message as string
+                  )
+            )
       }
 }
 
@@ -2056,7 +2110,7 @@ const blessFriend = async (
                         price: subscriptionDetails.price,
                         username: body.email.split('@')[0],
                         status: subscription?.status || 'Active',
-                        endDate: `[${formattedDate(subscriptionEndDate)}]`,
+                        endDate: `${formattedDate(subscriptionEndDate)}`,
                         duration: subscriptionDetails
                               ?.duration
                               ?.toLowerCase()
@@ -2091,6 +2145,75 @@ const blessFriend = async (
             })
       } catch (e: any) {
             next(Boom.badData(e.message))
+      }
+}
+
+/** Create payment sheet */
+const paymentSheet = async (
+      req: Request | any,
+      res: Response,
+      next: NextFunction
+) => {
+      try {
+            const userObj = req.user
+            const subscriptionDetails = await subscriptionService
+                  .getOneSubscriptionByFilter({
+                        _id: req.body.subscription
+                  })
+            if (!subscriptionDetails) {
+                  /** Return status code 404 not found */
+                  return next(
+                        Boom.notFound(
+                              subscriptionsControllerResponse.getSubscriptionFailure
+                        )
+                  )
+            }
+            if (!userObj?.stripe?.customerId) {
+                  const customer = await stripeSubscriptionService
+                        .createCustomer(
+                              userObj.email,
+                              req.body.token
+                        )
+                  if (!userObj.stripe) { userObj.stripe = {} }
+                  userObj.stripe.customerId = customer.id
+                  await usersService.updateUser(
+                        { _id: userObj._id },
+                        { 'stripe.customerId': customer.id }
+                  )
+            }
+
+            const ephemeralKey = await stripeSubscriptionService.createEphemeralKey(
+                  userObj.stripe.customerId
+            );
+
+            const paymentIntent = await stripeSubscriptionService.createPaymentIntent({
+                  amount: Number(subscriptionDetails.price) * 100,
+                  currency: 'usd',
+                  customer: userObj.stripe.customerId,
+                  automatic_payment_methods: {
+                        enabled: true,
+                  },
+                  /** Store new plan details in metadata */
+                  metadata: {
+                        planId: subscriptionDetails.stripePlanId,
+                        ephemeralKey: ephemeralKey?.id,
+                        hrSubscriptionId: String(subscriptionDetails._id)
+                  }
+            });
+
+            res.status(200).send({
+                  message: subscriptionsControllerResponse.createPaymentSheetSuccess,
+                  data: {
+                        paymentIntentId: paymentIntent?.id,
+                        clientSecret: paymentIntent?.client_secret,
+                        customerEmail: userObj.email,
+                        customerId: userObj?.stripe?.customerId,
+                        ephemeralKey: ephemeralKey?.secret
+                  }
+            })
+
+      } catch ({ message }) {
+            next(Boom.badData(message as string))
       }
 }
 
@@ -2170,13 +2293,41 @@ const subscribePlan = async (
                               subscription.current_period_end * 1000
                         )
                   } else {
-                        await stripeSubscriptionService.updateSubscription({
-                              coupon: req.body.coupon,
-                              customerId: userObj.stripe.customerId,
-                              paymentMethod: req.body.paymentMethod,
-                              planId: subscriptionDetails.stripePlanId,
-                              subscriptionId: userObj.stripe.subscriptionId,
-                        })
+                        const retrieveSubscription = await stripeSubscriptionService
+                              .retrieveSubscription(
+                                    userObj?.stripe?.subscriptionId
+                              )
+                        if (['incomplete'].includes(retrieveSubscription.status)) {
+                              await stripeSubscriptionService.cancelSubscription(
+                                    retrieveSubscription.id
+                              )
+                        }
+
+                        if (
+                              [
+                                    'canceled',
+                                    'incomplete',
+                                    'incomplete_expired'
+                              ].includes(
+                                    retrieveSubscription.status
+                              )
+                        ) {
+                              await stripeSubscriptionService.createSubscription({
+                                    status: 'active',
+                                    coupon: req.body.coupon,
+                                    customerId: userObj.stripe.customerId,
+                                    paymentMethod: req.body.paymentMethod,
+                                    planId: subscriptionDetails.stripePlanId,
+                              })
+                        } else {
+                              await stripeSubscriptionService.updateSubscription({
+                                    coupon: req.body.coupon,
+                                    customerId: userObj.stripe.customerId,
+                                    paymentMethod: req.body.paymentMethod,
+                                    planId: subscriptionDetails.stripePlanId,
+                                    subscriptionId: userObj.stripe.subscriptionId,
+                              })
+                        }
                         subscription = await stripeSubscriptionService
                               .retrieveSubscription(
                                     userObj.stripe.subscriptionId
@@ -2216,11 +2367,28 @@ const subscribePlan = async (
             await usersService.updateUser({ _id: userObj._id }, body)
 
             if (!req.body?.inAppSubscription) {
-                  res.status(200).send({
+                  const ephemeralKey = await stripeSubscriptionService
+                        .createEphemeralKey(
+                              userObj.stripe.customerId
+                        );
+                  return res.status(200).send({
                         message: subscriptionsControllerResponse.createSubscriptionSuccess,
                         data: {
                               subscriptionStatus: subscription.status,
-                              customerEmail: userObj.email
+                              paymentIntentId: subscription
+                                    ?.latest_invoice
+                                    ?.payment_intent
+                                    ?.id,
+                              clientSecret: subscription
+                                    ?.latest_invoice
+                                    ?.payment_intent
+                                    ?.client_secret,
+                              customerEmail: userObj.email,
+                              customerId: userObj
+                                    ?.stripe
+                                    ?.customerId,
+                              ephemeralKey: ephemeralKey
+                                    ?.secret
                         }
                   })
             }
@@ -2256,8 +2424,9 @@ const subscribePlan = async (
                         price: subscriptionDetails.price,
                         username: userObj.email.split('@')[0],
                         status: subscription?.status || 'Active',
-                        endDate: `[${formattedDate(subscriptionEndDate).replace(/ /g, ',')}]`,
-                        duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half')
+                        endDate: `${formattedDate(subscriptionEndDate).replace(/ /g, ',')}`,
+                        duration: subscriptionDetails
+                              ?.duration?.toLowerCase()?.includes('half')
                               ? subscriptionDetails.duration
                               : `1 ${subscriptionDetails.duration}`,
                   }
@@ -2270,10 +2439,9 @@ const subscribePlan = async (
                   }
             }
             const notificationTitle = 'Holy Reads Subscription'
-            const notificationDescription = `
-                  Holy Reads ${subscriptionDetails.duration.includes('Half')
-                        ? subscriptionDetails.duration
-                        : '1 ' + subscriptionDetails.duration
+            const notificationDescription = `Holy Reads ${subscriptionDetails.duration.includes('Half')
+                  ? subscriptionDetails.duration
+                  : '1 ' + subscriptionDetails.duration
                   } subscription has been activated! 🎉`
             await notificationsService.createNotification({
                   userId: userObj._id,
@@ -2480,11 +2648,13 @@ const updateHandout = async (
 
 export {
       logout,
+      getCoupon,
       emailAuth,
       deleteUser,
       submitQuery,
       blessFriend,
       updateRating,
+      paymentSheet,
       subscribePlan,
       updateHandout,
       submitFeedback,

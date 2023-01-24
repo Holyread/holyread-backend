@@ -8,6 +8,9 @@ import { fetchNotifications } from './notification.controller';
 import { emailTemplatesTitles, originEmails } from '../../constants/app.constant';
 import { compileHtml, pushNotification, sentEmail } from '../../lib/utils/utils';
 
+import config from '../../../config';
+import { SubscriptionsModel } from '../../models';
+
 import stripeSubscriptionService from '../../services/stripe/subscription'
 
 import userService from '../../services/customers/users/user.service';
@@ -15,66 +18,127 @@ import transactionsService from '../../services/customers/users/transactions.ser
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service';
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
 import notificationsService from '../../services/customers/notifications/notifications.service';
-import { SubscriptionsModel } from '../../models';
+
+const stripe = require('stripe')(config.STRIPE_SECRET);
 
 /** Create transaction */
-const createTransaction = async (request: Request, response: Response, next: NextFunction) => {
+const createTransaction = async (
+      request: Request,
+      response: Response,
+      next: NextFunction
+) => {
       try {
             const event = request.body;
             const session = event?.data?.object;
             /** invalid request */
-            if (!session) return next(Boom.badRequest())
+            if (!session) {
+                  return next(Boom.badRequest())
+            }
 
-            const user = await userService.getOneUserByFilter({ 'stripe.customerId': session.customer })
-            if (!user || !user?.subscription) return next(Boom.notAcceptable())
+            const user = await userService.getOneUserByFilter({
+                  'stripe.customerId': session.customer
+            })
+
+            if (
+                  !user
+                  ||
+                  (
+                        !user?.subscription
+                        &&
+                        !session?.metadata?.hrSubscriptionId
+                  )
+            ) { return next(Boom.notAcceptable()) }
+
+            processTransaction(user, session, event)
+
             response.status(200).send({ message: 'OK' });
-            const transaction: any = {
-                  userId: user._id,
-                  latestInvoice: session?.latest_invoice,
-                  planCreatedAt: new Date(session?.current_period_start * 1000),
-                  planExpiredAt: new Date(session?.current_period_end * 1000),
-                  total: (session?.plan?.amount || 0) / 100,
-                  status: session?.status,
-                  reason: '',
-                  device: 'web',
-                  stripeSubscriptionId: session.id,
-                  event: event.id,
-                  planId: session?.plan?.id
+
+      } catch (e: any) {
+            return next(
+                  Boom.badData(
+                        e.message
+                  )
+            )
+      }
+}
+
+const processTransaction = async (user: any, session: any, event: any) => {
+      try {
+            /** Trail or incomplete subscription does not required transation yet */
+            if (
+                  [
+                        'trialing',
+                        'incomplete'
+                  ]
+                        .includes(
+                              session?.status
+                        )
+            ) { return }
+
+            let subscriptionId = user?.subscription
+            if (event.type === 'payment_intent.succeeded') {
+                  subscriptionId = session.metadata.hrSubscriptionId
             }
-            userService.updateUser(
-                  { _id: user._id },
-                  {
-                        'stripe.expiredAt': transaction.planExpiredAt,
-                        'stripe.subscriptionId': session.id,
-                        'stripe.customer': session.customer,
-                        'stripe.planId': transaction.planId,
-                  })
-            /** Send and push notification */
-            const sentNotification = async (notificationTitle: string, notificationDescription: string) => {
-                  await notificationsService.createNotification({ userId: user._id, type: 'setting', notification: { title: notificationTitle, description: notificationDescription } })
-                  fetchNotifications(io.sockets, { _id: user._id })
-                  /** Push notification */
-                  if (user.pushTokens.length && user?.notification?.push && user?.notification?.subscription) {
-                        const tokens = user.pushTokens.map(i => i.token)
-                        pushNotification(tokens, notificationTitle, notificationDescription)
-                  }
-            }
+
             /** Sent subscription activation email */
-            const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: user.subscription })
-            const sentSubscriptionEmail = async () => {
-                  const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.subscriptionActivated })
-                  const subject = emailTemplateDetails.subject || `Holy Reads Subscription Activated`
-                  let html = `<p>Dear ${user.email.split('@')[0]},</p><p>Your holy reads subscription activated successfully.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+            const subscriptionDetails = await subscriptionsService
+                  .getOneSubscriptionByFilter({
+                        _id: subscriptionId
+                  })
+
+            const sentSubscriptionEmail = async (
+                  planExpiredAt?: Date,
+                  total?: number,
+                  status?: string
+            ) => {
+                  const emailTemplateDetails = await emailTemplateService
+                        .getOneEmailTemplateByFilter({
+                              title: emailTemplatesTitles.customer.subscriptionActivated
+                        })
+
+                  const subject = emailTemplateDetails.subject
+                        || `Holy Reads Subscription Activated`
+                  let html = `
+                        <p>
+                              Dear ${user.email.split('@')[0]},
+                        </p>
+                        <p>
+                              Your holy reads subscription activated successfully.
+                        </p>
+                        <p>
+                              Should you have any questions or if any of your details change, please contact us.
+                        </p>
+                        <p>
+                              Best regards,
+                              <br>Holy Reads
+                        </p>
+                        <p>
+                              <strong>
+                                    ( ***&nbsp; Please do not reply to this email ***&nbsp; )
+                              </strong>
+                        </p>
+                  `
                   if (emailTemplateDetails && emailTemplateDetails.content) {
-                        const localeDate = transaction.planExpiredAt?.toLocaleDateString()?.split('/')
+                        const localeDate = planExpiredAt
+                              ?.toLocaleDateString()
+                              ?.split('/')
+
                         const contentData = {
                               username: user.email.split('@')[0],
-                              price: transaction.total,
-                              endDate: `[${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)}]`,
-                              duration: subscriptionDetails?.duration?.toLowerCase()?.includes('half') ? subscriptionDetails.duration : `1 ${subscriptionDetails.duration}`,
-                              status: transaction?.status
+                              price: total,
+                              endDate: `${localeDate[0]?.padStart(2, '0')}/${localeDate[1]?.padStart(2, '0')}/${localeDate[2]?.slice(-2)}`,
+                              duration: subscriptionDetails
+                                    ?.duration
+                                    ?.toLowerCase()
+                                    ?.includes('half')
+                                    ? subscriptionDetails.duration
+                                    : `1 ${subscriptionDetails.duration}`,
+                              status
                         }
-                        const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                        const htmlData = await compileHtml(
+                              emailTemplateDetails.content,
+                              contentData
+                        )
                         if (htmlData) {
                               html = htmlData
                         }
@@ -86,58 +150,286 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                         html
                   });
                   if (!result) {
-                        return next(Boom.badRequest('Failed to sent an subscription email'))
+                        console.log(
+                              'Failed to sent an subscription email'
+                        )
+                        return
                   }
             }
-            /** Get latest invoice details */
-            const latestInvoice = await stripeSubscriptionService.getInvoice(session?.latest_invoice)
-            transaction.account = {
-                  country: latestInvoice.account_country,
-                  name: latestInvoice.account_name,
-                  taxIds: latestInvoice.account_tax_ids,
-            }
-            transaction.amount = {
-                  subtotal: (latestInvoice?.subtotal | 0) / 100,
-                  tax: (latestInvoice?.tax | 0) / 100,
-                  total: (latestInvoice?.total | 0) / 100,
-                  discount: (latestInvoice?.total_discount_amounts[0]?.amount | 0) / 100,
-            }
-            transaction.invoiceAt = latestInvoice.created && new Date(latestInvoice.created * 1000)
-            transaction.statusTransitions = latestInvoice.status_transitions
-            transaction.customer = {
-                  email: latestInvoice.customer_email,
-                  name: latestInvoice.customer_name,
-                  phone: latestInvoice.customer_phone,
-                  shipping: latestInvoice.customer_shipping
+            /**
+             * In App stripe payment succeed using holyreads payment sheet api
+             * Disabled webhook, not proceed yet
+             * */
+            if (event.type === 'payment_intent.succeeded') {
+
+                  // Retrieve the payment intent used to pay the subscription
+                  const paymentIntent =
+                        await stripeSubscriptionService.getPaymentIntent(
+                              session?.id
+                        );
+
+                  if (!paymentIntent?.id) {
+                        return;
+                  }
+
+                  let now = new Date(paymentIntent.created * 1000), planExpiredAt: any;
+
+                  switch (subscriptionDetails.duration) {
+                        case "Year":
+                              planExpiredAt = new Date(
+                                    now.setMonth(new Date().getMonth() + 12)
+                              );
+                              break;
+                        case "Half Year":
+                              planExpiredAt = new Date(
+                                    now.setMonth(new Date().getMonth() + 6)
+                              );
+                              break;
+                        default:
+                              planExpiredAt = new Date(
+                                    now.setMonth(new Date().getMonth() + 1)
+                              );
+                              break;
+                  }
+                  await userService.updateUser(
+                        { 'stripe.customerId': user.stripe.customerId },
+                        {
+                              'inAppSubscriptionStatus': 'Active',
+                              'inAppSubscription.transaction.expiresDate': new Date(planExpiredAt).getTime(),
+                              'stripe.createdAt': now,
+                              subscription: subscriptionDetails._id,
+                              'stripe.planId': session.metadata?.planId,
+                              'stripe.paymentIntent': paymentIntent?.id,
+                              'stripe.ephemeralKey': session.metadata?.ephemeralKey
+                        })
+                  const amount = session?.amount / 100 || Number(subscriptionDetails.price)
+                  await sentSubscriptionEmail(
+                        planExpiredAt,
+                        amount,
+                        'Active'
+                  )
+                  let charge = session?.charges?.data[0]
+                  let transaction: any = {
+                        userId: user._id,
+                        latestInvoice: session?.invoice,
+                        total: amount,
+                        status: session?.status,
+                        reason: '',
+                        device: 'app',
+                        event: event.id,
+                        planId: subscriptionDetails.planId,
+                        planCreatedAt: now,
+                        planExpiredAt,
+                        paymentLink: charge?.receipt_url,
+                        paymentMethod: charge?.payment_method_details?.card,
+                        account: {
+                              country: charge?.billing_details?.address?.country,
+                              name: charge?.billing_details?.name
+                        },
+                        amount: {
+                              subtotal: (session?.amount_received | 0) / 100,
+                              tax: (session?.application_fee_amount | 0) / 100,
+                              total: (session?.amount | 0) / 100,
+                              discount: 0
+                        },
+                        invoiceAt: now,
+                        customer: {
+                              email: charge?.billing_details?.email,
+                              name: charge?.billing_details?.name,
+                              phone: charge?.billing_details?.phone,
+                              shipping: charge?.billing_details
+                        }
+                  }
+                  await transactionsService.createTransaction(transaction)
+                  return;
             }
 
-            const paymentIntent = await stripeSubscriptionService.getPaymentIntent(
-                  latestInvoice?.payment_intent
-            );
+            /**
+             * Incoming webhook on confirm card payment
+             * On subscription purchase from web and confirm payment
+             */
+            if (
+                  event.type === 'invoice.payment_succeeded' &&
+                  session['subscription'] &&
+                  session['payment_intent']
+            ) {
+                  /**
+                   * The subscription automatically activates after successful payment
+                   * Set the payment method used to pay the first invoice
+                   * as the default payment method for that subscription
+                   */
+                  const subscription_id = session['subscription']
+                  const payment_intent_id = session['payment_intent']
+
+                  /* Retrieve the payment intent used to pay the subscription */
+                  const payment_intent =
+                        await stripeSubscriptionService.getPaymentIntent(
+                              payment_intent_id
+                        );
+
+                  try {
+                        await stripe.subscriptions.update(
+                              subscription_id,
+                              {
+                                    default_payment_method: payment_intent.payment_method,
+                              },
+                        );
+
+                        console.log(
+                              "Default payment method set for subscription:",
+                              payment_intent.payment_method
+                        );
+                  } catch (err) {
+                        console.log(
+                              '⚠️ Falied to update the default payment method for subscription:',
+                              subscription_id
+                        );
+                  }
+                  return;
+            }
+
+            let transaction: any = {
+                  userId: user._id,
+                  latestInvoice: session?.latest_invoice,
+                  total: (session?.plan?.amount || 0) / 100,
+                  status: session?.status,
+                  reason: '',
+                  device: 'web',
+                  stripeSubscriptionId: session.id,
+                  event: event.id,
+                  planId: session?.plan?.id
+            }
+
+            if (session?.current_period_start) {
+                  transaction.planCreatedAt =
+                        new Date(session?.current_period_start * 1000)
+            }
+
+            if (session?.current_period_end) {
+                  transaction.planExpiredAt =
+                        new Date(session?.current_period_end * 1000)
+            }
+
+            if ('invoice.payment_succeeded' !== event.type) {
+                  userService.updateUser(
+                        { _id: user._id },
+                        {
+                              'stripe.expiredAt': transaction.planExpiredAt,
+                              'stripe.subscriptionId': session.id,
+                              'stripe.customerId': session.customer,
+                              'stripe.planId': transaction.planId,
+                        })
+            }
+
+            /** Send and push notification */
+            const sentNotification = async (
+                  notificationTitle: string,
+                  notificationDescription: string
+            ) => {
+                  await notificationsService.createNotification({
+                        userId: user._id,
+                        type: 'setting',
+                        notification: {
+                              title: notificationTitle,
+                              description: notificationDescription
+                        }
+                  })
+
+                  fetchNotifications(io.sockets, { _id: user._id })
+                  /** Push notification */
+                  if (
+                        user.pushTokens.length
+                        && user?.notification?.push
+                        && user?.notification?.subscription
+                  ) {
+                        const tokens = user.pushTokens.map(i => i.token)
+
+                        pushNotification(
+                              tokens,
+                              notificationTitle,
+                              notificationDescription
+                        )
+                  }
+            }
+
+            /** Get latest invoice details */
+            const latestInvoice = await stripeSubscriptionService
+                  .getInvoice(
+                        session?.latest_invoice
+                  )
+            let paymentIntent;
+            if (latestInvoice?.id) {
+                  transaction.account = {
+                        country: latestInvoice?.account_country,
+                        name: latestInvoice?.account_name,
+                        taxIds: latestInvoice?.account_tax_ids,
+                  }
+                  transaction.amount = {
+                        subtotal: (latestInvoice?.subtotal | 0) / 100,
+                        tax: (latestInvoice?.tax | 0) / 100,
+                        total: (latestInvoice?.total | 0) / 100,
+                        discount: (
+                              latestInvoice
+                                    ?.total_discount_amounts[0]
+                                    ?.amount | 0
+                        ) / 100,
+                  }
+                  transaction.invoiceAt =
+                        latestInvoice.created
+                        &&
+                        new Date(latestInvoice.created * 1000)
+
+                  transaction.statusTransitions = latestInvoice.status_transitions
+                  transaction.customer = {
+                        email: latestInvoice.customer_email,
+                        name: latestInvoice.customer_name,
+                        phone: latestInvoice.customer_phone,
+                        shipping: latestInvoice.customer_shipping
+                  }
+
+                  paymentIntent = await stripeSubscriptionService.getPaymentIntent(
+                        latestInvoice?.payment_intent || session['payment_intent']
+                  );
+            }
+
             transaction.paymentLink = latestInvoice?.hosted_invoice_url
-            transaction.paymentMethod = (await stripeSubscriptionService.getPaymentMethod(paymentIntent?.payment_method))?.card
+            transaction.paymentMethod = (
+                  await stripeSubscriptionService
+                        .getPaymentMethod(
+                              paymentIntent?.payment_method
+                        )
+            )?.card
             if (!transaction.paymentMethod) {
-                  const customer = await stripeSubscriptionService.getCustomer(session.customer)
-                  const paymentMethod = await stripeSubscriptionService.getPaymentMethod(customer?.invoice_settings?.default_payment_method)
+                  const customer =
+                        await stripeSubscriptionService
+                              .getCustomer(session.customer)
+                  const paymentMethod =
+                        await stripeSubscriptionService
+                              .getPaymentMethod(
+                                    customer
+                                          ?.invoice_settings
+                                          ?.default_payment_method
+                              )
                   transaction.paymentMethod = paymentMethod?.card
             }
-      
-            /** Trail subscription does not required transation yet */
-            if (session.status === 'trialing') {
-                  return
-            }
 
-            /** No trail subscription */
+
+            /** Process active subscription */
             if (session.status === 'active') {
                   await transactionsService.createTransaction(transaction)
                   /** Sent subscription activation email */
-                  await sentSubscriptionEmail()
+                  await sentSubscriptionEmail(
+                        transaction?.planExpiredAt,
+                        transaction.total,
+                        transaction.status
+                  )
                   Promise.all([
                         sentNotification(
                               'Holy Reads Subscription',
                               `Holy Reads ${subscriptionDetails.duration.includes('Half')
                                     ? subscriptionDetails.duration
-                                    : '1 ' + subscriptionDetails.duration} Subscription activated successfully 🎉`)
+                                    : '1 ' + subscriptionDetails.duration
+                              } Subscription activated successfully 🎉`)
                   ])
                   return
             }
@@ -149,24 +441,86 @@ const createTransaction = async (request: Request, response: Response, next: Nex
             const now: Date = new Date()
             /** Set reason on payment failed */
             if (transaction?.paymentMethod) {
-                  const isCardExpired = !!(transaction?.paymentMethod?.exp_month > (now.getMonth() + 1) && (transaction?.paymentMethod?.exp_year >= now.getFullYear()))
-                  transaction.reason = isCardExpired ? 'Card Expired' : 'Decline Payment'
+                  const isCardExpired = !!(
+                        (
+                              transaction?.paymentMethod?.exp_month
+                              >
+                              (now.getMonth() + 1)
+                        )
+                        &&
+                        (
+                              transaction?.paymentMethod?.exp_year
+                              >= now.getFullYear()
+                        )
+                  )
+                  transaction.reason =
+                        isCardExpired ? 'Card Expired' : 'Decline Payment'
             }
-            const status = ['past_due', 'unpaid', 'canceled', 'incomplete', 'incomplete_expired']
+            const status = [
+                  'past_due',
+                  'unpaid',
+                  'canceled',
+                  'incomplete_expired'
+            ]
 
-            if (event?.type !== 'customer.subscription.updated' || !status.includes(session?.status)) {
+            if (
+                  event?.type !== 'customer.subscription.updated'
+                  ||
+                  !status.includes(session?.status)
+            ) {
                   return
             }
 
             /** Failed payment transaction * sent cancel subscription email */
-            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.subscriptionCancelled })
-            const subject = emailTemplateDetails.subject || `Holy Reads Subscription Cancelled`
-            let html = `<p>Dear ${user.email.split('@')[0]},</p><p>Your holy reads subscription cancelled.</p><p>Please click this <a href=${transaction?.paymentLink}>link</a> to reactive your subscription</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
-            if (emailTemplateDetails && emailTemplateDetails.content) {
+            const emailTemplateDetails =
+                  await emailTemplateService
+                        .getOneEmailTemplateByFilter({
+                              title: emailTemplatesTitles
+                                    .customer
+                                    .subscriptionCancelled
+                        })
+
+            const subject = emailTemplateDetails.subject
+                  || `Holy Reads Subscription Cancelled`
+
+            let html = `
+                  <p>
+                        Dear ${user.email.split('@')[0]},
+                  </p>
+                  <p>
+                        Your holy reads subscription cancelled.
+                  </p>
+                  <p>
+                        Please click this
+                              <a href=${transaction?.paymentLink}>
+                                    link
+                              </a>
+                        to reactive your subscription
+                  </p>
+                  <p>
+                        Should you have any questions or if any of your details change, please contact us.
+                  </p>
+                  <p>
+                        Best regards,
+                              <br>Holy Reads
+                  </p>
+                  <p>
+                        <strong>
+                              ( ***&nbsp; Please do not reply to this email ***&nbsp; )
+                        </strong>
+                  </p>`
+            if (
+                  emailTemplateDetails
+                  &&
+                  emailTemplateDetails.content
+            ) {
                   const contentData = {
                         link: transaction?.paymentLink
                   }
-                  const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+                  const htmlData = await compileHtml(
+                        emailTemplateDetails.content,
+                        contentData
+                  )
                   if (htmlData) {
                         html = htmlData
                   }
@@ -179,17 +533,30 @@ const createTransaction = async (request: Request, response: Response, next: Nex
                   html
             });
             if (!result) {
-                  console.log('Failed to sent an cancel subscription email')
+                  console.log(
+                        'Failed to sent an cancel subscription email'
+                  )
                   return;
             }
-            Promise.all([sentNotification('Holy Reads Subscription Cancelled ⛔', `Your Holy Reads ${subscriptionDetails.title} Subscription Cancelled`)])
+            Promise.all([
+                  sentNotification(
+                        'Holy Reads Subscription Cancelled ⛔',
+                        `Your Holy Reads ${subscriptionDetails.title} Subscription Cancelled`
+                  )
+            ])
       } catch (e: any) {
-            return next(Boom.badData(e.message))
+            console.log(
+                  e.message
+            )
       }
 }
 
-// /** Create transaction */
-const createAppTransaction = async (request: Request, response: Response, next: NextFunction) => {
+/** Create transaction */
+const createAppTransaction = async (
+      request: Request,
+      response: Response,
+      next: NextFunction
+) => {
       try {
             const body = request.body;
             const header = request.headers;
@@ -538,8 +905,8 @@ const createAppTransaction = async (request: Request, response: Response, next: 
 
             await userService.updateUser(
                   { _id: user._id },
-                  { 
-                        inAppSubscription:{
+                  {
+                        inAppSubscription: {
                               ...user.inAppSubscription,
                               ...inAppPurchaseBody,
                               expiredAt: new Date(v2TransactionInfo.expiresDate * 1000)
@@ -553,7 +920,11 @@ const createAppTransaction = async (request: Request, response: Response, next: 
 }
 
 // /** Create transaction */
-const createGoogleTransaction = async (request: Request, response: Response, next: NextFunction) => {
+const createGoogleTransaction = async (
+      request: Request,
+      response: Response,
+      next: NextFunction
+) => {
       try {
             const body = request.body;
             const header = request.headers;
@@ -561,118 +932,183 @@ const createGoogleTransaction = async (request: Request, response: Response, nex
                   result: { body, header }
             })
 
-            if (!body?.data) {
+            if (!body?.message?.data) {
                   return next(Boom.notFound('data is null'))
             }
 
-            const encodeDataBuff = Buffer.from(body.data, 'base64');
+            const encodeDataBuff = Buffer.from(body.message.data, 'base64');
             const decodedData: any = JSON.parse(encodeDataBuff.toString());
 
-            if (!decodedData?.SubscriptionNotification) {
-                  return next(Boom.badData('SubscriptionNotification is null or is not valid'));
+            if (
+                  !decodedData?.SubscriptionNotification
+                  &&
+                  (
+                        !decodedData?.SubscriptionNotification
+                        ||
+                        decodedData?.oneTimeProductNotification
+                  )
+            ) {
+                  return response
+                        .status(200)
+                        .send({
+                              message:
+                                    'Test or one time product notification received'
+                        });
+            }
+            if (
+                  !decodedData?.SubscriptionNotification
+            ) {
+                  return next(
+                        Boom.badData(
+                              'SubscriptionNotification is null or is not valid'
+                        )
+                  );
             }
 
-            let subscriptionNotification = decodedData.subscriptionNotification;
+            let subscriptionNotification =
+                  decodedData.subscriptionNotification;
 
-            const user = await userService.getOneUserByFilter({ 'inAppSubscription.purchaseToken': subscriptionNotification.purchaseToken })
+            const user = await userService
+                  .getOneUserByFilter({
+                        'inAppSubscription.purchaseToken':
+                              subscriptionNotification
+                                    .purchaseToken
+                  })
+
             if (!user) {
-                  return next(Boom.notFound('User details not found'));
+                  return next(
+                        Boom.notFound(
+                              'User details not found'
+                        )
+                  );
             }
-            const encodePurchaseTokenBuffer = Buffer.from(subscriptionNotification.purchaseToken, 'base64');
-            const decodedPurchaseToken: any = JSON.parse(encodePurchaseTokenBuffer.toString());
+            const encodePurchaseTokenBuffer = Buffer.from(
+                  subscriptionNotification.purchaseToken,
+                  'base64'
+            );
+            const decodedPurchaseToken: any = JSON.parse(
+                  encodePurchaseTokenBuffer.toString()
+            );
 
             let inAppSubscriptionStatus = user.inAppSubscriptionStatus;
+
             const inAppPurchaseBody = {
                   ...user.inAppSubscription,
                   subscriptionNotification,
-                  purchaseToken: subscriptionNotification.purchaseToken,
-                  transactionReceipt: JSON.stringify(decodedPurchaseToken),
-                  transactionId: decodedPurchaseToken.orderId,
-                  transactionDate: decodedPurchaseToken.purchaseTime,
                   productId: decodedPurchaseToken.productId,
+                  transactionId: decodedPurchaseToken.orderId,
                   dataAndroid: JSON.stringify(decodedPurchaseToken),
-                  autoRenewingAndroid: decodedPurchaseToken.autoRenewing,
-                  isAcknowledgedAndroid: decodedPurchaseToken.acknowledged,
+                  transactionDate: decodedPurchaseToken.purchaseTime,
                   packageNameAndroid: decodedPurchaseToken.packageName,
+                  purchaseToken: subscriptionNotification.purchaseToken,
+                  autoRenewingAndroid: decodedPurchaseToken.autoRenewing,
+                  transactionReceipt: JSON.stringify(decodedPurchaseToken),
+                  isAcknowledgedAndroid: decodedPurchaseToken.acknowledged,
                   purchaseStateAndroid: subscriptionNotification.notificationType
             }
+
             switch (subscriptionNotification.notificationType) {
                   case 1:
                         /*
-                              (1) SUBSCRIPTION_RECOVERED - A subscription was recovered from account hold.
+                              (1) SUBSCRIPTION_RECOVERED
+                              - A subscription was recovered from account hold.
                         */
 
                         break;
                   case 2:
                         /*
-                              (2) SUBSCRIPTION_RENEWED - An active subscription was renewed.
+                              (2) SUBSCRIPTION_RENEWED
+                              - An active subscription was renewed.
                         */
                         inAppSubscriptionStatus = 'Active'
                         break;
                   case 3:
                         /*
-                              (3) SUBSCRIPTION_CANCELED - A subscription was either voluntarily or involuntarily cancelled. For voluntary cancellation, sent when the user cancels.
+                              (3) SUBSCRIPTION_CANCELED
+                              - A subscription was either voluntarily
+                                or involuntarily cancelled.
+                                For voluntary cancellation, sent when the user cancels.
                         */
                         inAppSubscriptionStatus = 'Cancelled'
                         break;
                   case 4:
                         /*
-                              (4) SUBSCRIPTION_PURCHASED - A new subscription was purchased.
+                              (4) SUBSCRIPTION_PURCHASED
+                              - A new subscription was purchased.
                         */
                         inAppSubscriptionStatus = 'Active'
                         break;
                   case 5:
                         /*
-                              (5) SUBSCRIPTION_ON_HOLD - A subscription has entered account hold (if enabled).
+                              (5) SUBSCRIPTION_ON_HOLD
+                              - A subscription has entered account hold (if enabled).
                         */
                         break;
                   case 6:
                         /* 
-                              (6) SUBSCRIPTION_IN_GRACE_PERIOD - A subscription has entered grace period (if enabled).
+                              (6) SUBSCRIPTION_IN_GRACE_PERIOD
+                              - A subscription has entered grace period (if enabled).
                         */
                         break;
                   case 7:
                         /*
-                              (7) SUBSCRIPTION_RESTARTED - User has restored their subscription from Play > Account > Subscriptions. The subscription was canceled but had not expired yet when the user restores. For more information, see [Restorations](/google/play/billing/subscriptions#restore).
+                              (7) SUBSCRIPTION_RESTARTED
+                              - User has restored their subscription from
+                                Play > Account > Subscriptions.
+                                The subscription was canceled but had not expired yet
+                                when the user restores. For more information,
+                                see [Restorations](/google/play/billing/subscriptions#restore).
                         */
                         inAppSubscriptionStatus = 'Active'
                         break;
                   case 8:
                         /* 
-                              (8) SUBSCRIPTION_PRICE_CHANGE_CONFIRMED - A subscription price change has successfully been confirmed by the user.
+                              (8) SUBSCRIPTION_PRICE_CHANGE_CONFIRMED
+                              - A subscription price change has successfully
+                                been confirmed by the user.
                         */
                         break;
                   case 9:
                         /*
-                              (9) SUBSCRIPTION_DEFERRED - A subscription's recurrence time has been extended.
+                              (9) SUBSCRIPTION_DEFERRED
+                              - A subscription's recurrence time has been extended.
                         */
                         break;
                   case 10:
                         /*
-                              (10) SUBSCRIPTION_PAUSED - A subscription has been paused.
+                              (10) SUBSCRIPTION_PAUSED
+                              - A subscription has been paused.
                         */
                         break;
                   case 11:
                         /*
-                              (11) SUBSCRIPTION_PAUSE_SCHEDULE_CHANGED - A subscription pause schedule has been changed.
+                              (11) SUBSCRIPTION_PAUSE_SCHEDULE_CHANGED
+                              - A subscription pause schedule has been changed.
                         */
                         break;
                   case 12:
                         /*
-                              (12) SUBSCRIPTION_REVOKED - A subscription has been revoked from the user before the expiration time.
+                              (12) SUBSCRIPTION_REVOKED
+                              - A subscription has been revoked from
+                                the user before the expiration time.
                         */
                         inAppSubscriptionStatus = 'Cancelled'
                         break;
                   case 13:
                         /*
-                              (13) SUBSCRIPTION_EXPIRED - A subscription has expired.
+                              (13) SUBSCRIPTION_EXPIRED
+                              - A subscription has expired.
                         */
                         inAppSubscriptionStatus = 'Cancelled'
                         break;
                   default:
                         break;
             }
-            const subscriptions = await SubscriptionsModel.find({}).lean().exec();
+            const subscriptions = await SubscriptionsModel
+                  .find({})
+                  .lean()
+                  .exec();
+
             const getMonths = (subscription) => {
                   const duration = subscriptions.find(
                         s => String(s._id) == subscription
@@ -694,9 +1130,14 @@ const createGoogleTransaction = async (request: Request, response: Response, nex
                   }
                   return months;
             }
+
             let expiredAt = user?.inAppSubscription?.expiredAt;
+
             if (decodedPurchaseToken?.purchaseTime) {
-                  const date = Number(decodedPurchaseToken.purchaseTime)
+                  const date = Number(
+                        decodedPurchaseToken.purchaseTime
+                  )
+
                   expiredAt = new Date(date)
                   expiredAt.setMonth(
                         new Date(date).getMonth() + getMonths(user?.subscription)
@@ -714,10 +1155,17 @@ const createGoogleTransaction = async (request: Request, response: Response, nex
                         inAppSubscriptionStatus
                   }
             )
-            response.status(200).send({ message: 'OK' });
-      } catch (e: any) {
-            return next(Boom.badData(e.message))
+            response.status(200)
+                  .send({
+                        message: 'OK'
+                  });
+      } catch ({ message }) {
+            return next(Boom.badData(message as string))
       }
 }
 
-export { createTransaction, createAppTransaction, createGoogleTransaction };
+export {
+      createTransaction,
+      createAppTransaction,
+      createGoogleTransaction
+};

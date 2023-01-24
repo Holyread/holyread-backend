@@ -12,7 +12,6 @@ import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
 import stripeSubscriptionService from '../../services/stripe/subscription';
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
-import transactionsService from '../../services/customers/users/transactions.service';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
@@ -111,34 +110,15 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     }
     /** Store In app subscription */
     const now: Date = new Date()
-    let subscriptionEndDate: Date;
     if (body.subscription && body.inAppSubscription) {
       data.inAppSubscription = { ...body.inAppSubscription, createdAt: now }
       data.inAppSubscriptionStatus = 'Active'
       data.subscription = body.subscription
     }
-    const newUser = await usersService.createUser(data)
+    await usersService.createUser(data)
 
     res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
 
-    if (!body.inAppSubscription) return;
-
-    let months = subscriptionDetails.duration === 'Month' ? 1 : subscriptionDetails.duration === 'Half Year' ? 6 : 12;
-    subscriptionEndDate = new Date(new Date(now).setMonth(new Date(now).getMonth() + months))
-
-    /** Create transaction */
-    transactionsService.createTransaction({
-      latestInvoice: '',
-      planCreatedAt: now,
-      planExpiredAt: subscriptionEndDate,
-      userId: newUser._id,
-      total: subscriptionDetails.price,
-      status: 'active',
-      paymentMethod: null,
-      reason: '',
-      paymentLink: '',
-      device: 'app'
-    })
   } catch (e: any) {
     next(Boom.badData(e.message))
   }
@@ -478,27 +458,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       const tokens = data.pushTokens.map(i => i.token)
       /** sent wellcome notification in app */
       pushNotification(tokens, title, description)
-      if (data?.notification?.subscription && body.subscription && body.inAppSubscription)
-        pushNotification(tokens, 'Holy Reads Subscription', `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} subscription has been activated! 🎉`)
     }
-    if (!newBody.inAppSubscription) return;
-    const now = new Date();
-    let months = subscriptionDetails.duration === 'Month' ? 1 : subscriptionDetails.duration === 'Half Year' ? 6 : 12;
-    const subscriptionEndDate = new Date(new Date(now).setMonth(new Date(now).getMonth() + months))
-
-    /** Create transaction */
-    transactionsService.createTransaction({
-      latestInvoice: '',
-      planCreatedAt: now,
-      planExpiredAt: subscriptionEndDate,
-      userId: data._id,
-      total: subscriptionDetails.price,
-      status: 'active',
-      paymentMethod: null,
-      reason: '',
-      paymentLink: '',
-      device: 'app'
-    })
   } catch (e: any) {
     next(Boom.badData(e.message))
   }

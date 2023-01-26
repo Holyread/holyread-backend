@@ -2007,7 +2007,7 @@ const blessFriend = async (
             if (blessFriendTemplate && blessFriendTemplate.content) {
                   const contentData = {
                         email: body.email,
-                        username: refUser
+                        username: body
                               .email
                               .substr(
                                     0, refUser.email.indexOf('@')

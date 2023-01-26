@@ -638,8 +638,16 @@ const createAppTransaction = async (
 
             const user
                   = await userService.getOneUserByFilter({
-                        'inAppSubscription.originalTransactionIdentifierIOS'
-                              : v2TransactionInfo.originalTransactionId
+                        $or: [
+                              {
+                                    'inAppSubscription.originalTransactionIdentifierIOS':
+                                          v2TransactionInfo.originalTransactionId
+                              },
+                              {
+                                    'inAppSubscription.transactionId':
+                                          v2TransactionInfo?.transactionId
+                              }
+                        ]
                   })
             if (!user) {
                   return next(Boom.notFound('User details not found'));
@@ -672,7 +680,7 @@ const createAppTransaction = async (
                   await transactionsService.createTransaction({
                         latestInvoice: '',
                         planCreatedAt: new Date(),
-                        planExpiredAt: new Date(v2TransactionInfo.expiresDate * 1000),
+                        planExpiredAt: new Date(v2TransactionInfo.expiresDate),
                         userId: user._id,
                         total: subscriptionInfo.price,
                         status: v2Notification.notificationType.toLowerCase(),
@@ -909,7 +917,7 @@ const createAppTransaction = async (
                         inAppSubscription: {
                               ...user.inAppSubscription,
                               ...inAppPurchaseBody,
-                              expiredAt: new Date(v2TransactionInfo.expiresDate * 1000)
+                              expiredAt: new Date(v2TransactionInfo.expiresDate)
                         },
                         inAppSubscriptionStatus
                   })
@@ -940,10 +948,10 @@ const createGoogleTransaction = async (
             const decodedData: any = JSON.parse(encodeDataBuff.toString());
 
             if (
-                  !decodedData?.SubscriptionNotification
+                  !decodedData?.subscriptionNotification
                   &&
                   (
-                        !decodedData?.SubscriptionNotification
+                        !decodedData?.subscriptionNotification
                         ||
                         decodedData?.oneTimeProductNotification
                   )
@@ -956,7 +964,7 @@ const createGoogleTransaction = async (
                         });
             }
             if (
-                  !decodedData?.SubscriptionNotification
+                  !decodedData?.subscriptionNotification
             ) {
                   return next(
                         Boom.badData(
@@ -982,31 +990,54 @@ const createGoogleTransaction = async (
                         )
                   );
             }
-            const encodePurchaseTokenBuffer = Buffer.from(
-                  subscriptionNotification.purchaseToken,
-                  'base64'
-            );
-            const decodedPurchaseToken: any = JSON.parse(
-                  encodePurchaseTokenBuffer.toString()
-            );
 
             let inAppSubscriptionStatus = user.inAppSubscriptionStatus;
 
             const inAppPurchaseBody = {
                   ...user.inAppSubscription,
                   subscriptionNotification,
-                  productId: decodedPurchaseToken.productId,
-                  transactionId: decodedPurchaseToken.orderId,
-                  dataAndroid: JSON.stringify(decodedPurchaseToken),
-                  transactionDate: decodedPurchaseToken.purchaseTime,
-                  packageNameAndroid: decodedPurchaseToken.packageName,
-                  purchaseToken: subscriptionNotification.purchaseToken,
-                  autoRenewingAndroid: decodedPurchaseToken.autoRenewing,
-                  transactionReceipt: JSON.stringify(decodedPurchaseToken),
-                  isAcknowledgedAndroid: decodedPurchaseToken.acknowledged,
-                  purchaseStateAndroid: subscriptionNotification.notificationType
+                  purchaseStateAndroid: subscriptionNotification?.notificationType
             }
+            const subscription = await SubscriptionsModel
+                  .findOne({ _id: user?.subscription })
+                  .lean()
+                  .exec();
 
+            const getMonths = () => {
+                  const duration = subscription?.duration;
+
+                  let months = 1;
+                  switch (duration) {
+                        case 'Month':
+                              months = 1;
+                              break;
+                        case 'Half Year':
+                              months = 6;
+                              break;
+                        case 'Year':
+                              months = 12;
+                              break;
+                        default:
+                              break;
+                  }
+                  return months;
+            }
+            let expiredAt = user?.inAppSubscription?.expiredAt;
+
+            const createTransaction = async () => {
+                  await transactionsService.createTransaction({
+                        latestInvoice: '',
+                        planCreatedAt: new Date(),
+                        planExpiredAt: new Date(expiredAt),
+                        userId: user._id,
+                        total: Number(subscription?.price),
+                        status: inAppSubscriptionStatus,
+                        paymentMethod: null,
+                        reason: '',
+                        paymentLink: '',
+                        device: 'app'
+                  })
+            }
             switch (subscriptionNotification.notificationType) {
                   case 1:
                         /*
@@ -1021,6 +1052,11 @@ const createGoogleTransaction = async (
                               - An active subscription was renewed.
                         */
                         inAppSubscriptionStatus = 'Active'
+                        expiredAt = new Date()
+                        expiredAt.setMonth(
+                              expiredAt.getMonth() + getMonths()
+                        );
+                        createTransaction()
                         break;
                   case 3:
                         /*
@@ -1030,6 +1066,8 @@ const createGoogleTransaction = async (
                                 For voluntary cancellation, sent when the user cancels.
                         */
                         inAppSubscriptionStatus = 'Cancelled'
+                        expiredAt = new Date()
+                        createTransaction()
                         break;
                   case 4:
                         /*
@@ -1037,6 +1075,11 @@ const createGoogleTransaction = async (
                               - A new subscription was purchased.
                         */
                         inAppSubscriptionStatus = 'Active'
+                        expiredAt = new Date()
+                        expiredAt.setMonth(
+                              expiredAt.getMonth() + getMonths()
+                        );
+                        createTransaction()
                         break;
                   case 5:
                         /*
@@ -1060,6 +1103,11 @@ const createGoogleTransaction = async (
                                 see [Restorations](/google/play/billing/subscriptions#restore).
                         */
                         inAppSubscriptionStatus = 'Active'
+                        expiredAt = new Date()
+                        expiredAt.setMonth(
+                              expiredAt.getMonth() + getMonths()
+                        );
+                        createTransaction()
                         break;
                   case 8:
                         /* 
@@ -1093,6 +1141,8 @@ const createGoogleTransaction = async (
                                 the user before the expiration time.
                         */
                         inAppSubscriptionStatus = 'Cancelled'
+                        expiredAt = new Date()
+                        createTransaction()
                         break;
                   case 13:
                         /*
@@ -1100,48 +1150,11 @@ const createGoogleTransaction = async (
                               - A subscription has expired.
                         */
                         inAppSubscriptionStatus = 'Cancelled'
+                        expiredAt = new Date()
+                        createTransaction()
                         break;
                   default:
                         break;
-            }
-            const subscriptions = await SubscriptionsModel
-                  .find({})
-                  .lean()
-                  .exec();
-
-            const getMonths = (subscription) => {
-                  const duration = subscriptions.find(
-                        s => String(s._id) == subscription
-                  )?.duration;
-
-                  let months = 1;
-                  switch (duration) {
-                        case 'Month':
-                              months = 1;
-                              break;
-                        case 'Half Year':
-                              months = 6;
-                              break;
-                        case 'Year':
-                              months = 12;
-                              break;
-                        default:
-                              break;
-                  }
-                  return months;
-            }
-
-            let expiredAt = user?.inAppSubscription?.expiredAt;
-
-            if (decodedPurchaseToken?.purchaseTime) {
-                  const date = Number(
-                        decodedPurchaseToken.purchaseTime
-                  )
-
-                  expiredAt = new Date(date)
-                  expiredAt.setMonth(
-                        new Date(date).getMonth() + getMonths(user?.subscription)
-                  );
             }
 
             await userService.updateUser(

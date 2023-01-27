@@ -26,7 +26,11 @@ const getBooksRatings = async (bookIds: [string], userId: string) => {
                   if (!oneRating) {
                         return null
                   }
-                  book[String(oneRating.bookId)] = { star: (book[oneRating.bookId]?.star || 0) + oneRating.star, users: (book[oneRating.bookId]?.users || 0) + 1, isRate: book[oneRating.bookId]?.isRate || String(userId) === String(oneRating.userId) }
+                  book[String(oneRating.bookId)] = {
+                        star: (book[oneRating.bookId]?.star || 0) + oneRating.star,
+                        users: (book[oneRating.bookId]?.users || 0) + 1,
+                        isRate: book[oneRating.bookId]?.isRate || String(userId) === String(oneRating.userId)
+                  }
             }))
             for (const item in book) {
                   book[item] = { averageStar: Number((book[item].star / book[item].users).toFixed(1)), isRate: book[item].isRate }

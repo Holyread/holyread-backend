@@ -167,7 +167,7 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                 usersSorting.push(['createdAt', params.order || 'ASC']);
                 break;
             default:
-                usersSorting.push(['firstName', 'DESC']);
+                usersSorting.push(['createdAt', 'DESC']);
                 break;
         }
 

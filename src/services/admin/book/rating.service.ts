@@ -8,47 +8,83 @@ const bookSummaryControllerResponse = responseMessage.bookSummaryControllerRespo
 /** Get all ratings for table */
 const getAllRatings = async (skip: number, limit, search: any, sort: { column: string, order: string }) => {
       try {
-            const booksRatings = await RatingModel.find({}).select('userId bookId description star').lean()
-            const books = await BookSummaryModel.find({}).select('coverImage title').lean().exec()
+            const booksRatings = await RatingModel
+                  .find({})
+                  .select('userId bookId description star')
+                  .lean()
+            const books = await BookSummaryModel
+                  .find({})
+                  .select('coverImage title')
+                  .lean()
+                  .exec()
+
             let ratings = []
             await Promise.all(booksRatings.map(async (oneRating: any) => {
                   if (!oneRating) {
                         return
                   }
-                  oneRating.star = Math.trunc(oneRating.star || 0)
-                  const index = ratings.findIndex(oneRes => String(oneRes.bookId) === String(oneRating.bookId))
+                  oneRating.star = oneRating.star || 0
+                  const index = ratings.findIndex(
+                        oneRes => String(oneRes.bookId) === String(oneRating.bookId)
+                  )
                   if (index >= 0) {
-                        ratings[index].ratings[oneRating.star] = (ratings[index].ratings[oneRating.star] || 0) + 1
+                        ratings[index].ratings[`${oneRating.star}`] = {
+                              stars: (
+                                    ratings[index].ratings[
+                                          `${oneRating.star}`
+                                    ]?.stars || 0
+                              ) + oneRating.star,
+                              users: (
+                                    ratings[index].ratings[
+                                          `${oneRating.star}`
+                                    ]?.users || 0
+                              ) + 1
+                        }
                   } else {
-                        const bookDetails = books.find(oneBook => String(oneBook._id) === String(oneRating.bookId))
+                        const bookDetails = books.find(
+                              oneBook => String(oneBook._id) === String(oneRating.bookId)
+                        )
                         if (!bookDetails) return
-                        const result = {
+                        ratings.push({
                               bookId: oneRating.bookId,
                               userId: oneRating.userId,
-                              ratings: [],
+                              ratings: {
+                                    [`${oneRating.star}`]: {
+                                          stars: oneRating.star,
+                                          users: 1
+                                    }
+                              },
                               bookTitle: bookDetails.title,
                               bookCoverImage: awsBucket[config.NODE_ENV].s3BaseURL + '/books/coverImage/' + bookDetails.coverImage
-                        }
-                        result.ratings[oneRating.star] = (result.ratings[oneRating.star] || 0) + 1
-                        ratings.push(result)
+                        })
                   }
             }))
-            const count = ratings.length;
             /** Feat avarage ratings */
             ratings = ratings.map(item => {
                   let stars = 0
                   let users = 0
-                  item.ratings.map((i, index) => {
-                        if (!i) i = 0
-                        stars += i * index
-                        users += i
-                  })
+                  for (let i in item.ratings) {
+                        stars += item.ratings[i].stars
+                        users += item.ratings[i].users
+                  }
                   item.star = Number((stars / users).toFixed(1))
-                  if (search.star && Number(search.star) !== Math.trunc(item.star || 0)) return null
-                  if (search.search && !item.bookTitle.toLowerCase().includes(search.search)) return null
+
+                  if (
+                        search.star &&
+                        Number(search.star) !== Math.trunc(item.star || 0)
+                  ) { return null }
+
+                  if (
+                        search.search &&
+                        !item.bookTitle.toLowerCase().includes(search.search)
+                  ) { return null }
+
                   item.ratings = users
                   return item
             }).filter(i => i)
+
+            const count = ratings.length;
+
             /** sort books by star or sorting column */
             ratings = ratings.sort((a, b) => {
                   if (a[sort.column] < b[sort.column]) {
@@ -59,7 +95,10 @@ const getAllRatings = async (skip: number, limit, search: any, sort: { column: s
                   }
                   return 0;
             })
-            return { count, ratings: ratings.slice(skip, skip + limit) }
+            return {
+                  count,
+                  ratings: ratings.slice(skip, skip + limit)
+            }
       } catch (e: any) {
             throw new Error(e)
       }
@@ -77,7 +116,7 @@ const getBookRatings = async (skip: number, limit, search: any, sort: { column: 
                   if (!oneRating) {
                         return null
                   }
-                  oneRating.star = Math.trunc(oneRating.star || 0)
+                  oneRating.star = oneRating.star || 0
                   const user = users.find(oneUser => String(oneUser._id) === String(oneRating.userId))
                   const item = {
                         bookId: oneRating.bookId,

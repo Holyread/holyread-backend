@@ -560,7 +560,7 @@ const createAppTransaction = async (
       try {
             const body = request.body;
             const header = request.headers;
-            await transactionsService.createAppTransaction({
+            const transaction = await transactionsService.createAppTransaction({
                   result: { body, header }
             })
 
@@ -635,7 +635,15 @@ const createAppTransaction = async (
                               'base64'
                         );
             const v2TransactionInfo = JSON.parse(transactionInfoBuff.toString());
-
+            await transactionsService.updateAppTransaction({ _id: transaction._id }, {
+                  result: {
+                        body,
+                        header,
+                        v2TransactionInfo,
+                        v2RenewalInfo,
+                        v2Notification
+                  }
+            })
             const user
                   = await userService.getOneUserByFilter({
                         $or: [
@@ -921,6 +929,7 @@ const createAppTransaction = async (
                         },
                         inAppSubscriptionStatus
                   })
+
             response.status(200).send({ message: 'OK' });
       } catch (e: any) {
             return next(Boom.badData(e.message))
@@ -936,7 +945,7 @@ const createGoogleTransaction = async (
       try {
             const body = request.body;
             const header = request.headers;
-            await transactionsService.createAppTransaction({
+            const transaction = await transactionsService.createAppTransaction({
                   result: { body, header }
             })
 
@@ -976,6 +985,14 @@ const createGoogleTransaction = async (
             let subscriptionNotification =
                   decodedData.subscriptionNotification;
 
+            await transactionsService.updateAppTransaction({ _id: transaction._id }, {
+                  result: {
+                        body,
+                        header,
+                        subscriptionNotification
+                  }
+            })
+
             const user = await userService
                   .getOneUserByFilter({
                         'inAppSubscription.purchaseToken':
@@ -998,6 +1015,7 @@ const createGoogleTransaction = async (
                   subscriptionNotification,
                   purchaseStateAndroid: subscriptionNotification?.notificationType
             }
+
             const subscription = await SubscriptionsModel
                   .findOne({ _id: user?.subscription })
                   .lean()
@@ -1022,6 +1040,7 @@ const createGoogleTransaction = async (
                   }
                   return months;
             }
+
             let expiredAt = user?.inAppSubscription?.expiredAt;
 
             const createTransaction = async () => {
@@ -1038,6 +1057,7 @@ const createGoogleTransaction = async (
                         device: 'app'
                   })
             }
+
             switch (subscriptionNotification.notificationType) {
                   case 1:
                         /*

@@ -13,7 +13,14 @@ const createTransaction = async (body: createTransationsType) => {
 /** Create transaction */
 const createAppTransaction = async (body: createInAppNotificationType) => {
       try {
-            await InAppNotificationModel.create(body)
+            return await InAppNotificationModel.create(body)
+      } catch (e: any) {
+            throw new Error(e)
+      }
+}
+const updateAppTransaction = async (query: object, body: createInAppNotificationType) => {
+      try {
+            return await InAppNotificationModel.findOneAndUpdate(query, body)
       } catch (e: any) {
             throw new Error(e)
       }
@@ -31,5 +38,6 @@ const deleteTransaction = async (query: Object) => {
 export default {
       createTransaction,
       deleteTransaction,
-      createAppTransaction
+      createAppTransaction,
+      updateAppTransaction,
 }

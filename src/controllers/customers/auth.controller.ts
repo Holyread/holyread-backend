@@ -106,7 +106,10 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       type: 'User',
       status: 'Deactive',
       verified: false,
-      verificationCode
+      verificationCode,
+      source: body.source,
+      medium: body.medium,
+      campaign: body.campaign
     }
     /** Store In app subscription */
     const now: Date = new Date()
@@ -406,7 +409,10 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         default: true
       }],
       device: body?.device?.toLowerCase() || '',
-      email: body.email
+      email: body.email,
+      source: body.source,
+      medium: body.medium,
+      campaign: body.campaign
     }
     const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscription })
     if (body.subscription && body.inAppSubscription) {
@@ -618,7 +624,10 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
         default: true
       }],
       device: 'web',
-      email: body.email
+      email: body.email,
+      source: body.source,
+      medium: body.medium,
+      campaign: body.campaign
     }
 
     const subscriptionDetails = await subscriptionsService

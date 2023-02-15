@@ -9,20 +9,23 @@ const NODE_ENV = config.NODE_ENV
 /** Get all book summaries with filter by author id or author name, book title or all */
 const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, sort) => {
     try {
+        search.search.publish = true
+        console.log('herer', search);
         let result: any
             = await BookSummaryModel
                 .aggregate([
                     {
                         $project: {
                             title: 1.0,
+                            views: 1.0,
                             author: 1.0,
+                            bookFor: 1.0,
+                            publish: 1.0,
                             overview: 1.0,
                             categories: 1.0,
                             coverImage: 1.0,
                             description: 1.0,
                             coverImageBackground: 1.0,
-                            bookFor: 1.0,
-                            views: 1.0
                         }
                     },
                     {
@@ -76,7 +79,8 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                 coverImageBackground: oneItem.coverImageBackground,
                 categories: oneItem.categories,
                 isRate: !!ratings[String(oneItem._id)]?.isRate,
-                totalStar
+                totalStar,
+                publish: oneItem.publish,
             })
         }))
 
@@ -91,14 +95,16 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
     try {
         const star = search.star
         delete search.star
+        search.publish = true
         const aggregate: any = new Set([
             {
                 '$project': {
                     '_id': -1.0,
                     'title': 1.0,
                     'author': 1.0,
-                    'overview': 1.0,
                     'bookFor': 1.0,
+                    'publish': 1.0,
+                    'overview': 1.0,
                     'description': 1.0,
                     'coverImage': {
                         $concat: [
@@ -106,12 +112,12 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                             '$coverImage'
                         ]
                     },
-                    'coverImageBackground': 1.0,
-                    'categories': 1.0,
                     'views': '$views',
+                    'createdAt': -1.0,
+                    'categories': 1.0,
                     'chapters.name': 1.0,
                     'chapters.size': 1.0,
-                    'createdAt': -1.0
+                    'coverImageBackground': 1.0,
                 }
             },
             {
@@ -210,7 +216,7 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                         'views': oneItem.views || 0,
                     }
                 }
-                ))
+            ))
         return {
             count,
             summaries: result.filter(i => i)
@@ -223,6 +229,7 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
 /** Get book summary by summary id */
 const getOneBookSummaryByFilter = async (query: any) => {
     try {
+        query.publish = true
         const data: any = await BookSummaryModel.findOne(query).lean().exec()
         if (!data) return data;
         const ratings = await ratingService.getBooksRatings([String(data._id)], global.currentUser._id)
@@ -245,6 +252,7 @@ const getOneBookSummaryByFilter = async (query: any) => {
 /** Get book summary */
 const findBook = async (query: any) => {
     try {
+        query.publish = true
         const data: any = await BookSummaryModel.findOne(query).lean().exec()
         return data
     } catch (e: any) {
@@ -261,12 +269,13 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
         const title = 'libraries.reading.bookId.title'
         const updatedAt = 'libraries.reading.updatedAt'
         const author = 'libraries.reading.bookId.author'
+        const bookFor = 'libraries.reading.bookId.bookFor'
+        const publish = 'libraries.reading.bookId.publish'
         const overview = 'libraries.reading.bookId.overview'
         const chapters = 'libraries.reading.bookId.chapters._id'
         const categories = 'libraries.reading.bookId.categories'
         const coverImage = 'libraries.reading.bookId.coverImage'
         const description = 'libraries.reading.bookId.description'
-        const bookFor = 'libraries.reading.bookId.bookFor'
         const coverImageBackground = 'libraries.reading.bookId.coverImageBackground'
 
         const project = {
@@ -274,15 +283,16 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
             [email]: '$' + [email],
             [title]: '$' + [title],
             [views]: '$' + [views],
-            [bookFor]: '$' + [bookFor],
             [bookId]: '$' + [bookId],
             [author]: '$' + [author],
+            [bookFor]: '$' + [bookFor],
+            [publish]: '$' + [publish],
+            [chapters]: '$' + [chapters],
             [overview]: '$' + [overview],
             [updatedAt]: '$' + [updatedAt],
             [categories]: '$' + [categories],
             [description]: '$' + [description],
             [coverImageBackground]: '$' + [coverImageBackground],
-            [chapters]: '$' + [chapters],
             [coverImage]: {
                 $concat: [
                     awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/',
@@ -359,7 +369,8 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                 },
                 {
                     '$match': {
-                        'libraries.reading.bookId._id': { $exists: true }
+                        'libraries.reading.bookId.publish': true,
+                        'libraries.reading.bookId._id': { $exists: true },
                     }
                 },
                 {
@@ -495,7 +506,6 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
         throw new Error(e)
     }
 }
-
 
 /** Modify book summary */
 const updateBookSummary = async (body: any, query: object) => {

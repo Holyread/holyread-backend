@@ -5,21 +5,25 @@ import { ExpertCuratedModel } from '../../../models/index'
 const NODE_ENV = config.NODE_ENV
 
 /** Get all expert Curated for app */
-const getAllExpertCurateds = async (skip: number, limit, search: object, sort) => {
+const getAllExpertCurateds = async (skip: number, limit, search: any, sort) => {
     try {
+        search.publish = true
         const page: any = [{ $skip: skip }]
         const aggregate: any = new Set([
             {
                 $project: {
                     title: 1.0,
+                    views: 1.0,
+                    status: 1.0,
+                    publish: 1.0,
                     description: 1.0,
                     shortDescripion: 1.0,
-                    image: { $concat: [
-                        awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/',
-                        '$image'
-                    ] },
-                    views: 1.0,
-                    status: 1.0
+                    image: {
+                        $concat: [
+                            awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/',
+                            '$image'
+                        ]
+                    },
                 }
             }
         ])
@@ -36,8 +40,8 @@ const getAllExpertCurateds = async (skip: number, limit, search: object, sort) =
             $facet: {
                 page
                     : limit
-                    ? page.concat({ $limit: limit })
-                    : page,
+                        ? page.concat({ $limit: limit })
+                        : page,
                 total: [{
                     $count: 'count'
                 }]

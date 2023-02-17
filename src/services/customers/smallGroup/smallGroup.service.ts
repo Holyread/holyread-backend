@@ -13,13 +13,14 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
         smallgroupsList = await Promise.all(await smallgroupsList.map(async (item) => {
             if (item && item.books && item.books.length) {
                 item.books = await Promise.all(item.books.map(async oneBook => {
-                    const bookDetails = await BookSummaryModel.findById(oneBook).select('coverImage description').lean().exec()
-                    if (!bookDetails) {
+                    const bookDetails = await BookSummaryModel.findById(oneBook).select('coverImage description publish').lean().exec()
+                    if (!bookDetails || !bookDetails.publish) {
                         return oneBook
                     }
                     bookDetails.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + bookDetails.coverImage
                     return bookDetails
                 }))
+                item.books = item.books.filter(i => i?._id);
             } else {
                 --count
             }
@@ -44,13 +45,18 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
 /** Get one small group by filter */
 const getOneSmallGroupByFilter = async (query: any) => {
     try {
-        const result: any = await SmallGroupModel.findOne(query).populate('books', 'title overview description author coverImage coverImageBackground views bookFor').lean()
+        const result: any = await SmallGroupModel
+            .findOne(query)
+            .populate(
+                'books',
+                'title overview description author coverImage coverImageBackground views bookFor publish'
+            ).lean()
         const handout: any = await HandoutsModel.findOne({ smallGroup: result._id, user: global?.currentUser?._id }).select('answers').lean().exec()
         result.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + result.coverImage
         
         if (result?.books.length) {
             result.books = await Promise.all(result?.books?.map(async oneBook => {
-                if (!oneBook?._id) return undefined
+                if (!oneBook?._id || !oneBook?.publish) return undefined
                 if (oneBook.author) {
                     const authorDetails = await BookAuthorModel.findOne({ _id: oneBook.author }).select('name about _id').lean().exec()
                     oneBook.author = authorDetails ? authorDetails : oneBook.author
@@ -58,7 +64,8 @@ const getOneSmallGroupByFilter = async (query: any) => {
                 oneBook.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneBook.coverImage
                 oneBook.views = oneBook.views || 0
                 return oneBook
-            }).filter(ob => ob))
+            }))
+            result.books = result.books.filter(ob => ob);
             const ratings = await ratingService.getBooksRatings(result.books.map(i => i && i._id).filter(i => i) as [string], global.currentUser._id)
             result.books.map(i => {
                 i.totalStar = ratings[String(i._id)]?.averageStar || 3,

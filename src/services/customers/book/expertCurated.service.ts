@@ -66,7 +66,6 @@ const getAllExpertCurateds = async (skip: number, limit, search: any, sort) => {
 /** Get expert Curated  by id */
 const getOneExpertCuratedByFilter = async (query: any) => {
     try {
-        query.publish = true
         const data: any = await ExpertCuratedModel.findOne(query).lean()
         return data
     } catch (e: any) {

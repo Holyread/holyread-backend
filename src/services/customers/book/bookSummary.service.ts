@@ -229,7 +229,6 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
 /** Get book summary by summary id */
 const getOneBookSummaryByFilter = async (query: any) => {
     try {
-        query.publish = true
         const data: any = await BookSummaryModel.findOne(query).lean().exec()
         if (!data) return data;
         const ratings = await ratingService.getBooksRatings([String(data._id)], global.currentUser._id)
@@ -252,7 +251,6 @@ const getOneBookSummaryByFilter = async (query: any) => {
 /** Get book summary */
 const findBook = async (query: any) => {
     try {
-        query.publish = true
         const data: any = await BookSummaryModel.findOne(query).lean().exec()
         return data
     } catch (e: any) {

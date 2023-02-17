@@ -60,6 +60,12 @@ export interface IUser extends mongoose.Document {
         paymentIntent?: String,
         ephemeralKey?: String,
     },
+    appliedCoupons?: [{
+        subscription: string,
+        planId: string,
+        coupon: string
+    }],
+    createdBy?: string,
     device: string,
     maxDevices: [string],
     timeZone?: string,
@@ -129,6 +135,12 @@ export type createUserType = {
         paymentIntent?: String,
         ephemeralKey?: String,
     },
+    appliedCoupons?: [{
+        subscription: string,
+        planId: string,
+        coupon: string
+    }],
+    createdBy?: string,
     device: string,
     maxDevices: [string],
     codes: Object,
@@ -199,6 +211,12 @@ export type getUserType = {
         paymentIntent?: String,
         ephemeralKey?: String,
     },
+    appliedCoupons?: [{
+        subscription: string,
+        planId: string,
+        coupon: string
+    }],
+    createdBy?: string,
     device: string,
     maxDevices: [string],
     codes: Object,
@@ -272,6 +290,12 @@ export const UserSchema = new Schema({
     device: { type: String, required: true },
     maxDevices: [{ type: String }], // max devices size depends on maxDevicesLogin
     timeZone: { type: String },
+    appliedCoupons: [{
+        subscription: String,
+        planId: String,
+        coupon: String
+    }],
+    createdBy: { type: Schema.Types.ObjectId, ref: 'user' },
     createdAt: {
         type: Date, default: () => {
             return new Date()

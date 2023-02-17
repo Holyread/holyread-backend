@@ -13,6 +13,8 @@ import notificationsService from '../../services/customers/notifications/notific
 import stripeSubscriptionService from '../../services/stripe/subscription';
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
 
+import couponService from '../../services/customers/subscriptions/coupon.service';
+
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
 const subscriptionsControllerResponse = responseMessage.subscriptionsControllerResponse
@@ -128,12 +130,25 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 /** Verify User signup */
-const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction) => {
+const verifyUserSignUp = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const token = req.query.token as string
     let user: any;
-    if (!req?.query?.token && !req?.query?.code) {
-      return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+
+    if (
+      !req?.query?.token
+      &&
+      !req?.query?.code
+    ) {
+      return next(
+        Boom.notAcceptable(
+          authControllerResponse.invalidCodeOrTokenError
+        )
+      )
     }
 
     if (
@@ -141,47 +156,115 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
       !req?.query?.email &&
       !req?.query?.token
     ) {
-      return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
+      return next(
+        Boom.notAcceptable(
+          authControllerResponse.missingEmailError
+        )
+      )
     }
 
-    let body: any = { email: req?.query?.email, verificationCode: req?.query?.code };
-
+    let body: any = {
+      email: req?.query?.email,
+      verificationCode: req?.query?.code
+    };
+    let coupon = undefined
+    let subscriptionId;
     if (token) {
       const decryptToken: any = verifyToken(token)
+
       if (!decryptToken.code) {
-        return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+        return next(
+          Boom.notAcceptable(
+            authControllerResponse.invalidCodeOrTokenError
+          )
+        )
       }
+      subscriptionId = decryptToken.subscriptionId
+
       body.email = decryptToken.email
       body.verificationCode = decryptToken.code
+      coupon = decryptToken?.coupon
     }
 
     /** Get user from db */
     user = await usersService.getOneUserByFilter(body)
+
     if (!user) {
-      return next(Boom.notFound(authControllerResponse.getUserError))
+      return next(
+        Boom.notFound(
+          authControllerResponse.getUserError
+        )
+      )
     }
+    let creator = user.createdBy
+      &&
+      await usersService.getOneUserByFilter({
+        _id: user.createdBy
+      })
 
     body = {
       verified: true,
       status: 'Active',
-      device: user.referralUserId && req.query.device ? req.query.device : user.device,
+      device: user.referralUserId && req.query.device
+        ? req.query.device
+        : user.device,
       $unset: { verificationCode: 1 }
     }
 
-    if (!user.inAppSubscription && user.device === 'web' && !user.referralUserId) {
-      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
-      if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-        return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
+    if (
+      !user.inAppSubscription &&
+      user.device === 'web' &&
+      !user.referralUserId
+    ) {
+      const subscriptionDetails = await subscriptionsService
+        .getOneSubscriptionByFilter(
+          subscriptionId
+          ? { _id: subscriptionId }
+          : { duration: 'Month' }
+        )
+
+      if (
+        !subscriptionDetails
+        ||
+        !subscriptionDetails.stripePlanId
+      ) {
+        return next(
+          Boom.notFound(
+            subscriptionsControllerResponse.getSubscriptionFailure
+          )
+        )
+      }
+
+      const subscriptionBody: any = {
+        planId: subscriptionDetails.stripePlanId,
+        coupon: creator?.type === 'Admin' && coupon
+          ? coupon
+          : req.query.coupon || undefined,
       }
 
       /** Create stripe customer */
-      const customer = await stripeSubscriptionService.createCustomer(user.email)
+      const customer = !user?.stripe?.customerId
+        ? await stripeSubscriptionService.createCustomer(user.email)
+        : user.stripe.customerId
+
+      subscriptionBody.customerId = customer?.id
+
+      if (subscriptionBody?.coupon) {
+        const couponDetails = await couponService
+          .getOneCouponByFilter(
+            subscriptionBody?.coupon
+          )
+        if (!couponDetails?.valid) {
+          delete subscriptionDetails.coupon
+        }
+      }
+
       /** Create stripe subscription */
-      const subscription = await stripeSubscriptionService.createSubscription({
-        planId: subscriptionDetails.stripePlanId,
-        customerId: customer.id,
-        coupon: req.query.coupon as any
-      })
+      const subscription = await stripeSubscriptionService
+        .createSubscription(
+          subscriptionBody
+        )
+
       body.stripe = {
         planId: subscriptionDetails.stripePlanId,
         subscriptionId: subscription.id,
@@ -189,22 +272,78 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
         createdAt: new Date()
       }
       body.subscription = subscriptionDetails._id
+
+      if (subscriptionBody.coupon) {
+        body.appliedCoupons = [{
+          subscription: subscription.id,
+          planId: subscriptionDetails.stripePlanId,
+          coupon: coupon
+        }]
+      }
     }
 
     await usersService.updateUser({ _id: user._id }, body)
 
     const title = 'Welcome to Holy Reads 🎉';
     const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
-    await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title, description } })
+
+    await notificationsService.createNotification({
+      userId: user._id,
+      type: 'user',
+      notification: {
+        title,
+        description
+      }
+    })
 
     /** Get welcome email template */
-    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.welcomeToHolyreads })
-    const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
-    let html = `<p>Dear ${user.email.split('@')[0]},</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]}/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
+    const emailTemplateDetails = await emailTemplateService
+      .getOneEmailTemplateByFilter({
+        title: emailTemplatesTitles.customer.welcomeToHolyreads
+      })
 
-    if (emailTemplateDetails && emailTemplateDetails.content) {
-      const contentData = { loginURL: `${origins[NODE_ENV]}/account/login` }
-      const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+    const subject = emailTemplateDetails?.subject
+      || 'Welcome To Holy Reads'
+
+    let html = `
+      <p>
+        Dear ${user.email.split('@')[0]},
+      </p>
+      <p>
+        Welcome To Holy Reads
+      </p>
+      <br />
+      <p>
+        We’re excited to have you get started. Just press the button below.
+      </p>
+      <br />
+      <p>
+        <button>
+          <a href="${origins[NODE_ENV]}/account/login">Here</a>
+        </button>
+      </p>
+      <p>
+        Should you have any questions or if any of your details change, please contact us.
+      </p>
+      <p>
+        Best regards,<br>Holy Reads
+      </p>
+      <p>
+        <strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong>
+      </p>
+    `
+
+    if (
+      emailTemplateDetails &&
+      emailTemplateDetails.content
+    ) {
+      const contentData = {
+        loginURL: `${origins[NODE_ENV]}/account/login`
+      }
+      const htmlData = await compileHtml(
+        emailTemplateDetails.content,
+        contentData
+      )
       if (htmlData) {
         html = htmlData
       }
@@ -219,22 +358,45 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     });
 
     if (!result) {
-      return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
+      return next(
+        Boom.badData(
+          authControllerResponse.sentVerifyEmailFailure
+        )
+      )
     }
-    res.status(200).send({ message: authControllerResponse.signUpSuccess })
+    res.status(200).send({
+      message: authControllerResponse.signUpSuccess
+    })
     /** Push notification */
-    if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
+    if (
+      user &&
+      user.pushTokens &&
+      user.pushTokens.length &&
+      user?.notification?.push
+    ) {
       const tokens = user.pushTokens.map(i => i.token)
-      pushNotification(tokens, title, description)
+      pushNotification(
+        tokens,
+        title,
+        description
+      )
       if (
         user?.notification?.subscription &&
         user.device === 'web' &&
         !user.inAppSubscription &&
         !user.referralUserId
-      ) pushNotification(tokens, 'Holy Reads Free Plan 🔔', 'Enjoy 3 Days free trial with holy reads best summaries📚');
+      ) pushNotification(
+        tokens,
+        'Holy Reads Free Plan 🔔',
+        'Enjoy 3 Days free trial with holy reads best summaries📚'
+      );
     }
-  } catch (e: any) {
-    next(Boom.badData(e.message))
+  } catch ({ message }) {
+    next(
+      Boom.badData(
+        message as string
+      )
+    )
   }
 }
 

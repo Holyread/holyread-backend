@@ -10,8 +10,7 @@ import { removeS3File, uploadFileToS3, getSearchRegexp, sentEmail, compileHtml, 
 import { awsBucket, dataTable, emailTemplatesTitles, originEmails, origins } from '../../constants/app.constant'
 import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
-import { io } from '../../app';
-import { fetchNotifications } from '../customers/notification.controller';
+
 import ratingService from '../../services/customers/book/rating.service';
 import highLightsService from '../../services/customers/highLights/highLights.service';
 import transactionsService from '../../services/admin/users/transactions.service';
@@ -37,12 +36,34 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             return next(Boom.badData(authControllerResponse.userAlreadyExistError))
         }
         if (body.image) {
-            const s3File: any = await uploadFileToS3(body.image, body.email.substring(0, body.email.lastIndexOf("@")), s3Bucket)
+            const s3File: any = await uploadFileToS3(
+                body.image,
+                body.email.substring(0, body.email.lastIndexOf("@")),
+                s3Bucket
+            )
             body.image = s3File.name
         }
         const password = (Math.random() + 1).toString(36).substring(2)
         const verificationCode = Math.floor(1000 + Math.random() * 9000)
-        const token: string = getToken({ code: String(verificationCode), email: body.email })
+        const tokenBody: any = {
+            code: String(verificationCode),
+            email: body.email
+        }
+
+        const subscriptionDetails = body.subscription
+            &&
+            await subscriptionService
+                .getOneSubscriptionByFilter({
+                    _id: body.subscription
+                })
+
+        if (subscriptionDetails?._id) {
+            tokenBody.subscriptionId = subscriptionDetails?._id
+            tokenBody.coupon = body.coupon || undefined
+        }
+
+        const token: string = getToken(tokenBody)
+
         const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
         const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.customerRegistration })
         const subject = emailTemplateDetails.subject || 'Account Verification'
@@ -77,23 +98,6 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             verified: true,
             device: 'web'
         }
-        const subscriptionDetails = body.subscription && await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscription })
-        if (body.subscription) {
-            if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-                return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
-            }
-            const customer = await stripeSubscriptionService.createCustomer(body.email as any)
-            const subscription = await stripeSubscriptionService.createSubscription({
-                planId: subscriptionDetails.stripePlanId, customerId: customer.id
-            })
-            newBody.stripe = {
-                planId: subscriptionDetails.stripePlanId,
-                subscriptionId: subscription.id,
-                customerId: customer.id,
-                createdAt: new Date()
-            }
-            newBody.subscription = subscriptionDetails._id
-        }
 
         const data = await usersService.createUser(newBody)
         res.status(200).send({
@@ -103,13 +107,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
                 email: data.email
             }
         })
-        const title = 'Welcome to Holy Reads 🎉';
-        const description = 'Summarizing the best of Christian publishing for your busy schedule';
-        await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
-        const createSubscriptionTitle = 'Holy Reads Subscription'
-        const createSubscriptionDesc = `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} Subscription activated successfully`
-        await notificationsService.createNotification({ userId: data._id, type: 'setting', notification: { title: createSubscriptionTitle, description: createSubscriptionDesc } })
-        fetchNotifications(io.sockets, { _id: data._id })
+
     } catch (e: any) {
         next(Boom.badData(e.message))
     }

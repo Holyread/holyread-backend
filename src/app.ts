@@ -51,6 +51,8 @@ app.set(
   'html'
 )
 
+app.use(express.json())
+
 app.use(
   bodyParser.json({ limit: '1024mb' })
 )

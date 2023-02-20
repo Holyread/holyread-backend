@@ -55,7 +55,7 @@ app.use(
   bodyParser.json({ limit: '1024mb' })
 )
 app.use(
-  bodyParser.urlencoded({ extended: true })
+  bodyParser.urlencoded({ limit: "1024mb", extended: true, parameterLimit: 1024000 })
 )
 app.use(
   cookieParser()

@@ -7,7 +7,11 @@ const getAllRecommendedBooks = async (skip: number, limit, search: object, sort)
             let count: any = await RecommendedBookModel.count(search).lean().exec()
             recommendedBooks = await Promise.all(recommendedBooks.map(async item => {
                   if (item && item.book) {
-                        item.book = await BookSummaryModel.findById(item.book).lean()
+                        item.book = await BookSummaryModel.findOne({ _id: item.book, publish: true }).lean()
+                        if (!item.book?._id) {
+                              --count;
+                              return item
+                        }
                         item.book = {
                               _id: item.book._id,
                               coverImage: item.book.coverImage,
@@ -31,6 +35,7 @@ const getAllRecommendedBooks = async (skip: number, limit, search: object, sort)
                   }
                   return item
             }))
+            recommendedBooks = recommendedBooks.filter(i => i?.book?._id)
             return { recommendedBooks, count }
       } catch (e: any) {
             throw new Error(e)

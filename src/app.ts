@@ -51,11 +51,13 @@ app.set(
   'html'
 )
 
+app.use(express.json())
+
 app.use(
-  bodyParser.json({ limit: '1024mb' })
+  bodyParser.json({ limit: '500mb' })
 )
 app.use(
-  bodyParser.urlencoded({ extended: true })
+  bodyParser.urlencoded({ limit: '500mb', extended: true, parameterLimit: 1024000 })
 )
 app.use(
   cookieParser()

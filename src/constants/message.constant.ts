@@ -16,6 +16,7 @@ export const responseMessage = {
         userAlreadyVerifiedError: 'User already verified',
         getUserSuccess: 'User fetched successfully',
         getUsersSuccess: 'users fetched successfully',
+        getUsersCsvSuccess: 'users csv get successfully',
         getUserError: 'User does not exist',
         getReferralUserError: 'Referral User does not exist',
         userNotAuthorizationError: 'Incorrect credentials or wrong password',

@@ -60,10 +60,7 @@ const getAllUsers = async (skip: number, limit, search: object, sort) => {
                 return;
             }
             const userSubscriptionDetails = await SubscriptionsModel.findById(oneUser.subscription).lean()
-            if (!userSubscriptionDetails) {
-                return
-            }
-            oneUser.subscription = userSubscriptionDetails.title
+            oneUser.subscription = userSubscriptionDetails?.title
         }))
         return { count, users }
     } catch (e: any) {

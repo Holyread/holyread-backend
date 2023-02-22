@@ -328,7 +328,7 @@ const getUsersCsv = async (req: Request | any, res: Response, next: NextFunction
             if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
                 try {
                     const subscription = await stripeSubscriptionService.retrieveSubscription(i.stripe.subscriptionId);
-                    i.subscriptionStatus = subscription?.status
+                    i.subscriptionStatus = capitalizeFirstLetter(subscription?.status || '')
                     i.total = (subscription?.plan?.amount / 100) || 0;
                 } catch (error) {
                     i.subscriptionStatus = 'Expired'

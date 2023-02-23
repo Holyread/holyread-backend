@@ -1,6 +1,6 @@
 import path from 'path'
 import cors from 'cors'
-// import http from 'http'
+import http from 'http'
 import Boom from '@hapi/boom'
 import bodyParser from 'body-parser'
 import compression from 'compression'
@@ -121,18 +121,18 @@ app.use(
   appConfig.handleError
 )
 
-// const server = http.createServer(
-//   app
-// );
+const server = http.createServer(
+  app
+);
 
 if (config.NODE_ENV !== 'test') {
-  app.listen(
+  server.listen(
     config.PORT,
     () => console.log(
       `API listening on ${config.PORT}`
     )
   )
-  // io.attach(server);
+  io.attach(server);
 
   /** Create webhook */
   subscriptionService

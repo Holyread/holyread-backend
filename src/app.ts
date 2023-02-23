@@ -1,6 +1,6 @@
 import path from 'path'
 import cors from 'cors'
-import http from 'http'
+// import http from 'http'
 import Boom from '@hapi/boom'
 import bodyParser from 'body-parser'
 import compression from 'compression'
@@ -51,11 +51,13 @@ app.set(
   'html'
 )
 
+app.use(express.json())
+
 app.use(
-  bodyParser.json({ limit: '1024mb' })
+  bodyParser.json({ limit: '500mb' })
 )
 app.use(
-  bodyParser.urlencoded({ extended: true })
+  bodyParser.urlencoded({ limit: '500mb', extended: true, parameterLimit: 1024000 })
 )
 app.use(
   cookieParser()
@@ -119,18 +121,18 @@ app.use(
   appConfig.handleError
 )
 
-const server = http.createServer(
-  app
-);
+// const server = http.createServer(
+//   app
+// );
 
 if (config.NODE_ENV !== 'test') {
-  server.listen(
+  app.listen(
     config.PORT,
     () => console.log(
       `API listening on ${config.PORT}`
     )
   )
-  io.attach(server);
+  // io.attach(server);
 
   /** Create webhook */
   subscriptionService

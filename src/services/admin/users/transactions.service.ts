@@ -73,7 +73,7 @@ const getAllTransactions = async (
                         createdAt: i?.createdAt,
                         status: i?.status,
                         paymentLink: i?.paymentLink,
-                        payment: i?.device === 'app' ? ['fa fa-mobile', 'InApp'] : ['fa-cc-' + i?.paymentMethod?.brand?.toLowerCase(), i?.paymentMethod?.brand || ''],
+                        payment: i?.device === 'app' ? ['fa fa-mobile', 'In-App' + i?.inAppSubscription?.purchaseToken ? ' (Android)' : ' (IOS)'] : ['fa-cc-' + i?.paymentMethod?.brand?.toLowerCase(), i?.paymentMethod?.brand || ''],
                         reason: i.reason,
                         latestInvoice: i.latestInvoice || 'in_' + i._id,
                         subscription: i?.userId?.subscription,
@@ -203,6 +203,15 @@ const getUserAnalytics = async (duration = 'year') => {
       }
 }
 
+const getTransaction = async (query: object) => {
+      try {
+            const transaction = await TransactionsModel.findOne(query).sort([['createdAt', 'DESC']]).lean().exec();
+            return transaction;
+      } catch ({ message }) {
+            return {}
+      }
+}
+
 /** Delete user transactions */
 const deleteTransaction = async (query: Object) => {
       try {
@@ -213,6 +222,7 @@ const deleteTransaction = async (query: Object) => {
 }
 
 export default {
+      getTransaction,
       getUserAnalytics,
       deleteTransaction,
       getAllTransactions,

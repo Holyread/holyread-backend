@@ -208,7 +208,7 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     i.subscriptionStatus = 'Expired'
                 }
             } else {
-                i.subscriptionStatus = 'Cancelled'
+                i.subscriptionStatus = 'Canceled'
             }
         }))
     response.status(200).json({ message: authControllerResponse.getUsersSuccess, data: { count, users } })
@@ -334,7 +334,7 @@ const getUsersCsv = async (req: Request | any, res: Response, next: NextFunction
                     i.subscriptionStatus = 'Expired'
                 }
             } else {
-                i.subscriptionStatus = 'Cancelled'
+                i.subscriptionStatus = 'Canceled'
             }
         }))
         const usersCsv = [
@@ -343,11 +343,10 @@ const getUsersCsv = async (req: Request | any, res: Response, next: NextFunction
                 "Lastname",
                 "Email",
                 "Signup date",
-                "subscription",
+                "Subscription",
                 "Subscription Status",
                 "Payment Mode",
                 "Total",
-                "Discount",
                 "Coupon",
                 "Status",
             ],
@@ -360,7 +359,6 @@ const getUsersCsv = async (req: Request | any, res: Response, next: NextFunction
                 item.subscriptionStatus,
                 item.paymentmethod,
                 item.total,
-                item.discount,
                 item?.stripe?.coupon || item?.inAppSubscription?.coupon || '',
                 item.status,
             ])

@@ -477,18 +477,18 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         .getOneEmailTemplateByFilter({
                               title: emailTemplatesTitles
                                     .customer
-                                    .subscriptionCancelled
+                                    .subscriptionCanceled
                         })
 
             const subject = emailTemplateDetails.subject
-                  || `Holy Reads Subscription Cancelled`
+                  || `Holy Reads Subscription Canceled`
 
             let html = `
                   <p>
                         Dear ${user.email.split('@')[0]},
                   </p>
                   <p>
-                        Your holy reads subscription cancelled.
+                        Your holy reads subscription canceled.
                   </p>
                   <p>
                         Please click this
@@ -540,8 +540,8 @@ const processTransaction = async (user: any, session: any, event: any) => {
             }
             Promise.all([
                   sentNotification(
-                        'Holy Reads Subscription Cancelled ⛔',
-                        `Your Holy Reads ${subscriptionDetails.title} Subscription Cancelled`
+                        'Holy Reads Subscription Canceled ⛔',
+                        `Your Holy Reads ${subscriptionDetails.title} Subscription Canceled`
                   )
             ])
       } catch (e: any) {
@@ -737,7 +737,7 @@ const createAppTransaction = async (
                               and auto-renewable subscriptions. For more information about Family Sharing,
                               see Supporting Family Sharing in Your App.
                         */
-                        inAppSubscriptionStatus = 'Cancelled'
+                        inAppSubscriptionStatus = 'Canceled'
                         await createTransaction()
                         break;
                   case 'EXPIRED':
@@ -764,7 +764,7 @@ const createAppTransaction = async (
                                     'PRODUCT_NOT_FOR_SALE'
                               ].includes(v2Notification.subtype)
                         ) {
-                              inAppSubscriptionStatus = 'Cancelled';
+                              inAppSubscriptionStatus = 'Canceled';
                               await createTransaction()
                         }
                         break;
@@ -861,7 +861,7 @@ const createAppTransaction = async (
                               Involuntary Subscriber Churn.
                         */
                         if (!v2Notification.subtype) {
-                              inAppSubscriptionStatus = 'Cancelled'
+                              inAppSubscriptionStatus = 'Canceled'
                               await createTransaction()
                         }
                         break;
@@ -884,7 +884,7 @@ const createAppTransaction = async (
                               cancels their subscription, whichever comes first.
                               For more information, see Reducing Involuntary Subscriber Churn.
                         */
-                        inAppSubscriptionStatus = 'Cancelled'
+                        inAppSubscriptionStatus = 'Canceled'
                         await createTransaction()
                         break;
                   case 'DID_CHANGE_RENEWAL_PREF':
@@ -1082,10 +1082,10 @@ const createGoogleTransaction = async (
                         /*
                               (3) SUBSCRIPTION_CANCELED
                               - A subscription was either voluntarily
-                                or involuntarily cancelled.
+                                or involuntarily canceled.
                                 For voluntary cancellation, sent when the user cancels.
                         */
-                        inAppSubscriptionStatus = 'Cancelled'
+                        inAppSubscriptionStatus = 'Canceled'
                         expiredAt = new Date()
                         createTransaction()
                         break;
@@ -1160,7 +1160,7 @@ const createGoogleTransaction = async (
                               - A subscription has been revoked from
                                 the user before the expiration time.
                         */
-                        inAppSubscriptionStatus = 'Cancelled'
+                        inAppSubscriptionStatus = 'Canceled'
                         expiredAt = new Date()
                         createTransaction()
                         break;
@@ -1169,7 +1169,7 @@ const createGoogleTransaction = async (
                               (13) SUBSCRIPTION_EXPIRED
                               - A subscription has expired.
                         */
-                        inAppSubscriptionStatus = 'Cancelled'
+                        inAppSubscriptionStatus = 'Canceled'
                         expiredAt = new Date()
                         createTransaction()
                         break;

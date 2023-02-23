@@ -86,7 +86,7 @@ export const emailTemplatesTitles = {
         chooseSubscription: 'Choose Subscription',
         forgotPassword: 'Customer Forgot Password',
         welcomeToHolyreads: 'Welcome To Holy Reads',
-        subscriptionCancelled: 'Subscription Cancelled',
+        subscriptionCanceled: 'Subscription Canceled',
         subscriptionActivated: 'Subscription Activated',
         emailAuthEnabled: 'Customer Email Auth Enabled',
         blessFriend: 'Customer Registration Bless Friend',

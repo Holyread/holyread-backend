@@ -953,7 +953,7 @@ const updateUserAccount = async (
                   .getOneSubscriptionByFilter({ _id: userObj.subscription });
             const isAppSubscriptionStatus = !!subscriptionDetails
                   &&
-                  ['Cancelled', 'Active']
+                  ['Canceled', 'Active']
                         .includes(req.body.inAppSubscription?.status)
                   && !!userObj?.inAppSubscriptionStatus
                   && !!req.body.inAppSubscription?.status
@@ -971,14 +971,14 @@ const updateUserAccount = async (
                   ? `Holy Reads ${subscriptionDetails.duration.includes('Half')
                         ? subscriptionDetails.duration
                         : '1 ' + subscriptionDetails.duration} Subscription activated`
-                  : 'Subscription cancelled';
+                  : 'Subscription canceled';
 
             if (isAppSubscriptionStatus && subscriptionDetails) {
                   const emailTemplateDetails = await emailTemplateService
                         .getOneEmailTemplateByFilter({
                               title: req.body.inAppSubscription.status === 'Active'
                                     ? emailTemplatesTitles.customer.subscriptionActivated
-                                    : emailTemplatesTitles.customer.subscriptionCancelled
+                                    : emailTemplatesTitles.customer.subscriptionCanceled
                         })
                   const subject = emailTemplateDetails.subject
                         || `Holy Reads Subscription ${req.body.inAppSubscription.status}`
@@ -2292,6 +2292,7 @@ const subscribePlan = async (
                         subscriptionEndDate = new Date(
                               subscription.current_period_end * 1000
                         )
+                        body['stripe.coupon'] = req.body.coupon
                   } else {
                         const retrieveSubscription = await stripeSubscriptionService
                               .retrieveSubscription(
@@ -2319,6 +2320,7 @@ const subscribePlan = async (
                                     paymentMethod: req.body.paymentMethod,
                                     planId: subscriptionDetails.stripePlanId,
                               })
+                              body['stripe.coupon'] = req.body.coupon
                         } else {
                               await stripeSubscriptionService.updateSubscription({
                                     coupon: req.body.coupon,
@@ -2327,6 +2329,7 @@ const subscribePlan = async (
                                     planId: subscriptionDetails.stripePlanId,
                                     subscriptionId: userObj.stripe.subscriptionId,
                               })
+                              body['stripe.coupon'] = req.body.coupon
                         }
                         subscription = await stripeSubscriptionService
                               .retrieveSubscription(

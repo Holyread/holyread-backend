@@ -6,7 +6,18 @@ import subscriptionService from '../../services/admin/subscriptions/subscription
 import stripeSubscriptionService from '../../services/stripe/subscription'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
-import { removeS3File, uploadFileToS3, getSearchRegexp, sentEmail, compileHtml, getToken } from '../../lib/utils/utils'
+
+import {
+    getToken,
+    sentEmail,
+    compileHtml,
+    removeS3File,
+    formattedDate,
+    uploadFileToS3,
+    getSearchRegexp,
+    capitalizeFirstLetter,
+} from '../../lib/utils/utils'
+
 import { awsBucket, dataTable, emailTemplatesTitles, originEmails, origins } from '../../constants/app.constant'
 import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
@@ -171,11 +182,39 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                 break;
         }
 
-        const getUsersList = await usersService.getAllUsers(Number(skip), Number(limit), searchFilter, usersSorting)
-        response.status(200).json({ message: authControllerResponse.getUsersSuccess, data: getUsersList })
-    } catch (e: any) {
-        next(Boom.badData(e.message))
-    }
+        const { count, users } = await usersService.getAllUsers(Number(skip), Number(limit), searchFilter, usersSorting);
+        await Promise.all(users.map(async (i: any) => {
+            i.createdAt = i?.createdAt && formattedDate(i?.createdAt)?.replace(/ /g, ' ')
+            const transaction: any = await transactionsService.getTransaction({
+                userId: i._id
+            })
+            i.coupon = i?.stripe?.coupon || i?.inAppSubscription?.coupon || '';
+            i.discount = 0;
+            if (['android', 'ios'].includes(i.device)) {
+                i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus || '');
+            }
+            if (transaction) {
+                i.paymentmethod = transaction?.device === 'web' ? ['fa-cc-' + transaction?.paymentMethod?.brand?.toLowerCase(), (transaction?.paymentMethod?.brand || '')] : ['fa fa-mobile', i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)'];
+                i.total = transaction?.amount?.total || i.total;
+                i.discount = transaction?.amount?.discount || 0;
+            }
+
+            if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
+                try {
+                    const subscription = await stripeSubscriptionService.retrieveSubscription(i.stripe.subscriptionId);
+                    i.subscriptionStatus = capitalizeFirstLetter(subscription?.status)
+                    i.total = (subscription?.plan?.amount / 100) || 0;
+                } catch (error) {
+                    i.subscriptionStatus = 'Expired'
+                }
+            } else {
+                i.subscriptionStatus = 'Canceled'
+            }
+        }))
+    response.status(200).json({ message: authControllerResponse.getUsersSuccess, data: { count, users } })
+} catch (e: any) {
+    next(Boom.badData(e.message))
+}
 }
 
 /** Update user */
@@ -263,4 +302,82 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
     }
 }
 
-export { addUser, getOneUser, getAllUsers, updateUser, deleteUser }
+/** Get Users csv */
+const getUsersCsv = async (req: Request | any, res: Response, next: NextFunction) => {
+    try {
+        const { users }: any = await usersService.getAllUsers(
+            0, 0, {}, [['createdAt', 'DESC']]
+        );
+        await Promise.all(users.map(async i => {
+            i.createdAt = i?.createdAt && formattedDate(i?.createdAt)?.replace(/ /g, ' ')
+            i.coupon = i?.stripe?.coupon || i?.inAppSubscription?.coupon || '';
+            i.discount = 0;
+            const transaction: any = await transactionsService.getTransaction({
+                userId: i._id
+            })
+
+            if (['android', 'ios'].includes(i.device)) {
+                i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus || '');
+            }
+            if (transaction) {
+                i.paymentmethod = transaction?.device === 'web' ? transaction?.paymentMethod?.brand : i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)';
+                i.total = transaction?.amount?.total || i.total;
+                i.discount = transaction?.amount?.discount || 0;
+            }
+
+            if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
+                try {
+                    const subscription = await stripeSubscriptionService.retrieveSubscription(i.stripe.subscriptionId);
+                    i.subscriptionStatus = capitalizeFirstLetter(subscription?.status || '')
+                    i.total = (subscription?.plan?.amount / 100) || 0;
+                } catch (error) {
+                    i.subscriptionStatus = 'Expired'
+                }
+            } else {
+                i.subscriptionStatus = 'Canceled'
+            }
+        }))
+        const usersCsv = [
+            [
+                "Firstname",
+                "Lastname",
+                "Email",
+                "Signup date",
+                "Subscription",
+                "Subscription Status",
+                "Payment Mode",
+                "Total",
+                "Coupon",
+                "Status",
+            ],
+            ...users.map(item => [
+                item.firstName,
+                item.lastName,
+                item.email,
+                item.createdAt,
+                item.subscription,
+                item.subscriptionStatus,
+                item.paymentmethod,
+                item.total,
+                item?.stripe?.coupon || item?.inAppSubscription?.coupon || '',
+                item.status,
+            ])
+        ].map(e => e.join(",")).join("\n");
+
+        res.status(200).send({
+            message: authControllerResponse.getUsersCsvSuccess,
+            data: { users: usersCsv }
+        })
+    } catch (e: any) {
+        return next(Boom.badData(e.message))
+    }
+}
+
+export {
+    addUser,
+    getOneUser,
+    updateUser,
+    deleteUser,
+    getAllUsers,
+    getUsersCsv,
+}

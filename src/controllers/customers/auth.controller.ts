@@ -186,7 +186,8 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
         planId: subscriptionDetails.stripePlanId,
         subscriptionId: subscription.id,
         customerId: customer.id,
-        createdAt: new Date()
+        createdAt: new Date(),
+        coupon: req?.query?.coupon
       }
       body.subscription = subscriptionDetails._id
     }
@@ -657,7 +658,8 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       planId: subscriptionDetails.stripePlanId,
       subscriptionId: subscription.id,
       customerId: customer.id,
-      createdAt: new Date()
+      createdAt: new Date(),
+      coupon: body.coupon
     }
     newBody.subscription = subscriptionDetails._id
 

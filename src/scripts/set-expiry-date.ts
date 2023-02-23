@@ -108,13 +108,9 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                               );
                               const inAppSubscriptionStatus
                                     = (
-                                          new Date(
-                                                expiredAt
-                                          )
-                                                .getTime()
+                                          new Date(expiredAt).getTime()
                                           <
-                                          new Date()
-                                                .getTime()
+                                          new Date().getTime()
                                     )
                                           ? 'Canceled'
                                           : item.inAppSubscriptionStatus;
@@ -186,14 +182,11 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                                     )
                               );
                               const inAppSubscriptionStatus
-                                    = new Date(
-                                          expiredAt
-                                    ).getTime()
+                                    = (
+                                          new Date(expiredAt).getTime()
                                           <
-                                          new Date()
-                                                .getTime()
-                                          ? 'Canceled'
-                                          : item.inAppSubscriptionStatus
+                                          new Date().getTime()
+                                    ) ? 'Canceled' : item.inAppSubscriptionStatus;
 
                               body = {
                                     'inAppSubscription.expiredAt': expiredAt,
@@ -238,7 +231,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
       } catch (e: any) {
             console.log(
                   'Set expiry date script execution failed, Error is: ', e
-                  )
+            )
       }
       return true;
 })();

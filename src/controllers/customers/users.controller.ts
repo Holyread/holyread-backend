@@ -953,7 +953,7 @@ const updateUserAccount = async (
                   .getOneSubscriptionByFilter({ _id: userObj.subscription });
             const isAppSubscriptionStatus = !!subscriptionDetails
                   &&
-                  ['Cancelled', 'Active']
+                  ['Canceled', 'Active']
                         .includes(req.body.inAppSubscription?.status)
                   && !!userObj?.inAppSubscriptionStatus
                   && !!req.body.inAppSubscription?.status
@@ -971,14 +971,14 @@ const updateUserAccount = async (
                   ? `Holy Reads ${subscriptionDetails.duration.includes('Half')
                         ? subscriptionDetails.duration
                         : '1 ' + subscriptionDetails.duration} Subscription activated`
-                  : 'Subscription cancelled';
+                  : 'Subscription canceled';
 
             if (isAppSubscriptionStatus && subscriptionDetails) {
                   const emailTemplateDetails = await emailTemplateService
                         .getOneEmailTemplateByFilter({
                               title: req.body.inAppSubscription.status === 'Active'
                                     ? emailTemplatesTitles.customer.subscriptionActivated
-                                    : emailTemplatesTitles.customer.subscriptionCancelled
+                                    : emailTemplatesTitles.customer.subscriptionCanceled
                         })
                   const subject = emailTemplateDetails.subject
                         || `Holy Reads Subscription ${req.body.inAppSubscription.status}`

@@ -65,7 +65,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                                           <
                                           new Date().getTime()
                                     )
-                                          ? 'Cancel'
+                                          ? 'Canceled'
                                           : item.inAppSubscriptionStatus;
 
                               body = {
@@ -116,7 +116,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                                           new Date()
                                                 .getTime()
                                     )
-                                          ? 'Cancel'
+                                          ? 'Canceled'
                                           : item.inAppSubscriptionStatus;
                               body = {
                                     'inAppSubscription.expiredAt': expiredAt,
@@ -161,7 +161,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                                           <
                                           new Date()
                                                 .getTime()
-                                          ? 'Cancel'
+                                          ? 'Canceled'
                                           : item.inAppSubscriptionStatus
 
                               body = {
@@ -192,7 +192,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                                           <
                                           new Date()
                                                 .getTime()
-                                          ? 'Cancel'
+                                          ? 'Canceled'
                                           : item.inAppSubscriptionStatus
 
                               body = {

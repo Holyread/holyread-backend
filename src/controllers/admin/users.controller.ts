@@ -192,29 +192,53 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             i.discount = 0;
             if (['android', 'ios'].includes(i.device)) {
                 i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus || '');
+                i.subscriptionStatus = i.subscriptionStatus && i.subscriptionStatus + ' plan'
             }
+            i.total = transaction?.amount?.total || transaction?.total || i.subscription?.price;
+            i.subscription = i.subscription?.title;
             if (transaction) {
                 i.paymentmethod = transaction?.device === 'web' ? ['fa-cc-' + transaction?.paymentMethod?.brand?.toLowerCase(), (transaction?.paymentMethod?.brand || '')] : ['fa fa-mobile', i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)'];
-                i.total = transaction?.amount?.total || i.total;
                 i.discount = transaction?.amount?.discount || 0;
             }
 
             if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
                 try {
                     const subscription = await stripeSubscriptionService.retrieveSubscription(i.stripe.subscriptionId);
-                    i.subscriptionStatus = capitalizeFirstLetter(subscription?.status)
+                    if (!subscription?.status) {
+                        i.subscriptionStatus = 'Plan expired'
+                    }
+
+                    else if (['trialing', 'incomplete'].includes(subscription.status)) {
+                        i.subscriptionStatus = 'Trail period'
+                    }
+                    else if (subscription.status === 'active') {
+                        i.subscriptionStatus = 'Active plan'
+                    } else if (subscription.status === 'canceled') {
+                        i.subscriptionStatus = 'Canceled plan'
+                    } else if (
+                        [
+                            'past_due',
+                            'unpaid',
+                            'incomplete_expired'
+                        ].includes(subscription.status)
+                    ) {
+                        i.subscriptionStatus = 'Plan expired'
+                    } else {
+                        i.subscriptionStatus = 'Plan expired'
+                    }
                     i.total = (subscription?.plan?.amount / 100) || 0;
                 } catch (error) {
-                    i.subscriptionStatus = 'Expired'
+                    i.subscriptionStatus = 'Plan expired'
                 }
-            } else {
-                i.subscriptionStatus = 'Canceled'
+            }
+            else if (!i.subscriptionStatus) {
+                i.subscriptionStatus = 'Trail period'
             }
         }))
-    response.status(200).json({ message: authControllerResponse.getUsersSuccess, data: { count, users } })
-} catch (e: any) {
-    next(Boom.badData(e.message))
-}
+        response.status(200).json({ message: authControllerResponse.getUsersSuccess, data: { count, users } })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
 }
 
 /** Update user */
@@ -318,23 +342,46 @@ const getUsersCsv = async (req: Request | any, res: Response, next: NextFunction
 
             if (['android', 'ios'].includes(i.device)) {
                 i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus || '');
+                i.subscriptionStatus = i.subscriptionStatus && i.subscriptionStatus + ' plan'
             }
+            i.total = transaction?.amount?.total || transaction?.total || i.subscription?.price;
+            i.subscription = i.subscription?.title;
             if (transaction) {
                 i.paymentmethod = transaction?.device === 'web' ? transaction?.paymentMethod?.brand : i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)';
-                i.total = transaction?.amount?.total || i.total;
                 i.discount = transaction?.amount?.discount || 0;
             }
-
             if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
                 try {
                     const subscription = await stripeSubscriptionService.retrieveSubscription(i.stripe.subscriptionId);
-                    i.subscriptionStatus = capitalizeFirstLetter(subscription?.status || '')
+                    if (!subscription?.status) {
+                        i.subscriptionStatus = 'Plan expired'
+                    }
+
+                    else if (['trialing', 'incomplete'].includes(subscription.status)) {
+                        i.subscriptionStatus = 'Trail period'
+                    }
+                    else if (subscription.status === 'active') {
+                        i.subscriptionStatus = 'Active plan'
+                    } else if (subscription.status === 'canceled') {
+                        i.subscriptionStatus = 'Canceled plan'
+                    } else if (
+                        [
+                            'past_due',
+                            'unpaid',
+                            'incomplete_expired'
+                        ].includes(subscription.status)
+                    ) {
+                        i.subscriptionStatus = 'Plan expired'
+                    } else {
+                        i.subscriptionStatus = 'Plan expired'
+                    }
                     i.total = (subscription?.plan?.amount / 100) || 0;
                 } catch (error) {
-                    i.subscriptionStatus = 'Expired'
+                    i.subscriptionStatus = 'Plan expired'
                 }
-            } else {
-                i.subscriptionStatus = 'Canceled'
+            }
+            else if (!i.subscriptionStatus) {
+                i.subscriptionStatus = 'Trail period'
             }
         }))
         const usersCsv = [

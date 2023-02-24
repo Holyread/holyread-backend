@@ -194,7 +194,7 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                 i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus || '');
                 i.subscriptionStatus = i.subscriptionStatus && i.subscriptionStatus + ' plan'
             }
-            i.total = transaction?.amount?.total || transaction?.total || i.subscription?.price;
+            i.total = typeof transaction?.amount?.total === 'number' ? transaction?.amount?.total : (transaction?.total || i.subscription?.price);
             i.subscription = i.subscription?.title;
             if (transaction) {
                 i.paymentmethod = transaction?.device === 'web' ? ['fa-cc-' + transaction?.paymentMethod?.brand?.toLowerCase(), (transaction?.paymentMethod?.brand || '')] : ['fa fa-mobile', i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)'];
@@ -226,7 +226,6 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     } else {
                         i.subscriptionStatus = 'Plan expired'
                     }
-                    i.total = (subscription?.plan?.amount / 100) || 0;
                 } catch (error) {
                     i.subscriptionStatus = 'Plan expired'
                 }
@@ -344,7 +343,7 @@ const getUsersCsv = async (req: Request | any, res: Response, next: NextFunction
                 i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus || '');
                 i.subscriptionStatus = i.subscriptionStatus && i.subscriptionStatus + ' plan'
             }
-            i.total = transaction?.amount?.total || transaction?.total || i.subscription?.price;
+            i.total = typeof transaction?.amount?.total === 'number' ? transaction?.amount?.total : (transaction?.total || i.subscription?.price);
             i.subscription = i.subscription?.title;
             if (transaction) {
                 i.paymentmethod = transaction?.device === 'web' ? transaction?.paymentMethod?.brand : i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)';
@@ -375,7 +374,6 @@ const getUsersCsv = async (req: Request | any, res: Response, next: NextFunction
                     } else {
                         i.subscriptionStatus = 'Plan expired'
                     }
-                    i.total = (subscription?.plan?.amount / 100) || 0;
                 } catch (error) {
                     i.subscriptionStatus = 'Plan expired'
                 }

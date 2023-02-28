@@ -64,7 +64,8 @@ const createTransaction = async (
 
 const processTransaction = async (user: any, session: any, event: any) => {
       try {
-            /** Trail or incomplete subscription does not required transation yet */
+            userService.updateUser({ _id: user._id }, { 'stripe.status': session?.status })
+            /** Trial or incomplete subscription does not required transation yet */
             if (
                   [
                         'trialing',
@@ -73,7 +74,9 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         .includes(
                               session?.status
                         )
-            ) { return }
+            ) {
+                  return
+            }
 
             let subscriptionId = user?.subscription
             if (event.type === 'payment_intent.succeeded') {

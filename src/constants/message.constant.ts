@@ -110,7 +110,7 @@ export const responseMessage = {
         fetchBookSummariesSuccess: 'Book summary list fetched successfully',
         createBookSummaryFailure: 'Book summary already added',
         getBookSummaryFailure: 'Failed to fetch book summary details',
-        trailPlanLimitError: 'You have exceeded your daily limit. Please activate a plan to access unlimited books summaries.',
+        trialPlanLimitError: 'You have exceeded your daily limit. Please activate a plan to access unlimited books summaries.',
         planExpiredError: 'Your plan expired, please activate plan for access unlimited books summaries',
         getBookSummaryDocFailure: 'Book reading file missing',
         recommendedBookError: 'This summary is locked because it already exists in your recommended list.',

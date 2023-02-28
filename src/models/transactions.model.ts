@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose'
+import mongoose, { Schema, Types } from 'mongoose'
 
 mongoose.set('useCreateIndex', true)
 
@@ -6,7 +6,7 @@ export interface ITransactions extends mongoose.Document {
     latestInvoice?: string,
     planCreatedAt: Date,
     planExpiredAt: Date,
-    userId: string,
+    userId: Types.ObjectId,
     total: Number,
     status: string,
     paymentMethod?: Object,
@@ -42,7 +42,7 @@ export type createTransationsType = {
     latestInvoice?: string,
     planCreatedAt: Date,
     planExpiredAt: Date,
-    userId: string,
+    userId: Types.ObjectId,
     total: Number,
     status: string,
     paymentMethod?: Object,
@@ -78,7 +78,7 @@ export type getTransactionsType = {
     latestInvoice?: string,
     planCreatedAt: Date,
     planExpiredAt: Date,
-    userId: string,
+    userId: Types.ObjectId,
     total: Number,
     status: string,
     paymentMethod?: Object,

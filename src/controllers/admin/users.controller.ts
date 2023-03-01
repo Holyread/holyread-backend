@@ -196,63 +196,136 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             }
         }
 
-        if (['Monthly', 'Yearly', 'Half Year'].includes(params.status)) {
+        if (!params?.statusFilter && ['Monthly', 'Yearly', 'Half Year'].includes(params.planFilter)) {
             searchFilter['$or'] = [
                 ...searchFilter['$or'] || [],
-                { 'subscription.title': params.status }
+                { 'subscription.title': params.planFilter }
             ]
         }
-        if (params?.status?.toLowerCase()?.includes('plan expired')) {
+        if (params?.statusFilter?.toLowerCase()?.includes('plan expired')) {
             searchFilter['$or'] = [
                 ...searchFilter['$or'] || [],
                 {
-                    'stripe.status': {
-                        $in: [
-                            'past_due',
-                            'unpaid',
-                            'incomplete_expired'
-                        ]
-                    }
+                    $and: [
+                        {
+                            'stripe.status': {
+                                $in: [
+                                    'past_due',
+                                    'unpaid',
+                                    'incomplete_expired'
+                                ]
+                            }
+                        },
+                        [
+                            'Yearly',
+                            'Monthly',
+                            'Half Year',
+                        ].includes(
+                            params.planFilter
+                        )
+                            ? { 'subscription.title': params.planFilter }
+                            : {}
+                    ]
                 },
             ]
         }
 
         if (
-            params?.status?.toLowerCase()?.includes('canceled plan')
+            params?.statusFilter?.toLowerCase()?.includes('canceled plan')
         ) {
             searchFilter['$or'] = [
                 ...searchFilter['$or'] || [],
                 {
-                    'stripe.status': 'canceled'
+                    'stripe.status': 'canceled',
+                    ...[
+                        'Yearly',
+                        'Monthly',
+                        'Half Year',
+                    ].includes(
+                        params.planFilter
+                    )
+                        ? { 'subscription.title': params.planFilter }
+                        : {}
                 },
-                { 'inAppSubscriptionStatus': 'Canceled' }
-            ]
-        }
-
-        if (
-            params?.status?.toLowerCase()?.includes('trial plan')
-        ) {
-            searchFilter['$or'] = [
-                ...searchFilter['$or'] || [],
-                { 'stripe.status': { $in: ['trialing', 'incomplete'] } },
                 {
-                    stripe: { $exists: false },
-                    inAppSubscription: { $exists: false },
+                    'inAppSubscriptionStatus': 'Canceled',
+                    ...[
+                        'Yearly',
+                        'Monthly',
+                        'Half Year',
+                    ].includes(
+                        params.planFilter
+                    )
+                        ? { 'subscription.title': params.planFilter }
+                        : {}
                 }
             ]
         }
 
         if (
-            params?.status?.toLowerCase()?.includes('active plan')
+            params?.statusFilter?.toLowerCase()?.includes('trial plan')
+        ) {
+            searchFilter['$or'] = [
+                ...searchFilter['$or'] || [],
+                {
+                    'stripe.status': { $in: ['trialing', 'incomplete'] },
+                    ...[
+                        'Yearly',
+                        'Monthly',
+                        'Half Year',
+                    ].includes(
+                        params.planFilter
+                    )
+                        ? { 'subscription.title': params.planFilter }
+                        : {}
+                },
+                {
+                    stripe: { $exists: false },
+                    inAppSubscription: { $exists: false },
+                    ...[
+                        'Yearly',
+                        'Monthly',
+                        'Half Year',
+                    ].includes(
+                        params.planFilter
+                    )
+                        ? { 'subscription.title': params.planFilter }
+                        : {}
+                }
+            ]
+        }
+
+        if (
+            params?.statusFilter?.toLowerCase()?.includes('active plan')
         ) {
             searchFilter['$or'] = [
                 ...searchFilter['$or'] || [],
                 {
                     'inAppSubscription': { $exists: true },
                     'inAppSubscriptionStatus': 'Active',
-                    device: { $in: ['ios', 'android'] }
+                    device: { $in: ['ios', 'android'] },
+                    ...[
+                        'Yearly',
+                        'Monthly',
+                        'Half Year',
+                    ].includes(
+                        params.planFilter
+                    )
+                        ? { 'subscription.title': params.planFilter }
+                        : {}
                 },
-                { 'stripe.status': 'active' }
+                {
+                    'stripe.status': 'active',
+                    ...[
+                        'Yearly',
+                        'Monthly',
+                        'Half Year',
+                    ].includes(
+                        params.planFilter
+                    )
+                        ? { 'subscription.title': params.planFilter }
+                        : {}
+                }
             ]
         }
 

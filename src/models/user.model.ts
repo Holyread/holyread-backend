@@ -7,7 +7,7 @@ export interface IUser extends mongoose.Document {
     lastName?: string,
     email: string,
     password: string,
-    subscription?: string,
+    subscription?: Types.ObjectId,
     type: 'User' | 'Admin',
     status?: 'Active' | 'Deactive',
     verified?: boolean,
@@ -60,6 +60,7 @@ export interface IUser extends mongoose.Document {
         paymentIntent?: string,
         ephemeralKey?: string,
         coupon?: string,
+        status?: string,
     },
     device: string,
     maxDevices: [string],
@@ -69,7 +70,8 @@ export interface IUser extends mongoose.Document {
     lastSeen: Date,
     source?: string,
     medium?: string,
-    campaign?: string
+    campaign?: string,
+    lastTrnId?: Types.ObjectId,
 }
 
 export type createUserType = {
@@ -77,7 +79,7 @@ export type createUserType = {
     lastName?: string,
     email: string,
     password: string,
-    subscription?: string,
+    subscription?: Types.ObjectId,
     type: 'User' | 'Admin',
     status?: 'Active' | 'Deactive',
     verified?: boolean,
@@ -130,6 +132,7 @@ export type createUserType = {
         paymentIntent?: string,
         ephemeralKey?: string,
         coupon?: string,
+        status?: string,
     },
     device: string,
     maxDevices: [string],
@@ -140,7 +143,8 @@ export type createUserType = {
     lastSeen: Date,
     source?: string,
     medium?: string,
-    campaign?: string
+    campaign?: string,
+    lastTrnId?: Types.ObjectId,
 }
 
 export type getUserType = {
@@ -148,7 +152,7 @@ export type getUserType = {
     firstName?: string,
     lastName?: string,
     email: string,
-    subscription?: string,
+    subscription?: Types.ObjectId,
     type: 'User' | 'Admin',
     status?: 'Active' | 'Deactive',
     verified?: boolean,
@@ -201,6 +205,7 @@ export type getUserType = {
         paymentIntent?: string,
         ephemeralKey?: string,
         coupon?: string,
+        status?: string,
     },
     device: string,
     maxDevices: [string],
@@ -211,7 +216,8 @@ export type getUserType = {
     lastSeen: Date,
     source?: string,
     medium?: string,
-    campaign?: string
+    campaign?: string,
+    lastTrnId?: Types.ObjectId,
 }
 
 export const UserSchema = new Schema({
@@ -219,7 +225,7 @@ export const UserSchema = new Schema({
     lastName: { type: String },
     email: { type: String, required: true, index: true, validate: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ },
     password: { type: String },
-    subscription: { type: String, ref: 'subscriptions' },
+    subscription: { type: Schema.Types.ObjectId, ref: 'subscriptions' },
     type: { type: String, required: true, enum: ['User', 'Admin'] },
     status: { type: String, enum: ['Active', 'Deactive'] },
     verified: { type: Boolean },
@@ -270,6 +276,7 @@ export const UserSchema = new Schema({
         paymentIntent: { type: String },
         ephemeralKey: { type: String },
         coupon: { type: String },
+        status: { type: String },
     },
     inAppSubscription: { type: Object }, // default key - createdAt(Date)
     inAppSubscriptionStatus: { type: String },
@@ -281,6 +288,7 @@ export const UserSchema = new Schema({
             return new Date()
         },
     },
+    lastTrnId: { type: Schema.Types.ObjectId, ref: 'transactions' },
     codes: { type: Object },
     updatedAt: { type: Date },
     lastSeen: { type: Date },

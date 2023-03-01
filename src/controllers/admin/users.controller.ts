@@ -149,92 +149,194 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
     try {
         const params = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
-        const limit: any = params.limit ? params.limit : dataTable.limit
+        const limit: any = params.limit
 
-        let searchFilter = {}
-        if (params.search) {
+        let searchFilter: any = {}
+        if (Number(params.search)) {
+            searchFilter = {
+                $or: [
+                    { 'transaction.amount.total': Number(params.search) },
+                    { 'transaction.total': Number(params.search) },
+                    { 'subscription.price': Number(params.search) },
+                    { 'transaction.amount.discount': Number(params.search) },
+                ],
+                type: 'User'
+            }
+        }
+        if (params.search && !Number(params.search)) {
             searchFilter = {
                 $or: [
                     { 'email': await getSearchRegexp(params.search) },
                     { 'firstName': await getSearchRegexp(params.search) },
                     { 'lastName': await getSearchRegexp(params.search) },
-                    { 'status': await getSearchRegexp(params.search) }
-                ]
+                    { 'status': await getSearchRegexp(params.search) },
+                    { 'stripe.coupon': await getSearchRegexp(params.search) },
+                    { 'i.stripe.coupon': await getSearchRegexp(params.search) },
+                    { 'i.inAppSubscription.coupon': await getSearchRegexp(params.search) },
+                    { 'i.device': await getSearchRegexp(params.search) },
+                ],
+                type: 'User'
             }
         }
 
-        const usersSorting = [];
-        switch (params.column) {
-            case 'firstName':
-                usersSorting.push(['firstName', params.order || 'ASC']);
-                break;
-            case 'lastName':
-                usersSorting.push(['lastName', params.order || 'ASC']);
-                break;
-            case 'email':
-                usersSorting.push(['email', params.order || 'ASC']);
-                break;
-            case 'createdAt':
-                usersSorting.push(['createdAt', params.order || 'ASC']);
-                break;
-            default:
-                usersSorting.push(['createdAt', 'DESC']);
-                break;
+        if (params.from && params.to) {
+            searchFilter.createdAt = {
+                $gte: new Date(params.from),
+                $lte: new Date(new Date(params.to).setDate(new Date(params.to).getDate() + 1)),
+            }
+        }
+        if (params.from && !params.to) {
+            searchFilter.createdAt = {
+                $gte: new Date(params.from),
+            }
+        }
+        if (!params.from && params.to) {
+            searchFilter.createdAt = {
+                $lte: new Date(new Date(params.to).setDate(new Date(params.to).getDate() + 1)),
+            }
         }
 
-        const { count, users } = await usersService.getAllUsers(Number(skip), Number(limit), searchFilter, usersSorting);
-        await Promise.all(users.map(async (i: any) => {
-            i.createdAt = i?.createdAt && formattedDate(i?.createdAt)?.replace(/ /g, ' ')
-            const transaction: any = await transactionsService.getTransaction({
-                userId: i._id
-            })
-            i.coupon = i?.stripe?.coupon || i?.inAppSubscription?.coupon || '';
-            i.discount = 0;
-            if (['android', 'ios'].includes(i.device)) {
-                i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus || '');
-                i.subscriptionStatus = i.subscriptionStatus && i.subscriptionStatus + ' plan'
-            }
-            i.total = typeof transaction?.amount?.total === 'number' ? transaction?.amount?.total : (transaction?.total || i.subscription?.price);
-            i.subscription = i.subscription?.title;
-            if (transaction) {
-                i.paymentmethod = transaction?.device === 'web' ? ['fa-cc-' + transaction?.paymentMethod?.brand?.toLowerCase(), (transaction?.paymentMethod?.brand || '')] : ['fa fa-mobile', i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)'];
-                i.discount = transaction?.amount?.discount || 0;
-            }
-
-            if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
-                try {
-                    const subscription = await stripeSubscriptionService.retrieveSubscription(i.stripe.subscriptionId);
-                    if (!subscription?.status) {
-                        i.subscriptionStatus = 'Plan expired'
-                    }
-
-                    else if (['trialing', 'incomplete'].includes(subscription.status)) {
-                        i.subscriptionStatus = 'Trail period'
-                    }
-                    else if (subscription.status === 'active') {
-                        i.subscriptionStatus = 'Active plan'
-                    } else if (subscription.status === 'canceled') {
-                        i.subscriptionStatus = 'Canceled plan'
-                    } else if (
-                        [
+        if (['Monthly', 'Yearly', 'Half Year'].includes(params.status)) {
+            searchFilter['$or'] = [
+                ...searchFilter['$or'] || [],
+                { 'subscription.title': params.status }
+            ]
+        }
+        if (params?.status?.toLowerCase()?.includes('plan expired')) {
+            searchFilter['$or'] = [
+                ...searchFilter['$or'] || [],
+                {
+                    'stripe.status': {
+                        $in: [
                             'past_due',
                             'unpaid',
                             'incomplete_expired'
-                        ].includes(subscription.status)
-                    ) {
-                        i.subscriptionStatus = 'Plan expired'
-                    } else {
-                        i.subscriptionStatus = 'Plan expired'
+                        ]
                     }
-                } catch (error) {
+                },
+            ]
+        }
+
+        if (
+            params?.status?.toLowerCase()?.includes('canceled plan')
+        ) {
+            searchFilter['$or'] = [
+                ...searchFilter['$or'] || [],
+                {
+                    'stripe.status': 'canceled'
+                },
+                { 'inAppSubscriptionStatus': 'Canceled' }
+            ]
+        }
+
+        if (
+            params?.status?.toLowerCase()?.includes('trial plan')
+        ) {
+            searchFilter['$or'] = [
+                ...searchFilter['$or'] || [],
+                { 'stripe.status': { $in: ['trialing', 'incomplete'] } },
+                {
+                    stripe: { $exists: false },
+                    inAppSubscription: { $exists: false },
+                }
+            ]
+        }
+
+        if (
+            params?.status?.toLowerCase()?.includes('active plan')
+        ) {
+            searchFilter['$or'] = [
+                ...searchFilter['$or'] || [],
+                {
+                    'inAppSubscription': { $exists: true },
+                    'inAppSubscriptionStatus': 'Active',
+                    device: { $in: ['ios', 'android'] }
+                },
+                { 'stripe.status': 'active' }
+            ]
+        }
+
+        const usersSorting = {};
+
+        params.order = params.order && params?.order?.toLowerCase() === 'asc' ? 1 : -1
+        switch (params.column) {
+            case 'firstName':
+                usersSorting['firstName'] = params.order;
+                break;
+            case 'lastName':
+                usersSorting['lastName'] = params.order;
+                break;
+            case 'email':
+                usersSorting['email'] = params.order;
+                break;
+            case 'createdAt':
+                usersSorting['createdAt'] = params.order;
+                break;
+            default:
+                usersSorting['createdAt'] = -1;
+                break;
+        }
+
+        const { count, users } = await usersService.getAllUsers(
+            Number(skip),
+            Number(limit),
+            searchFilter,
+            usersSorting
+        );
+        await Promise.all(users.map(async (i: any) => {
+            i.createdAt = i?.createdAt && formattedDate(i?.createdAt)?.replace(/ /g, ' ')
+            i.coupon = i?.stripe?.coupon || i?.inAppSubscription?.coupon || '';
+            i.discount = 0;
+            i.transaction = i.transaction[0];
+            i.total = typeof i.transaction?.amount?.total === 'number' ? i.transaction?.amount?.total : (i.transaction?.total || i.subscription?.price);
+            i.subscription = i.subscription[0]?.title;
+            if (i.transaction) {
+                i.paymentmethod = params.flag !== 'csv'
+                    ? i.transaction?.device === 'web' ? ['fa-cc-' + i.transaction?.paymentMethod?.brand?.toLowerCase(), (i.transaction?.paymentMethod?.brand || '')] : ['fa fa-mobile', i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)']
+                    : i.transaction?.device === 'web' ? i.transaction?.paymentMethod?.brand : i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)';
+                i.discount = i.transaction?.amount?.discount || 0;
+            }
+            if (!i.stripe && !i.inAppSubscription) {
+                i.subscriptionStatus = 'Trial plan'
+            }
+            if (
+                !i.subscriptionStatus &&
+                i.inAppSubscriptionStatus &&
+                ['android', 'ios'].includes(i.device)
+            ) {
+                i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus) + ' plan';
+            }
+            if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
+                if (!i.stripe?.status) {
+                    i.subscriptionStatus = 'Trial plan'
+                }
+                else if (['trialing', 'incomplete'].includes(i.stripe?.status)) {
+                    i.subscriptionStatus = 'Trial plan'
+                }
+                else if (i.stripe?.status === 'active') {
+                    i.subscriptionStatus = 'Active plan'
+                } else if (i.stripe?.status === 'canceled') {
+                    i.subscriptionStatus = 'Canceled plan'
+                } else if (
+                    [
+                        'past_due',
+                        'unpaid',
+                        'incomplete_expired'
+                    ].includes(i.stripe?.status)
+                ) {
+                    i.subscriptionStatus = 'Plan expired'
+                } else {
                     i.subscriptionStatus = 'Plan expired'
                 }
             }
-            else if (!i.subscriptionStatus) {
-                i.subscriptionStatus = 'Trail period'
+            if (!i.subscriptionStatus) {
+                i.subscriptionStatus = 'Trial plan'
             }
         }))
-        response.status(200).json({ message: authControllerResponse.getUsersSuccess, data: { count, users } })
+        response.status(200).json({
+            message: authControllerResponse.getUsersSuccess,
+            data: { count, users }
+        })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }
@@ -325,104 +427,10 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
     }
 }
 
-/** Get Users csv */
-const getUsersCsv = async (req: Request | any, res: Response, next: NextFunction) => {
-    try {
-        const { users }: any = await usersService.getAllUsers(
-            0, 0, {}, [['createdAt', 'DESC']]
-        );
-        await Promise.all(users.map(async i => {
-            i.createdAt = i?.createdAt && formattedDate(i?.createdAt)?.replace(/ /g, ' ')
-            i.coupon = i?.stripe?.coupon || i?.inAppSubscription?.coupon || '';
-            i.discount = 0;
-            const transaction: any = await transactionsService.getTransaction({
-                userId: i._id
-            })
-
-            if (['android', 'ios'].includes(i.device)) {
-                i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus || '');
-                i.subscriptionStatus = i.subscriptionStatus && i.subscriptionStatus + ' plan'
-            }
-            i.total = typeof transaction?.amount?.total === 'number' ? transaction?.amount?.total : (transaction?.total || i.subscription?.price);
-            i.subscription = i.subscription?.title;
-            if (transaction) {
-                i.paymentmethod = transaction?.device === 'web' ? transaction?.paymentMethod?.brand : i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)';
-                i.discount = transaction?.amount?.discount || 0;
-            }
-            if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
-                try {
-                    const subscription = await stripeSubscriptionService.retrieveSubscription(i.stripe.subscriptionId);
-                    if (!subscription?.status) {
-                        i.subscriptionStatus = 'Plan expired'
-                    }
-
-                    else if (['trialing', 'incomplete'].includes(subscription.status)) {
-                        i.subscriptionStatus = 'Trail period'
-                    }
-                    else if (subscription.status === 'active') {
-                        i.subscriptionStatus = 'Active plan'
-                    } else if (subscription.status === 'canceled') {
-                        i.subscriptionStatus = 'Canceled plan'
-                    } else if (
-                        [
-                            'past_due',
-                            'unpaid',
-                            'incomplete_expired'
-                        ].includes(subscription.status)
-                    ) {
-                        i.subscriptionStatus = 'Plan expired'
-                    } else {
-                        i.subscriptionStatus = 'Plan expired'
-                    }
-                } catch (error) {
-                    i.subscriptionStatus = 'Plan expired'
-                }
-            }
-            else if (!i.subscriptionStatus) {
-                i.subscriptionStatus = 'Trail period'
-            }
-        }))
-        const usersCsv = [
-            [
-                "Firstname",
-                "Lastname",
-                "Email",
-                "Signup date",
-                "Subscription",
-                "Subscription Status",
-                "Payment Mode",
-                "Total",
-                "Coupon",
-                "Status",
-            ],
-            ...users.map(item => [
-                item.firstName,
-                item.lastName,
-                item.email,
-                item.createdAt,
-                item.subscription,
-                item.subscriptionStatus,
-                item.paymentmethod,
-                item.total,
-                item?.stripe?.coupon || item?.inAppSubscription?.coupon || '',
-                item.status,
-            ])
-        ].map(e => e.join(",")).join("\n");
-
-        res.status(200).send({
-            message: authControllerResponse.getUsersCsvSuccess,
-            data: { users: usersCsv }
-        })
-    } catch (e: any) {
-        return next(Boom.badData(e.message))
-    }
-}
-
 export {
     addUser,
     getOneUser,
     updateUser,
     deleteUser,
     getAllUsers,
-    getUsersCsv,
 }

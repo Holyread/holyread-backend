@@ -64,7 +64,8 @@ const createTransaction = async (
 
 const processTransaction = async (user: any, session: any, event: any) => {
       try {
-            /** Trail or incomplete subscription does not required transation yet */
+            userService.updateUser({ _id: user._id }, { 'stripe.status': session?.status })
+            /** Trial or incomplete subscription does not required transation yet */
             if (
                   [
                         'trialing',
@@ -73,7 +74,9 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         .includes(
                               session?.status
                         )
-            ) { return }
+            ) {
+                  return
+            }
 
             let subscriptionId = user?.subscription
             if (event.type === 'payment_intent.succeeded') {
@@ -240,7 +243,8 @@ const processTransaction = async (user: any, session: any, event: any) => {
                               shipping: charge?.billing_details
                         }
                   }
-                  await transactionsService.createTransaction(transaction)
+                  const createdTransaction = await transactionsService.createTransaction(transaction)
+                  userService.updateUser({ _id: user._id }, { lastTrnId: createdTransaction._id })
                   return;
             }
 
@@ -416,7 +420,8 @@ const processTransaction = async (user: any, session: any, event: any) => {
 
             /** Process active subscription */
             if (session.status === 'active') {
-                  await transactionsService.createTransaction(transaction)
+                  const createdTransaction = await transactionsService.createTransaction(transaction)
+                  userService.updateUser({ _id: user._id }, { lastTrnId: createdTransaction._id })
                   /** Sent subscription activation email */
                   await sentSubscriptionEmail(
                         transaction?.planExpiredAt,
@@ -462,6 +467,8 @@ const processTransaction = async (user: any, session: any, event: any) => {
                   'canceled',
                   'incomplete_expired'
             ]
+            const createdTransaction = await transactionsService.createTransaction(transaction)
+            userService.updateUser({ _id: user._id }, { lastTrnId: createdTransaction._id })
 
             if (
                   event?.type !== 'customer.subscription.updated'
@@ -685,7 +692,7 @@ const createAppTransaction = async (
                   return next(Boom.notFound('Faild to fetch subscription details'))
             }
             const createTransaction = async () => {
-                  await transactionsService.createTransaction({
+                  const createdTransaction = await transactionsService.createTransaction({
                         latestInvoice: '',
                         planCreatedAt: new Date(),
                         planExpiredAt: new Date(v2TransactionInfo.expiresDate),
@@ -697,6 +704,7 @@ const createAppTransaction = async (
                         paymentLink: '',
                         device: 'app'
                   })
+                  userService.updateUser({ _id: user._id }, { lastTrnId: createdTransaction._id })
             }
 
             switch (v2Notification?.notificationType) {
@@ -1044,7 +1052,7 @@ const createGoogleTransaction = async (
             let expiredAt = user?.inAppSubscription?.expiredAt;
 
             const createTransaction = async () => {
-                  await transactionsService.createTransaction({
+                  const createdTransaction = await transactionsService.createTransaction({
                         latestInvoice: '',
                         planCreatedAt: new Date(),
                         planExpiredAt: new Date(expiredAt),
@@ -1056,6 +1064,7 @@ const createGoogleTransaction = async (
                         paymentLink: '',
                         device: 'app'
                   })
+                  userService.updateUser({ _id: user._id }, { lastTrnId: createdTransaction._id })
             }
 
             switch (subscriptionNotification.notificationType) {

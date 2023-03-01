@@ -199,14 +199,10 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
         if (['Monthly', 'Yearly', 'Half Year'].includes(params.status)) {
             searchFilter['$or'] = [
                 ...searchFilter['$or'] || [],
-                { 'subscription.title': await getSearchRegexp(params.search) }
+                { 'subscription.title': params.status }
             ]
         }
-
-        if (
-            params?.status?.toLowerCase()?.includes('canceled plan') ||
-            params?.status?.toLowerCase()?.includes('plan expired')
-        ) {
+        if (params?.status?.toLowerCase()?.includes('plan expired')) {
             searchFilter['$or'] = [
                 ...searchFilter['$or'] || [],
                 {
@@ -214,14 +210,25 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                         $in: [
                             'past_due',
                             'unpaid',
-                            'incomplete_expired',
-                            'canceled'
+                            'incomplete_expired'
                         ]
                     }
+                },
+            ]
+        }
+
+        if (
+            params?.status?.toLowerCase()?.includes('canceled plan')
+        ) {
+            searchFilter['$or'] = [
+                ...searchFilter['$or'] || [],
+                {
+                    'stripe.status': 'canceled'
                 },
                 { 'inAppSubscriptionStatus': 'Canceled' }
             ]
         }
+
         if (
             params?.status?.toLowerCase()?.includes('trial plan')
         ) {
@@ -234,6 +241,7 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                 }
             ]
         }
+
         if (
             params?.status?.toLowerCase()?.includes('active plan')
         ) {
@@ -249,7 +257,8 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
         }
 
         const usersSorting = {};
-        params.order = params.order && params.order?.toLowerCase() === 'asc' ? 1 : -1
+
+        params.order = params.order && params?.order?.toLowerCase() === 'asc' ? 1 : -1
         switch (params.column) {
             case 'firstName':
                 usersSorting['firstName'] = params.order;
@@ -282,7 +291,9 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             i.total = typeof i.transaction?.amount?.total === 'number' ? i.transaction?.amount?.total : (i.transaction?.total || i.subscription?.price);
             i.subscription = i.subscription[0]?.title;
             if (i.transaction) {
-                i.paymentmethod = i.transaction?.device === 'web' ? ['fa-cc-' + i.transaction?.paymentMethod?.brand?.toLowerCase(), (i.transaction?.paymentMethod?.brand || '')] : ['fa fa-mobile', i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)'];
+                i.paymentmethod = params.flag !== 'csv'
+                    ? i.transaction?.device === 'web' ? ['fa-cc-' + i.transaction?.paymentMethod?.brand?.toLowerCase(), (i.transaction?.paymentMethod?.brand || '')] : ['fa fa-mobile', i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)']
+                    : i.transaction?.device === 'web' ? i.transaction?.paymentMethod?.brand : i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)';
                 i.discount = i.transaction?.amount?.discount || 0;
             }
             if (!i.stripe && !i.inAppSubscription) {
@@ -416,104 +427,10 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
     }
 }
 
-/** Get Users csv */
-const getUsersCsv = async (req: Request | any, res: Response, next: NextFunction) => {
-    try {
-        const { users }: any = await usersService.getAllUsers(
-            0, 0, {}, [['createdAt', 'DESC']]
-        );
-        await Promise.all(users.map(async i => {
-            i.createdAt = i?.createdAt && formattedDate(i?.createdAt)?.replace(/ /g, ' ')
-            i.coupon = i?.stripe?.coupon || i?.inAppSubscription?.coupon || '';
-            i.discount = 0;
-            const transaction: any = await transactionsService.getTransaction({
-                userId: i._id
-            })
-
-            if (['android', 'ios'].includes(i.device)) {
-                i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus || '');
-                i.subscriptionStatus = i.subscriptionStatus && i.subscriptionStatus + ' plan'
-            }
-            i.total = typeof transaction?.amount?.total === 'number' ? transaction?.amount?.total : (transaction?.total || i.subscription?.price);
-            i.subscription = i.subscription?.title;
-            if (transaction) {
-                i.paymentmethod = transaction?.device === 'web' ? transaction?.paymentMethod?.brand : i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)';
-                i.discount = transaction?.amount?.discount || 0;
-            }
-            if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
-                try {
-                    const subscription = await stripeSubscriptionService.retrieveSubscription(i.stripe.subscriptionId);
-                    if (!subscription?.status) {
-                        i.subscriptionStatus = 'Plan expired'
-                    }
-
-                    else if (['trialing', 'incomplete'].includes(subscription.status)) {
-                        i.subscriptionStatus = 'Trial plan'
-                    }
-                    else if (subscription.status === 'active') {
-                        i.subscriptionStatus = 'Active plan'
-                    } else if (subscription.status === 'canceled') {
-                        i.subscriptionStatus = 'Canceled plan'
-                    } else if (
-                        [
-                            'past_due',
-                            'unpaid',
-                            'incomplete_expired'
-                        ].includes(subscription.status)
-                    ) {
-                        i.subscriptionStatus = 'Plan expired'
-                    } else {
-                        i.subscriptionStatus = 'Plan expired'
-                    }
-                } catch (error) {
-                    i.subscriptionStatus = 'Plan expired'
-                }
-            }
-            else if (!i.subscriptionStatus) {
-                i.subscriptionStatus = 'Trial plan'
-            }
-        }))
-        const usersCsv = [
-            [
-                "Firstname",
-                "Lastname",
-                "Email",
-                "Signup date",
-                "Subscription",
-                "Subscription Status",
-                "Payment Mode",
-                "Total",
-                "Coupon",
-                "Status",
-            ],
-            ...users.map(item => [
-                item.firstName,
-                item.lastName,
-                item.email,
-                item.createdAt,
-                item.subscription,
-                item.subscriptionStatus,
-                item.paymentmethod,
-                item.total,
-                item?.stripe?.coupon || item?.inAppSubscription?.coupon || '',
-                item.status,
-            ])
-        ].map(e => e.join(",")).join("\n");
-
-        res.status(200).send({
-            message: authControllerResponse.getUsersCsvSuccess,
-            data: { users: usersCsv }
-        })
-    } catch (e: any) {
-        return next(Boom.badData(e.message))
-    }
-}
-
 export {
     addUser,
     getOneUser,
     updateUser,
     deleteUser,
     getAllUsers,
-    getUsersCsv,
 }

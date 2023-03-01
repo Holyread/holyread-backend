@@ -4,7 +4,7 @@ import { InAppNotificationModel, createInAppNotificationType } from '../../../mo
 /** Create transaction */
 const createTransaction = async (body: createTransationsType) => {
       try {
-            await TransactionsModel.create(body)
+            return await TransactionsModel.create(body)
       } catch (e: any) {
             throw new Error(e)
       }

@@ -152,33 +152,38 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
         const limit: any = params.limit
 
         let searchFilter: any = {}
-        if (Number(params.search)) {
-            searchFilter = {
-                $or: [
-                    { 'transaction.amount.total': Number(params.search) },
-                    { 'transaction.total': Number(params.search) },
-                    { 'subscription.price': Number(params.search) },
-                    { 'transaction.amount.discount': Number(params.search) },
-                ],
-                type: 'User'
-            }
-        }
-        if (params.search && !Number(params.search)) {
-            searchFilter = {
-                $or: [
-                    { 'email': await getSearchRegexp(params.search) },
-                    { 'firstName': await getSearchRegexp(params.search) },
-                    { 'lastName': await getSearchRegexp(params.search) },
-                    { 'status': await getSearchRegexp(params.search) },
-                    { 'stripe.coupon': await getSearchRegexp(params.search) },
-                    { 'i.stripe.coupon': await getSearchRegexp(params.search) },
-                    { 'i.inAppSubscription.coupon': await getSearchRegexp(params.search) },
-                    { 'i.device': await getSearchRegexp(params.search) },
-                ],
-                type: 'User'
-            }
-        }
 
+        const searchQuery = params.search ? {
+            $or: [
+                { 'email': await getSearchRegexp(params.search) },
+                { 'firstName': await getSearchRegexp(params.search) },
+                { 'lastName': await getSearchRegexp(params.search) },
+                { 'status': await getSearchRegexp(params.search) },
+                { 'stripe.coupon': await getSearchRegexp(params.search) },
+                { 'i.stripe.coupon': await getSearchRegexp(params.search) },
+                { 'i.inAppSubscription.coupon': await getSearchRegexp(params.search) },
+                { 'i.device': await getSearchRegexp(params.search) },
+                { 'transaction.total': await getSearchRegexp(params.search) },
+            ],
+            type: 'User'
+        } : {}
+
+        const planQuery = [
+            'Yearly',
+            'Monthly',
+            'Half Year',
+        ].includes(
+            params.planFilter
+        )
+            ? { 'subscription.title': params.planFilter }
+            : {}
+
+        if (!params?.statusFilter) {
+            searchFilter = {
+                ...searchQuery,
+                ...planQuery
+            }
+        }
         if (params.from && params.to) {
             searchFilter.createdAt = {
                 $gte: new Date(params.from),
@@ -196,15 +201,13 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             }
         }
 
-        if (!params?.statusFilter && ['Monthly', 'Yearly', 'Half Year'].includes(params.planFilter)) {
+        searchFilter['type'] = 'User'
+
+        if (
+            params?.statusFilter?.toLowerCase()?.includes('plan expired')
+        ) {
             searchFilter['$or'] = [
-                ...searchFilter['$or'] || [],
-                { 'subscription.title': params.planFilter }
-            ]
-        }
-        if (params?.statusFilter?.toLowerCase()?.includes('plan expired')) {
-            searchFilter['$or'] = [
-                ...searchFilter['$or'] || [],
+                ...(searchFilter['$or'] || []),
                 {
                     $and: [
                         {
@@ -216,15 +219,8 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                                 ]
                             }
                         },
-                        [
-                            'Yearly',
-                            'Monthly',
-                            'Half Year',
-                        ].includes(
-                            params.planFilter
-                        )
-                            ? { 'subscription.title': params.planFilter }
-                            : {}
+                        planQuery,
+                        searchQuery
                     ]
                 },
             ]
@@ -234,31 +230,17 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             params?.statusFilter?.toLowerCase()?.includes('canceled plan')
         ) {
             searchFilter['$or'] = [
-                ...searchFilter['$or'] || [],
+                ...(searchFilter['$or'] || []),
                 {
                     'stripe.status': 'canceled',
-                    ...[
-                        'Yearly',
-                        'Monthly',
-                        'Half Year',
-                    ].includes(
-                        params.planFilter
-                    )
-                        ? { 'subscription.title': params.planFilter }
-                        : {}
+                    ...planQuery,
+                    ...searchQuery
                 },
                 {
                     'inAppSubscriptionStatus': 'Canceled',
-                    ...[
-                        'Yearly',
-                        'Monthly',
-                        'Half Year',
-                    ].includes(
-                        params.planFilter
-                    )
-                        ? { 'subscription.title': params.planFilter }
-                        : {}
-                }
+                    ...planQuery,
+                    ...searchQuery
+                },
             ]
         }
 
@@ -266,32 +248,18 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             params?.statusFilter?.toLowerCase()?.includes('trial plan')
         ) {
             searchFilter['$or'] = [
-                ...searchFilter['$or'] || [],
+                ...(searchFilter['$or'] || []),
                 {
                     'stripe.status': { $in: ['trialing', 'incomplete'] },
-                    ...[
-                        'Yearly',
-                        'Monthly',
-                        'Half Year',
-                    ].includes(
-                        params.planFilter
-                    )
-                        ? { 'subscription.title': params.planFilter }
-                        : {}
+                    ...planQuery,
+                    ...searchQuery
                 },
                 {
                     stripe: { $exists: false },
                     inAppSubscription: { $exists: false },
-                    ...[
-                        'Yearly',
-                        'Monthly',
-                        'Half Year',
-                    ].includes(
-                        params.planFilter
-                    )
-                        ? { 'subscription.title': params.planFilter }
-                        : {}
-                }
+                    ...planQuery,
+                    ...searchQuery
+                },
             ]
         }
 
@@ -299,33 +267,19 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             params?.statusFilter?.toLowerCase()?.includes('active plan')
         ) {
             searchFilter['$or'] = [
-                ...searchFilter['$or'] || [],
+                ...(searchFilter['$or'] || []),
                 {
                     'inAppSubscription': { $exists: true },
                     'inAppSubscriptionStatus': 'Active',
                     device: { $in: ['ios', 'android'] },
-                    ...[
-                        'Yearly',
-                        'Monthly',
-                        'Half Year',
-                    ].includes(
-                        params.planFilter
-                    )
-                        ? { 'subscription.title': params.planFilter }
-                        : {}
+                    ...planQuery,
+                    ...searchQuery
                 },
                 {
                     'stripe.status': 'active',
-                    ...[
-                        'Yearly',
-                        'Monthly',
-                        'Half Year',
-                    ].includes(
-                        params.planFilter
-                    )
-                        ? { 'subscription.title': params.planFilter }
-                        : {}
-                }
+                    ...planQuery,
+                    ...searchQuery
+                },
             ]
         }
 
@@ -359,15 +313,13 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
         await Promise.all(users.map(async (i: any) => {
             i.createdAt = i?.createdAt && formattedDate(i?.createdAt)?.replace(/ /g, ' ')
             i.coupon = i?.stripe?.coupon || i?.inAppSubscription?.coupon || '';
-            i.discount = 0;
             i.transaction = i.transaction[0];
-            i.total = typeof i.transaction?.amount?.total === 'number' ? i.transaction?.amount?.total : (i.transaction?.total || i.subscription?.price);
+            i.total = i.transaction?.amount?.total;
             i.subscription = i.subscription[0]?.title;
             if (i.transaction) {
                 i.paymentmethod = params.flag !== 'csv'
                     ? i.transaction?.device === 'web' ? ['fa-cc-' + i.transaction?.paymentMethod?.brand?.toLowerCase(), (i.transaction?.paymentMethod?.brand || '')] : ['fa fa-mobile', i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)']
                     : i.transaction?.device === 'web' ? i.transaction?.paymentMethod?.brand : i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)';
-                i.discount = i.transaction?.amount?.discount || 0;
             }
             if (!i.stripe && !i.inAppSubscription) {
                 i.subscriptionStatus = 'Trial plan'

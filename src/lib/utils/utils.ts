@@ -220,7 +220,7 @@ export const sentEmail = async (params: {
 }
 
 export const getSearchRegexp = async (value) => {
-    const result = { $regex: `.*` + value.toLowerCase().trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '.*', $options: '-i' }
+    const result = { $regex: `.*` + value.toLowerCase().trim().replace(/[-\/\\^$*+?.)(*|][\]{}]/g, '\\$&') + '.*', $options: '-i' }
     return result
 }
 

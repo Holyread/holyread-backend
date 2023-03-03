@@ -5,10 +5,11 @@ interface IConfig {
     DBURL: string,
     NODE_ENV: string,
     AWS_SECRET: string,
+    SMTP_SECRET: string,
     PORT: number | string,
     AWS_ACCESSKEY: string,
     STRIPE_SECRET: string,
-    SMTP_SECRET: string,
+    MAILCHIMP_API_KEY: string,
     KINDLE_SMTP_EMAIL: string,
     KINDLE_SMTP_SECRET: string,
 }
@@ -21,6 +22,7 @@ const config: IConfig = {
     SMTP_SECRET: process.env.SMTP_SECRET,
     AWS_ACCESSKEY: process.env.AWS_ACCESSKEY,
     STRIPE_SECRET: process.env.STRIPE_SECRET,
+    MAILCHIMP_API_KEY: process.env.MAILCHIMP_API_KEY,
     KINDLE_SMTP_EMAIL: process.env.KINDLE_SMTP_EMAIL,
     KINDLE_SMTP_SECRET: process.env.KINDLE_SMTP_SECRET,
 }

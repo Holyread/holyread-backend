@@ -8,6 +8,7 @@ const updateUser = async (
       status: 'subscribed' | 'unsubscribed' | 'cleaned' | 'pending' | 'transactional',
 ) => {
       try {
+            if (config.NODE_ENV !== 'production') return null;
             const subscriberHash = crypto.createHash("md5")
                   .update(email.toLowerCase())
                   .digest("hex");

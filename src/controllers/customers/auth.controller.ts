@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
 import { encrypt, getToken, verifyToken, sentEmail, pushNotification, imageUrlToBase64 } from '../../lib/utils/utils'
+import mailchimpService from '../../services/mailchimp'
 import usersService from '../../services/admin/users/user.service'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
@@ -193,7 +194,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     }
 
     await usersService.updateUser({ _id: user._id }, body)
-
+    mailchimpService.updateUser(user.email, 'subscribed')
     const title = 'Welcome to Holy Reads 🎉';
     const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
     await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title, description } })
@@ -287,10 +288,16 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
     if (!newPassword) {
       return next(Boom.badData(adminControllerResponse.passwordMissingError))
     }
+
     /** Get user from db */
-    const userObj: any = await usersService.getOneUserByFilter({ verificationCode: code, type: 'User' })
+    const userObj: any = await usersService.getOneUserByFilter(
+      { verificationCode: code, type: 'User' }, ['password']
+    )
     if (!userObj) {
       return next(Boom.notFound(adminControllerResponse.codeVerificationFailure))
+    }
+    if (encrypt(newPassword) === userObj.password) {
+      return next(Boom.badData(authControllerResponse.userSamePasswordError))
     }
     await usersService.updateUser({ _id: userObj._id }, { password: newPassword, $unset: { verificationCode: 1 } })
     res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
@@ -426,6 +433,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     }
     /** Create new user using social login */
     const data: any = await usersService.createUser(newBody)
+    mailchimpService.updateUser(data.email, 'subscribed')
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
     const title = 'Welcome to Holy Reads 🎉';
     const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
@@ -664,6 +672,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     newBody.subscription = subscriptionDetails._id
 
     const data: any = await usersService.createUser(newBody)
+    mailchimpService.updateUser(data.email, 'subscribed')
     const token: string = getToken({
       email: data.email,
       'oauthClientId': body.id,

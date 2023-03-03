@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
+import mailchimpService from '../../services/mailchimp'
 import usersService from '../../services/admin/users/user.service'
 import subscriptionService from '../../services/admin/subscriptions/subscriptions.service'
 import stripeSubscriptionService from '../../services/stripe/subscription'
@@ -432,6 +433,7 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
         const id: any = req.params.userId
         const userObj: any = await usersService.getOneUserByFilter({ _id: id })
         await usersService.deleteUser(id)
+        mailchimpService.updateUser(userObj.email, 'unsubscribed')
         res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
 
         if (userObj && userObj.image) {

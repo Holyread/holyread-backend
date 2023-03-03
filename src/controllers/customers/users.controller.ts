@@ -66,6 +66,8 @@ import emailTemplateService
 import notificationsService
       from '../../services/customers/notifications/notifications.service';
 
+import mailchimpService from '../../services/mailchimp'
+
 const NODE_ENV = config.NODE_ENV
 
 const authControllerResponse
@@ -585,7 +587,10 @@ const verifyEmailAuth = async (
                   email,
                   password: password
             })
-
+            if (user.email !== email) {
+                  mailchimpService.updateUser(user.email, 'unsubscribed')
+            }
+            mailchimpService.updateUser(email, 'subscribed');
             const emailTemplateDetails = await emailTemplateService
                   .getOneEmailTemplateByFilter({
                         title: emailTemplatesTitles.customer.emailAuthEnabled
@@ -2508,6 +2513,7 @@ const deleteUser = async (
       try {
             const userObj: any = req.user
             await usersService.deleteUser(userObj._id)
+            mailchimpService.updateUser(userObj.email, 'unsubscribed')
             res.status(200).send({
                   message: authControllerResponse.deleteUserSuccess
             })

@@ -6,6 +6,7 @@ import { encrypt } from '../lib/utils/utils'
 import { uploadFileToS3 } from '../lib/utils/utils'
 
 import { awsBucket } from '../constants/app.constant'
+import { Types } from 'mongoose'
 
 const NODE_ENV = config.NODE_ENV
 const s3Bucket = {
@@ -38,6 +39,11 @@ const createBotBody: any = {
 /** Create Admin */
 (async (body: any) => {
       try {
+            const users: any = await UserModel.find({ subscription: { $exists: true } });
+            users.map(user => {
+                  user.subscription = Types.ObjectId(user.subscription);
+                  user.save();
+            })
             await UserModel.updateMany(
                   {
                         inAppSubscriptionStatus: 'active'

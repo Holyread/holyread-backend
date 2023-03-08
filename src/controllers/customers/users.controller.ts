@@ -66,6 +66,8 @@ import emailTemplateService
 import notificationsService
       from '../../services/customers/notifications/notifications.service';
 
+import mailchimpService from '../../services/mailchimp'
+
 const NODE_ENV = config.NODE_ENV
 
 const authControllerResponse
@@ -108,7 +110,7 @@ const getUserAccount = async (
                               _id: userObj.subscription
                         })
 
-            /** set default subscription end date with 3 days trail */
+            /** set default subscription end date with 3 days trial */
             let subscriptionEndDate
                   = new Date(userObj.createdAt)
                         .getTime() + (3 * 24 * 60 * 60 * 1000);
@@ -585,7 +587,10 @@ const verifyEmailAuth = async (
                   email,
                   password: password
             })
-
+            if (user.email !== email) {
+                  mailchimpService.updateUser(user.email, 'unsubscribed')
+            }
+            mailchimpService.updateUser(email, 'subscribed');
             const emailTemplateDetails = await emailTemplateService
                   .getOneEmailTemplateByFilter({
                         title: emailTemplatesTitles.customer.emailAuthEnabled
@@ -736,7 +741,7 @@ const getUserSubscription = async (
                                     ))
                               ) : '0:0:0:0';
 
-                        /** set default subscription end date with 3 days trail */
+                        /** set default subscription end date with 3 days trial */
                         if (data.subscription?._id) {
                               let months = data.subscription.duration === 'Month'
                                     ? 1 : data.subscription.duration === 'Half Year'
@@ -2508,6 +2513,7 @@ const deleteUser = async (
       try {
             const userObj: any = req.user
             await usersService.deleteUser(userObj._id)
+            mailchimpService.updateUser(userObj.email, 'unsubscribed')
             res.status(200).send({
                   message: authControllerResponse.deleteUserSuccess
             })

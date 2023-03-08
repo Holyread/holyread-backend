@@ -144,7 +144,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             })
 
             if (!isExist && todayViews.length >= 5) {
-                return next(Boom.forbidden(bookSummaryControllerResponse.trailPlanLimitError))
+                return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError))
             }
         }
         if (data.coverImage) {

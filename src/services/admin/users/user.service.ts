@@ -2,8 +2,9 @@ import config from '../../../../config'
 import { encrypt } from '../../../lib/utils/utils'
 import { awsBucket } from '../../../constants/app.constant'
 import { responseMessage } from '../../../constants/message.constant'
-import { UserModel, SubscriptionsModel } from '../../../models/index'
-
+// import { UserModel, SubscriptionsModel } from '../../../models/index'
+import { UserModel } from '../../../models/index'
+// import stripeSubscriptionService from '../../stripe/subscription'
 const NODE_ENV = config.NODE_ENV
 const authControllerResponse = responseMessage.authControllerResponse
 
@@ -35,9 +36,9 @@ const updateUser = async (query: object, body: any) => {
 }
 
 /** Get user by id */
-const getOneUserByFilter = async (query: any) => {
+const getOneUserByFilter = async (query: any, select=[]) => {
     try {
-        const result: any = await UserModel.findOne(query).select('-password').lean().exec()
+        const result: any = await UserModel.findOne(query).select(select).lean().exec()
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -45,23 +46,96 @@ const getOneUserByFilter = async (query: any) => {
 }
 
 /** Get all Users for table */
-const getAllUsers = async (skip: number, limit, search: object, sort) => {
+const getAllUsers = async (
+    skip: number,
+    limit: number,
+    search: object,
+    sort: object
+) => {
     try {
-        const users = await UserModel.find({ ...search, type: 'User' }).select('-password').skip(skip).limit(limit).sort(sort).lean()
-        const count = await UserModel.find({ ...search, type: 'User' }).count()
-        await Promise.all(users.map(async (oneUser: any) => {
-            if (!oneUser) {
-                return
-            }
-            if (oneUser.image) {
-                oneUser.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + oneUser.image
-            }
-            if (!oneUser.subscription) {
-                return;
-            }
-            oneUser.subscription = await SubscriptionsModel.findById(oneUser.subscription).lean()
-        }))
-        return { count, users }
+        const page: any = [
+            { $skip: skip },
+        ]
+        if (limit) {
+            page.push({ $limit: limit })
+        }
+        let result: any
+            = await UserModel
+                .aggregate([
+                    {
+                        $project: {
+                            type: 1.0,
+                            email: 1.0,
+                            stripe: 1.0,
+                            status: 1.0,
+                            device: 1.0,
+                            lastName: 1.0,
+                            lastTrnId: 1.0,
+                            firstName: 1.0,
+                            createdAt: 1.0,
+                            subscription: 1.0,
+                            image: {
+                                $concat: [
+                                    awsBucket[NODE_ENV].s3BaseURL + '/users/',
+                                    '$image'
+                                ]
+                            },
+                            inAppSubscriptionStatus: 1.0,
+                            'inAppSubscription.createdAt': 1.0,
+                            'inAppSubscription.expiredAt': 1.0,
+                            'inAppSubscription.coupon': 1.0,
+                        }
+                    },
+                    {
+                        $lookup: {
+                            as: 'subscription',
+                            foreignField: '_id',
+                            from: 'subscriptions',
+                            localField: 'subscription',
+                        }
+                    },
+                    {
+                        $lookup: {
+                            as: 'transaction',
+                            foreignField: '_id',
+                            from: 'transactions',
+                            localField: 'lastTrnId',
+                        }
+                    },
+                    {
+                        $match: search,
+                    },
+                    {
+                        $project: {
+                            'lastTrnId': 0,
+                            'subscription.__v': 0,
+                            'subscription.saves': 0,
+                            'subscription.status': 0,
+                            'subscription.duration': 0,
+                            'subscription.createdAt': 0,
+                            'subscription.updatedAt': 0,
+                            'subscription.description': 0,
+                            'subscription.stripePlanId': 0,
+                            'subscription.intervalCount': 0,
+                        }
+                    },
+                    {
+                        $sort: sort
+                    },
+                    {
+                        $facet: {
+                            page,
+                            total: [
+                                {
+                                    $count: 'count'
+                                }
+                            ]
+                        }
+                    }
+                ]);
+        const users = result[0]?.page;
+
+        return { count: result[0]?.total[0]?.count || 0, users }
     } catch (e: any) {
         throw new Error(e)
     }

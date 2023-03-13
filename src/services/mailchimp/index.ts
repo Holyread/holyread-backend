@@ -18,7 +18,6 @@ const updateUser = async (
             ).toString('base64');
             const data = {
                   email_address: email,
-                  status_if_new: 'pending',
                   status
             };
 

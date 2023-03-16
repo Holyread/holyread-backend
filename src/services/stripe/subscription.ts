@@ -209,7 +209,7 @@ const createSubscription = async (params: {
                   ],
                   payment_behavior: 'default_incomplete',
                   expand: ['latest_invoice.payment_intent'],
-                  trial_period_days: params.status === 'active' ? 0 : 7
+                  trial_period_days: params.status === 'active' ? 0 : 3
             }
             if (params.coupon) {
                   const couponList = await getCouponList();

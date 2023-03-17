@@ -84,6 +84,7 @@ const getAllUsers = async (
                             'inAppSubscription.createdAt': 1.0,
                             'inAppSubscription.expiredAt': 1.0,
                             'inAppSubscription.coupon': 1.0,
+                            'inAppSubscription.purchaseToken': 1.0
                         }
                     },
                     {

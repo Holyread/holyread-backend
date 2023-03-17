@@ -179,12 +179,24 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             ? { 'subscription.title': params.planFilter }
             : {}
 
+        const serchPaymentDeviceQuery = [
+            'ios',
+            'android',
+            'web',
+        ].includes(
+            params.paymentModeFilter
+        )
+            ? { 'device': params.paymentModeFilter }
+            : {}
+
         if (!params?.statusFilter) {
             searchFilter = {
                 ...searchQuery,
-                ...planQuery
+                ...planQuery,
+                ...serchPaymentDeviceQuery
             }
         }
+
         if (params.from && params.to) {
             searchFilter.createdAt = {
                 $gte: new Date(params.from),
@@ -221,7 +233,8 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                             }
                         },
                         planQuery,
-                        searchQuery
+                        searchQuery,
+                        serchPaymentDeviceQuery
                     ]
                 },
             ]
@@ -235,12 +248,14 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                 {
                     'stripe.status': 'canceled',
                     ...planQuery,
-                    ...searchQuery
+                    ...searchQuery,
+                    ...serchPaymentDeviceQuery
                 },
                 {
                     'inAppSubscriptionStatus': 'Canceled',
                     ...planQuery,
-                    ...searchQuery
+                    ...searchQuery,
+                    ...serchPaymentDeviceQuery
                 },
             ]
         }
@@ -253,13 +268,15 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                 {
                     'stripe.status': { $in: ['trialing', 'incomplete'] },
                     ...planQuery,
-                    ...searchQuery
+                    ...searchQuery,
+                    ...serchPaymentDeviceQuery
                 },
                 {
                     stripe: { $exists: false },
                     inAppSubscription: { $exists: false },
                     ...planQuery,
-                    ...searchQuery
+                    ...searchQuery,
+                    ...serchPaymentDeviceQuery
                 },
             ]
         }
@@ -274,12 +291,14 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     'inAppSubscriptionStatus': 'Active',
                     device: { $in: ['ios', 'android'] },
                     ...planQuery,
-                    ...searchQuery
+                    ...searchQuery,
+                    ...serchPaymentDeviceQuery
                 },
                 {
                     'stripe.status': 'active',
                     ...planQuery,
-                    ...searchQuery
+                    ...searchQuery,
+                    ...serchPaymentDeviceQuery
                 },
             ]
         }
@@ -323,49 +342,49 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     : i.transaction?.device === 'web' ? i.transaction?.paymentMethod?.brand : i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)';
             }
             if (!i.stripe && !i.inAppSubscription) {
+            i.subscriptionStatus = 'Trial plan'
+        }
+        if (
+            !i.subscriptionStatus &&
+            i.inAppSubscriptionStatus &&
+            ['android', 'ios'].includes(i.device)
+        ) {
+            i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus) + ' plan';
+        }
+        if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
+            if (!i.stripe?.status) {
                 i.subscriptionStatus = 'Trial plan'
             }
-            if (
-                !i.subscriptionStatus &&
-                i.inAppSubscriptionStatus &&
-                ['android', 'ios'].includes(i.device)
+            else if (['trialing', 'incomplete'].includes(i.stripe?.status)) {
+                i.subscriptionStatus = 'Trial plan'
+            }
+            else if (i.stripe?.status === 'active') {
+                i.subscriptionStatus = 'Active plan'
+            } else if (i.stripe?.status === 'canceled') {
+                i.subscriptionStatus = 'Canceled plan'
+            } else if (
+                [
+                    'past_due',
+                    'unpaid',
+                    'incomplete_expired'
+                ].includes(i.stripe?.status)
             ) {
-                i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus) + ' plan';
+                i.subscriptionStatus = 'Plan expired'
+            } else {
+                i.subscriptionStatus = 'Plan expired'
             }
-            if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
-                if (!i.stripe?.status) {
-                    i.subscriptionStatus = 'Trial plan'
-                }
-                else if (['trialing', 'incomplete'].includes(i.stripe?.status)) {
-                    i.subscriptionStatus = 'Trial plan'
-                }
-                else if (i.stripe?.status === 'active') {
-                    i.subscriptionStatus = 'Active plan'
-                } else if (i.stripe?.status === 'canceled') {
-                    i.subscriptionStatus = 'Canceled plan'
-                } else if (
-                    [
-                        'past_due',
-                        'unpaid',
-                        'incomplete_expired'
-                    ].includes(i.stripe?.status)
-                ) {
-                    i.subscriptionStatus = 'Plan expired'
-                } else {
-                    i.subscriptionStatus = 'Plan expired'
-                }
-            }
-            if (!i.subscriptionStatus) {
-                i.subscriptionStatus = 'Trial plan'
-            }
-        }))
-        response.status(200).json({
-            message: authControllerResponse.getUsersSuccess,
-            data: { count, users }
-        })
-    } catch (e: any) {
-        next(Boom.badData(e.message))
-    }
+        }
+        if (!i.subscriptionStatus) {
+            i.subscriptionStatus = 'Trial plan'
+        }
+    }))
+    response.status(200).json({
+        message: authControllerResponse.getUsersSuccess,
+        data: { count, users }
+    })
+} catch (e: any) {
+    next(Boom.badData(e.message))
+}
 }
 
 /** Update user */
@@ -461,3 +480,4 @@ export {
     deleteUser,
     getAllUsers,
 }
+

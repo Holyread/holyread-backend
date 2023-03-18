@@ -334,7 +334,7 @@ export const imageUrlToBase64 = async (imageUrl: string) => {
             { responseType: 'arraybuffer' }
         )
         return "data:" + headers["content-type"] + ";base64," + Buffer.from(data).toString('base64');
-    } catch ({ message }) {
+    } catch ({ message }: any) {
         return null;
     }
 }

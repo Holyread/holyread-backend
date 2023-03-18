@@ -124,7 +124,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                               { _id: item._id },
                               body
                         )
-                  } catch ({ message }) { }
+                  } catch ({ message }: any) { }
             }))
 
             await Promise.all(googleStoreUsers.map(async (item: any) => {
@@ -197,7 +197,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                               { _id: item._id },
                               body
                         )
-                  } catch ({ message }) { }
+                  } catch ({ message }: any) { }
             }))
 
             await Promise.all(webUsers.map(async (item: any) => {
@@ -223,7 +223,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                                           )
                                     }
                               )
-                  } catch ({ message }) { }
+                  } catch ({ message }: any) { }
             }))
 
             console.log('expiry date added successfully');

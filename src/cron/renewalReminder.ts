@@ -69,7 +69,7 @@ const sentSubscriptionEmail = async (user, title, description) => {
                   console.log('Failed to sent an renewal reminder email');
             }
 
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             console.log('Failed to sent a renewal reminder email: Error: ', message);
       }
 }
@@ -177,7 +177,7 @@ const start = async () => {
                               ).catch(() => { return undefined; })
                         )
 
-                  } catch ({ message }) {
+                  } catch ({ message }: any) {
                         console.log('JOB(🔴) Renewal Reminder execution Error is: ', message);
                   }
             })
@@ -189,7 +189,7 @@ const start = async () => {
             ])
 
             console.log('JOB(✅) Renewal Reminder executed successfully!');
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             console.log('JOB(🔴) Renewal Reminder execution Error is: ', message);
       }
 };

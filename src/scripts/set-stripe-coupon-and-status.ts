@@ -43,7 +43,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                   'Coupon added successfully'
             );
 
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             console.log(
                   'Set coupon script execution failed, Error: ',
                   message

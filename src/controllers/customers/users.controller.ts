@@ -756,7 +756,7 @@ const getUserSubscription = async (
                                           new Date(createdAt).getMonth() + months
                                     )
                         }
-                  } catch ({ message }) {
+                  } catch ({ message }: any) {
                         /** Handle get subscription error here */
                   }
             }
@@ -777,7 +777,7 @@ const getUserSubscription = async (
                         message: authControllerResponse.getUserSuccess,
                         data
                   })
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             next(Boom.badData(message as string))
       }
 }
@@ -807,7 +807,7 @@ const getCoupon = async (
                   data: coupon
             })
 
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             return next(
                   Boom.badData(
                         message as string
@@ -1106,7 +1106,7 @@ const updateUserAccount = async (
                               notificationDescription
                         )
             }
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             return next(Boom.badData(message as string))
       }
 }
@@ -1135,7 +1135,7 @@ const getShareOptionImageUrl = async (
                   message: authControllerResponse.addShareImage,
                   data: { image: imageUrl }
             })
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             return next(Boom.badData(message as string))
       }
 }
@@ -1154,7 +1154,7 @@ const getEncodeImage = async (
                   message: authControllerResponse.encodeImageSuccess,
                   data: { image: req.body.image }
             })
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             return next(Boom.badData(message as string))
       }
 }
@@ -1357,7 +1357,7 @@ const updateUserLibrary = async (
             await usersService.updateUserLibrary(query, req.body)
             return res.status(200).send({ message })
 
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             return next(Boom.badData(message as string))
       }
 }
@@ -1593,7 +1593,7 @@ const getUserLibrary = async (
                   message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
                   data: []
             })
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             next(Boom.badData(message as string))
       }
 }
@@ -1678,7 +1678,7 @@ const submitQuery = async (
             res.status(200).send({
                   message: authControllerResponse.submitQuerySuccess
             })
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             next(Boom.badData(message as string))
       }
 }
@@ -1746,7 +1746,7 @@ const submitFeedback = async (
             res.status(200).send({
                   message: authControllerResponse.submitQuerySuccess
             })
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             next(Boom.badData(message as string))
       }
 }
@@ -2217,7 +2217,7 @@ const paymentSheet = async (
                   }
             })
 
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             next(Boom.badData(message as string))
       }
 }
@@ -2499,7 +2499,7 @@ const subscribePlan = async (
                         notificationDescription
                   )
             }
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             next(Boom.badData(message as string))
       }
 }
@@ -2540,7 +2540,7 @@ const deleteUser = async (
                         userId: userObj._id
                   }),
             ])
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             return next(
                   Boom.badData(message as string)
             )
@@ -2570,7 +2570,7 @@ const logout = async (
             res.status(200).send({
                   message: authControllerResponse.userLogoutSuccess
             })
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             return next(Boom.badData(message as string))
       }
 }

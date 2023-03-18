@@ -30,7 +30,7 @@ const retrieveSubscription = async (id: string) => {
                                                 .payment_intent
                                     )
                         }
-                  } catch ({ message }) {
+                  } catch ({ message }: any) {
                         console.log(
                               'Failed to fetch invoice details',
                               message
@@ -158,7 +158,7 @@ const getCouponList = async (list = [], startAfter = {}) => {
             if (!hasMore) return list;
             list = await getCouponList(list, data[data.length - 1].id);
             return list;
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             return [];
       }
 };
@@ -170,7 +170,7 @@ const getOneCoupon = async (id: string) => {
             }
             const coupon = await stripe.coupons.retrieve(id);
             return coupon;
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             return null;
       }
 };
@@ -182,7 +182,7 @@ const deleteCoupon = async (id: string) => {
             }
             await stripe.coupons.del(id);
             return true;
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             return false;
       }
 };
@@ -406,7 +406,7 @@ const createPaymentIntent = async (data: any) => {
                   ...data
             });
             return paymentIntent
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             console.log(message)
             return false
       }
@@ -422,7 +422,7 @@ const confirmPaymentIntent = async (
                   { payment_method: paymentMethodId }
             );
             return paymentIntent
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             console.log(message)
             return false
       }
@@ -440,7 +440,7 @@ const getPaymentIntents = async (list = [], startAfter = {}) => {
             if (!hasMore) return list;
             list = await getPaymentIntents(list, data[data.length - 1].id);
             return list;
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             return [];
       }
 };

@@ -47,7 +47,7 @@ import { randomNumberInRange } from '../lib/utils/utils'
             }))
 
             console.log('Default Ratings added successfully')
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             console.log(
                   'Add default ratings script execution failed: Error: ',
                   message

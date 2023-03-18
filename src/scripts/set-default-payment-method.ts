@@ -31,7 +31,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                                                 .invoice_settings
                                                 .default_payment_method
                                     );
-                        } catch ({ message }) {
+                        } catch ({ message }: any) {
                               console.log(
                                     'Confirm payment processing error: ',
                                     message
@@ -45,7 +45,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                   'Confirm payment intents successfully'
             );
 
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             console.log(
                   'Confirm payment intent script execution failed, Error: ',
                   message

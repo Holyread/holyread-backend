@@ -207,7 +207,7 @@ const getTransaction = async (query: object) => {
       try {
             const transaction = await TransactionsModel.findOne(query).sort([['createdAt', 'DESC']]).lean().exec();
             return transaction;
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             return {}
       }
 }

@@ -92,7 +92,7 @@ import { awsBucket } from '../constants/app.constant';
                               { _id: oneBook._id },
                               oneBook
                         )
-                  } catch ({ message }) {
+                  } catch ({ message }: any) {
                         console.log(
                               'Error on book size updates, Error is: ',
                               'book - ',
@@ -106,7 +106,7 @@ import { awsBucket } from '../constants/app.constant';
                   'Book size added successfully'
             )
 
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             console.log(
                   'Add size in book script execution failed, Error is: ',
                   message

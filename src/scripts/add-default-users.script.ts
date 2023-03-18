@@ -91,7 +91,7 @@ const createBotBody: any = {
             )
             console.log('Default users added successfully')
 
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             console.log(
                   'Add default users script execution failed, Error: ',
                   message

@@ -1201,7 +1201,7 @@ const createGoogleTransaction = async (
                   .send({
                         message: 'OK'
                   });
-      } catch ({ message }) {
+      } catch ({ message }: any) {
             return next(Boom.badData(message as string))
       }
 }

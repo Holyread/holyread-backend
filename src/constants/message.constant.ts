@@ -54,7 +54,8 @@ export const responseMessage = {
         emailAuthEnabledSuccess: 'Your email auth enabled',
         emailAuthExist: 'Your email auth already enabled',
         socialLinkError: 'User is authorized as admin. Please use another email.',
-        invalidCodeOrTokenError: 'Invalid code or token provided'
+        invalidCodeOrTokenError: 'Invalid code or token provided',
+        invalidDateError:'Start date greater than End date'
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

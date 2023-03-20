@@ -198,10 +198,14 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
         }
 
         if (params.from && params.to) {
-            searchFilter.createdAt = {
-                $gte: new Date(params.from),
-                $lte: new Date(new Date(params.to).setDate(new Date(params.to).getDate() + 1)),
-            }
+            if (Date.parse(params.to) >= Date.parse(params.from))
+                searchFilter.createdAt = {
+                    $gte: new Date(params.from),
+                    $lte: new Date(new Date(params.to).setDate(new Date(params.to).getDate() + 1)),
+                }
+                else{
+                    return next(Boom.badData(authControllerResponse.invalidDateError))
+                }
         }
         if (params.from && !params.to) {
             searchFilter.createdAt = {
@@ -342,49 +346,49 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     : i.transaction?.device === 'web' ? i.transaction?.paymentMethod?.brand : i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)';
             }
             if (!i.stripe && !i.inAppSubscription) {
-            i.subscriptionStatus = 'Trial plan'
-        }
-        if (
-            !i.subscriptionStatus &&
-            i.inAppSubscriptionStatus &&
-            ['android', 'ios'].includes(i.device)
-        ) {
-            i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus) + ' plan';
-        }
-        if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
-            if (!i.stripe?.status) {
                 i.subscriptionStatus = 'Trial plan'
             }
-            else if (['trialing', 'incomplete'].includes(i.stripe?.status)) {
-                i.subscriptionStatus = 'Trial plan'
-            }
-            else if (i.stripe?.status === 'active') {
-                i.subscriptionStatus = 'Active plan'
-            } else if (i.stripe?.status === 'canceled') {
-                i.subscriptionStatus = 'Canceled plan'
-            } else if (
-                [
-                    'past_due',
-                    'unpaid',
-                    'incomplete_expired'
-                ].includes(i.stripe?.status)
+            if (
+                !i.subscriptionStatus &&
+                i.inAppSubscriptionStatus &&
+                ['android', 'ios'].includes(i.device)
             ) {
-                i.subscriptionStatus = 'Plan expired'
-            } else {
-                i.subscriptionStatus = 'Plan expired'
+                i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus) + ' plan';
             }
-        }
-        if (!i.subscriptionStatus) {
-            i.subscriptionStatus = 'Trial plan'
-        }
-    }))
-    response.status(200).json({
-        message: authControllerResponse.getUsersSuccess,
-        data: { count, users }
-    })
-} catch (e: any) {
-    next(Boom.badData(e.message))
-}
+            if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
+                if (!i.stripe?.status) {
+                    i.subscriptionStatus = 'Trial plan'
+                }
+                else if (['trialing', 'incomplete'].includes(i.stripe?.status)) {
+                    i.subscriptionStatus = 'Trial plan'
+                }
+                else if (i.stripe?.status === 'active') {
+                    i.subscriptionStatus = 'Active plan'
+                } else if (i.stripe?.status === 'canceled') {
+                    i.subscriptionStatus = 'Canceled plan'
+                } else if (
+                    [
+                        'past_due',
+                        'unpaid',
+                        'incomplete_expired'
+                    ].includes(i.stripe?.status)
+                ) {
+                    i.subscriptionStatus = 'Plan expired'
+                } else {
+                    i.subscriptionStatus = 'Plan expired'
+                }
+            }
+            if (!i.subscriptionStatus) {
+                i.subscriptionStatus = 'Trial plan'
+            }
+        }))
+        response.status(200).json({
+            message: authControllerResponse.getUsersSuccess,
+            data: { count, users }
+        })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
 }
 
 /** Update user */

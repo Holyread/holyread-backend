@@ -13,6 +13,7 @@ import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
 import stripeSubscriptionService from '../../services/stripe/subscription';
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
+import {trailDays}  from '../../constants/app.constant';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
@@ -233,7 +234,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
         user.device === 'web' &&
         !user.inAppSubscription &&
         !user.referralUserId
-      ) pushNotification(tokens, 'Holy Reads Free Plan 🔔', 'Enjoy 7 Days free trial with holy reads best summaries📚');
+      ) pushNotification(tokens, 'Holy Reads Free Plan 🔔', `Enjoy  ${trailDays} Days free trial with holy reads best summaries📚`);
     }
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -775,7 +776,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       pushNotification(
         tokens,
         'Holy Reads Free Plan 🔔',
-        'Enjoy 7 Days free trial with holy reads best summaries📚'
+        `Enjoy ${trailDays}  Days free trial with holy reads best summaries📚`
       )
     }
 

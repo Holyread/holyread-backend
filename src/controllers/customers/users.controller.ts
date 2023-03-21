@@ -110,7 +110,7 @@ const getUserAccount = async (
                               _id: userObj.subscription
                         })
 
-            /** set default subscription end date with 7 days trial */
+            /** set default subscription end date with 10 days trial */
             let subscriptionEndDate
                   = new Date(userObj.createdAt)
                         .getTime() + (trailDays[config.NODE_ENV] * 24 * 60 * 60 * 1000);
@@ -741,7 +741,7 @@ const getUserSubscription = async (
                                     ))
                               ) : '0:0:0:0';
 
-                        /** set default subscription end date with 7 days trial */
+                        /** set default subscription end date with 10 days trial */
                         if (data.subscription?._id) {
                               let months = data.subscription.duration === 'Month'
                                     ? 1 : data.subscription.duration === 'Half Year'

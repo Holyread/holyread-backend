@@ -115,7 +115,7 @@ export const fireStoreConfig = {
 }
 
 export const trailDays ={
-    development: 7,
-    production: 3,
-    local: 7
+    development: 10,
+    production: 10,
+    local: 10
   }

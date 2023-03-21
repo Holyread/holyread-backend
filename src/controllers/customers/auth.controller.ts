@@ -234,7 +234,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
         user.device === 'web' &&
         !user.inAppSubscription &&
         !user.referralUserId
-      ) pushNotification(tokens, 'Holy Reads Free Plan 🔔', `Enjoy  ${trailDays[config.NODE_ENV]} Days free trial with holy reads best summaries📚`);
+      ) pushNotification(tokens, 'Holy Reads Free Plan 🔔', `Enjoy  ${[config.NODE_ENV]} Days free trial with holy reads best summaries📚`);
     }
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -776,7 +776,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       pushNotification(
         tokens,
         'Holy Reads Free Plan 🔔',
-        `Enjoy ${trailDays[config.NODE_ENV]}  Days free trial with holy reads best summaries📚`
+        `Enjoy ${trailDays}  Days free trial with holy reads best summaries📚`
       )
     }
 

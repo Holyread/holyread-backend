@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
-
+import {trailDays}  from '../../constants/app.constant';
 import { Types } from 'mongoose'
 
 import {
@@ -113,7 +113,7 @@ const getUserAccount = async (
             /** set default subscription end date with 7 days trial */
             let subscriptionEndDate
                   = new Date(userObj.createdAt)
-                        .getTime() + (7 * 24 * 60 * 60 * 1000);
+                        .getTime() + (trailDays[config.NODE_ENV] * 24 * 60 * 60 * 1000);
 
             if (subscriptionDetails?._id) {
                   let months
@@ -691,7 +691,7 @@ const getUserSubscription = async (
             let subscriptionEndDate = new Date(
                   data.createdAt
             )
-                  .getTime() + (3 * 24 * 60 * 60 * 1000);
+                  .getTime() + (trailDays[config.NODE_ENV] * 24 * 60 * 60 * 1000);
 
             if (data.subscription) {
                   try {
@@ -736,7 +736,7 @@ const getUserSubscription = async (
                                     String(new Date()),
                                     String(new Date(
                                           new Date().setDate(
-                                                new Date(createdAt).getDate() + 7
+                                                new Date(createdAt).getDate() + trailDays[config.NODE_ENV]
                                           )
                                     ))
                               ) : '0:0:0:0';

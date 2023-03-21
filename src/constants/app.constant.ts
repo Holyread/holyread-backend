@@ -113,3 +113,9 @@ export const fireStoreConfig = {
     'auth_provider_x509_cert_url': 'https://www.googleapis.com/oauth2/v1/certs',
     'client_x509_cert_url': 'https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbog5%40holyreads-1649330389089.iam.gserviceaccount.com'
 }
+
+export const trailDays ={
+    development: 7,
+    production: 3,
+    local: 7
+  }

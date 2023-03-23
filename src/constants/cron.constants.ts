@@ -17,18 +17,18 @@ export const dailyDevotional = {
             Months: '*',
             DayOfWeek: '*',
       },
-      JOBRESTRICTENV: ['local'], // 'local','development','production'
+      JOBRESTRICTENV: [], // 'local','development','production'
 }
 
 export const publishContent = {
       SCHEDULE: {
-            Minutes: '0',
-            Hours: '1',
+            Minutes: '*',
+            Hours: '*',
             DayOfMonth: '*',
             Months: '*',
             DayOfWeek: '*',
       },
-      JOBRESTRICTENV: ['local'], // 'local','development','production'
+      JOBRESTRICTENV: [], // 'local','development','production'
 }
 
 export const renewalReminder = {

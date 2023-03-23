@@ -320,6 +320,9 @@ const appOAuthSignIn = async (req: Request, res: any, next: NextFunction) => {
     if (user?.type === 'Admin') {
       return next(Boom.unauthorized(authControllerResponse.userNotAuthorizationError))
     }
+    if (user && user.status !== 'Active') {
+      return next(Boom.notAcceptable(authControllerResponse.userNotActivatedError))
+    }
     /** unauthorised if user missing */
     if (!user) {
       return next(Boom.notFound(authControllerResponse.missingSocialAccountError))

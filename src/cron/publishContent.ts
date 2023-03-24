@@ -36,10 +36,11 @@ const start = async () => {
                               'status'
                         ]).populate('author').lean().exec();
 
+                  let publishContent;
                   /** Initialize default ratings for books by machine user */
                   try {
                         /** Find bot user */
-                        var botUser: any = await UserModel.findOne({
+                        let botUser: any = await UserModel.findOne({
                               email: 'bot@holyreads.com'
                         })
                               .select('_id')
@@ -48,7 +49,7 @@ const start = async () => {
 
                         /**Find Random User */
                         if (!botUser) {
-                              var botUser: any = await UserModel.aggregate([{ $sample: { size: 1 } }])
+                              botUser = await UserModel.aggregate([{ $sample: { size: 1 } }])
                         }
 
                         /** Add Default ratingin New Publish Book */
@@ -64,7 +65,7 @@ const start = async () => {
 
                         /** Get book rating */
                         const Bookrating = await RatingModel.findOne({ userId: botUser._id, bookId: newPubishBook._id }).select('star').lean().exec();
-                        var publishContent = { ...newPubishBook, Bookrating }
+                        publishContent = { ...newPubishBook, Bookrating }
                   } catch ({ message }: any) {
                         console.log(
                               'Add default ratings  execution failed: Error: ',
@@ -106,7 +107,10 @@ const start = async () => {
                                                 status: publishContent.status,
                                           }
                                     })
-                              ).catch(() => { return undefined; })
+                              ).catch((error: any) => {
+                                    console.log('JOB(🔴) push notification publish new book execution Error is -', error.message)
+                                    return undefined;
+                              })
                         )
                   })
             }

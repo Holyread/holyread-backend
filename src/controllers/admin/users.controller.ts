@@ -161,9 +161,8 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                 { 'lastName': await getSearchRegexp(params.search) },
                 { 'status': await getSearchRegexp(params.search) },
                 { 'stripe.coupon': await getSearchRegexp(params.search) },
-                { 'i.stripe.coupon': await getSearchRegexp(params.search) },
-                { 'i.inAppSubscription.coupon': await getSearchRegexp(params.search) },
-                { 'i.device': await getSearchRegexp(params.search) },
+                { 'inAppSubscription.coupon': await getSearchRegexp(params.search) },
+                { 'device': await getSearchRegexp(params.search) },
                 { 'transaction.total': await getSearchRegexp(params.search) },
             ],
             type: 'User'
@@ -179,21 +178,29 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             ? { 'subscription.title': params.planFilter }
             : {}
 
-        const serchPaymentDeviceQuery = [
-            'ios',
-            'android',
-            'web',
-        ].includes(
-            params.paymentModeFilter
-        )
-            ? { 'device': params.paymentModeFilter }
-            : {}
+        /** Feat search query for payment mode */
+        let paymentModeQuery = {};
+        if (params?.paymentModeQuery === 'ios') {
+            paymentModeQuery = {
+                'inAppSubscription.purchaseToken': { $exists: false },
+                'transaction.device': 'app'
+            }
+        }
+        if (params?.paymentModeQuery === 'android') {
+            paymentModeQuery = {
+                'inAppSubscription.purchaseToken': { $exists: true },
+                'transaction.device': 'app'
+            }
+        }
+        if (params?.paymentModeQuery === 'web') {
+            paymentModeQuery = { 'transaction.device': 'web' }
+        }
 
         if (!params?.statusFilter) {
             searchFilter = {
                 ...searchQuery,
                 ...planQuery,
-                ...serchPaymentDeviceQuery
+                ...paymentModeQuery
             }
         }
 
@@ -238,7 +245,7 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                         },
                         planQuery,
                         searchQuery,
-                        serchPaymentDeviceQuery
+                        paymentModeQuery
                     ]
                 },
             ]
@@ -253,13 +260,13 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     'stripe.status': 'canceled',
                     ...planQuery,
                     ...searchQuery,
-                    ...serchPaymentDeviceQuery
+                    ...paymentModeQuery
                 },
                 {
                     'inAppSubscriptionStatus': 'Canceled',
                     ...planQuery,
                     ...searchQuery,
-                    ...serchPaymentDeviceQuery
+                    ...paymentModeQuery
                 },
             ]
         }
@@ -273,14 +280,14 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     'stripe.status': { $in: ['trialing', 'incomplete'] },
                     ...planQuery,
                     ...searchQuery,
-                    ...serchPaymentDeviceQuery
+                    ...paymentModeQuery
                 },
                 {
                     stripe: { $exists: false },
                     inAppSubscription: { $exists: false },
                     ...planQuery,
                     ...searchQuery,
-                    ...serchPaymentDeviceQuery
+                    ...paymentModeQuery
                 },
             ]
         }
@@ -296,13 +303,13 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     device: { $in: ['ios', 'android'] },
                     ...planQuery,
                     ...searchQuery,
-                    ...serchPaymentDeviceQuery
+                    ...paymentModeQuery
                 },
                 {
                     'stripe.status': 'active',
                     ...planQuery,
                     ...searchQuery,
-                    ...serchPaymentDeviceQuery
+                    ...paymentModeQuery
                 },
             ]
         }

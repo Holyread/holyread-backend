@@ -180,19 +180,19 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
 
         /** Feat search query for payment mode */
         let paymentModeQuery = {};
-        if (params?.paymentModeQuery === 'ios') {
+        if (params?.paymentModeFilter === 'ios') {
             paymentModeQuery = {
                 'inAppSubscription.purchaseToken': { $exists: false },
                 'transaction.device': 'app'
             }
         }
-        if (params?.paymentModeQuery === 'android') {
+        if (params?.paymentModeFilter === 'android') {
             paymentModeQuery = {
                 'inAppSubscription.purchaseToken': { $exists: true },
                 'transaction.device': 'app'
             }
         }
-        if (params?.paymentModeQuery === 'web') {
+        if (params?.paymentModeFilter === 'web') {
             paymentModeQuery = { 'transaction.device': 'web' }
         }
 

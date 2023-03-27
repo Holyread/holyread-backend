@@ -36,7 +36,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
                 return next(Boom.unauthorized('User not authorized'));
             }
             if (userDetails.status !== 'Active') {
-                return next(Boom.forbidden('User not active'));
+                return next(Boom.unauthorized('User not active'));
             }
             if (!userDetails.verified) {
                 return next(Boom.forbidden('User not verfied'));

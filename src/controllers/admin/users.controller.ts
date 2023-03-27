@@ -161,9 +161,8 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                 { 'lastName': await getSearchRegexp(params.search) },
                 { 'status': await getSearchRegexp(params.search) },
                 { 'stripe.coupon': await getSearchRegexp(params.search) },
-                { 'i.stripe.coupon': await getSearchRegexp(params.search) },
-                { 'i.inAppSubscription.coupon': await getSearchRegexp(params.search) },
-                { 'i.device': await getSearchRegexp(params.search) },
+                { 'inAppSubscription.coupon': await getSearchRegexp(params.search) },
+                { 'device': await getSearchRegexp(params.search) },
                 { 'transaction.total': await getSearchRegexp(params.search) },
             ],
             type: 'User'
@@ -179,17 +178,41 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             ? { 'subscription.title': params.planFilter }
             : {}
 
+        /** Feat search query for payment mode */
+        let paymentModeQuery = {};
+        if (params?.paymentModeFilter === 'ios') {
+            paymentModeQuery = {
+                'inAppSubscription.purchaseToken': { $exists: false },
+                'transaction.device': 'app'
+            }
+        }
+        if (params?.paymentModeFilter === 'android') {
+            paymentModeQuery = {
+                'inAppSubscription.purchaseToken': { $exists: true },
+                'transaction.device': 'app'
+            }
+        }
+        if (params?.paymentModeFilter === 'web') {
+            paymentModeQuery = { 'transaction.device': 'web' }
+        }
+
         if (!params?.statusFilter) {
             searchFilter = {
                 ...searchQuery,
-                ...planQuery
+                ...planQuery,
+                ...paymentModeQuery
             }
         }
+
         if (params.from && params.to) {
-            searchFilter.createdAt = {
-                $gte: new Date(params.from),
-                $lte: new Date(new Date(params.to).setDate(new Date(params.to).getDate() + 1)),
-            }
+            if (Date.parse(params.to) >= Date.parse(params.from))
+                searchFilter.createdAt = {
+                    $gte: new Date(params.from),
+                    $lte: new Date(new Date(params.to).setDate(new Date(params.to).getDate() + 1)),
+                }
+                else{
+                    return next(Boom.badData(authControllerResponse.invalidDateError))
+                }
         }
         if (params.from && !params.to) {
             searchFilter.createdAt = {
@@ -221,7 +244,8 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                             }
                         },
                         planQuery,
-                        searchQuery
+                        searchQuery,
+                        paymentModeQuery
                     ]
                 },
             ]
@@ -235,12 +259,14 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                 {
                     'stripe.status': 'canceled',
                     ...planQuery,
-                    ...searchQuery
+                    ...searchQuery,
+                    ...paymentModeQuery
                 },
                 {
                     'inAppSubscriptionStatus': 'Canceled',
                     ...planQuery,
-                    ...searchQuery
+                    ...searchQuery,
+                    ...paymentModeQuery
                 },
             ]
         }
@@ -253,13 +279,15 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                 {
                     'stripe.status': { $in: ['trialing', 'incomplete'] },
                     ...planQuery,
-                    ...searchQuery
+                    ...searchQuery,
+                    ...paymentModeQuery
                 },
                 {
                     stripe: { $exists: false },
                     inAppSubscription: { $exists: false },
                     ...planQuery,
-                    ...searchQuery
+                    ...searchQuery,
+                    ...paymentModeQuery
                 },
             ]
         }
@@ -274,12 +302,14 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     'inAppSubscriptionStatus': 'Active',
                     device: { $in: ['ios', 'android'] },
                     ...planQuery,
-                    ...searchQuery
+                    ...searchQuery,
+                    ...paymentModeQuery
                 },
                 {
                     'stripe.status': 'active',
                     ...planQuery,
-                    ...searchQuery
+                    ...searchQuery,
+                    ...paymentModeQuery
                 },
             ]
         }
@@ -461,3 +491,4 @@ export {
     deleteUser,
     getAllUsers,
 }
+

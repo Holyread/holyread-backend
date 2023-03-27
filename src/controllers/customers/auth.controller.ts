@@ -13,6 +13,7 @@ import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
 import stripeSubscriptionService from '../../services/stripe/subscription';
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
+import {trailDays}  from '../../constants/app.constant';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
@@ -233,7 +234,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
         user.device === 'web' &&
         !user.inAppSubscription &&
         !user.referralUserId
-      ) pushNotification(tokens, 'Holy Reads Free Plan 🔔', 'Enjoy 3 Days free trial with holy reads best summaries📚');
+      ) pushNotification(tokens, 'Holy Reads Free Plan 🔔', `Enjoy  ${trailDays} Days free trial with holy reads best summaries📚`);
     }
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -318,6 +319,9 @@ const appOAuthSignIn = async (req: Request, res: any, next: NextFunction) => {
     /** unauthorised if user type is admin */
     if (user?.type === 'Admin') {
       return next(Boom.unauthorized(authControllerResponse.userNotAuthorizationError))
+    }
+    if (user && user.status !== 'Active') {
+      return next(Boom.notAcceptable(authControllerResponse.userNotActivatedError))
     }
     /** unauthorised if user missing */
     if (!user) {
@@ -775,7 +779,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       pushNotification(
         tokens,
         'Holy Reads Free Plan 🔔',
-        'Enjoy 3 Days free trial with holy reads best summaries📚'
+        `Enjoy ${trailDays}  Days free trial with holy reads best summaries📚`
       )
     }
 

@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
-
+import {trailDays}  from '../../constants/app.constant';
 import { Types } from 'mongoose'
 
 import {
@@ -110,10 +110,10 @@ const getUserAccount = async (
                               _id: userObj.subscription
                         })
 
-            /** set default subscription end date with 3 days trial */
+            /** set default subscription end date with 10 days trial */
             let subscriptionEndDate
                   = new Date(userObj.createdAt)
-                        .getTime() + (3 * 24 * 60 * 60 * 1000);
+                        .getTime() + (trailDays * 24 * 60 * 60 * 1000);
 
             if (subscriptionDetails?._id) {
                   let months
@@ -691,7 +691,7 @@ const getUserSubscription = async (
             let subscriptionEndDate = new Date(
                   data.createdAt
             )
-                  .getTime() + (3 * 24 * 60 * 60 * 1000);
+                  .getTime() + (trailDays * 24 * 60 * 60 * 1000);
 
             if (data.subscription) {
                   try {
@@ -736,12 +736,12 @@ const getUserSubscription = async (
                                     String(new Date()),
                                     String(new Date(
                                           new Date().setDate(
-                                                new Date(createdAt).getDate() + 3
+                                                new Date(createdAt).getDate() + trailDays
                                           )
                                     ))
                               ) : '0:0:0:0';
 
-                        /** set default subscription end date with 3 days trial */
+                        /** set default subscription end date with 10 days trial */
                         if (data.subscription?._id) {
                               let months = data.subscription.duration === 'Month'
                                     ? 1 : data.subscription.duration === 'Half Year'

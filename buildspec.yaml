@@ -13,6 +13,7 @@ phases:
   build:
     commands:
       - echo Build started on `date`
+      - npm run clean
       - npm run build
       - npm run build-files
   post_build:

@@ -73,7 +73,7 @@ const getAllTransactions = async (
                         createdAt: i?.createdAt,
                         status: i?.status,
                         paymentLink: i?.paymentLink,
-                        payment: i?.device === 'app' ? ['fa fa-mobile', 'In-App' + i?.inAppSubscription?.purchaseToken ? ' (Android)' : ' (IOS)'] : ['fa-cc-' + i?.paymentMethod?.brand?.toLowerCase(), i?.paymentMethod?.brand || ''],
+                        payment: i?.device === 'app' ? ['fa fa-mobile', i?.userId?.inAppSubscription?.purchaseToken? 'In-App (Android)' : 'In-App (IOS)'] : ['fa-cc-' + i?.paymentMethod?.brand?.toLowerCase(), i?.paymentMethod?.brand || ''],
                         reason: i.reason,
                         latestInvoice: i.latestInvoice || 'in_' + i._id,
                         subscription: i?.userId?.subscription,

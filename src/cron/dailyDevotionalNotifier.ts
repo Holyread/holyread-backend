@@ -61,7 +61,7 @@ const start = async () => {
                                     tokenSet.add(
                                           pushNotification(
                                                 item?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
-                                                '🔔 Your Daily Pick is ready! 🔑',
+                                                '🔔 Your Daily Pick is ready!',
                                                 `📙 ${readOfDay.title} 🔖 `,
                                                 JSON.stringify({
                                                       dailyDevotional: {

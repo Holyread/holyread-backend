@@ -10,7 +10,7 @@ const start = async () => {
             console.log('JOB(🟢) publish contents Started successfully!');
 
             /** Find unpublish books */
-            const unpublishBooks = await BookSummaryModel.find({ publish: true }).select('_id').lean().exec();
+            const unpublishBooks = await BookSummaryModel.find({ publish: false }).select('_id').lean().exec();
 
             /** Find unpublish curateds */
             const unpublishCurateds = await ExpertCuratedModel.find({ publish: false }).select('_id').lean().exec();
@@ -90,7 +90,7 @@ const start = async () => {
                               pushNotification(
                                     i?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
                                     '🔔 NEW Publish book for you',
-                                    `📙 ${unpublishBooks[0]?.title}`,
+                                    `📙 ${publishContent.title}`,
                                     JSON.stringify({
                                           publishContents: {
                                                 _id: publishContent._id,

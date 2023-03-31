@@ -53,7 +53,7 @@ const getOneSmallGroupByFilter = async (query: any) => {
             ).lean()
         const handout: any = await HandoutsModel.findOne({ smallGroup: result._id, user: global?.currentUser?._id }).select('answers').lean().exec()
         result.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + result.coverImage
-        
+
         if (result?.books.length) {
             result.books = await Promise.all(result?.books?.map(async oneBook => {
                 if (!oneBook?._id || !oneBook?.publish) return undefined
@@ -69,14 +69,15 @@ const getOneSmallGroupByFilter = async (query: any) => {
             const ratings = await ratingService.getBooksRatings(result.books.map(i => i && i._id).filter(i => i) as [string], global.currentUser._id)
             result.books.map(i => {
                 i.totalStar = ratings[String(i._id)]?.averageStar || 3,
-                i.isRate = !!ratings[String(i._id)]?.isRate
+                    i.isRate = !!ratings[String(i._id)]?.isRate
             })
         }
         const answers = handout?.answers || []
         result.questions = result.questions?.map((q, index) => {
+            const ans = answers.find(a => a.question === index);
             q = {
                 question: q,
-                answer: answers[index]?.answer
+                answers: ans?.answer || ''
             }
             return q
         })

@@ -77,7 +77,7 @@ const getOneSmallGroupByFilter = async (query: any) => {
             const ans = answers.find(a => a.question === index);
             q = {
                 question: q,
-                answers: ans?.answer || ''
+                answer: ans?.answer || ''
             }
             return q
         })

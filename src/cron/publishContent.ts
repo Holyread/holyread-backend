@@ -89,7 +89,7 @@ const start = async () => {
                         tokenSet.add(
                               pushNotification(
                                     i?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
-                                    '🔔 NEW Publish book for you',
+                                    '🔔 New summary for you',
                                     `📙 ${publishContent.title}`,
                                     JSON.stringify({
                                           publishContents: {

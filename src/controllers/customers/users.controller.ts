@@ -98,6 +98,9 @@ const getUserAccount = async (
       try {
             /** Get current user */
             let userObj: any = Object.assign({}, req.user)
+
+            userObj?.oAuth.length === 1 ? userObj.oAuth.find(i =>userObj.loginType = i.provider): userObj.loginType = 'NORMAL'
+
             if (userObj.image) {
                   userObj.image
                         = `${awsBucket[NODE_ENV].s3BaseURL}/users/${userObj.image}`

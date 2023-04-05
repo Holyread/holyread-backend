@@ -99,7 +99,7 @@ const getUserAccount = async (
             /** Get current user */
             let userObj: any = Object.assign({}, req.user)
 
-            userObj?.oAuth.length === 1 ? userObj.oAuth.find(i =>userObj.loginType = i.provider): userObj.loginType = 'NORMAL'
+            userObj?.oAuth.length === 1 ? userObj.loginType = userObj.oAuth[0]?.provider: userObj.loginType = 'NORMAL'
 
             if (userObj.image) {
                   userObj.image

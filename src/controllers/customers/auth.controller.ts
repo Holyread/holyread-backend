@@ -160,7 +160,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     /** Get user from db */
     user = await usersService.getOneUserByFilter(body)
     if (!user) {
-      return next(Boom.notFound(authControllerResponse.invalidCodeOrTokenError))
+      return next(Boom.notFound(authControllerResponse.invalidOtpError))
     }
 
     body = {

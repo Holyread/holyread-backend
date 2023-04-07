@@ -55,6 +55,7 @@ export const responseMessage = {
         emailAuthExist: 'Your email auth already enabled',
         socialLinkError: 'User is authorized as admin. Please use another email.',
         invalidCodeOrTokenError: 'Invalid code or token provided',
+        invalidOtpError: 'Incorrect OTP',
         invalidDateError:'Start date should less or equal to end date'
     },
     adminControllerResponse: {

@@ -10,6 +10,7 @@ import { getSearchRegexp, sentEmail } from '../../../lib/utils/utils'
 import config from '../../../../config'
 import userService from '../../../services/customers/users/user.service';
 import stripeSubscriptionService from '../../../services/stripe/subscription';
+import {trailDays}  from '../../../constants/app.constant';
 
 const NODE_ENV = config.NODE_ENV
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -111,7 +112,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             <
             new Date()
                 .setDate(
-                    new Date().getDate() - 3
+                    new Date().getDate() - trailDays
                 )
         ) {
             isPlanExpired = true;

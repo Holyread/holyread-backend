@@ -39,8 +39,8 @@ const getOneExpertCurated = async (req: Request, res: Response, next: NextFuncti
         /** Incress curated views */
         expertCuratedService
             .updateOneExpertCurated(
-                { '$inc': { views: 1 } },
-                { _id: id }
+                { _id: id },
+                { '$inc': { views: 1 } }
             )
         
     } catch (e: any) {

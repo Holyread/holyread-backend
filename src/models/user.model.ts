@@ -265,7 +265,7 @@ export const UserSchema = new Schema({
         default: Boolean
     }],
     referralUserId: { type: Schema.Types.ObjectId, ref: 'user' },
-    kindleEmail: { type: String },
+    kindleEmail: { type: String, validate: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ },
     stripe: {
         subscriptionId: { type: String, index: true },
         customerId: { type: String, index: true },

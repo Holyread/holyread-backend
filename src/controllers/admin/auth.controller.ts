@@ -96,7 +96,7 @@ const verifySignInOtp = async (req: Request, res: Response, next: NextFunction) 
     const params: { code: string } = req.body
     const user = await usersService.getOneUserByFilter({ verificationCode: params.code, type: 'Admin' })
     if (!user) {
-      return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
+      return next(Boom.badData(authControllerResponse.invalidOtpError))
     }
     const token: string = getToken({ email: user.email, id: user._id })
     res.status(200).json({

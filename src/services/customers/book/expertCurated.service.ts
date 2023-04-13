@@ -74,7 +74,7 @@ const getOneExpertCuratedByFilter = async (query: any) => {
 }
 
 /** update expert Curated  by id */
-const updateOneExpertCurated = async (data: any, query: any) => {
+const updateOneExpertCurated = async (query: any, data: any) => {
     try {
         await ExpertCuratedModel.findOneAndUpdate(query, data).lean()
         return true

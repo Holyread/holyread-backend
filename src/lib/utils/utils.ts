@@ -7,15 +7,22 @@ import jwt from 'jsonwebtoken';
 import handlebars from 'handlebars'
 import nodemailer from 'nodemailer';
 
-import config from '../../../config'
-
 import firebaseAdmin from 'firebase-admin';
+import { awsBucket } from '../../constants/app.constant';
+
+import config from '../../../config'
 
 const algorithm = 'aes-256-cbc';
 const iv = '3ad77bb40d7a3660';
 const inputEncoding = 'utf8';
 const outputEncoding = 'base64';
 const key = '2b7e151628aed2a6abf7158809cf4f3c';
+
+const s3 = new aws.S3({
+    secretAccessKey: config.AWS_SECRET,
+    accessKeyId: config.AWS_ACCESSKEY,
+    region: awsBucket.region,
+})
 
 export const encrypt = (text: string): string => {
     const cipher = crypto.createCipheriv(algorithm, key, iv);
@@ -74,12 +81,6 @@ export const uploadFileToS3 = async (
 ) => {
     try {
         return new Promise(async (resolve, reject) => {
-            const s3 = new aws.S3({
-                secretAccessKey: config.AWS_SECRET,
-                accessKeyId: config.AWS_ACCESSKEY,
-                region: aWSBucket.region,
-            })
-
             let docContentType: any = await isBase64(base64Document, { allowMime: true })
             if (!docContentType) { return reject(new Error('File must be in base64 format')) }
             const base64 = base64Document.indexOf(';base64,')
@@ -133,12 +134,6 @@ export const removeS3File = async (
     aWSBucket: { region: string, bucketName: string, documentDirectory: string }
 ) => {
     try {
-        const s3 = new aws.S3({
-            secretAccessKey: config.AWS_SECRET,
-            accessKeyId: config.AWS_ACCESSKEY,
-            region: aWSBucket.region,
-        })
-
         const option = { Bucket: `${aWSBucket.bucketName}/${aWSBucket.documentDirectory}`, Key: documentName }
         s3.deleteObject(option, (s3err, fileData) => {
             if (s3err) { return 'Error while processing file' }
@@ -361,4 +356,27 @@ export const formattedDate = (
 
 export const capitalizeFirstLetter = ([first = '', ...rest]) => {
     return [first.toUpperCase(), ...rest].join('');
+}
+
+export const copyS3File = async ({
+    oldKey,
+    newKey,
+    bucketName
+}: {
+    oldKey: string,
+    newKey: string,
+    bucketName: string
+}) => {
+    try {
+        /* Copy the object to a new location */
+        const result = await s3.copyObject({
+            Key: newKey,
+            Bucket: bucketName,
+            CopySource: oldKey,
+        }).promise()
+
+        return result
+    } catch ({ message }) {
+        throw new Error(message as string)
+    }
 }

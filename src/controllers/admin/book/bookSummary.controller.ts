@@ -254,7 +254,7 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
 const deleteSummary = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         if(req.user.type === 'SubAdmin'){
-            next(Boom.unauthorized(passportResponse.unauthorized));
+            return next(Boom.unauthorized(passportResponse.unauthorized));
         }
         const id: any = req.params.id
         const bookSummaryDetails: any = await bookSummaryService.getOneBookSummaryByFilter({ _id: id })

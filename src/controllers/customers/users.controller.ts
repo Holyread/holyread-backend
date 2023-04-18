@@ -867,7 +867,7 @@ const updateUserAccount = async (
                               : userObj?.downloadOverWifi || false
             }
 
-            const validateEmail = await getEmailRegexp(body.friendEmail);
+            const validateEmail = await getEmailRegexp(body.kindleEmail);
             if (!validateEmail) {
               return next(Boom.notFound(authControllerResponse.inValidEmailError));
             }

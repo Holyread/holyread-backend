@@ -4,7 +4,7 @@ export const responseMessage = {
     },
     passportResponse: {
         accessTokenMissingError: 'Access token missing in header',
-        unauthorized:'you have no access'
+        unauthorized:'Unauthorized to perform the operation'
     },
     authControllerResponse: {
         loginSuccess: 'User login successfully, ',

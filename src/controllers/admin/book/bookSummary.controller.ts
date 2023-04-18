@@ -13,6 +13,7 @@ import ratingService from '../../../services/customers/book/rating.service';
 
 const bookCategoryControllerResponse = responseMessage.bookCategoryControllerResponse
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
+const passportResponse = responseMessage.passportResponse
 
 const NODE_ENV = config.NODE_ENV
 const s3Bucket = {
@@ -250,8 +251,11 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
 }
 
 /** Remove book summary */
-const deleteSummary = async (req: Request, res: Response, next: NextFunction) => {
+const deleteSummary = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
+        if(req.user.type === 'SubAdmin'){
+            next(Boom.unauthorized(passportResponse.unauthorized));
+        }
         const id: any = req.params.id
         const bookSummaryDetails: any = await bookSummaryService.getOneBookSummaryByFilter({ _id: id })
         if (bookSummaryDetails) {

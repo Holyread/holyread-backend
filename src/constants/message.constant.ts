@@ -4,6 +4,7 @@ export const responseMessage = {
     },
     passportResponse: {
         accessTokenMissingError: 'Access token missing in header',
+        unauthorized:'you have no access'
     },
     authControllerResponse: {
         loginSuccess: 'User login successfully, ',
@@ -56,7 +57,8 @@ export const responseMessage = {
         socialLinkError: 'User is authorized as admin. Please use another email.',
         invalidCodeOrTokenError: 'Invalid code or token provided',
         invalidOtpError: 'Incorrect OTP',
-        invalidDateError:'Start date should less or equal to end date'
+        invalidDateError:'Start date should less or equal to end date',
+        inValidEmailError:'Please add valid email address'
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

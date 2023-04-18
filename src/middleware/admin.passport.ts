@@ -11,7 +11,11 @@ export default async (req: Request | any, res: Response, next: NextFunction): Pr
     } else {
         try {
             const details: any = await verifyToken(accessToken)
-            const userDetails = await UserModel.findOne({ email: details?.email, _id: details.id, type: 'Admin' }).lean().exec()
+             let userDetails = await UserModel.findOne({ email: details?.email, _id: details.id, type: 'Admin' }).lean().exec()
+
+            if(!userDetails){
+                 userDetails = await UserModel.findOne({ email: details?.email, _id: details.id, type: 'SubAdmin' }).lean().exec()
+            }
             if (!userDetails) {
                 next(Boom.unauthorized('Admin not authorized'));
             }

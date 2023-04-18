@@ -18,6 +18,7 @@ import {
       pushNotification,
       imageUrlToBase64,
       capitalizeFirstLetter,
+      getEmailRegexp,
 } from '../../lib/utils/utils'
 
 import {
@@ -864,6 +865,11 @@ const updateUserAccount = async (
                         typeof eval(req.body?.downloadOverWifi) === 'boolean'
                               ? req.body?.downloadOverWifi
                               : userObj?.downloadOverWifi || false
+            }
+
+            const validateEmail = await getEmailRegexp(body.friendEmail);
+            if (!validateEmail) {
+              return next(Boom.notFound(authControllerResponse.inValidEmailError));
             }
 
             if (req.body.kindleEmail) {
@@ -1794,6 +1800,10 @@ const blessFriend = async (
 ) => {
       try {
             const body = req.body
+            const validateEmail = await getEmailRegexp(body.friendEmail);
+            if (!validateEmail) {
+              return next(Boom.notFound(authControllerResponse.inValidEmailError));
+            }
             body.email = body.friendEmail
             delete body.friendEmail
             const refUser: any = await usersService

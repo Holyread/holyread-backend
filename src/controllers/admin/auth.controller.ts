@@ -94,7 +94,8 @@ const resendSignInOtp = async (req: Request, res: Response, next: NextFunction) 
 const verifySignInOtp = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const params: { code: string } = req.body
-    const user = await usersService.getOneUserByFilter({ verificationCode: params.code, type: 'Admin' })
+    const user = await usersService.getOneUserByFilter({ verificationCode: params.code, type: {$in:['Admin','SubAdmin']} })
+   
     if (!user) {
       return next(Boom.badData(authControllerResponse.invalidOtpError))
     }
@@ -156,7 +157,9 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
       return next(Boom.notFound(adminControllerResponse.passwordMissingError))
     }
     /** Get user from db */
-    const userObj: any = await usersService.getOneUserByFilter({ verificationCode: code, type: 'Admin' })
+    
+    const userObj: any = await usersService.getOneUserByFilter({ verificationCode: code, type: {$in:['Admin','SubAdmin']} })
+
     if (!userObj) {
       return next(Boom.notFound(adminControllerResponse.updateCodeFailure))
     }

@@ -56,7 +56,8 @@ export const responseMessage = {
         socialLinkError: 'User is authorized as admin. Please use another email.',
         invalidCodeOrTokenError: 'Invalid code or token provided',
         invalidOtpError: 'Incorrect OTP',
-        invalidDateError:'Start date should less or equal to end date'
+        invalidDateError:'Start date should less or equal to end date',
+        inValidEmailError:'Please add valid email address'
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

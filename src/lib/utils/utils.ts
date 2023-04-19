@@ -224,6 +224,12 @@ export const getSearchRegexp = async (value) => {
     return result
 }
 
+export const validateEmail = async (value) => {
+  const emailRegexp =
+  /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+  return emailRegexp.test(value);
+};
+
 export const compileHtml = async (source: string, data: any) => {
     try {
         const template = handlebars.compile(source);

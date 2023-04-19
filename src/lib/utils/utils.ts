@@ -224,7 +224,7 @@ export const getSearchRegexp = async (value) => {
     return result
 }
 
-export const getEmailRegexp = async (value) => {
+export const validateEmail = async (value) => {
   const emailRegexp =
   /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
   return emailRegexp.test(value);

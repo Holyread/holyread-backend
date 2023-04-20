@@ -188,6 +188,12 @@ const getBlessFriend = async (
       next: NextFunction
 ) => {
       try {
+             /** Validate Email */
+            const isValid = await validateEmail(req.params.email);
+            if (!isValid) {
+              return next(Boom.notFound(authControllerResponse.inValidEmailError));
+            }
+
             /** Get current user */
             let userObj: any
                   = await usersService

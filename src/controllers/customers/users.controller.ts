@@ -873,12 +873,11 @@ const updateUserAccount = async (
                               : userObj?.downloadOverWifi || false
             }
 
-            const isValid = await validateEmail(body.kindleEmail);
-            if (!isValid) {
-              return next(Boom.notFound(authControllerResponse.inValidEmailError));
-            }
-
             if (req.body.kindleEmail) {
+                  const isValid = await validateEmail(req.body.kindleEmail);
+                  if (!isValid) {
+                    return next(Boom.notFound(authControllerResponse.inValidEmailError));
+                  }
                   body.kindleEmail = req.body.kindleEmail
             }
             if (req.body.image === null) {

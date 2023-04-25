@@ -248,7 +248,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     /** Get user from db */
     const user: any = await usersService.getOneUserByFilter({ email, type: 'User' })
     if (!user) {
-      return next(Boom.notFound(authControllerResponse.getUserError))
+      return next(Boom.unauthorized(authControllerResponse.getUserError))
     }
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.forgotPassword })

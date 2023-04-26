@@ -195,7 +195,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     'bookId.overview': 1.0,
                     'highLights': 1.0,
                     'createdAt': -1.0,
-                    'updatedAt':1
+                    'updatedAt':1.0
                 }
             }
         ])

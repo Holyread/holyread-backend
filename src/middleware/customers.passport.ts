@@ -68,7 +68,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             next();
 
         } catch (err: any) {
-            next(Boom.badRequest(err));
+            next(Boom.unauthorized(err));
         }
     }
 }

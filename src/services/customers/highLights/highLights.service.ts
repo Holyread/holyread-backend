@@ -144,7 +144,8 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     chapterId: 1,
                     userId: -1,
                     createdAt: -1,
-                    highLights: 1
+                    highLights: 1,
+                    updatedAt :1
                 }
             },
             {
@@ -193,7 +194,8 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     'author.name': 1.0,
                     'bookId.overview': 1.0,
                     'highLights': 1.0,
-                    'createdAt': -1.0
+                    'createdAt': -1.0,
+                    'updatedAt':1.0
                 }
             }
         ])
@@ -250,7 +252,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                 i.highLights.sort((a, b) =>
                     (new Date(a.updatedAt).getTime() > new Date(b.updatedAt).getTime())
                         ? -1
-                        : ((new Date(b.updatedAt).getTime() > new Date(a.updatedAt).getTime()) ? 1 : 0))
+                        : ((new Date(b.updatedAt).getTime() > new Date(a.updatedAt).getTime()) ? 1 : 0))    
             if (!search) {
                 i.highLights = i.highLights.slice(skip, limit ? skip + limit : i.highLights.length)
                 return true

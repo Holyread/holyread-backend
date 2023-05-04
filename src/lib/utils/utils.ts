@@ -32,7 +32,7 @@ export const decrypt = (encrypted: string): string => {
 }
 
 export const getToken = (data: { [key: string]: string }) => {
-    const token: string = jwt.sign(data, 'secret', { expiresIn: '7d' }); // token valid for 7 days
+    const token: string = jwt.sign(data, 'secret', { expiresIn: '365d' }); // token valid for 365 days
     return token
 }
 

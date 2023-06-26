@@ -23,10 +23,10 @@ export const dailyDevotional = {
 export const publishContent = {
       SCHEDULE: {
             Minutes: '0',
-            Hours: '1',
+            Hours: '6',
             DayOfMonth: '*',
             Months: '*',
-            DayOfWeek: '*',
+            DayOfWeek: '2,5',
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 }

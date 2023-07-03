@@ -26,7 +26,7 @@ export const publishContent = {
             Hours: '1',
             DayOfMonth: '*',
             Months: '*',
-            DayOfWeek: '*',
+            DayOfWeek: '2,5',
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 }

@@ -1676,8 +1676,8 @@ const submitQuery = async (
                   }
             }
             const result = await sentEmail({
-                  from: originEmails.contactUs,
-                  to: originEmails.contactUs,
+                  from: originEmails.marketing,
+                  to: originEmails.marketing,
                   subject: sub,
                   html
             });
@@ -1743,8 +1743,8 @@ const submitFeedback = async (
             }
 
             const result = await sentEmail({
-                  from: originEmails.contactUs,
-                  to: originEmails.contactUs,
+                  from: originEmails.marketing,
+                  to: originEmails.marketing,
                   subject,
                   html
             });

@@ -1,20 +1,18 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import { encrypt, getToken, verifyToken, sentEmail, pushNotification, imageUrlToBase64 } from '../../lib/utils/utils'
+import { encrypt, getToken, verifyToken, sentEmail, pushNotification, imageUrlToBase64, validateEmail } from '../../lib/utils/utils'
 import mailchimpService from '../../services/mailchimp'
 import usersService from '../../services/admin/users/user.service'
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
 import { origins, emailTemplatesTitles, originEmails } from '../../constants/app.constant'
 import { uploadFileToS3, compileHtml } from '../../lib/utils/utils'
-import { awsBucket } from '../../constants/app.constant'
+import { awsBucket, trailDays } from '../../constants/app.constant'
 import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
 import stripeSubscriptionService from '../../services/stripe/subscription';
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
-import {trailDays}  from '../../constants/app.constant';
-
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
 const subscriptionsControllerResponse = responseMessage.subscriptionsControllerResponse
@@ -342,6 +340,7 @@ const appOAuthSignIn = async (req: Request, res: any, next: NextFunction) => {
 const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
   try {
     const body: any = req.body
+
     if (!body.id || !body.provider) {
       return next(Boom.notFound(authControllerResponse.missingoAuthKeyError))
     }
@@ -350,6 +349,11 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     }
     if (!body.email) {
       return next(Boom.notFound(authControllerResponse.missingEmailError))
+    }
+    /** Validate Email */
+    const isValid = await validateEmail(body.email);
+    if (!isValid) {
+      return next(Boom.notFound(authControllerResponse.inValidEmailError));
     }
 
     const query: any = { 'oAuth.clientId': body.id, 'oAuth.provider': body.provider }
@@ -743,7 +747,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       subject,
       html
     });
-  
+
     if (!result) {
       return next(
         Boom.badData(

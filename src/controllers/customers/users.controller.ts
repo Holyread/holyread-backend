@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
-import {trailDays}  from '../../constants/app.constant';
+import { trailDays } from '../../constants/app.constant';
 import { Types } from 'mongoose'
 
 import {
@@ -100,7 +100,7 @@ const getUserAccount = async (
             /** Get current user */
             let userObj: any = Object.assign({}, req.user)
 
-            userObj?.oAuth.length === 1 ? userObj.loginType = userObj.oAuth[0]?.provider: userObj.loginType = 'NORMAL'
+            userObj?.oAuth.length === 1 ? userObj.loginType = userObj.oAuth[0]?.provider : userObj.loginType = 'NORMAL'
 
             if (userObj.image) {
                   userObj.image
@@ -188,10 +188,10 @@ const getBlessFriend = async (
       next: NextFunction
 ) => {
       try {
-             /** Validate Email */
+            /** Validate Email */
             const isValid = await validateEmail(req.params.email);
             if (!isValid) {
-              return next(Boom.notFound(authControllerResponse.inValidEmailError));
+                  return next(Boom.notFound(authControllerResponse.inValidEmailError));
             }
 
             /** Get current user */
@@ -876,7 +876,7 @@ const updateUserAccount = async (
             if (req.body.kindleEmail) {
                   const isValid = await validateEmail(req.body.kindleEmail);
                   if (!isValid) {
-                    return next(Boom.notFound(authControllerResponse.inValidEmailError));
+                        return next(Boom.notFound(authControllerResponse.inValidEmailError));
                   }
                   body.kindleEmail = req.body.kindleEmail
             }
@@ -1807,7 +1807,7 @@ const blessFriend = async (
             const body = req.body
             const isValid = await validateEmail(body.friendEmail);
             if (!isValid) {
-              return next(Boom.notFound(authControllerResponse.inValidEmailError));
+                  return next(Boom.notFound(authControllerResponse.inValidEmailError));
             }
             body.email = body.friendEmail
             delete body.friendEmail
@@ -2575,15 +2575,20 @@ const logout = async (
             /** Get current user */
             let userObj: any = Object.assign({}, req.user)
             let maxDevices = [];
+            let pushTokens = [];
             /** Logout from specific device */
             if (req.body.deviceId) {
                   maxDevices = userObj.maxDevices?.filter(
                         item => item !== req.body.deviceId
                   )
+                  pushTokens = userObj.pushTokens?.filter(
+                        item => item.deviceId !== req.body.deviceId
+                  );
             }
+
             await usersService.updateUser(
                   { _id: userObj._id },
-                  { maxDevices }
+                  { maxDevices, pushTokens }
             )
             res.status(200).send({
                   message: authControllerResponse.userLogoutSuccess

@@ -514,13 +514,38 @@ const updateBookSummary = async (body: any, query: object) => {
     }
 }
 
+/** Get books summary */
+const findBooks = async (query: any) => {
+    try {
+        const data: any = await BookSummaryModel.find(query).lean().exec()
+        return data
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+/** Get random books summary */
+const findRandomBooks = async (query: any, count: any) => {
+    try {
+        const data: any = await BookSummaryModel.aggregate([
+            query,
+            { $sample: { size: count } }
+        ])
+        return data
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 export default {
     getAllBookSummaries,
     getAllBookSummariesForDiscover,
     getOneBookSummaryByFilter,
     findBook,
     getMostPopularBooks,
-    updateBookSummary
+    updateBookSummary,
+    findBooks,
+    findRandomBooks
 }
 
 /*

@@ -144,7 +144,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                 }
             })
 
-            if (!isExist && todayViews.length >= 2) {
+            if (!isExist && todayViews.length >= 1) {
                 return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError))
             }
         }

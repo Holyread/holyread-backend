@@ -36,21 +36,14 @@ const updateUser = async (query: object, body: any) => {
 }
 
 /** Get user by id */
-const getOneUserByFilter = async (query: any, select = []) => {
-  try {
-    const result: any = await UserModel.findOne(query)
-      .select(select)
-      .populate({
-        path: "subscription",
-        select: "title",
-      })
-      .lean()
-      .exec();
-    return result;
-  } catch (e: any) {
-    throw new Error(e);
-  }
-};
+const getOneUserByFilter = async (query: any, select=[]) => {
+    try {
+        const result: any = await UserModel.findOne(query).select(select).lean().exec()
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
 
 /** Get all Users for table */
 const getAllUsers = async (
@@ -169,31 +162,4 @@ const getAllUsersForDashboard = async (query: any, select: string) => {
     }
 }
 
-const getActiveUsersWithPushTokensAndTimeZone = async () => {
-    try {
-        const users: any = await UserModel.find({
-            status: 'Active',
-            timeZone: { $exists: true },
-            'pushTokens.0': { '$exists': true },
-            'notification.push': true,
-        }).select('timeZone pushTokens').lean().exec()
-        return users
-    } catch (e: any) {
-        throw new Error(e)
-    }
-}
-
-const getActiveWebUsers = async () => {
-    try {
-        const users: any = await UserModel.find({
-            status: 'Active',
-            device: 'web',
-            'notification.push': true,
-        }).lean().exec()
-        return users
-    } catch (e: any) {
-        throw new Error(e)
-    }
-}
-
-export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser, getAllUsersForDashboard, getActiveUsersWithPushTokensAndTimeZone, getActiveWebUsers }
+export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser, getAllUsersForDashboard }

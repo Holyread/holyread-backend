@@ -57,8 +57,7 @@ export const responseMessage = {
         invalidCodeOrTokenError: 'Invalid code or token provided',
         invalidOtpError: 'Incorrect OTP',
         invalidDateError:'Start date should less or equal to end date',
-        inValidEmailError:'Please add valid email address',
-        noUserFound:'No users found'
+        inValidEmailError:'Please add valid email address'
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',
@@ -78,8 +77,7 @@ export const responseMessage = {
         failedToSendPassword: 'Failed to send password on email',
         sentEmailFailure: 'The email did not send. Please try again.',
         forgotPassowrdSuccess: 'Password updated successfully',
-        passwordMissingError: 'Password is missing',
-        notificationSuccess: 'Notification sent successfully'
+        passwordMissingError: 'Password is missing'
     },
     subscriptionsControllerResponse: {
         createSubscriptionSuccess: 'Subscription added successfully',
@@ -235,9 +233,7 @@ export const responseMessage = {
     notificationsControllerResponse: {
         createNotificationSuccess: 'Notification created successfully',
         updateNotificationSuccess: 'Notification updated successfully',
-        deleteNotificationSuccess: 'Notification deleted successfully',
-        getNotificationFailure: 'Failed to fetch notification details',
-        fetchNotificationSuccess: 'Notification details fetched successfully',
+        deleteNotificationSuccess: 'Notification deleted successfully'
     },
     transactionsControllerResponse: {
         getTransactionsSuccess: 'Transactions listed successfully',

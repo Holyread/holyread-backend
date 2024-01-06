@@ -26,8 +26,6 @@ import bookCategroy    from './admin/book/bookCategory.route'
 import expertCurated   from './admin/book/expertCurated.route'
 import recommendedBook from './admin/book/recommendedBook.route'
 
-import customNotification from './admin/customNotification.route'
-
 const router: Router = express.Router()
 
 router.use('/auth', auth)
@@ -62,6 +60,5 @@ router.use('/expert-curated', adminPassport, expertCurated)
 router.use('/email-template', adminPassport, emailTemplate)
 
 router.use('/recommended-book', adminPassport, recommendedBook)
-router.use('/notification', adminPassport, customNotification)
 
 export default router

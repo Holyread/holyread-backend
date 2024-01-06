@@ -10,6 +10,7 @@ const NODE_ENV = config.NODE_ENV
 const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, sort) => {
     try {
         search.search.publish = true
+        console.log('herer', search);
         let result: any
             = await BookSummaryModel
                 .aggregate([
@@ -37,9 +38,6 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                     },
                     {
                         $match: search.search
-                    },
-                    {
-                        $sample: { size: limit }
                     },
                     {
                         $facet: {

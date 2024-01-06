@@ -5,7 +5,7 @@ import { Types } from 'mongoose'
 import bookSummaryService from '../../../services/customers/book/bookSummary.service'
 import bookAuthorService from '../../../services/admin/book/author.service'
 import { responseMessage } from '../../../constants/message.constant'
-import { awsBucket, dataLimit, originEmails,trailDays } from '../../../constants/app.constant'
+import { awsBucket, dataLimit, originEmails, trailDays } from '../../../constants/app.constant'
 import { getSearchRegexp, sentEmail } from '../../../lib/utils/utils'
 import config from '../../../../config'
 import userService from '../../../services/customers/users/user.service';

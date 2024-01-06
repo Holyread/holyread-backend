@@ -36,14 +36,21 @@ const updateUser = async (query: object, body: any) => {
 }
 
 /** Get user by id */
-const getOneUserByFilter = async (query: any, select=[]) => {
-    try {
-        const result: any = await UserModel.findOne(query).select(select).lean().exec()
-        return result
-    } catch (e: any) {
-        throw new Error(e)
-    }
-}
+const getOneUserByFilter = async (query: any, select = []) => {
+  try {
+    const result: any = await UserModel.findOne(query)
+      .select(select)
+      .populate({
+        path: "subscription",
+        select: "title",
+      })
+      .lean()
+      .exec();
+    return result;
+  } catch (e: any) {
+    throw new Error(e);
+  }
+};
 
 /** Get all Users for table */
 const getAllUsers = async (

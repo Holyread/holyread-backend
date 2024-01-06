@@ -15,9 +15,9 @@ const { notificationsControllerResponse } = responseMessage
 
 const sendCustomNotificationToAllUsers = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
-        const { description, title } = req.body
+        const { description, title, userFilter } = req.body
         const users: string[] = [];
-        const mobileUsers = await usersService.getActiveUsersWithPushTokensAndTimeZone()
+        const mobileUsers = await usersService.getActiveUsersWithPushTokensAndTimeZone(userFilter)
 
         if (!mobileUsers.length) {
             return next(Boom.notFound(authControllerResponse.noUserFound))
@@ -32,7 +32,7 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
             users.push(user._id);
         }))
 
-        const webUsers = await usersService.getActiveWebUsers()
+        const webUsers = await usersService.getActiveWebUsers(userFilter)
         if (!webUsers.length) {
             return next(Boom.notFound(authControllerResponse.noUserFound))
         }

@@ -5,12 +5,11 @@ import { Types } from 'mongoose'
 import bookSummaryService from '../../../services/customers/book/bookSummary.service'
 import bookAuthorService from '../../../services/admin/book/author.service'
 import { responseMessage } from '../../../constants/message.constant'
-import { awsBucket, dataLimit, originEmails } from '../../../constants/app.constant'
+import { awsBucket, dataLimit, originEmails,trailDays } from '../../../constants/app.constant'
 import { getSearchRegexp, sentEmail } from '../../../lib/utils/utils'
 import config from '../../../../config'
 import userService from '../../../services/customers/users/user.service';
 import stripeSubscriptionService from '../../../services/stripe/subscription';
-//import {trailDays}  from '../../../constants/app.constant';
 
 const NODE_ENV = config.NODE_ENV
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -102,7 +101,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                 isPlanExpired = !['active', 'trialing'].includes(s?.status?.toLowerCase())
             } catch (e) { }
         }
-        /*if (
+        if (
             !req.user.inAppSubscription &&
             !req.user?.stripe?.subscriptionId &&
             new Date(
@@ -116,17 +115,17 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                 )
         ) {
             isPlanExpired = true;
-        }*/
+        }
 
-        /*if (isPlanExpired) {
+        if (isPlanExpired) {
             return next(
                 Boom.forbidden(
                     bookSummaryControllerResponse.planExpiredError
                 )
             )
-        }*/
+        }
 
-        if (!isPlanActive || isPlanExpired) {
+        if (!isPlanActive) {
             /** Set today start and end */
             const start = new Date();
             start.setHours(0, 0, 0, 0);
@@ -144,7 +143,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                 }
             })
 
-            if (!isExist && todayViews.length >= 1) {
+            if (!isExist && todayViews.length >= 5) {
                 return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError))
             }
         }

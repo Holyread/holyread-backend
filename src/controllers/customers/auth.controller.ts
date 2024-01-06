@@ -8,7 +8,7 @@ import emailTemplateService from '../../services/admin/emailTemplate/emailTempla
 import { responseMessage } from '../../constants/message.constant'
 import { origins, emailTemplatesTitles, originEmails } from '../../constants/app.constant'
 import { uploadFileToS3, compileHtml } from '../../lib/utils/utils'
-import { awsBucket } from '../../constants/app.constant'
+import { awsBucket, trailDays } from '../../constants/app.constant'
 import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
 import stripeSubscriptionService from '../../services/stripe/subscription';
@@ -232,7 +232,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
         user.device === 'web' &&
         !user.inAppSubscription &&
         !user.referralUserId
-      ) pushNotification(tokens, 'Holy Reads Free access 🔔', `Enjoy unlimited free access with holy reads best summaries📚`);
+      ) pushNotification(tokens, 'Holy Reads Free Plan 🔔', `Enjoy ${trailDays} Days free trial with holy reads best summaries📚`);
     }
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -783,7 +783,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       pushNotification(
         tokens,
         'Holy Reads Free Plan 🔔',
-        `Enjoy unlimited free access with holy reads best summaries📚`
+        `Enjoy ${trailDays} Days free trial with holy reads best summaries📚`
       )
     }
 

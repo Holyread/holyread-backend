@@ -232,7 +232,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
         user.device === 'web' &&
         !user.inAppSubscription &&
         !user.referralUserId
-      ) pushNotification(tokens, 'Holy Reads Free access 🔔', `Enjoy unlimited free access with holy reads best summaries📚`);
+      ) pushNotification(tokens, tokens, 'Holy Reads Free access 🔔', `Enjoy unlimited free access with holy reads best summaries📚`);
     }
   } catch (e: any) {
     next(Boom.badData(e.message))

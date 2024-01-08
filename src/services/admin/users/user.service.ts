@@ -1,5 +1,5 @@
 import config from '../../../../config'
-import { encrypt, calculateDateInThePast } from '../../../lib/utils/utils'
+import { encrypt } from '../../../lib/utils/utils'
 import { awsBucket } from '../../../constants/app.constant'
 import { responseMessage } from '../../../constants/message.constant'
 // import { UserModel, SubscriptionsModel } from '../../../models/index'
@@ -37,13 +37,20 @@ const updateUser = async (query: object, body: any) => {
 
 /** Get user by id */
 const getOneUserByFilter = async (query: any, select = []) => {
-    try {
-        const result: any = await UserModel.findOne(query).select(select).lean().exec()
-        return result
-    } catch (e: any) {
-        throw new Error(e)
-    }
-}
+  try {
+    const result: any = await UserModel.findOne(query)
+      .select(select)
+      .populate({
+        path: "subscription",
+        select: "title",
+      })
+      .lean()
+      .exec();
+    return result;
+  } catch (e: any) {
+    throw new Error(e);
+  }
+};
 
 /** Get all Users for table */
 const getAllUsers = async (
@@ -155,67 +162,11 @@ const deleteUser = async (id: string) => {
 /** Get all Users for dashboard */
 const getAllUsersForDashboard = async (query: any, select: string) => {
     try {
-        const users: any = await UserModel.find().select(select || '').lean().exec()
+        const users: any = await UserModel.find(query).select(select || '').lean().exec()
         return users
     } catch (e: any) {
         throw new Error(e)
     }
 }
 
-const getActiveUsersWithPushTokensAndTimeZone = async (userFilter: any) => {
-    try {
-        // Define common query conditions for active users
-        let commonQueryConditions: any = {
-            timeZone: { $exists: true },
-            "pushTokens.0": { $exists: true },
-            "notification.push": true,
-            status: "Active",
-        };
-
-        if (userFilter === "InActiveUsers") {
-            // Filter inactive users based on lastSeen value in the last 7 days
-            const sevenDaysAgo = calculateDateInThePast(7);
-            commonQueryConditions.lastSeen = { $lte: sevenDaysAgo };
-        }
-
-        // Retrieve all active users
-        const allUsers = await UserModel.find({
-            ...commonQueryConditions,
-        })
-            .select("timeZone pushTokens")
-            .lean()
-            .exec();
-
-        return allUsers;
-    } catch (e: any) {
-        throw new Error(e);
-    }
-};
-
-const getActiveWebUsers = async (userFilter: any) => {
-    try {
-
-        let commonQueryConditions: any = {
-            device: "web",
-            "notification.push": true,
-            status: "Active",
-        };
-
-        if (userFilter === "InActiveUsers") {
-            // Filter inactive users based on lastSeen value in the last 7 days
-            const sevenDaysAgo = calculateDateInThePast(7);
-            commonQueryConditions.lastSeen = { $lte: sevenDaysAgo };
-        }
-
-        const users: any = await UserModel.find({
-            ...commonQueryConditions,
-        })
-            .lean()
-            .exec();
-        return users;
-    } catch (e: any) {
-        throw new Error(e);
-    }
-};
-
-export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser, getAllUsersForDashboard, getActiveUsersWithPushTokensAndTimeZone, getActiveWebUsers }
+export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser, getAllUsersForDashboard }

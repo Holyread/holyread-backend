@@ -10,7 +10,6 @@ import { getSearchRegexp, sentEmail } from '../../../lib/utils/utils'
 import config from '../../../../config'
 import userService from '../../../services/customers/users/user.service';
 import stripeSubscriptionService from '../../../services/stripe/subscription';
-//import {trailDays}  from '../../../constants/app.constant';
 
 const NODE_ENV = config.NODE_ENV
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse

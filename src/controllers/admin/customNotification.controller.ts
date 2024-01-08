@@ -3,7 +3,7 @@ import Boom from '@hapi/boom';
 import notificationsService from '../../services/customers/notifications/notifications.service';
 import { io } from '../../app';
 import { fetchNotifications } from '../customers/notification.controller';
-import { getSearchRegexp, pushNotification } from '../../lib/utils/utils'
+import { calculateDateInThePast, getSearchRegexp, pushNotification } from '../../lib/utils/utils'
 import customNotificationService from '../../services/admin/customNotification.service';
 import usersService from '../../services/admin/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
@@ -17,7 +17,24 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
     try {
         const { description, title, userFilter } = req.body
         const users: string[] = [];
-        const mobileUsers = await usersService.getActiveUsersWithPushTokensAndTimeZone(userFilter)
+
+        let commonUserObj: any = {
+            "notification.push": true,
+            status: "Active",
+        };
+
+        if (userFilter === "InActiveUsers") {
+            // Filter inactive users based on lastSeen value in the last 7 days
+            const sevenDaysAgo = calculateDateInThePast(7);
+            commonUserObj.lastSeen = { $lte: sevenDaysAgo };
+        }
+
+        let mobileUserObj = {
+            ...commonUserObj,
+            "pushTokens.0": { $exists: true },
+        };
+
+        const mobileUsers = await usersService.getAllUsersForDashboard(mobileUserObj, 'timeZone pushTokens')
 
         if (!mobileUsers.length) {
             return next(Boom.notFound(authControllerResponse.noUserFound))
@@ -32,7 +49,13 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
             users.push(user._id);
         }))
 
-        const webUsers = await usersService.getActiveWebUsers(userFilter)
+        let webUserObj = {
+            ...commonUserObj,
+            device: "web",
+        }
+
+        const webUsers = await usersService.getAllUsersForDashboard(webUserObj, '')
+
         if (!webUsers.length) {
             return next(Boom.notFound(authControllerResponse.noUserFound))
         }

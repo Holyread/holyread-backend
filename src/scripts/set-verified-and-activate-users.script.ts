@@ -15,4 +15,5 @@ import { UserModel } from '../models';
     } catch (e: any) {
         console.log('Script execution failed - ', e);
     }
+    return true
 })();

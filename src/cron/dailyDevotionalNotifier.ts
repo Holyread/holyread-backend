@@ -29,6 +29,16 @@ const start = async () => {
                   'pushTokens.0': { '$exists': true },
                   'notification.dailyDevotional': true,
                   'notification.push': true,
+                  $or: [
+                        {
+                              'inAppSubscription': { $exists: true },
+                              'inAppSubscriptionStatus': 'Active'
+                        },
+                        {
+                              'stripe': { $exists: true },
+                              'stripe.status':'active' 
+                        },
+                  ],
             }).select('timeZone pushTokens').lean().exec()
 
             if (!users.length) {

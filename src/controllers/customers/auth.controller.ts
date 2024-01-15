@@ -4,6 +4,7 @@ import Boom from '@hapi/boom';
 import { encrypt, getToken, verifyToken, sentEmail, pushNotification, imageUrlToBase64, validateEmail } from '../../lib/utils/utils'
 import mailchimpService from '../../services/mailchimp'
 import usersService from '../../services/admin/users/user.service'
+import userService from '../../services/customers/users/user.service';
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service'
 import { responseMessage } from '../../constants/message.constant'
 import { origins, emailTemplatesTitles, originEmails } from '../../constants/app.constant'
@@ -98,6 +99,15 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       body.image = s3File.name
     }
 
+      const libraries = await userService
+            .createUserLibrary({
+                  saved: [],
+                  completed: [],
+                  view: [],
+                  smallGroups: [],
+                  reading: [],
+            })
+
     const data: any = {
       image: body.image ? body.image : '',
       email: body.email,
@@ -109,7 +119,8 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       verificationCode,
       source: body.source,
       medium: body.medium,
-      campaign: body.campaign
+      campaign: body.campaign,
+      libraries : libraries?._id
     }
     /** Store In app subscription */
     const now: Date = new Date()
@@ -413,6 +424,15 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       body.photoUrl = s3File.name
     }
 
+    const libraries = await userService
+    .createUserLibrary({
+          saved: [],
+          completed: [],
+          view: [],
+          smallGroups: [],
+          reading: [],
+    })
+
     const newBody: any = {
       image: body.photoUrl ? body.photoUrl : '',
       type: 'User',
@@ -428,8 +448,10 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       email: body.email,
       source: body.source,
       medium: body.medium,
-      campaign: body.campaign
+      campaign: body.campaign,
+      libraries: libraries?._id
     }
+
     const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscription })
     if (body.subscription && body.inAppSubscription) {
       if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {

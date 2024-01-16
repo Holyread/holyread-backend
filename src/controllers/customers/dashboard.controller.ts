@@ -147,16 +147,13 @@ const getReadsOfTheDay = async (request: Request, response: Response, next: Next
 /** Get recommended books for dashboard */
 const getRecommendedBooks = async (request: any, response: Response, next: NextFunction) => {
     try {
-        let libraries: any;
-        if(request.user.libraries){
-             libraries = await userService.getUserLibrary({ _id: request.user.libraries })
-        }
+        const libraries = await userService.getUserLibrary({ _id: request.user.libraries })
 
-        const bookIds = libraries?.reading?.map(item => item.bookId);
+        const bookIds = libraries.reading.map(item => item.bookId);
         const books = await bookSummaryService.findBooks({ _id: { $in: bookIds } })
 
         const preferredCategories = [];
-        books?.forEach(book => {
+        books.forEach(book => {
             book.categories.forEach(categoryId => {
                 if (!preferredCategories.some(id => id.toString() === categoryId.toString())) {
                     preferredCategories.push(categoryId);
@@ -172,9 +169,9 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
 
         for (const category of preferredCategories) {
             // Calculate the number of books to select from this category based on its weight
-            const categoryWeight = books?.reduce((count, book) => {
-                if (Array.isArray(book?.categories)) {
-                    book?.categories?.forEach(categoryId => {
+            const categoryWeight = books.reduce((count, book) => {
+                if (Array.isArray(book.categories)) {
+                    book.categories.forEach(categoryId => {
                         if (categoryId.toString() === category.toString()) {
                             count++;
                         }

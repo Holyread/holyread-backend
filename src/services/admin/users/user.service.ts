@@ -162,38 +162,11 @@ const deleteUser = async (id: string) => {
 /** Get all Users for dashboard */
 const getAllUsersForDashboard = async (query: any, select: string) => {
     try {
-        const users: any = await UserModel.find().select(select || '').lean().exec()
+        const users: any = await UserModel.find(query).select(select || '').lean().exec()
         return users
     } catch (e: any) {
         throw new Error(e)
     }
 }
 
-const getActiveUsersWithPushTokensAndTimeZone = async () => {
-    try {
-        const users: any = await UserModel.find({
-            status: 'Active',
-            timeZone: { $exists: true },
-            'pushTokens.0': { '$exists': true },
-            'notification.push': true,
-        }).select('timeZone pushTokens').lean().exec()
-        return users
-    } catch (e: any) {
-        throw new Error(e)
-    }
-}
-
-const getActiveWebUsers = async () => {
-    try {
-        const users: any = await UserModel.find({
-            status: 'Active',
-            device: 'web',
-            'notification.push': true,
-        }).lean().exec()
-        return users
-    } catch (e: any) {
-        throw new Error(e)
-    }
-}
-
-export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser, getAllUsersForDashboard, getActiveUsersWithPushTokensAndTimeZone, getActiveWebUsers }
+export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser, getAllUsersForDashboard }

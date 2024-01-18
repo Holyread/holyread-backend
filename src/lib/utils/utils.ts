@@ -368,3 +368,9 @@ export const formattedDate = (
 export const capitalizeFirstLetter = ([first = '', ...rest]) => {
     return [first.toUpperCase(), ...rest].join('');
 }
+
+export const calculateDateInThePast = (daysAgo) => {
+    const dateInPast = new Date();
+    dateInPast.setDate(dateInPast.getDate() - daysAgo);
+    return dateInPast;
+};

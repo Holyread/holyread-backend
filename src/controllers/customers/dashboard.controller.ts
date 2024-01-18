@@ -147,7 +147,8 @@ const getReadsOfTheDay = async (request: Request, response: Response, next: Next
 /** Get recommended books for dashboard */
 const getRecommendedBooks = async (request: any, response: Response, next: NextFunction) => {
     try {
-        const libraries: any = await userService.getUserLibrary({ _id: request.user.libraries })
+        const libraries = await userService.getUserLibrary({ _id: request.user.libraries })
+
         const bookIds = libraries.reading.map(item => item.bookId);
         const books = await bookSummaryService.findBooks({ _id: { $in: bookIds } })
 

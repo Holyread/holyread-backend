@@ -12,15 +12,14 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
         let count: any = await SmallGroupModel.count(search).lean().exec()
         smallgroupsList = await Promise.all(await smallgroupsList.map(async (item) => {
             if (item && item.books && item.books.length) {
-                item.books = await Promise.all(item.books.map(async oneBook => {
+                item.publishedBooks = [];
+                for (const oneBook of item.books) {
                     const bookDetails = await BookSummaryModel.findById(oneBook).select('coverImage description publish').lean().exec()
-                    if (!bookDetails || !bookDetails.publish) {
-                        return oneBook
+                    if (bookDetails && bookDetails.publish) {
+                        bookDetails.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + bookDetails.coverImage
+                        item.publishedBooks.push(bookDetails);
                     }
-                    bookDetails.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + bookDetails.coverImage
-                    return bookDetails
-                }))
-                item.books = item.books.filter(i => i?._id);
+                }
             } else {
                 --count
             }
@@ -32,7 +31,7 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
                 description: item.description,
                 coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + item.coverImage,
                 backgroundColor: item.backgroundColor,
-                books: item.books,
+                books: item.publishedBooks,
                 bookMark: global?.currentUser?.smallGroups?.find(os => String(os) === String(item._id)) ? true : false
             }
         }))

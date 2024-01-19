@@ -710,7 +710,7 @@ const getUserSubscription = async (
                                     _id: data.subscription
                               })
 
-                        data.subscriptionStatus = data?.inAppSubscriptionStatus || 'freemium';
+                        data.subscriptionStatus = ['Active'].includes(data?.inAppSubscriptionStatus) ? data?.inAppSubscriptionStatus : 'freemium';
                         if (data?.stripe?.subscriptionId) {
                               await stripeSubscriptionService
                                     .retrieveSubscription(data.stripe?.subscriptionId)

@@ -39,12 +39,23 @@ export const renewalReminder = {
             Months: '*',
             DayOfWeek: '*',
       },
-      JOBRESTRICTENV: ['local','development','production'], // 'local','development','production'
+      JOBRESTRICTENV: ['local', 'development', 'production'], // 'local','development','production'
 }
 
 export const syncProfits = {
       SCHEDULE: {
             Minutes: '30',
+            Hours: '*',
+            DayOfMonth: '*',
+            Months: '*',
+            DayOfWeek: '*',
+      },
+      JOBRESTRICTENV: ['local'], // 'local','development','production'
+}
+
+export const setStripeCouponAndStatus = {
+      SCHEDULE: {
+            Minutes: '*/10',
             Hours: '*',
             DayOfMonth: '*',
             Months: '*',

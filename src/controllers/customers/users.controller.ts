@@ -710,12 +710,12 @@ const getUserSubscription = async (
                                     _id: data.subscription
                               })
 
-                        data.subscriptionStatus = data?.inAppSubscriptionStatus || 'trialing';
+                        data.subscriptionStatus = data?.inAppSubscriptionStatus || 'freemium';
                         if (data?.stripe?.subscriptionId) {
                               await stripeSubscriptionService
                                     .retrieveSubscription(data.stripe?.subscriptionId)
                                     .then(res => {
-                                          data.subscriptionStatus = res.status
+                                          data.subscriptionStatus = res.status !== 'active' ? 'freemium' : res.status
                                           if (res.status !== 'active') {
                                                 return;
                                           }
@@ -733,23 +733,6 @@ const getUserSubscription = async (
                                           }
                                     })
                         }
-
-                        const createdAt = data.subscriptionStatus === 'trialing'
-                              ? (
-                                    data?.stripe?.createdAt
-                                    || data?.inAppSubscription?.createdAt
-                                    || data.createdAt
-                              ) : data.createdAt;
-
-                        data.trialEndsIn = data.subscriptionStatus === 'trialing'
-                              ? getTimeDiff(
-                                    String(new Date()),
-                                    String(new Date(
-                                          new Date().setDate(
-                                                new Date(createdAt).getDate() + trailDays
-                                          )
-                                    ))
-                              ) : '0:0:0:0';
 
                         /** set default subscription end date with 10 days trial */
                         if (data.subscription?._id) {

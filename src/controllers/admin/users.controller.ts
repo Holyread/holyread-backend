@@ -16,7 +16,6 @@ import {
     formattedDate,
     uploadFileToS3,
     getSearchRegexp,
-    capitalizeFirstLetter,
 } from '../../lib/utils/utils'
 
 import { awsBucket, dataTable, emailTemplatesTitles, originEmails, origins } from '../../constants/app.constant'
@@ -210,9 +209,9 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     $gte: new Date(params.from),
                     $lte: new Date(new Date(params.to).setDate(new Date(params.to).getDate() + 1)),
                 }
-                else{
-                    return next(Boom.badData(authControllerResponse.invalidDateError))
-                }
+            else {
+                return next(Boom.badData(authControllerResponse.invalidDateError))
+            }
         }
         if (params.from && !params.to) {
             searchFilter.createdAt = {
@@ -228,31 +227,33 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
         searchFilter['type'] = 'User'
 
         if (
-            params?.statusFilter?.toLowerCase()?.includes('plan expired')
+            params?.statusFilter?.toLowerCase()?.includes('freemium')
         ) {
             searchFilter['$or'] = [
                 ...(searchFilter['$or'] || []),
                 {
-                    $and: [
-                        {
-                            'stripe.status': {
-                                $in: [
-                                    'past_due',
-                                    'unpaid',
-                                    'incomplete_expired'
-                                ]
-                            }
-                        },
-                        planQuery,
-                        searchQuery,
-                        paymentModeQuery
-                    ]
+                    'stripe.status': {
+                        $in: [
+                            'trialing',
+                            'incomplete',
+                            'past_due',
+                            'unpaid',
+                            'incomplete_expired',
+                        ]
+                    }
                 },
+                {
+                    stripe: { $exists: false },
+                    inAppSubscription: { $exists: false },
+                    ...planQuery,
+                    ...searchQuery,
+                    ...paymentModeQuery
+                }
             ]
         }
 
         if (
-            params?.statusFilter?.toLowerCase()?.includes('canceled plan')
+            params?.statusFilter?.toLowerCase()?.includes('cancelled plan')
         ) {
             searchFilter['$or'] = [
                 ...(searchFilter['$or'] || []),
@@ -264,6 +265,7 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                 },
                 {
                     'inAppSubscriptionStatus': 'Canceled',
+                    'stripe.status': 'canceled',
                     ...planQuery,
                     ...searchQuery,
                     ...paymentModeQuery
@@ -271,29 +273,29 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             ]
         }
 
-        if (
-            params?.statusFilter?.toLowerCase()?.includes('trial plan')
-        ) {
-            searchFilter['$or'] = [
-                ...(searchFilter['$or'] || []),
-                {
-                    'stripe.status': { $in: ['trialing', 'incomplete'] },
-                    ...planQuery,
-                    ...searchQuery,
-                    ...paymentModeQuery
-                },
-                {
-                    stripe: { $exists: false },
-                    inAppSubscription: { $exists: false },
-                    ...planQuery,
-                    ...searchQuery,
-                    ...paymentModeQuery
-                },
-            ]
-        }
+        // if (
+        //     params?.statusFilter?.toLowerCase()?.includes('trial plan')
+        // ) {
+        //     searchFilter['$or'] = [
+        //         ...(searchFilter['$or'] || []),
+        //         {
+        //             'stripe.status': { $in: ['freemium', 'incomplete'] },
+        //             ...planQuery,
+        //             ...searchQuery,
+        //             ...paymentModeQuery
+        //         },
+        //         {
+        //             stripe: { $exists: false },
+        //             inAppSubscription: { $exists: false },
+        //             ...planQuery,
+        //             ...searchQuery,
+        //             ...paymentModeQuery
+        //         },
+        //     ]
+        // }
 
         if (
-            params?.statusFilter?.toLowerCase()?.includes('active plan')
+            params?.statusFilter?.toLowerCase()?.includes('paid user')
         ) {
             searchFilter['$or'] = [
                 ...(searchFilter['$or'] || []),
@@ -301,12 +303,39 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     'inAppSubscription': { $exists: true },
                     'inAppSubscriptionStatus': 'Active',
                     device: { $in: ['ios', 'android'] },
+                    'stripe.coupon': { $eq: null },
                     ...planQuery,
                     ...searchQuery,
                     ...paymentModeQuery
                 },
                 {
                     'stripe.status': 'active',
+                    'stripe.coupon': { $eq: null },
+                    ...planQuery,
+                    ...searchQuery,
+                    ...paymentModeQuery
+                },
+            ]
+        }
+
+        if (
+            params?.statusFilter?.toLowerCase()?.includes('coupon activated')
+        ) {
+            searchFilter['$or'] = [
+                ...(searchFilter['$or'] || []),
+                {
+                    'inAppSubscription': { $exists: true },
+                    'inAppSubscriptionStatus': 'Active',
+                    device: { $in: ['ios', 'android'] },
+                    'stripe.status': 'active',
+                    'stripe.coupon': { $exists: true, $ne: null },
+                    ...planQuery,
+                    ...searchQuery,
+                    ...paymentModeQuery
+                },
+                {
+                    'stripe.status': 'active',
+                    'stripe.coupon': { $exists: true, $ne: null },
                     ...planQuery,
                     ...searchQuery,
                     ...paymentModeQuery
@@ -353,26 +382,26 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     : i.transaction?.device === 'web' ? i.transaction?.paymentMethod?.brand : i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)';
             }
             if (!i.stripe && !i.inAppSubscription) {
-                i.subscriptionStatus = 'Trial plan'
+                i.subscriptionStatus = 'Freemium'
             }
             if (
                 !i.subscriptionStatus &&
                 i.inAppSubscriptionStatus &&
                 ['android', 'ios'].includes(i.device)
             ) {
-                i.subscriptionStatus = capitalizeFirstLetter(i.inAppSubscriptionStatus) + ' plan';
+                i.subscriptionStatus = i.inAppSubscriptionStatus === 'Active' ? (i.stripe?.coupon ? 'Coupon' : 'Activated') : 'Cancelled'
             }
             if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
                 if (!i.stripe?.status) {
-                    i.subscriptionStatus = 'Trial plan'
+                    i.subscriptionStatus = 'Freemium'
                 }
                 else if (['trialing', 'incomplete'].includes(i.stripe?.status)) {
-                    i.subscriptionStatus = 'Trial plan'
+                    i.subscriptionStatus = 'Freemium'
                 }
                 else if (i.stripe?.status === 'active') {
-                    i.subscriptionStatus = 'Active plan'
+                    i.subscriptionStatus = 'Activated'
                 } else if (i.stripe?.status === 'canceled') {
-                    i.subscriptionStatus = 'Canceled plan'
+                    i.subscriptionStatus = 'Cancelled'
                 } else if (
                     [
                         'past_due',
@@ -380,13 +409,16 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                         'incomplete_expired'
                     ].includes(i.stripe?.status)
                 ) {
-                    i.subscriptionStatus = 'Plan expired'
+                    i.subscriptionStatus = 'Freemium'
                 } else {
-                    i.subscriptionStatus = 'Plan expired'
+                    i.subscriptionStatus = 'Freemium'
                 }
             }
             if (!i.subscriptionStatus) {
-                i.subscriptionStatus = 'Trial plan'
+                i.subscriptionStatus = 'Freemium'
+            }
+            if (i.stripe?.status === 'active' && i.stripe?.coupon) {
+                i.subscriptionStatus = 'Coupon'
             }
         }))
         response.status(200).json({

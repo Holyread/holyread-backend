@@ -55,7 +55,7 @@ export const syncProfits = {
 
 export const setStripeCouponAndStatus = {
       SCHEDULE: {
-            Minutes: '*/10',
+            Minutes: '*/1',
             Hours: '*',
             DayOfMonth: '*',
             Months: '*',

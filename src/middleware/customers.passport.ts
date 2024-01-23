@@ -38,9 +38,9 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             if (userDetails.status !== 'Active') {
                 return next(Boom.unauthorized('User not active'));
             }
-            if (!userDetails.verified) {
-                return next(Boom.forbidden('User not verfied'));
-            }
+            // if (!userDetails.verified) {
+            //     return next(Boom.forbidden('User not verfied'));
+            // }
             if (
                 false && 
                 !req.path.includes('logout') &&

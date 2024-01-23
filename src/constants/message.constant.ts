@@ -8,6 +8,7 @@ export const responseMessage = {
     authControllerResponse: {
         loginSuccess: 'User login successfully, ',
         signUpSuccess: 'User signUp successfully',
+        verifySuccess: 'Email verified successfully',
         userUpdateSuccess: 'User updated successfully',
         savedBook: 'Saved to My favorite',
         unSavedBook: 'Removed from My Favorite',

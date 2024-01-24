@@ -141,42 +141,49 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
 /** Verify User signup */
 const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const token = req.query.token as string
-    let user: any;
-    if (!req?.query?.token && !req?.query?.code) {
-      return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
-    }
-
-    if (
-      req?.query?.code &&
-      !req?.query?.email &&
-      !req?.query?.token
-    ) {
-      return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
-    }
-
-    let body: any = { email: req?.query?.email, verificationCode: req?.query?.code };
-
-    if (token) {
-      const decryptToken: any = verifyToken(token)
-      if (!decryptToken.code) {
+    const token = req.query.token as string;
+    let body: any;
+    const isVerifyLater = req?.query?.isVerifyLater;
+    if (isVerifyLater) {
+      if (!req?.query?.email) {
+        return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
+      }
+      body = { email: req?.query?.email };
+    } else {
+      if (!req?.query?.token && !req?.query?.code) {
         return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
       }
-      body.email = decryptToken.email
-      body.verificationCode = decryptToken.code
+  
+      if (!req?.query?.code && !req?.query?.email &&
+        !req?.query?.token
+      ) {
+        return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
+      }
+  
+      body = { email: req?.query?.email, verificationCode: req?.query?.code };
+  
+      if (token) {
+        const decryptToken: any = verifyToken(token)
+        if (!decryptToken.code) {
+          return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+        }
+        body.email = decryptToken.email
+        body.verificationCode = decryptToken.code
+      }
     }
 
+
     /** Get user from db */
-    user = await usersService.getOneUserByFilter(body)
+    const user = await usersService.getOneUserByFilter(body)
     if (!user) {
       return next(Boom.notFound(authControllerResponse.invalidOtpError))
     }
 
     body = {
-      verified: true,
+      verified: isVerifyLater ? false : true,
       status: 'Active',
       device: user.referralUserId && req.query.device ? req.query.device : user.device,
-      $unset: { verificationCode: 1 }
+      ...!isVerifyLater && { $unset: { verificationCode: 1 } }
     }
 
     if (!user.inAppSubscription && user.device === 'web' && !user.referralUserId && !user.stripe) {
@@ -233,7 +240,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     if (!result) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
     }
-    res.status(200).send({ message: authControllerResponse.verifySuccess })
+    res.status(200).send({ message: isVerifyLater ? authControllerResponse.signUpSuccess : authControllerResponse.verifySuccess })
     /** Push notification */
     if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
       const tokens = user.pushTokens.map(i => i.token)
@@ -868,90 +875,46 @@ const resendSignUpEmail = async (req: Request, res: Response, next: NextFunction
 
 const verifyLater = async (req: Request, res: Response, next: NextFunction)=>{
   try {
-    let user: any;
     let body: any;
 
     if (!req?.body?.email) {
       return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
     }
 
+    const token = req.body.token as string;
+
+    if (!req?.body?.code && !req?.body?.email &&
+      !token
+    ) {
+      return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
+    }
+
+    body = { email: req?.body?.email, verificationCode: req?.body?.code };
+
+    if (token) {
+      const decryptToken: any = verifyToken(token)
+      if (!decryptToken.code) {
+        return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+      }
+      body.email = decryptToken.email
+      body.verificationCode = decryptToken.code
+    }
+
+
     /** Get user from db */
-    user = await usersService.getOneUserByFilter({email:req?.body?.email})
+    const user: any = await usersService.getOneUserByFilter({email:req?.body?.email})
     if (!user) {
       return next(Boom.notFound(authControllerResponse.invalidOtpError))
     }
 
     body = {
-      status: 'Active',
-      device: user.referralUserId && req.body.device ? req.body.device : user.device,
-    }
-
-    if (!user.inAppSubscription && user.device === 'web' && !user.referralUserId) {
-      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
-      if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-        return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
-      }
-
-      /** Create stripe customer */
-      const customer = await stripeSubscriptionService.createCustomer(user.email)
-      /** Create stripe subscription */
-      const subscription = await stripeSubscriptionService.createSubscription({
-        planId: subscriptionDetails.stripePlanId,
-        customerId: customer.id,
-        coupon: req.query.coupon as any
-      })
-      body.stripe = {
-        planId: subscriptionDetails.stripePlanId,
-        subscriptionId: subscription.id,
-        customerId: customer.id,
-        createdAt: new Date(),
-        coupon: req?.query?.coupon
-      }
-      body.subscription = subscriptionDetails._id
+      verified: true,
+      $unset: { verificationCode: 1 }
     }
 
     await usersService.updateUser({ _id: user._id }, body)
-    mailchimpService.updateUser(user.email, 'subscribed')
-    const title = 'Welcome to Holy Reads 🎉';
-    const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
-    await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title, description } })
-
-    /** Get welcome email template */
-    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.welcomeToHolyreads })
-    const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
-    let html = `<p>Dear ${user.email.split('@')[0]},</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]}/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
-
-    if (emailTemplateDetails && emailTemplateDetails.content) {
-      const contentData = { loginURL: `${origins[NODE_ENV]}/account/login` }
-      const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
-      if (htmlData) {
-        html = htmlData
-      }
-    }
-
-    /** sent welcome email */
-    const result = await sentEmail({
-      from: originEmails.marketing,
-      to: user.email,
-      subject,
-      html
-    });
-
-    if (!result) {
-      return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
-    }
+    
     res.status(200).send({ message: authControllerResponse.verifySuccess })
-    /** Push notification */
-    if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
-      const tokens = user.pushTokens.map(i => i.token)
-      pushNotification(tokens, title, description)
-      if (
-        user?.notification?.subscription &&
-        user.device === 'web' &&
-        !user.inAppSubscription &&
-        !user.referralUserId
-      ) pushNotification(tokens, tokens, 'Holy Reads Free access 🔔', `Enjoy unlimited free access with holy reads best summaries📚`);
-    }
   } catch (e: any) {
     next(Boom.badData(e.message))
   }

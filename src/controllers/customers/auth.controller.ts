@@ -143,7 +143,8 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
   try {
     const token = req.query.token as string;
     let body: any;
-    if (req?.query?.isVerifyLater) {
+    const isVerifyLater = req?.query?.isVerifyLater;
+    if (isVerifyLater) {
       if (!req?.query?.email) {
         return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
       }
@@ -179,10 +180,10 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     }
 
     body = {
-      verified: req?.query?.isVerifyLater ? false : true,
+      verified: isVerifyLater ? false : true,
       status: 'Active',
       device: user.referralUserId && req.query.device ? req.query.device : user.device,
-      ...!req?.query?.isVerifyLater && { $unset: { verificationCode: 1 } }
+      ...!isVerifyLater && { $unset: { verificationCode: 1 } }
     }
 
     if (!user.inAppSubscription && user.device === 'web' && !user.referralUserId && !user.stripe) {
@@ -239,7 +240,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     if (!result) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
     }
-    res.status(200).send({ message: authControllerResponse.verifySuccess })
+    res.status(200).send({ message: isVerifyLater ? authControllerResponse.signUpSuccess : authControllerResponse.verifySuccess })
     /** Push notification */
     if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
       const tokens = user.pushTokens.map(i => i.token)

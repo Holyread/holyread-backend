@@ -875,31 +875,9 @@ const resendSignUpEmail = async (req: Request, res: Response, next: NextFunction
 
 const verifyLater = async (req: Request, res: Response, next: NextFunction)=>{
   try {
-    let body: any;
-
-    if (!req?.body?.email) {
+    if (!req?.body?.code && !req?.body?.email) {
       return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
     }
-
-    const token = req.body.token as string;
-
-    if (!req?.body?.code && !req?.body?.email &&
-      !token
-    ) {
-      return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
-    }
-
-    body = { email: req?.body?.email, verificationCode: req?.body?.code };
-
-    if (token) {
-      const decryptToken: any = verifyToken(token)
-      if (!decryptToken.code) {
-        return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
-      }
-      body.email = decryptToken.email
-      body.verificationCode = decryptToken.code
-    }
-
 
     /** Get user from db */
     const user: any = await usersService.getOneUserByFilter({email:req?.body?.email})
@@ -907,7 +885,7 @@ const verifyLater = async (req: Request, res: Response, next: NextFunction)=>{
       return next(Boom.notFound(authControllerResponse.invalidOtpError))
     }
 
-    body = {
+    const body: any = {
       verified: true,
       $unset: { verificationCode: 1 }
     }

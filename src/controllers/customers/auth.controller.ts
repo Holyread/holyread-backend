@@ -875,35 +875,9 @@ const resendSignUpEmail = async (req: Request, res: Response, next: NextFunction
 
 const verifyLater = async (req: Request, res: Response, next: NextFunction)=>{
   try {
-    let body: any;
-
-    if (!req?.body?.email) {
+    if (!req?.body?.code && !req?.body?.email) {
       return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
     }
-
-    const token = req.body.token as string;
-
-    if (!req?.body?.token && !req?.body?.code) {
-      return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
-    }
-
-    if (!req?.body?.code && !req?.body?.email &&
-      !req?.body?.token
-    ) {
-      return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
-    }
-
-    body = { email: req?.body?.email, verificationCode: req?.body?.code };
-
-    if (token) {
-      const decryptToken: any = verifyToken(token)
-      if (!decryptToken.code) {
-        return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
-      }
-      body.email = decryptToken.email
-      body.verificationCode = decryptToken.code
-    }
-
 
     /** Get user from db */
     const user: any = await usersService.getOneUserByFilter({email:req?.body?.email})
@@ -911,7 +885,7 @@ const verifyLater = async (req: Request, res: Response, next: NextFunction)=>{
       return next(Boom.notFound(authControllerResponse.invalidOtpError))
     }
 
-    body = {
+    const body: any = {
       verified: true,
       $unset: { verificationCode: 1 }
     }
@@ -919,19 +893,6 @@ const verifyLater = async (req: Request, res: Response, next: NextFunction)=>{
     await usersService.updateUser({ _id: user._id }, body)
     
     res.status(200).send({ message: authControllerResponse.verifySuccess })
-    /** Push notification */
-    if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
-      const tokens = user.pushTokens.map(i => i.token)
-      const title = 'Welcome to Holy Reads 🎉';
-      const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
-      pushNotification(tokens, title, description)
-      if (
-        user?.notification?.subscription &&
-        user.device === 'web' &&
-        !user.inAppSubscription &&
-        !user.referralUserId
-      ) pushNotification(tokens, tokens, 'Holy Reads Free access 🔔', `Enjoy unlimited free access with holy reads best summaries📚`);
-    }
   } catch (e: any) {
     next(Boom.badData(e.message))
   }

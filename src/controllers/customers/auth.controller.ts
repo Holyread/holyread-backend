@@ -38,7 +38,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     const token: string = getToken({ email: user.email, id: user._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
-      data: { _id: user._id, email: user.email, token, type: user.type }
+      data: { _id: user._id, email: user.email, token, type: user.type, verified: user.verified }
     })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -141,45 +141,52 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
 /** Verify User signup */
 const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const token = req.query.token as string
-    let user: any;
-    if (!req?.query?.token && !req?.query?.code) {
-      return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
-    }
-
-    if (
-      req?.query?.code &&
-      !req?.query?.email &&
-      !req?.query?.token
-    ) {
-      return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
-    }
-
-    let body: any = { email: req?.query?.email, verificationCode: req?.query?.code };
-
-    if (token) {
-      const decryptToken: any = verifyToken(token)
-      if (!decryptToken.code) {
+    const token = req.query.token as string;
+    let body: any;
+    const isVerifyLater = req?.query?.isVerifyLater;
+    if (isVerifyLater) {
+      if (!req?.query?.email) {
+        return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
+      }
+      body = { email: req?.query?.email };
+    } else {
+      if (!req?.query?.token && !req?.query?.code) {
         return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
       }
-      body.email = decryptToken.email
-      body.verificationCode = decryptToken.code
+  
+      if (!req?.query?.code && !req?.query?.email &&
+        !req?.query?.token
+      ) {
+        return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
+      }
+  
+      body = { email: req?.query?.email, verificationCode: req?.query?.code };
+  
+      if (token) {
+        const decryptToken: any = verifyToken(token)
+        if (!decryptToken.code) {
+          return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+        }
+        body.email = decryptToken.email
+        body.verificationCode = decryptToken.code
+      }
     }
 
+
     /** Get user from db */
-    user = await usersService.getOneUserByFilter(body)
+    const user = await usersService.getOneUserByFilter(body)
     if (!user) {
       return next(Boom.notFound(authControllerResponse.invalidOtpError))
     }
 
     body = {
-      verified: true,
+      verified: isVerifyLater ? false : true,
       status: 'Active',
       device: user.referralUserId && req.query.device ? req.query.device : user.device,
-      $unset: { verificationCode: 1 }
+      ...!isVerifyLater && { $unset: { verificationCode: 1 } }
     }
 
-    if (!user.inAppSubscription && user.device === 'web' && !user.referralUserId) {
+    if (!user.inAppSubscription && user.device === 'web' && !user.referralUserId && !user.stripe) {
       const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
       if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
         return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
@@ -233,7 +240,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     if (!result) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
     }
-    res.status(200).send({ message: authControllerResponse.signUpSuccess })
+    res.status(200).send({ message: isVerifyLater ? authControllerResponse.signUpSuccess : authControllerResponse.verifySuccess })
     /** Push notification */
     if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
       const tokens = user.pushTokens.map(i => i.token)
@@ -866,6 +873,31 @@ const resendSignUpEmail = async (req: Request, res: Response, next: NextFunction
   }
 }
 
+const verifyLater = async (req: Request, res: Response, next: NextFunction)=>{
+  try {
+    if (!req?.body?.code && !req?.body?.email) {
+      return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
+    }
+
+    /** Get user from db */
+    const user: any = await usersService.getOneUserByFilter({email:req?.body?.email})
+    if (!user) {
+      return next(Boom.notFound(authControllerResponse.invalidOtpError))
+    }
+
+    const body: any = {
+      verified: true,
+      $unset: { verificationCode: 1 }
+    }
+
+    await usersService.updateUser({ _id: user._id }, body)
+    
+    res.status(200).send({ message: authControllerResponse.verifySuccess })
+  } catch (e: any) {
+    next(Boom.badData(e.message))
+  }
+}
+
 export default {
   signInUser,
   signUpUser,
@@ -876,4 +908,5 @@ export default {
   forgotPassoword,
   verifyUserSignUp,
   resendSignUpEmail,
+  verifyLater
 }

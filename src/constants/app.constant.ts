@@ -73,6 +73,7 @@ export const dataLimit = {
 export const originEmails = {
     kindle: 'kindle@holyreads.com',
     marketing: 'noreply@holyreads.com',
+    contactUs: 'info@holyreads.com'
 }
 
 export const emailTemplatesTitles = {

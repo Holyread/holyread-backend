@@ -1603,10 +1603,12 @@ const submitQuery = async (
       try {
             const {
                   subject,
-                  message
+                  message,
+                  phone
             }: {
                   subject: string,
-                  message: string
+                  message: string,
+                  phone: number
             } = req.body;
 
             const userObj = Object.assign({}, req.user)
@@ -1626,7 +1628,7 @@ const submitQuery = async (
                         Email : ${userObj.email}
                   </p>
                   <p>
-                        Phone Number : ${userObj.contactNumber || ''}
+                        Phone Number : ${userObj.contactNumber || phone}
                   </p>
                   <p>
                         Subject : ${subject}
@@ -1646,7 +1648,7 @@ const submitQuery = async (
                   const contentData = {
                         username: userObj.email.split('@')[0],
                         email: userObj.email,
-                        phone_number: userObj.contactNumber || '',
+                        phone_number: userObj.contactNumber || phone,
                         subject,
                         message
                   }
@@ -1660,7 +1662,7 @@ const submitQuery = async (
             }
             const result = await sentEmail({
                   from: originEmails.marketing,
-                  to: originEmails.marketing,
+                  to: originEmails.contactUs,
                   subject: sub,
                   html
             });
@@ -1727,7 +1729,7 @@ const submitFeedback = async (
 
             const result = await sentEmail({
                   from: originEmails.marketing,
-                  to: originEmails.marketing,
+                  to: originEmails.contactUs,
                   subject,
                   html
             });

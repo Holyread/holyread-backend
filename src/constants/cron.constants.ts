@@ -52,3 +52,14 @@ export const syncProfits = {
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 }
+
+export const setStripeCouponAndStatus = {
+      SCHEDULE: {
+            Minutes: '*/1',
+            Hours: '*',
+            DayOfMonth: '*',
+            Months: '*',
+            DayOfWeek: '*',
+      },
+      JOBRESTRICTENV: ['local'], // 'local','development','production'
+}

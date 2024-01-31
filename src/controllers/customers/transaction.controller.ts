@@ -64,7 +64,7 @@ const createTransaction = async (
 
 const processTransaction = async (user: any, session: any, event: any) => {
       try {
-            userService.updateUser({ _id: user._id }, { 'stripe.status': session?.status })
+            await userService.updateUser({ _id: user._id }, { 'stripe.status': session?.status })
             /** Trial or incomplete subscription does not required transation yet */
             if (
                   [
@@ -421,7 +421,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
             /** Process active subscription */
             if (session.status === 'active') {
                   const createdTransaction = await transactionsService.createTransaction(transaction)
-                  userService.updateUser({ _id: user._id }, { lastTrnId: createdTransaction._id })
+                  await userService.updateUser({ _id: user._id }, { lastTrnId: createdTransaction._id, 'stripe.status': 'active' })
                   /** Sent subscription activation email */
                   await sentSubscriptionEmail(
                         transaction?.planExpiredAt,

@@ -64,7 +64,7 @@ const createTransaction = async (
 
 const processTransaction = async (user: any, session: any, event: any) => {
       try {
-            userService.updateUser({ _id: user._id }, { 'stripe.status': session?.status })
+            await userService.updateUser({ _id: user._id }, { 'stripe.status': session?.status })
             /** Trial or incomplete subscription does not required transation yet */
             if (
                   [

@@ -478,11 +478,6 @@ const processTransaction = async (user: any, session: any, event: any) => {
                   return
             }
 
-            // Update status 'active' if subscription updated
-            if (event.type === 'customer.subscription.updated' && session.status === 'active') {
-                  await userService.updateUser({ _id: user._id }, { 'stripe.status': 'active' });
-            } 
-
             /** Failed payment transaction * sent cancel subscription email */
             const emailTemplateDetails =
                   await emailTemplateService

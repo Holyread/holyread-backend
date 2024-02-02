@@ -2374,14 +2374,6 @@ const subscribePlan = async (
                         'stripe.subscriptionId': subscription.id,
                         'stripe.planId': subscriptionDetails.stripePlanId,
                   }
-                  // Update coupon id and status if user redeem coupon
-                  const isUserRedeemCoupon = subscription && !userObj.stripe.coupon && userObj.stripe.status !== 'active' && req.body.coupon;
-                  const couponId = subscription.discount?.coupon?.id;
-
-                  if (isUserRedeemCoupon && couponId) {
-                        body['stripe.coupon'] = couponId;
-                        body['stripe.status'] = subscription.status;
-                  }
             }
             await usersService.updateUser({ _id: userObj._id }, body)
 

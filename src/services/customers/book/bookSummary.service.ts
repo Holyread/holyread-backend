@@ -39,9 +39,6 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                         $match: search.search
                     },
                     {
-                        $sample: { size: limit }
-                    },
-                    {
                         $facet: {
                             page: [
                                 { $skip: skip },

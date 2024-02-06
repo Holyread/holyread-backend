@@ -9,6 +9,8 @@ const getAllExpertCurateds = async (skip: number, limit, search: any, sort) => {
     try {
         search.publish = true
         const page: any = [{ $skip: skip }]
+        const count = await ExpertCuratedModel.find(search).countDocuments()
+
         const aggregate: any = new Set([
             {
                 $project: {
@@ -35,6 +37,9 @@ const getAllExpertCurateds = async (skip: number, limit, search: any, sort) => {
         }
         aggregate.add({
             $sort: sort
+        })
+        aggregate.add({
+            $sample: { size: count }
         })
         aggregate.add({
             $facet: {

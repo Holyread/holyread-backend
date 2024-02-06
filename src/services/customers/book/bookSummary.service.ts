@@ -10,6 +10,9 @@ const NODE_ENV = config.NODE_ENV
 const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, sort) => {
     try {
         search.search.publish = true
+
+        const totalCount = await BookSummaryModel.find({ publish: true }).countDocuments()
+
         let result: any
             = await BookSummaryModel
                 .aggregate([
@@ -38,6 +41,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                     {
                         $match: search.search
                     },
+                    { $sample: { size: totalCount } },
                     {
                         $facet: {
                             page: [

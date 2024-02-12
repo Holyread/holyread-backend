@@ -29,10 +29,18 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
             commonUserObj.lastSeen = { $lte: sevenDaysAgo };
         }
 
-        let mobileUserObj = {
+        let mobileUserObj: any = {
             ...commonUserObj,
             "pushTokens.0": { $exists: true },
         };
+
+        if (userFilter?.toLowerCase()?.includes('cancelled plan')) {
+            mobileUserObj.inAppSubscriptionStatus = 'Canceled'
+        }
+
+        if (userFilter?.toLowerCase()?.includes('freemium')) {
+            mobileUserObj.inAppSubscription = { $exists: false }
+        }
 
         const mobileUsers = await usersService.getAllUsersForDashboard(mobileUserObj, 'timeZone pushTokens')
 
@@ -54,7 +62,30 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
             device: "web",
         }
 
-        const webUsers = await usersService.getAllUsersForDashboard(webUserObj, '')
+        if (userFilter?.toLowerCase()?.includes('cancelled plan')) {
+            webUserObj['$or'] = [
+                ...(webUserObj['$or'] || []), 
+                { 'stripe.status': 'canceled' }]
+        }
+
+        if (userFilter?.toLowerCase()?.includes('freemium')) {
+            webUserObj['$or'] = [
+                ...(webUserObj['$or'] || []),
+                {
+                    'stripe.status': {
+                        $in: [
+                            'trialing',
+                            'incomplete',
+                            'past_due',
+                            'unpaid',
+                            'incomplete_expired',
+                        ]
+                    }
+                }
+            ]
+        }
+
+        const webUsers: any = await usersService.getAllUsersForDashboard(webUserObj, '');
 
         if (!webUsers.length) {
             return next(Boom.notFound(authControllerResponse.noUserFound))

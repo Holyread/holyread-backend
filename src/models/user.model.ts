@@ -73,6 +73,7 @@ export interface IUser extends mongoose.Document {
     campaign?: string,
     lastTrnId?: Types.ObjectId,
     deviceId?: string,
+    isSignedUp: boolean,
 }
 
 export type createUserType = {
@@ -147,6 +148,7 @@ export type createUserType = {
     campaign?: string,
     lastTrnId?: Types.ObjectId,
     deviceId?: string,
+    isSignedUp: boolean,
 }
 
 export type getUserType = {
@@ -221,6 +223,7 @@ export type getUserType = {
     campaign?: string,
     lastTrnId?: Types.ObjectId,
     deviceId?: string,
+    isSignedUp: boolean,
 }
 
 export const UserSchema = new Schema({
@@ -299,6 +302,7 @@ export const UserSchema = new Schema({
     medium: { type: String },
     campaign: { type: String },
     deviceId: { type: String},
+    isSignedUp: { type: Boolean },
 }, { strict: 'throw' })
 
 export const UserModel = mongoose.model<IUser>('user', UserSchema)

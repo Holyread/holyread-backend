@@ -74,6 +74,7 @@ const initializeDeviceAccess = async (req: Request, res: Response, next: NextFun
         device: body.device,
         verified: false,
         deviceId: body.deviceId,
+        isSignedUp: false,
         libraries: libraries ? libraries._id : null,
       };
 
@@ -150,6 +151,7 @@ const appSignUpUser = async (
     source: body.source,
     medium: body.medium,
     campaign: body.campaign,
+    isSignedUp: true,
   };
 
   await usersService.updateUser({ _id: user._id }, userData);
@@ -230,7 +232,8 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       source: body.source,
       medium: body.medium,
       campaign: body.campaign,
-      libraries : libraries?._id
+      libraries : libraries?._id,
+      isSignedUp : true,
     }
     /** Store In app subscription */
     const now: Date = new Date()
@@ -507,6 +510,7 @@ const handleExistingAppUser = async (
     source: body.source,
     medium: body.medium,
     campaign: body.campaign,
+    isSignedUp: true,
   };
 
   const subscriptionDetails =

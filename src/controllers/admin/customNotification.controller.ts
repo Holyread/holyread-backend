@@ -9,7 +9,6 @@ import usersService from '../../services/admin/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
 import { dataTable } from '../../constants/app.constant';
 
-const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
 const { notificationsControllerResponse } = responseMessage
 
@@ -42,13 +41,14 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
             mobileUserObj.inAppSubscription = { $exists: false }
         }
 
+        if (userFilter?.toLowerCase()?.includes('presignupusers')) {
+            mobileUserObj.isSignedUp = false
+        }
+
         const mobileUsers = await usersService.getAllUsersForDashboard(mobileUserObj, 'timeZone pushTokens')
 
-        if (!mobileUsers.length) {
-            return next(Boom.notFound(authControllerResponse.noUserFound))
-        }
         /**push notification */
-        await Promise.all(mobileUsers.map(user => {
+        await Promise.all(mobileUsers?.map(user => {
             pushNotification(
                 user?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
                 ` ${title}`,
@@ -85,12 +85,14 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
             ]
         }
 
+
+        if (userFilter?.toLowerCase()?.includes('presignupusers')) {
+            webUserObj.isSignedUp = false
+        }
+
         const webUsers: any = await usersService.getAllUsersForDashboard(webUserObj, '');
 
-        if (!webUsers.length) {
-            return next(Boom.notFound(authControllerResponse.noUserFound))
-        }
-        await Promise.all(webUsers.map(async (user) => {
+        await Promise.all(webUsers?.map(async (user) => {
             try {
                 await notificationsService.createNotification({
                     userId: user._id,

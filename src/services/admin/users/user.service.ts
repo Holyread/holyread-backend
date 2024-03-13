@@ -81,6 +81,7 @@ const getAllUsers = async (
                             firstName: 1.0,
                             createdAt: 1.0,
                             subscription: 1.0,
+                            isSignedUp: 1.0,
                             image: {
                                 $concat: [
                                     awsBucket[NODE_ENV].s3BaseURL + '/users/',

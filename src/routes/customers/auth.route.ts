@@ -4,12 +4,14 @@ import customerLogin from '../../middleware/customers.login.passport'
 
 const router: Router = express.Router()
 
+router.post('/device', authController.initializeDeviceAccess)
 router.post('/signUp', authController.signUpUser)
 router.post('/signUp/verify-later', authController.verifyLater)
 router.get('/signUp/verify', authController.verifyUserSignUp)
 router.post('/verify-password', authController.verifyPassword)
 router.post('/signUp/resend', authController.resendSignUpEmail)
 router.post('/login', customerLogin, authController.signInUser)
+router.post('/signUp/app', authController.appSignUpUser)
 router.post('/oauth-signup/app', authController.appOAuthSignUp)
 router.post('/forgot-password', authController.forgotPassoword)
 router.post('/oauth-login', customerLogin, authController.oAuthLogin)

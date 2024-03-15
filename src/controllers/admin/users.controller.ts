@@ -272,6 +272,19 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                 },
             ]
         }
+        if (
+            params?.statusFilter?.toLowerCase()?.includes('presignupusers')
+        ) {
+            searchFilter['$or'] = [
+                ...(searchFilter['$or'] || []),
+                {
+                    'isSignedUp': false,
+                    ...planQuery,
+                    ...searchQuery,
+                    ...paymentModeQuery
+                },
+            ]
+        }
 
         // if (
         //     params?.statusFilter?.toLowerCase()?.includes('trial plan')

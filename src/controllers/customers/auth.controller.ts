@@ -300,7 +300,7 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     }
 
     if (!user.inAppSubscription && user.device === 'web' && !user.referralUserId && !user.stripe) {
-      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ duration: 'Month' })
+      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ title: 'Monthly' })
       if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
         return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
       }
@@ -931,7 +931,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     }
 
     const subscriptionDetails = await subscriptionsService
-      .getOneSubscriptionByFilter({ duration: 'Month' })
+      .getOneSubscriptionByFilter({ title: 'Monthly' })
 
     if (
       !subscriptionDetails ||

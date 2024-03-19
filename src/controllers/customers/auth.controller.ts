@@ -267,8 +267,8 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
   }
 }
 
-/** Verify User signup */
-const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction) => {
+/** Verify Email */
+const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.query.token as string;
     let body: any;
@@ -1075,7 +1075,7 @@ export default {
   appOAuthSignUp,
   appOAuthSignIn,
   forgotPassoword,
-  verifyUserSignUp,
+  verifyEmail,
   sendVerificationEmail,
   initializeDeviceAccess,
   appSignUpUser

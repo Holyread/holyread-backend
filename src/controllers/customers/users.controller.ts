@@ -701,15 +701,18 @@ const getUserSubscription = async (
             let subscriptionEndDate = new Date(
                   data.createdAt
             )
-                  .getTime() + (trailDays * 24 * 60 * 60 * 1000);
+                  .getTime() + (24 * 60 * 60 * 1000);
 
+
+            if (!data.stripe) {
+                  data.subscriptionStatus = 'freemium';
+            }
             if (data.subscription) {
                   try {
                         data.subscription = await subscriptionService
                               .getOneSubscriptionByFilter({
                                     _id: data.subscription
                               })
-
                         data.subscriptionStatus = ['Active'].includes(data?.inAppSubscriptionStatus) ? data?.inAppSubscriptionStatus : 'freemium';
                         if (data?.stripe?.subscriptionId) {
                               await stripeSubscriptionService
@@ -2233,6 +2236,7 @@ const subscribePlan = async (
 ) => {
       try {
             const userObj = req.user
+
             const subscriptionDetails = await subscriptionService
                   .getOneSubscriptionByFilter({
                         _id: req.body.subscription

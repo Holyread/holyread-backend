@@ -650,7 +650,8 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       source: body.source,
       medium: body.medium,
       campaign: body.campaign,
-      libraries: libraries?._id
+      libraries: libraries?._id,
+      isSignedUp: true
     }
 
     const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscription })

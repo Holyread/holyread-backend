@@ -1845,7 +1845,7 @@ const blessFriend = async (
                   verified: false,
                   verificationCode,
                   email: body.email,
-                  status: 'Deactive',
+                  status: 'Active',
                   password: body.password,
                   referralUserId: refUser._id,
                   device: body.device || 'web',

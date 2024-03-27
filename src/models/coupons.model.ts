@@ -8,6 +8,7 @@ export interface ICoupons extends mongoose.Document {
     redeemCount: number,
     discount: number, // stripe percent_off
     duration: 'once' | 'repeating' | 'forever',
+    type: string,
     maxRedemptions: number
 }
 
@@ -17,6 +18,7 @@ export type createCouponType = {
     redeemCount: number,
     discount: number,
     duration: 'once' | 'repeating' | 'forever',
+    type: string,
     maxRedemptions: number
 }
 
@@ -27,6 +29,7 @@ export type getCouponType = {
     redeemCount?: number,
     discount?: number,
     duration?: 'once' | 'repeating' | 'forever',
+    type?: string,
     maxRedemptions: number
 }
 
@@ -58,6 +61,13 @@ export const CouponsSchema = new Schema({
             'once',
             'forever',
             'repeating',
+        ]
+    },
+    type: {
+        type: String,
+        enum: [
+            'yearly',
+            'monthly'
         ]
     },
     maxRedemptions: {

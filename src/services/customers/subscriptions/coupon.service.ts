@@ -13,7 +13,8 @@ const getOneCouponByFilter = async (query: any) => {
                               'discount',
                               'duration',
                               'expireDate',
-                              'maxRedemptions',  
+                              'maxRedemptions',
+                              'type'
                         ])
                         .lean();
             return result

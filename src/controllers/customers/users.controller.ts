@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 import { trailDays } from '../../constants/app.constant';
 import { Types } from 'mongoose'
+import coupoonsService from '../../services/customers/subscriptions/coupon.service'
 
 import {
       encrypt,
@@ -798,9 +799,11 @@ const getCoupon = async (
                   )
             }
 
+           const data =  await coupoonsService.getOneCouponByFilter({ code: req.params.coupon })
+
             res.status(200).send({
                   message: couponControllerResponse.fetchCouponSuccess,
-                  data: coupon
+                  data: {...coupon,type:data.type}
             })
 
       } catch ({ message }: any) {

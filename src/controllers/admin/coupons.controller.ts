@@ -33,7 +33,7 @@ const addCoupon = async (req: Request, res: Response, next: NextFunction) => {
         }
 
         const data = await coupoonsService.createCoupon({
-            ...couponDetails
+            ...couponDetails,type:body.type
         })
 
         if (!data._id) {

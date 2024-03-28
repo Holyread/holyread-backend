@@ -8,31 +8,37 @@ const NODE_ENV = config.NODE_ENV
 /** Get all small group for app */
 const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
     try {
-        let smallgroupsList: any = await SmallGroupModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        let count: any = await SmallGroupModel.count(search).lean().exec()
+        const count = await SmallGroupModel.find(search).countDocuments();
+        const aggregatePipeline = [
+            { $match: search },
+            { $sort: sort },
+            { $skip: skip },
+            { $limit: limit },
+            { $sample: { size: count } }
+        ]
+        
+        let smallgroupsList = await SmallGroupModel.aggregate(aggregatePipeline).exec()
         smallgroupsList = await Promise.all(await smallgroupsList.map(async (item) => {
             if (item && item.books && item.books.length) {
                 item.publishedBooks = [];
                 for (const oneBook of item.books) {
                     const bookDetails = await BookSummaryModel.findById(oneBook).select('coverImage description publish').lean().exec()
                     if (bookDetails && bookDetails.publish) {
-                        bookDetails.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + bookDetails.coverImage
+                        bookDetails.coverImage = `${awsBucket[NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${bookDetails.coverImage}`
                         item.publishedBooks.push(bookDetails);
                     }
                 }
-            } else {
-                --count
-            }
+            }      
             return {
                 _id: item._id,
                 iceBreaker: item.iceBreaker,
                 introduction: item.introduction,
                 title: item.title,
                 description: item.description,
-                coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + item.coverImage,
+                coverImage: `${awsBucket[NODE_ENV].s3BaseURL}/${awsBucket.smallGroupDirectory}/${item.coverImage}`,
                 backgroundColor: item.backgroundColor,
-                books: item.publishedBooks,
-                bookMark: global?.currentUser?.smallGroups?.find(os => String(os) === String(item._id)) ? true : false
+                books: item.publishedBooks || [],
+                bookMark: global?.currentUser?.smallGroups?.includes(String(item._id)) || false
             }
         }))
         return { smallgroupsList, count }

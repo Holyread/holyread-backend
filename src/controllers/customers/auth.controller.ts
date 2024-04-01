@@ -64,6 +64,7 @@ const initializeDeviceAccess = async (req: Request, res: Response, next: NextFun
         view: [],
         smallGroups: [],
         reading: [],
+        categories: [],
       });
 
       const email = body.deviceId + "@holyreads-temp.com";
@@ -214,14 +215,15 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       body.image = s3File.name
     }
 
-      const libraries = await userService
-            .createUserLibrary({
-                  saved: [],
-                  completed: [],
-                  view: [],
-                  smallGroups: [],
-                  reading: [],
-            })
+    const libraries = await userService
+      .createUserLibrary({
+        saved: [],
+        completed: [],
+        view: [],
+        smallGroups: [],
+        reading: [],
+        categories: [],
+      })
 
     const data: any = {
       image: body.image ? body.image : '',
@@ -626,13 +628,14 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     }
 
     const libraries = await userService
-    .createUserLibrary({
-          saved: [],
-          completed: [],
-          view: [],
-          smallGroups: [],
-          reading: [],
-    })
+      .createUserLibrary({
+        saved: [],
+        completed: [],
+        view: [],
+        smallGroups: [],
+        reading: [],
+        categories: [],
+      })
 
     const newBody: any = {
       image: body.photoUrl ? body.photoUrl : '',

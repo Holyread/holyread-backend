@@ -5,7 +5,6 @@ import Boom from '@hapi/boom';
 import bookSummaryService from '../../services/customers/book/bookSummary.service'
 import bookCategoryService from '../../services/customers/book/bookCategory.service'
 import expertCuratedService from '../../services/customers/book/expertCurated.service'
-import recommendedBookService from '../../services/customers/book/recommendedBook.service'
 import readsOfDayService from '../../services/customers/readsOfDay/readsOfDay.service'
 import ratingService from '../../services/customers/book/rating.service'
 import autherService from '../../services/customers/book/author.service'
@@ -147,10 +146,17 @@ const getReadsOfTheDay = async (request: Request, response: Response, next: Next
 /** Get recommended books for dashboard */
 const getRecommendedBooks = async (request: any, response: Response, next: NextFunction) => {
     try {
+        let books;
         const libraries = await userService.getUserLibrary({ _id: request.user.libraries })
 
         const bookIds = libraries.reading.map(item => item.bookId);
-        const books = await bookSummaryService.findBooks({ _id: { $in: bookIds } })
+
+        if (!bookIds.length) {
+            const categoryIds = libraries.categories.map(item => item);
+            books = await bookSummaryService.findBooks({ categories: { $in: categoryIds } });
+        } else {
+            books = await bookSummaryService.findBooks({ _id: { $in: bookIds } });
+        }
 
         const preferredCategories = [];
         books.forEach(book => {
@@ -195,11 +201,11 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
             }
         }
 
-        /* Select books from recommendedBooks if user not read any books */
-        if (!recommendedBooks.length) {
-            const result = await recommendedBookService.getAllRecommendedBooks(Number(0), Number(10), {}, [])
-            recommendedBooks = result.recommendedBooks.map(item => item.book._id);
-        }
+        // /* Select books from recommendedBooks if user not read any books */
+        // if (!recommendedBooks.length) {
+        //     const result = await recommendedBookService.getAllRecommendedBooks(Number(0), Number(10), {}, [])
+        //     recommendedBooks = result.recommendedBooks.map(item => item.book._id);
+        // }
 
         const ratings = await ratingService.getBooksRatings(recommendedBooks.filter(i => i) as [string], request.user._id)
 

@@ -24,6 +24,7 @@ import {
   getUserSubscription,
   getChangePasswordCode,
   getShareOptionImageUrl,
+  addCategoryToUserLibrary
 } from '../../controllers/customers/users.controller'
 
 const router: Router = express.Router()
@@ -57,5 +58,7 @@ router.post('/encode-image', customerPassport, getEncodeImage)
 router.post('/email-auth/verify', customerPassport, verifyEmailAuth)
 router.get('/change-password/code', customerPassport, getChangePasswordCode)
 router.post('/share-options-image', customerPassport, getShareOptionImageUrl)
+
+router.post('/categories',customerPassport, addCategoryToUserLibrary)
 
 export default router

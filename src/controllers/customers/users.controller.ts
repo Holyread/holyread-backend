@@ -166,6 +166,7 @@ const getUserAccount = async (
                               view: [],
                               smallGroups: [],
                               reading: [],
+                              categories: [],
                         })
 
                   userObj.libraries = libraries?._id
@@ -2670,6 +2671,25 @@ const updateHandout = async (
       }
 }
 
+/** Add Category */
+const addCategoryToUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const userObj: any = Object.assign({}, req.user)
+            const query: any = { _id: userObj.libraries }
+            userObj.libraries = await userService.getUserLibrary(query)
+            userObj.libraries.categories.push(...req.body.categories)
+            await userService.updateUserLibrary(
+                  query,
+                  userObj.libraries
+            )
+            res.status(200).send({
+                  message: authControllerResponse.addCategorySuccess
+            })
+      } catch (e: any) {
+            next(Boom.badData(e.message))
+      }
+}
+
 export {
       logout,
       getCoupon,
@@ -2693,4 +2713,5 @@ export {
       getUserSubscription,
       getChangePasswordCode,
       getShareOptionImageUrl,
+      addCategoryToUserLibrary
 }

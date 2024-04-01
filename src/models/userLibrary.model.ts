@@ -61,6 +61,7 @@ export const UserLibrarySchema = new Schema({
         chaptersCompleted: [{ type: String }],
         updatedAt: { type: Date }
     }],
+    categories: [{ type: Schema.Types.ObjectId }]
 }, { strict: 'throw' })
 
 export const UserLibraryModel =

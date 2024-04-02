@@ -14,6 +14,7 @@ import { awsBucket, dataLimit } from '../../constants/app.constant'
 import { sortArrayObject } from '../../lib/utils/utils'
 import config from '../../../config'
 import userService from '../../services/customers/users/user.service';
+import recommendedBookService from '../../services/customers/book/recommendedBook.service';
 
 const NODE_ENV = config.NODE_ENV
 const dashboardControllerResponse = responseMessage.dashboardControllerResponse
@@ -146,17 +147,11 @@ const getReadsOfTheDay = async (request: Request, response: Response, next: Next
 /** Get recommended books for dashboard */
 const getRecommendedBooks = async (request: any, response: Response, next: NextFunction) => {
     try {
-        let books;
         const libraries = await userService.getUserLibrary({ _id: request.user.libraries })
 
         const bookIds = libraries.reading.map(item => item.bookId);
 
-        if (!bookIds.length) {
-            const categoryIds = libraries.categories.map(item => item);
-            books = await bookSummaryService.findBooks({ categories: { $in: categoryIds } });
-        } else {
-            books = await bookSummaryService.findBooks({ _id: { $in: bookIds } });
-        }
+        const books = await bookSummaryService.findBooks({ _id: { $in: bookIds } });
 
         const preferredCategories = [];
         books.forEach(book => {
@@ -201,11 +196,11 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
             }
         }
 
-        // /* Select books from recommendedBooks if user not read any books */
-        // if (!recommendedBooks.length) {
-        //     const result = await recommendedBookService.getAllRecommendedBooks(Number(0), Number(10), {}, [])
-        //     recommendedBooks = result.recommendedBooks.map(item => item.book._id);
-        // }
+        /* Select books from recommendedBooks if user not read any books */
+        if (!recommendedBooks.length) {
+            const result = await recommendedBookService.getAllRecommendedBooks(Number(0), Number(10), {}, [])
+            recommendedBooks = result.recommendedBooks.map(item => item.book._id);
+        }
 
         const ratings = await ratingService.getBooksRatings(recommendedBooks.filter(i => i) as [string], request.user._id)
 
@@ -249,6 +244,105 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
             data: {
                 recommendedBooks,
                 count: recommendedBooks.length
+            }
+        })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
+/** Get favorite categories books for dashboard */
+const getFavoriteCategoriesBooks = async (request: any, response: Response, next: NextFunction) => {
+    try {
+        const libraries = await userService.getUserLibrary({ _id: request.user.libraries })
+
+        const categoryIds = libraries.categories.map(item => item);
+        const books = await bookSummaryService.findBooks({ categories: { $in: categoryIds } });
+        const preferredCategories = [];
+        books.forEach(book => {
+            book.categories.forEach(categoryId => {
+                if (!preferredCategories.some(id => id.toString() === categoryId.toString())) {
+                    preferredCategories.push(categoryId);
+                }
+            });
+        });
+
+        let favoriteCategoriesBooks = [];
+        let totalSuggestions = 0;
+        // Define a weight factor to prioritize categories with more books read
+        const weightFactor = 1; // You can adjust this factor as needed
+        const MAX_SUGGESTIONS = 10;
+
+        for (const category of preferredCategories) {
+            // Calculate the number of books to select from this category based on its weight
+            const categoryWeight = books.reduce((count, book) => {
+                if (Array.isArray(book.categories)) {
+                    book.categories.forEach(categoryId => {
+                        if (categoryId.toString() === category.toString()) {
+                            count++;
+                        }
+                    });
+                }
+                return count;
+            }, 0);
+
+            const numBooksToSelect = Math.ceil(MAX_SUGGESTIONS * (categoryWeight / books.length) * weightFactor);
+            const categoryFilterquery = { $match: { categories: category, publish: true } }
+            const selectedBooks = await bookSummaryService.findRandomBooks(categoryFilterquery, numBooksToSelect)
+
+            selectedBooks.forEach(book => {
+                favoriteCategoriesBooks.push(book._id);
+            });
+
+            totalSuggestions += numBooksToSelect;
+
+            if (totalSuggestions >= MAX_SUGGESTIONS) {
+                break; // We have enough suggestions
+            }
+        }
+
+        const ratings = await ratingService.getBooksRatings(favoriteCategoriesBooks.filter(i => i) as [string], request.user._id)
+
+        favoriteCategoriesBooks = await Promise.all(favoriteCategoriesBooks.map(async item => {
+
+            const bookDetails: any = await bookSummaryService.findBook({ _id: item })
+            const bookMark = libraries?.saved?.find(b => String(b) === String(bookDetails._id)) ? true : false
+            const libBookChapters = libraries?.reading?.find(item => String(item.bookId) === String(bookDetails._id))?.chaptersCompleted
+
+            item = {
+                _id: bookDetails._id,
+                coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + bookDetails.coverImage,
+                coverImageBackground: bookDetails.coverImageBackground,
+                title: bookDetails.title,
+                author: bookDetails.author,
+                overview: bookDetails.overview,
+                description: bookDetails.description,
+                views: bookDetails.views || 0,
+                bookFor: bookDetails.bookFor,
+                bookMark,
+                totalStar: ratings[String(bookDetails._id)]?.averageStar || 3,
+                isRate: !!ratings[String(bookDetails._id)]?.isRate,
+                reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / bookDetails.chapters?.length : 0).toFixed(0))
+            }
+
+            if (bookDetails.author) {
+                const author = await autherService.findAuthor({ _id: bookDetails.author })
+                item.author = {
+                    _id: author._id,
+                    name: author.name,
+                    about: author.about
+                }
+            }
+
+            return item
+        }))
+
+
+        response.status(200).json({
+            message: dashboardControllerResponse.getDashboardSuccess,
+            data: {
+                favoriteCategoriesBooks,
+                count: favoriteCategoriesBooks.length
             }
         })
     } catch (e: any) {
@@ -304,5 +398,6 @@ export {
     getReadsOfTheDay,
     getRecentReads,
     getRecommendedBooks,
-    getSmallGroups
+    getSmallGroups,
+    getFavoriteCategoriesBooks
 }

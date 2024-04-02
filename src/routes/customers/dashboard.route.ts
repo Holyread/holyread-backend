@@ -7,7 +7,8 @@ import {
   getReadsOfTheDay,
   getRecentReads,
   getRecommendedBooks,
-  getSmallGroups
+  getSmallGroups,
+  getFavoriteCategoriesBooks
 } from '../../controllers/customers/dashboard.controller'
 
 const router: Router = express.Router()
@@ -20,4 +21,5 @@ router.get('/reads-of-the-day', getReadsOfTheDay)
 router.get('/recent-reads', getRecentReads)
 router.get('/recommended-books', getRecommendedBooks)
 router.get('/small-groups', getSmallGroups)
+router.get('/favorite-categories', getFavoriteCategoriesBooks)
 export default router

@@ -2674,21 +2674,25 @@ const updateHandout = async (
 /** Add Category */
 const addCategoryToUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-            const userObj: any = Object.assign({}, req.user)
-            const query: any = { _id: userObj.libraries }
-            userObj.libraries = await userService.getUserLibrary(query)
-            userObj.libraries.categories.push(...req.body.categories)
-            await userService.updateUserLibrary(
-                  query,
-                  userObj.libraries
-            )
+            const userObj: any = Object.assign({}, req.user);
+            const query: any = { _id: userObj.libraries };
+
+            // Get the user's library
+            userObj.libraries = await userService.getUserLibrary(query);
+
+            // Replace old categories with new categories
+            userObj.libraries.categories = req.body.categories;
+
+            // Update the user's library
+            await userService.updateUserLibrary(query, userObj.libraries);
+
             res.status(200).send({
                   message: authControllerResponse.addCategorySuccess
-            })
+            });
       } catch (e: any) {
-            next(Boom.badData(e.message))
+            next(Boom.badData(e.message));
       }
-}
+};
 
 export {
       logout,

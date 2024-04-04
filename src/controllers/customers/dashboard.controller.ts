@@ -10,11 +10,13 @@ import ratingService from '../../services/customers/book/rating.service'
 import autherService from '../../services/customers/book/author.service'
 import smallGroupService from '../../services/customers/smallGroup/smallGroup.service'
 import { responseMessage } from '../../constants/message.constant'
-import { awsBucket, dataLimit } from '../../constants/app.constant'  
+import { awsBucket, dataLimit } from '../../constants/app.constant'
 import { sortArrayObject } from '../../lib/utils/utils'
 import config from '../../../config'
 import userService from '../../services/customers/users/user.service';
 import recommendedBookService from '../../services/customers/book/recommendedBook.service';
+import subscriptionService from '../../services/customers/subscriptions/subscriptions.service';
+
 
 const NODE_ENV = config.NODE_ENV
 const dashboardControllerResponse = responseMessage.dashboardControllerResponse
@@ -123,18 +125,27 @@ const getCuratedsList = async (request: Request, response: Response, next: NextF
 }
 
 /** Get reads of the day for Dashboard */
-const getReadsOfTheDay = async (request: Request, response: Response, next: NextFunction) => {
+const getReadsOfTheDay = async (request: Request | any, response: Response, next: NextFunction) => {
     try {
+        let data: any;
         const params: any = request.query
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        /** Set today start and end */
-        const start = new Date();
-        start.setDate(new Date().getDate() - 4);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date();
-        end.setHours(23, 59, 59, 999);
-        const data: any = await readsOfDayService.getAllReadsOfDays(Number(skip), Number(limit), { displayAt: { $gte: new Date(start), $lte: new Date(end) } }, [['displayAt', 'DESC']])
+
+        const subscriptionStatus = await subscriptionService.getUserSubscriptionStatus(request.user)
+        if (subscriptionStatus === 'freemium') {
+            /** Set today start and end */
+            const start = new Date();
+            start.setDate(new Date().getDate() - 4);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date();
+            end.setHours(23, 59, 59, 999);
+            data = await readsOfDayService.getAllReadsOfDays(Number(skip), Number(limit), { displayAt: { $gte: new Date(start), $lte: new Date(end) } }, [['displayAt', 'DESC']])
+        }
+        else {
+            data = await readsOfDayService.getAllReadsOfDays(Number(skip), Number(limit), {}, [['displayAt', 'DESC']])
+        }
+
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data

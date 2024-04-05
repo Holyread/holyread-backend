@@ -265,7 +265,6 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                 },
                 {
                     'inAppSubscriptionStatus': 'Canceled',
-                    'stripe.status': 'canceled',
                     ...planQuery,
                     ...searchQuery,
                     ...paymentModeQuery

@@ -17,7 +17,7 @@ const start = async () => {
 
             /** Publish first in  */
             if (unpublishBooks.length && unpublishBooks[0]?._id) {
-                  await BookSummaryModel.findOneAndUpdate({ _id: unpublishBooks[0]?._id }, { publish: true });
+                  await BookSummaryModel.findOneAndUpdate({ _id: unpublishBooks[0]?._id }, { publish: true, publishedAt: new Date() });
 
                   /** Get New Pubish Book by id */
                   const newPubishBook = await BookSummaryModel.findOne(unpublishBooks[0]._id)

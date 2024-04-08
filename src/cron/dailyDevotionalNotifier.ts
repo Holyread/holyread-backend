@@ -18,6 +18,17 @@ const start = async () => {
             const readOfDay = await ReadsOfDayModel.findOne({
                   displayAt: { $gte: new Date(start), $lte: new Date(end) }
             }).select('title description image').lean().exec();
+
+            const paragraph = readOfDay.description;
+            const paragraphs = paragraph.split('</p>');
+
+            // Slice the HTML text to remove the last paragraph
+            const lastParagraphHTML = paragraphs[paragraphs.length - 2] + '</p>';
+            const withoutNbsp = lastParagraphHTML.replace(/&nbsp;/g, '');
+
+            // Remove HTML tags from the last paragraph
+            const content = withoutNbsp.replace(/<\/?[^>]+(>|$)/g, '');
+
             if (!readOfDay) {
                   console.log('JOB(🔴) Daily devotional execution stop due to no reads found');
                   return;
@@ -71,8 +82,8 @@ const start = async () => {
                                     tokenSet.add(
                                           pushNotification(
                                                 item?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
-                                                '🔔 Your Daily Pick is ready!',
-                                                `📙 ${readOfDay.title} 🔖 `,
+                                                '🔔 Start your day with inspiration!',
+                                                `📙 Today's theme: ${content} Dive in now for a dose of spiritual nourishment 🔖`,
                                                 JSON.stringify({
                                                       dailyDevotional: {
                                                             _id: readOfDay._id,

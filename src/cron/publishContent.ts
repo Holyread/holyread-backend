@@ -37,6 +37,7 @@ const start = async () => {
                         ]).populate('author').lean().exec();
 
                   let publishContent;
+                  let content;
                   /** Initialize default ratings for books by machine user */
                   try {
                         /** Find bot user */
@@ -66,6 +67,11 @@ const start = async () => {
                         /** Get book rating */
                         const Bookrating = await RatingModel.findOne({ userId: botUser._id, bookId: newPubishBook._id }).select('star').lean().exec();
                         publishContent = { ...newPubishBook, Bookrating }
+
+                        const paragraph = publishContent.overview;
+                        const withoutNbsp = paragraph.replace(/&nbsp;/g, '');
+                        content = withoutNbsp.replace(/<\/?[^>]+(>|$)/g, '');
+
                   } catch ({ message }: any) {
                         console.log(
                               'Add default ratings  execution failed: Error: ',
@@ -90,7 +96,7 @@ const start = async () => {
                               pushNotification(
                                     i?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
                                     '🔔 NEW Publish book for you',
-                                    `📙 ${publishContent.title}`,
+                                    `📙 Explore the latest with titles like ${content}`,
                                     JSON.stringify({
                                           publishContents: {
                                                 _id: publishContent._id,

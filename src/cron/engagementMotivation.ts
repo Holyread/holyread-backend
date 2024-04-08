@@ -1,0 +1,104 @@
+import cron from 'cron';
+import config from "../../config";
+import { engagementMotivation } from '../constants/cron.constants'
+import { BookSummaryModel, UserModel, RatingModel } from '../models';
+import { pushNotification, calculateDateInThePast } from '../lib/utils/utils'
+import { awsBucket } from '../constants/app.constant';
+
+const start = async () => {
+    try {
+        console.log('JOB(🟢) engagement motivation Started successfully!');
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+
+        const newPublishBook = await BookSummaryModel.findOne({
+            publish: true, publishedAt: {
+                $gte: today,
+                $lt: tomorrow
+            }
+        }).select([
+            '_id',
+            'description',
+            'overview',
+            'bookFor',
+            'categories',
+            'coverImageBackground',
+            'title',
+            'author',
+            'views',
+            'coverImage',
+            'totalStar',
+            'status'
+        ]).populate('author').lean().exec();
+
+        let publishContent;
+
+        /** Get book rating */
+        const bookRating = await RatingModel.findOne({ bookId: newPublishBook._id }).select('star').lean().exec();
+        publishContent = { ...newPublishBook, bookRating };
+
+        // Calculate the date three days ago
+        const threeDayAgo = calculateDateInThePast(3);
+
+        // Find active users with a defined timeZone, at least one push token,
+        // enabled push notifications, and whose lastSeen date is on or before three days ago
+        const users = await UserModel.find({
+            status: 'Active',
+            timeZone: { $exists: true },
+            'pushTokens.0': { $exists: true },
+            'notification.push': true,
+            lastSeen: { $lte: threeDayAgo }
+        }).select('timeZone pushTokens').lean().exec();
+
+        if (!users.length) {
+            console.log('JOB(🔴) engagement motivation execution stop due to no users found');
+        }
+
+        users.forEach(user => {
+            const tokenSet = new Set();
+            tokenSet.add(
+                pushNotification(
+                    user?.pushTokens?.map(token => token.token) || [],
+                    '🔔 We miss you at Holy Reads!',
+                    `📙 You've missed out on some uplifting content like ${publishContent.title}.`,
+                    JSON.stringify({
+                        publishContents: {
+                            _id: publishContent._id,
+                            description: publishContent.description,
+                            overview: publishContent.overview,
+                            bookFor: publishContent.bookFor,
+                            categories: publishContent.categories,
+                            coverImageBackground: publishContent.coverImageBackground,
+                            title: publishContent.title,
+                            author: publishContent.author,
+                            views: publishContent.views,
+                            coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${publishContent.coverImage}`,
+                            totalStar: publishContent.bookRating.star,
+                            status: publishContent.status,
+                        }
+                    })
+                ).catch(error => {
+                    console.log('JOB(🔴) push notification publish new book execution Error is -', error.message);
+                    return undefined;
+                })
+            );
+        });
+
+        console.log('JOB(✅) engagement motivation executed successfully!');
+    } catch (error: any) {
+        console.log('JOB(🔴) engagement motivation execution Error is - ', error.message);
+    }
+};
+
+((cronConfig, config) => {
+    if (cronConfig.JOBRESTRICTENV.indexOf(config.NODE_ENV) > -1) {
+        console.log(`JOB(🟡) engagement motivation not initiated due to ${config.NODE_ENV} Environment`);
+        return;
+    }
+    const schedule = Object.values(engagementMotivation.SCHEDULE).join(' ');
+    new cron.CronJob(schedule, () => { start() }, null, true);
+    console.log('JOB(🟢) engagement motivation initiated successfully!');
+})(engagementMotivation, config);

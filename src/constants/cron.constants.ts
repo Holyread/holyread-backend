@@ -64,13 +64,13 @@ export const setStripeCouponAndStatus = {
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 }
 
-export const engagementMotivation = {
+export const contentUpdateAlert = {
       SCHEDULE: {
             Minutes: '0',
-            Hours: '11',
+            Hours: '6',
             DayOfMonth: '*',
             Months: '*',
             DayOfWeek: '2,5',
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
-};
+}

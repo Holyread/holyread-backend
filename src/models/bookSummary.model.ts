@@ -111,6 +111,7 @@ export const BookSummarySchema = new Schema({
     },
     status: { type: String, default: 'Active', index: true },
     updatedAt: { type: Date },
+    publishedAt: { type: Date },
 }, { strict: 'throw' })
 
 BookSummarySchema.index({ categories: -1 });

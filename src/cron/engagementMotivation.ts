@@ -1,19 +1,29 @@
 import cron from 'cron';
 import config from "../../config";
-import { engagementMotivation } from '../constants/cron.constants'
-import { BookSummaryModel, UserModel, RatingModel } from '../models';
-import { pushNotification, calculateDateInThePast } from '../lib/utils/utils'
+import { engagementMotivation } from '../constants/cron.constants';
+import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
+import { pushNotification, calculateDateInThePast } from '../lib/utils/utils';
 import { awsBucket } from '../constants/app.constant';
 
-const start = async () => {
+const startEngagementMotivationJob = async () => {
     try {
         console.log('JOB(🟢) engagement motivation Started successfully!');
 
+        // Execution Log
+        const cronLog = new CronLogModel({
+            jobName: 'engagement_motivation',
+            status: 'running',
+            startedAt: new Date(),
+        });
+        await cronLog.save();
+
+        // Get the current date
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
 
+        // Find a new published book for today
         const newPublishBook = await BookSummaryModel.findOne({
             publish: true, publishedAt: {
                 $gte: today,
@@ -34,14 +44,17 @@ const start = async () => {
             'status'
         ]).populate('author').lean().exec();
 
-        let publishContent;
+        if (!newPublishBook) {
+            console.log('JOB(🔴) engagement motivation execution stop due to no new published book found');
+            return;
+        }
 
-        /** Get book rating */
+        // Get the book rating
         const bookRating = await RatingModel.findOne({ bookId: newPublishBook._id }).select('star').lean().exec();
-        publishContent = { ...newPublishBook, bookRating };
+        const publishContent = { ...newPublishBook, bookRating };
 
         // Calculate the date three days ago
-        const threeDayAgo = calculateDateInThePast(3);
+        const threeDaysAgo = calculateDateInThePast(3);
 
         // Find active users with a defined timeZone, at least one push token,
         // enabled push notifications, and whose lastSeen date is on or before three days ago
@@ -50,18 +63,20 @@ const start = async () => {
             timeZone: { $exists: true },
             'pushTokens.0': { $exists: true },
             'notification.push': true,
-            lastSeen: { $lte: threeDayAgo }
-        }).select('timeZone pushTokens').lean().exec();
+            lastSeen: { $lte: threeDaysAgo }
+        }).select('pushTokens').lean().exec();
 
         if (!users.length) {
             console.log('JOB(🔴) engagement motivation execution stop due to no users found');
+            return;
         }
 
-        users.forEach(user => {
-            const tokenSet = new Set();
-            tokenSet.add(
-                pushNotification(
-                    user?.pushTokens?.map(token => token.token) || [],
+        // Send notifications to each user
+        for (const user of users) {
+            const tokens = user.pushTokens.map(token => 'd9wU6FbGSRiJlL7KosVCIt:APA91bFN08JPqfSifLXkdduR6IeD2IuZjMRuKPtamgTb18jk6oYoFItTiArVoQKcq5Arn0TI1A6SKWjZ3EqVu6HW_gfQUi0zI17tMg_UAayOmZxQbjCTqy-u1w19sE-g5g_Ehu8dsyUU');
+            try {
+                await pushNotification(
+                    tokens,
                     '🔔 We miss you at Holy Reads!',
                     `📙 You've missed out on some uplifting content like ${publishContent.title}.`,
                     JSON.stringify({
@@ -80,17 +95,52 @@ const start = async () => {
                             status: publishContent.status,
                         }
                     })
-                ).catch(error => {
-                    console.log('JOB(🔴) push notification publish new book execution Error is -', error.message);
-                    return undefined;
-                })
-            );
-        });
+                );
+
+                // Log notification sent
+                const notificationLog = new NotificationsModel({
+                    userId: user._id,
+                    type: 'user',
+                    notification: {
+                        title: '🔔 We miss you at Holy Reads!',
+                        description: `📙 You've missed out on some uplifting content like ${publishContent.title}.`,
+                        success: true,
+                        errorMessage: null,
+                    },
+                    createdAt: new Date()
+                });
+                await notificationLog.save();
+            } catch (error: any) {
+                console.log('JOB(🔴) Users processing error -', error.message);
+                const notificationLog = new NotificationsModel({
+                    userId: user._id,
+                    type: 'user',
+                    notification: {
+                        title: '🔔 We miss you at Holy Reads!',
+                        description: `📙 You've missed out on some uplifting content like ${publishContent.title}.`,
+                        success: false,
+                        errorMessage: `Users processing error -', ${error.message}`,
+                    },
+                    createdAt: new Date()
+                });
+                await notificationLog.save();
+            }
+        }
 
         console.log('JOB(✅) engagement motivation executed successfully!');
+        cronLog.status = 'success';
+        cronLog.endedAt = new Date();
+        await cronLog.save();
     } catch (error: any) {
         console.log('JOB(🔴) engagement motivation execution Error is - ', error.message);
-    }
+        const cronLog = new CronLogModel({
+            jobName: 'engagement_motivation',
+            status: 'failed',
+            endedAt: new Date(),
+            message: `engagement motivation execution Error is: ${error.message}`
+      });
+      await cronLog.save();
+}
 };
 
 ((cronConfig, config) => {
@@ -99,6 +149,6 @@ const start = async () => {
         return;
     }
     const schedule = Object.values(engagementMotivation.SCHEDULE).join(' ');
-    new cron.CronJob(schedule, () => { start() }, null, true);
+    new cron.CronJob(schedule, () => { startEngagementMotivationJob() }, null, true);
     console.log('JOB(🟢) engagement motivation initiated successfully!');
 })(engagementMotivation, config);

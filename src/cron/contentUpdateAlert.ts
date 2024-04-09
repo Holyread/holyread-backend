@@ -1,7 +1,7 @@
 import cron from 'cron';
 import config from "../../config";
 import { contentUpdateAlert } from '../constants/cron.constants'
-import { BookSummaryModel, UserModel, RatingModel } from '../models';
+import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
 import { pushNotification } from '../lib/utils/utils'
 import { awsBucket } from '../constants/app.constant';
 
@@ -9,6 +9,15 @@ const start = async () => {
     try {
         console.log('JOB(🟢) content update alert Started successfully!');
 
+        // Execution Log
+        const cronLog = new CronLogModel({
+            jobName: 'content_update_alert',
+            status: 'running',
+            startedAt: new Date(),
+        });
+        await cronLog.save();
+
+        // Execution Logic
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
@@ -45,17 +54,15 @@ const start = async () => {
         const withoutNbsp = paragraph.replace(/&nbsp;/g, '');
         content = withoutNbsp.replace(/<\/?[^>]+(>|$)/g, '');
 
-        // Find active users with a defined timeZone, at least one push token,
+        // Find active users with a defined timeZone and at least one push token
         const users: any = await UserModel.find({
             status: 'Active',
             timeZone: { $exists: true },
             'pushTokens.0': { '$exists': true },
             'notification.push': true,
-        }).select('libraries timeZone pushTokens').populate('libraries').lean().exec()
+        }).select('libraries timeZone pushTokens').populate('libraries').lean().exec();
 
-        if (!users.length) {
-            console.log('JOB(🔴) content update alert execution stop due to no users found');
-        }
+        // Filter users based on categories
         const usersWithCategories = users.filter(user =>
             user.libraries && user.libraries.categories && user.libraries.categories.length > 0
         );
@@ -66,39 +73,75 @@ const start = async () => {
             });
         });
 
-        usersMatchingCategories.forEach(user => {
-            const tokenSet = new Set();
-            tokenSet.add(
-                pushNotification(
-                    user?.pushTokens?.map(token => token.token) || [],
-                    '🔔 Fresh Inspiration Alert!',
-                    `📙  Explore the latest in your favorite category with titles like ${content}.`,
-                    JSON.stringify({
-                        publishContents: {
-                            _id: publishContent._id,
-                            description: publishContent.description,
-                            overview: publishContent.overview,
-                            bookFor: publishContent.bookFor,
-                            categories: publishContent.categories,
-                            coverImageBackground: publishContent.coverImageBackground,
-                            title: publishContent.title,
-                            author: publishContent.author,
-                            views: publishContent.views,
-                            coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${publishContent.coverImage}`,
-                            totalStar: publishContent.bookRating.star,
-                            status: publishContent.status,
-                        }
-                    })
-                ).catch(error => {
-                    console.log('JOB(🔴) push notification publish new book execution Error is -', error.message);
-                    return undefined;
-                })
-            );
-        });
-
+        // Send notifications to matching users
+        const notificationsSent = [];
+        for (const user of usersMatchingCategories) {
+            const tokens = user.pushTokens.map(token => token.token);
+            const notificationPayload = {
+                title: '🔔 Fresh Inspiration Alert!',
+                body: `📙 Explore the latest in your favorite category with titles like ${content}.`,
+                data: {
+                    publishContents: {
+                        _id: publishContent._id,
+                        description: publishContent.description,
+                        overview: publishContent.overview,
+                        bookFor: publishContent.bookFor,
+                        categories: publishContent.categories,
+                        coverImageBackground: publishContent.coverImageBackground,
+                        title: publishContent.title,
+                        author: publishContent.author,
+                        views: publishContent.views,
+                        coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${publishContent.coverImage}`,
+                        totalStar: publishContent.bookRating.star,
+                        status: publishContent.status,
+                    }
+                }
+            };
+            try {
+                await pushNotification(tokens, notificationPayload.title, notificationPayload.body, JSON.stringify(notificationPayload.data));
+                notificationsSent.push({
+                    userId: user._id,
+                    success: true
+                });
+            } catch (error: any) {
+                notificationsSent.push({
+                    userId: user._id,
+                    success: false,
+                    errorMessage: error.message
+                });
+            }
+        }
+        // Log Success
         console.log('JOB(✅) content update alert executed successfully!');
+        cronLog.status = 'success';
+        cronLog.endedAt =  new Date();
+        await cronLog.save();
+
+        // Log Notifications Sent
+        for (const notification of notificationsSent) {
+            const notificationLog = new NotificationsModel({
+                userId: notification.userId,
+                type: 'user',
+                notification: {
+                    title: '🔔 Fresh Inspiration Alert!',
+                    description: `📙 Explore the latest in your favorite category with titles like ${content}.`,
+                    success: notification.success,
+                    errorMessage: notification.errorMessage,
+                },
+                createdAt: new Date()
+            });
+            await notificationLog.save();
+        }
     } catch (error: any) {
+        // Log Error
         console.log('JOB(🔴) content update alert execution Error is - ', error.message);
+        const cronLog = new CronLogModel({
+            jobName: 'content_update_alert',
+            status: 'failed',
+            endedAt: new Date(),
+            message: `content update alert job failed: ${error.message}`
+        });
+        await cronLog.save();
     }
 };
 

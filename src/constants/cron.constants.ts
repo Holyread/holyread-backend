@@ -67,7 +67,7 @@ export const setStripeCouponAndStatus = {
 export const contentUpdateAlert = {
       SCHEDULE: {
             Minutes: '0',
-            Hours: '6',
+            Hours: '8',
             DayOfMonth: '*',
             Months: '*',
             DayOfWeek: '2,5',
@@ -78,10 +78,10 @@ export const contentUpdateAlert = {
 export const engagementMotivation = {
       SCHEDULE: {
             Minutes: '0',
-            Hours: '11',
+            Hours: '10',
             DayOfMonth: '*',
             Months: '*',
-            DayOfWeek: '2,5',
+            DayOfWeek: '*',
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 };

@@ -33,6 +33,7 @@ import { NotificationsModel } from './notifications.model'
 import { RecommendedBookModel } from './recommendedBooks.model'
 import { InAppNotificationModel } from './inAppNotification.model'
 import { CustomNotificationsModel } from './customNotification.model'
+import { CronLogModel } from './cronLog.model'
 
 const NODE_ENV = config.NODE_ENV
 const option = { useNewUrlParser: true, useUnifiedTopology: true }
@@ -78,5 +79,6 @@ export {
   NotificationsModel,
   RecommendedBookModel,
   InAppNotificationModel,
-  CustomNotificationsModel
+  CustomNotificationsModel,
+  CronLogModel
 }

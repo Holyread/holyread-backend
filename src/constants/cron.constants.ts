@@ -8,14 +8,13 @@ export const readsOfDayDisplayAt = {
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 }
-
 export const dailyDevotional = {
       SCHEDULE: {
-            Minutes: '*',
-            Hours: '*',
-            DayOfMonth: '*',
-            Months: '*',
-            DayOfWeek: '*',
+          Minutes: '0',
+          Hours: '8',
+          DayOfMonth: '*',
+          Months: '*',
+          DayOfWeek: '*',
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 }
@@ -66,22 +65,22 @@ export const setStripeCouponAndStatus = {
 
 export const contentUpdateAlert = {
       SCHEDULE: {
-            Minutes: '0',
-            Hours: '8',
-            DayOfMonth: '*',
-            Months: '*',
-            DayOfWeek: '2,5',
+          Minutes: '0',
+          Hours: '12',
+          DayOfMonth: '*',
+          Months: '*',
+          DayOfWeek: '2,5',
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 }
-
+  
 export const engagementMotivation = {
       SCHEDULE: {
-            Minutes: '0',
-            Hours: '10',
-            DayOfMonth: '*',
-            Months: '*',
-            DayOfWeek: '*',
+          Minutes: '0',
+          Hours: '18', // 6 PM
+          DayOfMonth: '*',
+          Months: '*',
+          DayOfWeek: '*',
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 };

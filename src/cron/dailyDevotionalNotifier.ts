@@ -34,13 +34,6 @@ const start = async () => {
                   return;
             }
 
-            // Extract content from the description
-            const paragraph = readOfDay.description;
-            const paragraphs = paragraph.split('</p>');
-            const lastParagraphHTML = paragraphs[paragraphs.length - 2] + '</p>';
-            const withoutNbsp = lastParagraphHTML.replace(/&nbsp;/g, '');
-            const content = withoutNbsp.replace(/<\/?[^>]+(>|$)/g, '');
-
             // Get users eligible for notifications
             const users: any = await UserModel.find({
                   status: 'Active',
@@ -98,7 +91,7 @@ const start = async () => {
                               // Send notifications to users in the timezone
                               const notificationPayload = {
                                     title: '🔔 Start your day with inspiration!',
-                                    body: `📙 Today's theme: ${content} Dive in now for a dose of spiritual nourishment 🔖`,
+                                    body: `📙 Today's Devotional: ${readOfDay.title}. Dive in now for a dose of spiritual nourishment 🔖`,
                                     data: {
                                           dailyDevotional: {
                                                 _id: readOfDay._id,
@@ -134,7 +127,7 @@ const start = async () => {
                               type: 'user',
                               notification: {
                                     title: '🔔 Start your day with inspiration!',
-                                    description: `📙 Today's theme: ${content} Dive in now for a dose of spiritual nourishment 🔖`,
+                                    description: `📙 Today's Devotional: ${readOfDay.title}. Dive in now for a dose of spiritual nourishment 🔖`,
                                     success: true,
                                     errorMessage: `Users processing error -', ${error.message}`,
                               },

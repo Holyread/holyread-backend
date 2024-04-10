@@ -6,3 +6,4 @@ import './syncProfit';
 import './setStripeCouponAndStatus';
 import './contentUpdateAlert';
 import './engagementMotivation';
+import './unfinishedBookNotifier';

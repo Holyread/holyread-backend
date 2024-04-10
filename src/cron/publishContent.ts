@@ -4,6 +4,9 @@ import { publishContent } from '../constants/cron.constants';
 import { ExpertCuratedModel, BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
 import { randomNumberInRange, pushNotification } from '../lib/utils/utils';
 import { awsBucket } from '../constants/app.constant';
+import { io } from '../app';
+import { fetchNotifications } from '../controllers/customers/notification.controller';
+import notificationsService from '../services/customers/notifications/notifications.service';
 
 const startPublishContentJob = async () => {
       try {
@@ -28,12 +31,24 @@ const startPublishContentJob = async () => {
                   await BookSummaryModel.findOneAndUpdate({ _id: unpublishBooks[0]?._id }, { publish: true, publishedAt: new Date() });
 
                   // Get details of the newly published book
-                  const newPublishedBook = await BookSummaryModel.findOne({ _id: unpublishBooks[0]._id })
-                        .populate('author')
+                  const newPublishedBook = await BookSummaryModel.findOne({ _id: unpublishBooks[0]._id }).select([
+                        '_id',
+                        'description',
+                        'overview',
+                        'bookFor',
+                        'categories',
+                        'coverImageBackground',
+                        'title',
+                        'author',
+                        'views',
+                        'coverImage',
+                        'totalStar',
+                        'status'
+                  ]).populate('author')
                         .lean()
                         .exec();
 
-                  let publishContent;
+                  let bookDetails;
                   let content;
 
                   // Initialize default ratings for books by machine user
@@ -57,81 +72,32 @@ const startPublishContentJob = async () => {
 
                         // Get book rating
                         const bookRating = await RatingModel.findOne({ userId: botUser._id, bookId: newPublishedBook._id }).select('star').lean().exec();
-                        publishContent = { ...newPublishedBook, bookRating };
+                        bookDetails = { ...newPublishedBook, bookRating };
 
                         // Prepare content for notification
-                        const paragraph = publishContent.overview;
+                        const paragraph = bookDetails.overview;
                         const withoutNbsp = paragraph.replace(/&nbsp;/g, '');
                         content = withoutNbsp.replace(/<\/?[^>]+(>|$)/g, '');
                   } catch (error: any) {
                         console.log('Add default ratings execution failed: Error: ', error.message);
                   }
 
-                  // Find users and send push notifications for the new published book
+                  // Find users and send notifications for the new published book
                   const users = await UserModel.find({
                         status: 'Active',
-                        timeZone: { $exists: true },
-                        'pushTokens.0': { $exists: true },
+                        // timeZone: { $exists: true },
+                        // 'pushTokens.0': { $exists: true },
                         'notification.push': true,
-                  }).select('pushTokens').lean().exec();
+                  }).select('pushTokens notification device').lean().exec();
 
                   if (!users.length) {
                         console.log('JOB(🔴) publish contents execution stop due to no users found');
                   }
 
                   for (const user of users) {
-                        const tokens = user.pushTokens.map(token => token.token);
-                        try {
-                              await pushNotification(
-                                    tokens,
-                                    '🔔 NEW Publish book for you',
-                                    `📙 Explore the latest with titles like ${content}`,
-                                    JSON.stringify({
-                                          publishContents: {
-                                                _id: publishContent._id,
-                                                description: publishContent.description,
-                                                overview: publishContent.overview,
-                                                bookFor: publishContent.bookFor,
-                                                categories: publishContent.categories,
-                                                coverImageBackground: publishContent.coverImageBackground,
-                                                title: publishContent.title,
-                                                author: publishContent.author,
-                                                views: publishContent.views,
-                                                coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${publishContent.coverImage}`,
-                                                totalStar: publishContent.bookRating.star,
-                                                status: publishContent.status,
-                                          }
-                                    })
-                              );
+                        const { title, description, data } = generateNotificationContent(content, bookDetails);
 
-                              // Log notification sent
-                              const notificationLog = new NotificationsModel({
-                                    userId: user._id,
-                                    type: 'user',
-                                    notification: {
-                                          title: '🔔 NEW Publish book for you',
-                                          description: `📙 Explore the latest with titles like ${content}`,
-                                          success: true,
-                                          errorMessage: null,
-                                    },
-                                    createdAt: new Date()
-                              });
-                              await notificationLog.save();
-                        } catch (error: any) {
-                              console.log('Users processing error -', error.message);
-                              const notificationLog = new NotificationsModel({
-                                    userId: user._id,
-                                    type: 'user',
-                                    notification: {
-                                          title: '🔔 NEW Publish book for you',
-                                          description: `📙 Explore the latest with titles like ${content}`,
-                                          success: false,
-                                          errorMessage: `Users processing error -', ${error.message}`,
-                                    },
-                                    createdAt: new Date()
-                              });
-                              await notificationLog.save();
-                        }
+                        await sentNotification(title, description, data, user);
                   }
             }
 
@@ -153,6 +119,74 @@ const startPublishContentJob = async () => {
                   message: `publish contents execution Error is: ${error.message}`
             });
             await cronLog.save();
+      }
+};
+
+const generateNotificationContent = (content: any, bookDetails: any) => {
+      return {
+            title: '🔔 NEW Publish book for you',
+            description: `📙 Explore the latest with titles like ${content}`,
+            data: {
+                  publishContents: {
+                        _id: bookDetails._id,
+                        description: bookDetails.description,
+                        overview: bookDetails.overview,
+                        bookFor: bookDetails.bookFor,
+                        categories: bookDetails.categories,
+                        coverImageBackground: bookDetails.coverImageBackground,
+                        title: bookDetails.title,
+                        author: bookDetails.author,
+                        views: bookDetails.views,
+                        coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${bookDetails.coverImage}`,
+                        totalStar: bookDetails.bookRating.star,
+                        status: bookDetails.status,
+                  }
+            }
+      }
+};
+
+const sentNotification: any = async (title: string, description: string, data: any, user: any) => {
+      try {
+            await NotificationsModel.create({
+                  userId: user._id,
+                  type: 'user',
+                  notification: {
+                        title,
+                        description,
+                        success: true,
+                        errorMessage: null,
+                  },
+                  createdAt: new Date()
+            });
+
+            if (user.device === 'web') {
+                  // Send notification to web
+                  await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title, description } })
+                  fetchNotifications(io.sockets, { _id: user._id });
+            } else {
+                  // Send push notification to mobile
+                  if (
+                        user?.notification?.subscription &&
+                        user?.notification?.push &&
+                        user.pushTokens.length > 0
+                  ) {
+                        const tokens: string[] = user.pushTokens.map(i => i.token);
+                        pushNotification(tokens, title, description, JSON.stringify(data));
+                  }
+            }
+      } catch (error: any) {
+            console.log('Users processing error -', error.message);
+            await NotificationsModel.create({
+                  userId: user._id,
+                  type: 'user',
+                  notification: {
+                        title,
+                        description,
+                        success: false,
+                        errorMessage: `Users processing error - ${error.message}`,
+                  },
+                  createdAt: new Date()
+            });
       }
 };
 

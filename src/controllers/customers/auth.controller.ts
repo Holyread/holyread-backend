@@ -652,7 +652,8 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         {
           oAuth: emailUser.oAuth,
           status: 'Active',
-          verified: true
+          verified: true,
+          isSignedUp: true,
         }
       )
 

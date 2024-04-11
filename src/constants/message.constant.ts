@@ -60,7 +60,8 @@ export const responseMessage = {
         invalidDateError:'Start date should less or equal to end date',
         inValidEmailError:'Please add valid email address',
         noUserFound:'No users found',
-        addCategorySuccess: 'Category added successfully'
+        addCategorySuccess: 'Category added successfully',
+        getCategorySuccess: 'User selected categories fetched successfully'
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

@@ -8,3 +8,4 @@ import './contentUpdateAlert';
 import './engagementMotivation';
 import './unfinishedBookNotifier';
 import './notifyKindleSetUp'
+import './schedulePersonalizedNotification'

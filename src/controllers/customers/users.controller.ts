@@ -153,6 +153,12 @@ const getUserAccount = async (
                   = await notificationsService
                         .getUserNotifications({ userId: userObj._id })
 
+            if (userObj.email.endsWith("@holyreads-temp.com")) {
+                  userObj.isSignedUp = false;
+            } else {
+                  userObj.isSignedUp = true;
+            }
+
             userObj.notifications = notifications
             res.status(200).send({
                   message: authControllerResponse.getUserSuccess,
@@ -176,7 +182,8 @@ const getUserAccount = async (
                   { _id: userObj._id },
                   {
                         lastSeen: new Date(),
-                        libraries: userObj.libraries
+                        libraries: userObj.libraries,
+                        isSignedUp: userObj.isSignedUp
                   }
             );
       } catch (e: any) {
@@ -801,11 +808,11 @@ const getCoupon = async (
                   )
             }
 
-           const data =  await coupoonsService.getOneCouponByFilter({ code: req.params.coupon })
+            const data = await coupoonsService.getOneCouponByFilter({ code: req.params.coupon })
 
             res.status(200).send({
                   message: couponControllerResponse.fetchCouponSuccess,
-                  data: {...coupon,type:data.type}
+                  data: { ...coupon, type: data.type }
             })
 
       } catch ({ message }: any) {

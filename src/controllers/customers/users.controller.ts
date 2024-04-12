@@ -3,6 +3,7 @@ import Boom from '@hapi/boom';
 import { trailDays } from '../../constants/app.constant';
 import { Types } from 'mongoose'
 import coupoonsService from '../../services/customers/subscriptions/coupon.service'
+import bookCategoryService from '../../services/customers/book/bookCategory.service'
 
 import {
       encrypt,
@@ -2693,6 +2694,26 @@ const addCategoryToUserLibrary = async (req: Request | any, res: Response, next:
             next(Boom.badData(e.message));
       }
 };
+const getUserSelectedCategory = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const userObj: any = Object.assign({}, req.user);
+            const query: any = { _id: userObj.libraries };
+
+            // Get the user's library
+            userObj.libraries = await userService.getUserLibrary(query);
+
+            // Fetch details of categories
+            const categoryIds = userObj.libraries.categories.map((categoryId: any) => categoryId);
+            const categories = await bookCategoryService.getCategoriesDetails(categoryIds);
+
+            res.status(200).send({
+                  message: authControllerResponse.getCategorySuccess,
+                  categories
+            });
+      } catch (e: any) {
+            next(Boom.badData(e.message));
+      }
+};
 
 export {
       logout,
@@ -2717,5 +2738,6 @@ export {
       getUserSubscription,
       getChangePasswordCode,
       getShareOptionImageUrl,
-      addCategoryToUserLibrary
+      addCategoryToUserLibrary,
+      getUserSelectedCategory
 }

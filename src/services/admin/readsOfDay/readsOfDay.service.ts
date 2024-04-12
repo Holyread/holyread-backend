@@ -2,6 +2,7 @@ import { ReadsOfDayModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
+import { formattedDate } from '../../../lib/utils/utils'
 
 const NODE_ENV = config.NODE_ENV
 const readsOfDayControllerResponse = responseMessage.readsOfDayControllerResponse
@@ -52,11 +53,15 @@ const getOneReadOfDayByFilter = async (query: any) => {
 /** Get all read of day for table */
 const getAllReadsOfDay = async (skip: number, limit, search: object, sort) => {
     try {
-        const result = await ReadsOfDayModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+        const result: any = await ReadsOfDayModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         await result.map(async (item: any) => {
             item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image
         })
         const count = await ReadsOfDayModel.find(search).count()
+        await result.map(i => {
+            i.createdAt = formattedDate(i.createdAt).replace(/ /g, ' ')
+        })
+
         return { count, reads: result }
     } catch (e: any) {
         throw new Error(e)

@@ -7,4 +7,5 @@ import './setStripeCouponAndStatus';
 import './contentUpdateAlert';
 import './engagementMotivation';
 import './unfinishedBookNotifier';
+import './notifyHighlightAndQuoteFeature'
 import './notifyKindleSetUp'

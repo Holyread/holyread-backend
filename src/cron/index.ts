@@ -9,3 +9,4 @@ import './engagementMotivation';
 import './unfinishedBookNotifier';
 import './notifyHighlightAndQuoteFeature'
 import './notifyKindleSetUp'
+import './schedulePersonalizedNotification'

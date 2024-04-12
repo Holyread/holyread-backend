@@ -73,7 +73,7 @@ const startEngagementMotivationJob = async () => {
 
         // Send notifications to each user
         for (const user of users) {
-            const tokens = user.pushTokens.map(token => 'd9wU6FbGSRiJlL7KosVCIt:APA91bFN08JPqfSifLXkdduR6IeD2IuZjMRuKPtamgTb18jk6oYoFItTiArVoQKcq5Arn0TI1A6SKWjZ3EqVu6HW_gfQUi0zI17tMg_UAayOmZxQbjCTqy-u1w19sE-g5g_Ehu8dsyUU');
+            const tokens = user.pushTokens.map(token => token.token);
             try {
                 await pushNotification(
                     tokens,

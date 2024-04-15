@@ -368,14 +368,14 @@ const getSmallGroups = async (request: Request, response: Response, next: NextFu
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
         if (params.id) {
-            const data = await smallGroupService.getOneSmallGroupByFilter({ _id: params.id, status: 'Active' })
+            const data = await smallGroupService.getOneSmallGroupByFilter({ _id: params.id, status: 'Active', publish: true })
             response.status(200).json({
                 message: smallGroupControllerResponse.fetchSmallGroupSuccess,
                 data
             })
             return;
         }
-        const data: any = await smallGroupService.getAllSmallGroups(Number(skip), Number(limit), { status: 'Active' }, { createdAt: -1.0 })
+        const data: any = await smallGroupService.getAllSmallGroups(Number(skip), Number(limit), { status: 'Active', publish: true }, { createdAt: -1.0 })
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data

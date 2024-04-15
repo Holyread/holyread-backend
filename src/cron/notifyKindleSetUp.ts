@@ -1,7 +1,7 @@
 import cron from 'cron';
 import config from "../../config";
 import { UserModel, CronLogModel, NotificationsModel } from '../models';
-import { pushNotification } from '../lib/utils/utils'
+import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
 import { kindleEmailNotifier } from '../constants/cron.constants';
 
 const start = async () => {
@@ -16,7 +16,8 @@ const start = async () => {
         });
         await cronLog.save();
 
-        // Find users who are not in the usersWithHighlights array
+        const fiveDaysAgo = calculateDateInThePast(5);
+        // Find users who are not set up kindle email
         const usersWithoutKindleEmail = await UserModel.find({
             status: 'Active',
             timeZone: { $exists: true },
@@ -24,6 +25,7 @@ const start = async () => {
             'notification.push': true,
             'notification.userActivityAlerts': true,
             kindleEmail: { $exists: false },
+            createdAt: { $lte: fiveDaysAgo }
         }).select('timeZone pushTokens').lean().exec();
 
         // Send notifications to matching users

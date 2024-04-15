@@ -21,7 +21,7 @@ const startPublishContentJob = async () => {
 
         // Publish the first unpublished curated content
         if (unpublishCurateds.length && unpublishCurateds[0]?._id) {
-            await ExpertCuratedModel.findOneAndUpdate({ _id: unpublishCurateds[0]?._id }, { publish: true });
+            await ExpertCuratedModel.findOneAndUpdate({ _id: unpublishCurateds[0]?._id }, { publish: true, publishedAt: new Date() });
         }
 
         console.log('JOB(✅) publish curated executed successfully!');

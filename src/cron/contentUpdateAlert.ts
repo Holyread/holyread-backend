@@ -60,7 +60,7 @@ const start = async () => {
             timeZone: { $exists: true },
             'pushTokens.0': { '$exists': true },
             'notification.push': true,
-            'notification.latestSummariesUploads': true,
+            'notification.favoriteCategoriesAlerts': true,
         }).select('libraries timeZone pushTokens').populate('libraries').lean().exec();
 
         // Filter users based on categories
@@ -115,7 +115,7 @@ const start = async () => {
         // Log Success
         console.log('JOB(✅) content update alert executed successfully!');
         cronLog.status = 'success';
-        cronLog.endedAt =  new Date();
+        cronLog.endedAt = new Date();
         await cronLog.save();
 
         // Log Notifications Sent

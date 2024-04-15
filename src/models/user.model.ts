@@ -21,7 +21,8 @@ export interface IUser extends mongoose.Document {
         subscription?: boolean,
         offerAndDeal?: boolean,
         latestSummariesUploads?: boolean,
-        userActivityAlerts?: boolean
+        userActivityAlerts?: boolean,
+        favoriteCategoriesAlerts?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -97,7 +98,8 @@ export type createUserType = {
         subscription?: boolean,
         offerAndDeal?: boolean,
         latestSummariesUploads?: boolean,
-        userActivityAlerts?: boolean
+        userActivityAlerts?: boolean,
+        favoriteCategoriesAlerts?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -175,6 +177,7 @@ export type getUserType = {
         offerAndDeal?: boolean,
         latestSummariesUploads?: boolean,
         userActivityAlerts?: boolean
+        favoriteCategoriesAlerts?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -252,6 +255,7 @@ export const UserSchema = new Schema({
         offerAndDeal: { type: Boolean, default: true },
         latestSummariesUploads: { type: Boolean, default: true },
         userActivityAlerts: { type: Boolean, default: true },
+        favoriteCategoriesAlerts: { type: Boolean, default: true },
     },
     metaKeyword: { type: String },
     metaDescription: { type: String },

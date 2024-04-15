@@ -2,7 +2,7 @@ import cron from 'cron';
 import config from "../../config";
 import { highlightAndQuoteFeature } from '../constants/cron.constants'
 import { UserModel, CronLogModel, NotificationsModel, HighLightsModel } from '../models';
-import { pushNotification } from '../lib/utils/utils'
+import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
 
 const start = async () => {
     try {
@@ -19,6 +19,8 @@ const start = async () => {
         // Find distinct user IDs from the highlights collection
         const usersWithHighlights = await HighLightsModel.distinct('userId');
 
+        const fourDaysAgo = calculateDateInThePast(4);
+
         // Find users who are not in the usersWithHighlights array
         const usersWithoutHighlights = await UserModel.find({
             _id: { $nin: usersWithHighlights },
@@ -27,6 +29,7 @@ const start = async () => {
             'pushTokens.0': { $exists: true },
             'notification.push': true,
             'notification.userActivityAlerts': true,
+            createdAt: { $lte: fourDaysAgo }
         }).select('timeZone pushTokens').lean().exec();
 
         // Send notifications to matching users

@@ -76,6 +76,7 @@ export const SmallGroupSchema = new Schema({
         },
     },
     updatedAt: {type: Date},
+    publishedAt: { type: Date },
 }, {strict: 'throw'})
 
 export const SmallGroupModel = mongoose.model<ISmallGroup>('smallGroup', SmallGroupSchema)

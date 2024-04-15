@@ -2,7 +2,7 @@ import cron from 'cron';
 import config from "../../config";
 import { unfinishedBookNotifier } from '../constants/cron.constants'
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
-import { pushNotification } from '../lib/utils/utils'
+import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
 import { awsBucket } from '../constants/app.constant';
 
 const start = async () => {
@@ -35,8 +35,22 @@ const start = async () => {
 
         function getRandomBookFromReading(userData) {
             const readingArray = userData.libraries.reading;
-            const randomIndex = Math.floor(Math.random() * readingArray.length);
-            return readingArray[randomIndex];
+            const yesterday = calculateDateInThePast(1);
+
+            // Filter the readingArray to include only books updated yesterday
+            const updatedYesterday = readingArray.filter(book => {
+                const bookUpdatedDate = new Date(book.updatedAt);
+                return bookUpdatedDate < yesterday
+            });
+
+            // If there are books updated yesterday, select a random one
+            if (updatedYesterday.length > 0) {
+                const randomIndex = Math.floor(Math.random() * updatedYesterday.length);
+                return updatedYesterday[randomIndex];
+            } else {
+                // If no books were updated yesterday, select a random book from the entire readingArray
+                console.log('JOB(🔴) not found incomplete book from reading list');
+            }
         }
 
         // Send notifications to matching users

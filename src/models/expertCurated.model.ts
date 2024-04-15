@@ -47,6 +47,7 @@ export const ExpertCuratedSchema = new Schema({
     },
     status: { type: String, default: 'Active' },
     updatedAt: { type: Date },
+    publishedAt: { type: Date },
 }, { strict: 'throw' })
 
 export const ExpertCuratedModel = mongoose.model<IExpertCurated>('expertCurated', ExpertCuratedSchema)

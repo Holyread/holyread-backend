@@ -44,6 +44,25 @@ const getAllBookCategories = async (skip: number, limit, search: object, sort) =
     }
 }
 
+/** Get book category by category id */
+const getCategoriesDetails = async (categoryIds: string[]) => {
+    try {
+        const result = await BookCategoryModel.find({ _id: { $in: categoryIds } }).lean();
+        await Promise.all(result.map(async (item: any) => {
+            if (!item) {
+                return
+            }
+            if (item.image) {
+                item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/category/' + item.image
+            }
+        }))
+        return result
+    } catch (e: any) {
+        throw new Error(e);
+    }
+}
+
 export default {
-    getAllBookCategories
+    getAllBookCategories,
+    getCategoriesDetails
 }

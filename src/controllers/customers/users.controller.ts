@@ -3,6 +3,7 @@ import Boom from '@hapi/boom';
 import { trailDays } from '../../constants/app.constant';
 import { Types } from 'mongoose'
 import coupoonsService from '../../services/customers/subscriptions/coupon.service'
+import bookCategoryService from '../../services/customers/book/bookCategory.service'
 
 import {
       encrypt,
@@ -152,6 +153,12 @@ const getUserAccount = async (
                   = await notificationsService
                         .getUserNotifications({ userId: userObj._id })
 
+            if (userObj.email.endsWith("@holyreads-temp.com")) {
+                  userObj.isSignedUp = false;
+            } else {
+                  userObj.isSignedUp = true;
+            }
+
             userObj.notifications = notifications
             res.status(200).send({
                   message: authControllerResponse.getUserSuccess,
@@ -175,7 +182,8 @@ const getUserAccount = async (
                   { _id: userObj._id },
                   {
                         lastSeen: new Date(),
-                        libraries: userObj.libraries
+                        libraries: userObj.libraries,
+                        isSignedUp: userObj.isSignedUp
                   }
             );
       } catch (e: any) {
@@ -800,11 +808,11 @@ const getCoupon = async (
                   )
             }
 
-           const data =  await coupoonsService.getOneCouponByFilter({ code: req.params.coupon })
+            const data = await coupoonsService.getOneCouponByFilter({ code: req.params.coupon })
 
             res.status(200).send({
                   message: couponControllerResponse.fetchCouponSuccess,
-                  data: {...coupon,type:data.type}
+                  data: { ...coupon, type: data.type }
             })
 
       } catch ({ message }: any) {
@@ -2693,6 +2701,26 @@ const addCategoryToUserLibrary = async (req: Request | any, res: Response, next:
             next(Boom.badData(e.message));
       }
 };
+const getUserSelectedCategory = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const userObj: any = Object.assign({}, req.user);
+            const query: any = { _id: userObj.libraries };
+
+            // Get the user's library
+            userObj.libraries = await userService.getUserLibrary(query);
+
+            // Fetch details of categories
+            const categoryIds = userObj.libraries.categories.map((categoryId: any) => categoryId);
+            const categories = await bookCategoryService.getCategoriesDetails(categoryIds);
+
+            res.status(200).send({
+                  message: authControllerResponse.getCategorySuccess,
+                  categories
+            });
+      } catch (e: any) {
+            next(Boom.badData(e.message));
+      }
+};
 
 export {
       logout,
@@ -2717,5 +2745,6 @@ export {
       getUserSubscription,
       getChangePasswordCode,
       getShareOptionImageUrl,
-      addCategoryToUserLibrary
+      addCategoryToUserLibrary,
+      getUserSelectedCategory
 }

@@ -22,10 +22,10 @@ export const dailyDevotional = {
 export const publishContent = {
       SCHEDULE: {
             Minutes: '0',
-            Hours: '1',
-            DayOfMonth: '*',
+            Hours: '9-18',
+            DayOfMonth: '*/4',
             Months: '*',
-            DayOfWeek: '2,5',
+            DayOfWeek: '*',
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 }
@@ -67,9 +67,9 @@ export const contentUpdateAlert = {
       SCHEDULE: {
           Minutes: '0',
           Hours: '12',
-          DayOfMonth: '*',
+          DayOfMonth: */4',
           Months: '*',
-          DayOfWeek: '2,5',
+          DayOfWeek: '*',
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 }
@@ -82,5 +82,49 @@ export const engagementMotivation = {
           Months: '*',
           DayOfWeek: '*',
       },
+      JOBRESTRICTENV: ['local'], // 'local','development','production'
+};
+
+export const unfinishedBookNotifier = {
+      SCHEDULE: {
+        Minutes: '0',
+        Hours: '9-18', // Daytime hours (9 AM to 6 PM)
+        DayOfMonth: '*/4', // Every 4 days
+        Months: '*',
+        DayOfWeek: '*',
+      },
+      JOBRESTRICTENV: ['local'], // 'local','development','production'
+};
+
+export const highlightAndQuoteFeature = {
+      SCHEDULE: {
+        Minutes: '0',
+        Hours: '9-18', // Daytime hours (9 AM to 6 PM)
+        DayOfMonth: '*/4', // Every 4 days
+        Months: '*',
+        DayOfWeek: '*',
+      },
+      JOBRESTRICTENV: ['local'], // 'local','development','production'
+};
+
+  export const kindleEmailNotifier = {
+      SCHEDULE: {
+            Minutes: '0',
+            Hours: '9-18', // Daytime hours (9 AM to 6 PM)
+            DayOfMonth: '*/4', // Every 4 days
+            Months: '*',
+            DayOfWeek: '*',
+          },
+      JOBRESTRICTENV: ['local'], // 'local','development','production'
+};
+
+export const schedulePersonalizeNotification = {
+      SCHEDULE: {
+            Minutes: '0',
+            Hours: '9-18', // Daytime hours (9 AM to 6 PM)
+            DayOfMonth: '*/4', // Every 4 days
+            Months: '*',
+            DayOfWeek: '*',
+          },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 };

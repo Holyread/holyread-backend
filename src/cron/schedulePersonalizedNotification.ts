@@ -25,6 +25,7 @@ const start = async () => {
             timeZone: { $exists: true },
             'pushTokens.0': { '$exists': true },
             'notification.push': true,
+            'notification.userActivityAlerts': true,
         }).select('libraries timeZone pushTokens').populate('libraries').lean().exec();
 
         // Filter users based on reading

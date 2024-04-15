@@ -18,7 +18,12 @@ const start = async () => {
 
         // Find users who are not in the usersWithHighlights array
         const usersWithoutKindleEmail = await UserModel.find({
-            kindleEmail: { $exists: false }
+            status: 'Active',
+            timeZone: { $exists: true },
+            'pushTokens.0': { $exists: true },
+            'notification.push': true,
+            'notification.userActivityAlerts': true,
+            kindleEmail: { $exists: false },
         }).select('timeZone pushTokens').lean().exec();
 
         // Send notifications to matching users

@@ -864,6 +864,16 @@ const updateUserAccount = async (
                               typeof eval(req.body?.notification?.offerAndDeal) === 'boolean'
                                     ? req.body?.notification?.offerAndDeal
                                     : userObj?.notification?.offerAndDeal || false,
+
+                        latestSummariesUploads:
+                              typeof eval(req.body?.notification?.latestSummariesUploads) === 'boolean'
+                                    ? req.body?.notification?.latestSummariesUploads
+                                    : userObj?.notification?.latestSummariesUploads || false,
+
+                        userActivityAlerts:
+                              typeof eval(req.body?.notification?.userActivityAlerts) === 'boolean'
+                                    ? req.body?.notification?.userActivityAlerts
+                                    : userObj?.notification?.userActivityAlerts || false,
                   },
                   downloadOverWifi:
                         typeof eval(req.body?.downloadOverWifi) === 'boolean'

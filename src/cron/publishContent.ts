@@ -1,7 +1,7 @@
 import cron from 'cron';
 import config from "../../config";
 import { publishContent } from '../constants/cron.constants';
-import { ExpertCuratedModel, BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
+import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
 import { randomNumberInRange, pushNotification } from '../lib/utils/utils';
 import { awsBucket } from '../constants/app.constant';
 
@@ -19,9 +19,6 @@ const startPublishContentJob = async () => {
 
             // Find unpublished books
             const unpublishBooks = await BookSummaryModel.find({ publish: false }).select('_id').lean().exec();
-
-            // Find unpublished curated content
-            const unpublishCurateds = await ExpertCuratedModel.find({ publish: false }).select('_id').lean().exec();
 
             // Publish the first unpublished book
             if (unpublishBooks.length && unpublishBooks[0]?._id) {
@@ -134,11 +131,6 @@ const startPublishContentJob = async () => {
                               await notificationLog.save();
                         }
                   }
-            }
-
-            // Publish the first unpublished curated content
-            if (unpublishCurateds.length && unpublishCurateds[0]?._id) {
-                  await ExpertCuratedModel.findOneAndUpdate({ _id: unpublishCurateds[0]?._id }, { publish: true });
             }
 
             console.log('JOB(✅) publish contents executed successfully!');

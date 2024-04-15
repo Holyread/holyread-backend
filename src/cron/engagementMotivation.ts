@@ -17,19 +17,18 @@ const startEngagementMotivationJob = async () => {
         });
         await cronLog.save();
 
-        // Get the current date
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
+        const books = await BookSummaryModel.find({ publish: true }).select('_id').lean().exec();
+
+        function getRandomBook(bookData) {
+            const bookArray = bookData;
+            const randomIndex = Math.floor(Math.random() * bookArray.length);
+            return bookArray[randomIndex];
+        }
+
+        const randomBook = getRandomBook(books);
 
         // Find a new published book for today
-        const newPublishBook = await BookSummaryModel.findOne({
-            publish: true, publishedAt: {
-                $gte: today,
-                $lt: tomorrow
-            }
-        }).select([
+        const newPublishBook = await BookSummaryModel.findOne({ _id: randomBook._id }).select([
             '_id',
             'description',
             'overview',
@@ -63,6 +62,7 @@ const startEngagementMotivationJob = async () => {
             timeZone: { $exists: true },
             'pushTokens.0': { $exists: true },
             'notification.push': true,
+            'notification.userActivityAlerts': true,
             lastSeen: { $lte: threeDaysAgo }
         }).select('pushTokens').lean().exec();
 
@@ -138,9 +138,9 @@ const startEngagementMotivationJob = async () => {
             status: 'failed',
             endedAt: new Date(),
             message: `engagement motivation execution Error is: ${error.message}`
-      });
-      await cronLog.save();
-}
+        });
+        await cronLog.save();
+    }
 };
 
 ((cronConfig, config) => {

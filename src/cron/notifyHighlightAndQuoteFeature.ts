@@ -21,7 +21,12 @@ const start = async () => {
 
         // Find users who are not in the usersWithHighlights array
         const usersWithoutHighlights = await UserModel.find({
-            _id: { $nin: usersWithHighlights }
+            _id: { $nin: usersWithHighlights },
+            status: 'Active',
+            timeZone: { $exists: true },
+            'pushTokens.0': { $exists: true },
+            'notification.push': true,
+            'notification.userActivityAlerts': true,
         }).select('timeZone pushTokens').lean().exec();
 
         // Send notifications to matching users

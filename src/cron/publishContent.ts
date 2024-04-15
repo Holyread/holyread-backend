@@ -73,6 +73,7 @@ const startPublishContentJob = async () => {
                         timeZone: { $exists: true },
                         'pushTokens.0': { $exists: true },
                         'notification.push': true,
+                        'notification.latestSummariesUploads': true,
                   }).select('pushTokens').lean().exec();
 
                   if (!users.length) {

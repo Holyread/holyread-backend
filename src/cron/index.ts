@@ -10,3 +10,4 @@ import './unfinishedBookNotifier';
 import './notifyHighlightAndQuoteFeature'
 import './notifyKindleSetUp'
 import './schedulePersonalizedNotification'
+import './publishSmallGroup'

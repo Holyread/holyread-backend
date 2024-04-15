@@ -376,6 +376,7 @@ const getSmallGroups = async (request: Request, response: Response, next: NextFu
             return;
         }
         const data: any = await smallGroupService.getAllSmallGroups(Number(skip), Number(limit), { status: 'Active', publish: true }, { createdAt: -1.0 })
+
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data

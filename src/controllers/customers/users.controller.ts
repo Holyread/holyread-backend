@@ -874,6 +874,11 @@ const updateUserAccount = async (
                               typeof eval(req.body?.notification?.userActivityAlerts) === 'boolean'
                                     ? req.body?.notification?.userActivityAlerts
                                     : userObj?.notification?.userActivityAlerts || false,
+
+                        favoriteCategoriesAlerts:
+                              typeof eval(req.body?.notification?.favoriteCategoriesAlerts) === 'boolean'
+                                    ? req.body?.notification?.favoriteCategoriesAlerts
+                                    : userObj?.notification?.favoriteCategoriesAlerts || false,
                   },
                   downloadOverWifi:
                         typeof eval(req.body?.downloadOverWifi) === 'boolean'

@@ -120,12 +120,12 @@ export const highlightAndQuoteFeature = {
 
 export const schedulePersonalizeNotification = {
       SCHEDULE: {
-            Minutes: '0',
-            Hours: '9-18', // Daytime hours (9 AM to 6 PM)
-            DayOfMonth: '*/4', // Every 4 days
-            Months: '*',
-            DayOfWeek: '*',
-          },
+          Minutes: '0',
+          Hours: '9-18', // Daytime hours (9 AM to 6 PM)
+          DayOfMonth: '3,6', // On the 3rd and 6th day
+          Months: '*', // Every month
+          DayOfWeek: '*', // Every day of the week
+         },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 };
 

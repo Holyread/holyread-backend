@@ -68,7 +68,7 @@ const start = async () => {
                 type: 'user',
                 notification: {
                     title: '🔔 Notes and highlights!',
-                    description: `📙 By long pressing on your favorite line, you can make highlights and share them with your friends as quotes or images .`,
+                    description: `📙 Do you know you can highlight by long pressing on your favorite phrase and share it your friends as a quote or an image?`,
                     success: notification.success,
                     errorMessage: notification.errorMessage,
                 },

@@ -33,8 +33,8 @@ const start = async () => {
         for (const user of usersWithoutKindleEmail) {
             const tokens = user.pushTokens.map(token => token.token);
             const notificationPayload = {
-                title: '🔔 Sync your favorite books with Kindle!',
-                body: `📙 Click here to finish Kindle setup and start reading Holy Reads collection on Kindle.`,
+                title: '🔔 Sync your favorite books with your Kindle account for free!',
+                body: `📙 Click here to finish setting it up begin reading Holy Reads on your Kindle.`,
             };
             try {
                 await pushNotification(tokens, notificationPayload.title, notificationPayload.body);

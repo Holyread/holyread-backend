@@ -66,7 +66,7 @@ export const setStripeCouponAndStatus = {
 export const contentUpdateAlert = {
       SCHEDULE: {
           Minutes: '0',
-          Hours: '12',
+          Hours: '12', //12 PM
           DayOfMonth: '*/4',
           Months: '*',
           DayOfWeek: '*',
@@ -88,7 +88,7 @@ export const engagementMotivation = {
 export const unfinishedBookNotifier = {
       SCHEDULE: {
         Minutes: '0',
-        Hours: '9-18', // Daytime hours (9 AM to 6 PM)
+        Hours: '10', // Daytime hours (10AM)
         DayOfMonth: '*/4', // Every 4 days
         Months: '*',
         DayOfWeek: '*',
@@ -99,7 +99,7 @@ export const unfinishedBookNotifier = {
 export const highlightAndQuoteFeature = {
       SCHEDULE: {
         Minutes: '0',
-        Hours: '9-18', // Daytime hours (9 AM to 6 PM)
+        Hours: '14', // Daytime hours (2pm)
         DayOfMonth: '*/4', // Every 4 days
         Months: '*',
         DayOfWeek: '*',
@@ -110,7 +110,7 @@ export const highlightAndQuoteFeature = {
   export const kindleEmailNotifier = {
       SCHEDULE: {
             Minutes: '0',
-            Hours: '9-18', // Daytime hours (9 AM to 6 PM)
+            Hours: '16', // Daytime hours (4pm)
             DayOfMonth: '*/4', // Every 4 days
             Months: '*',
             DayOfWeek: '*',
@@ -133,7 +133,7 @@ export const publishSmallGroup = {
       SCHEDULE: {
             Minutes: '0',
             Hours: '9-18', // Daytime hours (9 AM to 6 PM)
-            DayOfMonth: '*/7', // Every 4 days
+            DayOfMonth: '*/7', // Every 7 days
             Months: '*',
             DayOfWeek: '*',
           },
@@ -143,7 +143,8 @@ export const publishSmallGroup = {
 export const publishCuratedList = {
       SCHEDULE: {
             Minutes: '0',
-            Hours: '9-18', // Daytime hours (9 AM to 6 PM)
+            Hours: '11', // Daytime hours (11AM)
+            // Hours: '9-18', // Daytime hours (9 AM to 6 PM)
             DayOfMonth: '*/4', // Every 4 days
             Months: '*',
             DayOfWeek: '*',

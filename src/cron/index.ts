@@ -4,3 +4,10 @@ import './renewalReminder';
 import './publishContent';
 import './syncProfit';
 import './setStripeCouponAndStatus';
+import './contentUpdateAlert';
+import './engagementMotivation';
+import './unfinishedBookNotifier';
+import './notifyHighlightAndQuoteFeature'
+import './notifyKindleSetUp'
+import './schedulePersonalizedNotification'
+import './publishSmallGroup'

@@ -3,6 +3,7 @@ import Boom from '@hapi/boom';
 import { trailDays } from '../../constants/app.constant';
 import { Types } from 'mongoose'
 import coupoonsService from '../../services/customers/subscriptions/coupon.service'
+import bookCategoryService from '../../services/customers/book/bookCategory.service'
 
 import {
       encrypt,
@@ -172,6 +173,7 @@ const getUserAccount = async (
                               view: [],
                               smallGroups: [],
                               reading: [],
+                              categories: [],
                         })
 
                   userObj.libraries = libraries?._id
@@ -709,15 +711,18 @@ const getUserSubscription = async (
             let subscriptionEndDate = new Date(
                   data.createdAt
             )
-                  .getTime() + (trailDays * 24 * 60 * 60 * 1000);
+                  .getTime() + (24 * 60 * 60 * 1000);
 
+
+            if (!data.stripe) {
+                  data.subscriptionStatus = 'freemium';
+            }
             if (data.subscription) {
                   try {
                         data.subscription = await subscriptionService
                               .getOneSubscriptionByFilter({
                                     _id: data.subscription
                               })
-
                         data.subscriptionStatus = ['Active'].includes(data?.inAppSubscriptionStatus) ? data?.inAppSubscriptionStatus : 'freemium';
                         if (data?.stripe?.subscriptionId) {
                               await stripeSubscriptionService
@@ -859,6 +864,21 @@ const updateUserAccount = async (
                               typeof eval(req.body?.notification?.offerAndDeal) === 'boolean'
                                     ? req.body?.notification?.offerAndDeal
                                     : userObj?.notification?.offerAndDeal || false,
+
+                        latestSummariesUploads:
+                              typeof eval(req.body?.notification?.latestSummariesUploads) === 'boolean'
+                                    ? req.body?.notification?.latestSummariesUploads
+                                    : userObj?.notification?.latestSummariesUploads || false,
+
+                        userActivityAlerts:
+                              typeof eval(req.body?.notification?.userActivityAlerts) === 'boolean'
+                                    ? req.body?.notification?.userActivityAlerts
+                                    : userObj?.notification?.userActivityAlerts || false,
+
+                        favoriteCategoriesAlerts:
+                              typeof eval(req.body?.notification?.favoriteCategoriesAlerts) === 'boolean'
+                                    ? req.body?.notification?.favoriteCategoriesAlerts
+                                    : userObj?.notification?.favoriteCategoriesAlerts || false,
                   },
                   downloadOverWifi:
                         typeof eval(req.body?.downloadOverWifi) === 'boolean'
@@ -2243,6 +2263,7 @@ const subscribePlan = async (
 ) => {
       try {
             const userObj = req.user
+
             const subscriptionDetails = await subscriptionService
                   .getOneSubscriptionByFilter({
                         _id: req.body.subscription
@@ -2673,6 +2694,49 @@ const updateHandout = async (
       }
 }
 
+/** Add Category */
+const addCategoryToUserLibrary = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const userObj: any = Object.assign({}, req.user);
+            const query: any = { _id: userObj.libraries };
+
+            // Get the user's library
+            userObj.libraries = await userService.getUserLibrary(query);
+
+            // Replace old categories with new categories
+            userObj.libraries.categories = req.body.categories;
+
+            // Update the user's library
+            await userService.updateUserLibrary(query, userObj.libraries);
+
+            res.status(200).send({
+                  message: authControllerResponse.addCategorySuccess
+            });
+      } catch (e: any) {
+            next(Boom.badData(e.message));
+      }
+};
+const getUserSelectedCategory = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const userObj: any = Object.assign({}, req.user);
+            const query: any = { _id: userObj.libraries };
+
+            // Get the user's library
+            userObj.libraries = await userService.getUserLibrary(query);
+
+            // Fetch details of categories
+            const categoryIds = userObj.libraries.categories.map((categoryId: any) => categoryId);
+            const categories = await bookCategoryService.getCategoriesDetails(categoryIds);
+
+            res.status(200).send({
+                  message: authControllerResponse.getCategorySuccess,
+                  categories
+            });
+      } catch (e: any) {
+            next(Boom.badData(e.message));
+      }
+};
+
 export {
       logout,
       getCoupon,
@@ -2696,4 +2760,6 @@ export {
       getUserSubscription,
       getChangePasswordCode,
       getShareOptionImageUrl,
+      addCategoryToUserLibrary,
+      getUserSelectedCategory
 }

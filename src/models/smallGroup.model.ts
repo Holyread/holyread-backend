@@ -14,7 +14,8 @@ export interface ISmallGroup extends mongoose.Document {
     backgroundColor?: string,
     coverImage: string,
     conclusion?: string,
-    status?: 'Active' | 'Deactive'
+    status?: 'Active' | 'Deactive',
+    publish?: boolean
 }
 
 export type createSmallGroupType = {
@@ -29,7 +30,8 @@ export type createSmallGroupType = {
     backgroundColor?: string,
     coverImage: string,
     conclusion?: string,
-    status: 'Active' | 'Deactive'
+    status: 'Active' | 'Deactive',
+    publish?: boolean
 }
 
 export type getSmallGroupType = {
@@ -45,7 +47,8 @@ export type getSmallGroupType = {
     backgroundColor?: string,
     coverImage?: string,
     conclusion?: string,
-    status?: 'Active' | 'Deactive'
+    status?: 'Active' | 'Deactive',
+    publish?: boolean
 }
 
 export const SmallGroupSchema = new Schema({
@@ -66,12 +69,14 @@ export const SmallGroupSchema = new Schema({
     backgroundColor: { type: String, default: '' },
     coverImage: { type: String, required: true },
     conclusion: { type: String, default: '' },
+    publish: { type: Boolean, default: false },
     createdAt: {
         type: Date, default: () => {
             return new Date()
         },
     },
     updatedAt: {type: Date},
+    publishedAt: { type: Date },
 }, {strict: 'throw'})
 
 export const SmallGroupModel = mongoose.model<ISmallGroup>('smallGroup', SmallGroupSchema)

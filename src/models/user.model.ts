@@ -19,7 +19,10 @@ export interface IUser extends mongoose.Document {
         inApp?: boolean,
         dailyDevotional?: boolean,
         subscription?: boolean,
-        offerAndDeal?: boolean
+        offerAndDeal?: boolean,
+        latestSummariesUploads?: boolean,
+        userActivityAlerts?: boolean,
+        favoriteCategoriesAlerts?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -93,7 +96,10 @@ export type createUserType = {
         inApp?: boolean,
         dailyDevotional?: boolean,
         subscription?: boolean,
-        offerAndDeal?: boolean
+        offerAndDeal?: boolean,
+        latestSummariesUploads?: boolean,
+        userActivityAlerts?: boolean,
+        favoriteCategoriesAlerts?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -168,7 +174,10 @@ export type getUserType = {
         inApp?: boolean,
         subscription?: boolean,
         dailyDevotional?: boolean,
-        offerAndDeal?: boolean
+        offerAndDeal?: boolean,
+        latestSummariesUploads?: boolean,
+        userActivityAlerts?: boolean
+        favoriteCategoriesAlerts?: boolean
     },
     metaKeyword?: string,
     metaDescription?: string,
@@ -243,7 +252,10 @@ export const UserSchema = new Schema({
         inApp: { type: Boolean, default: true },
         subscription: { type: Boolean, default: true },
         dailyDevotional: { type: Boolean, default: true },
-        offerAndDeal: { type: Boolean, default: true }
+        offerAndDeal: { type: Boolean, default: true },
+        latestSummariesUploads: { type: Boolean, default: true },
+        userActivityAlerts: { type: Boolean, default: true },
+        favoriteCategoriesAlerts: { type: Boolean, default: true },
     },
     metaKeyword: { type: String },
     metaDescription: { type: String },
@@ -301,7 +313,7 @@ export const UserSchema = new Schema({
     source: { type: String },
     medium: { type: String },
     campaign: { type: String },
-    deviceId: { type: String},
+    deviceId: { type: String },
     isSignedUp: { type: Boolean },
 }, { strict: 'throw' })
 

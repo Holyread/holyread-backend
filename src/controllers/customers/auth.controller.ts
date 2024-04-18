@@ -64,6 +64,7 @@ const initializeDeviceAccess = async (req: Request, res: Response, next: NextFun
         view: [],
         smallGroups: [],
         reading: [],
+        categories: [],
       });
 
       const email = body.deviceId + "@holyreads-temp.com";
@@ -174,21 +175,27 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     ) return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
 
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
-    const token: string = getToken({ code: String(verificationCode), email: body.email })
 
-    let link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
-    if (body.coupon) {
-      link = link + `&coupon=${body.coupon}`
-    }
+    const title = 'Welcome to Holy Reads 🎉';
+    const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
+    /** Get welcome email template */
+    const emailTemplateDetails =
+      await emailTemplateService.getOneEmailTemplateByFilter({
+        title: emailTemplatesTitles.customer.welcomeToHolyreads,
+      });
+    const subject = emailTemplateDetails?.subject || "Welcome To Holy Reads";
+    let html = `<p>Dear ${body.email.split("@")[0]
+      },</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]
+      }/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`;
 
-    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
-    const subject = emailTemplateDetails?.subject || 'Account Verification'
-    let html = `<p>Dear ${body.email.split('@')[0]},</p><p>Thank you for registering with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${body.email}</p><p>Please enter this code ${verificationCode} <!-- <a href="${link}">Here</a> --> to verify your registration.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
     if (emailTemplateDetails && emailTemplateDetails.content) {
-      const contentData = { link, code: verificationCode, username: body.email.split('@')[0] }
-      const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
+      const contentData = { loginURL: `${origins[NODE_ENV]}/account/login` };
+      const htmlData = await compileHtml(
+        emailTemplateDetails.content,
+        contentData
+      );
       if (htmlData) {
-        html = htmlData
+        html = htmlData;
       }
     }
 
@@ -199,26 +206,24 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       subject,
       html
     });
+
     if (!result) {
       return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
-    }
-    if (user && !user.verificationCode) {
-      await usersService.updateUser({ _id: user._id }, { verificationCode })
-      return res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
     }
     if (body.image) {
       const s3File: any = await uploadFileToS3(body.image, `user-${verificationCode}`, s3Bucket)
       body.image = s3File.name
     }
 
-      const libraries = await userService
-            .createUserLibrary({
-                  saved: [],
-                  completed: [],
-                  view: [],
-                  smallGroups: [],
-                  reading: [],
-            })
+    const libraries = await userService
+      .createUserLibrary({
+        saved: [],
+        completed: [],
+        view: [],
+        smallGroups: [],
+        reading: [],
+        categories: [],
+      })
 
     const data: any = {
       image: body.image ? body.image : '',
@@ -226,9 +231,8 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       password: body.password,
       device: body.device,
       type: 'User',
-      status: 'Deactive',
+      status: 'Active',
       verified: false,
-      verificationCode,
       source: body.source,
       medium: body.medium,
       campaign: body.campaign,
@@ -242,49 +246,54 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       data.inAppSubscriptionStatus = 'Active'
       data.subscription = body.subscription
     }
-    await usersService.createUser(data)
+    const userData: any = await usersService.createUser(data)
 
-    res.status(200).send({ message: authControllerResponse.verifyEmailRequest })
+    await notificationsService.createNotification({ userId: userData._id, type: 'user', notification: { title, description } })
+
+    /** Push notification */
+    if (userData && userData.pushTokens && userData.pushTokens.length && userData?.notification?.push) {
+      const tokens = userData.pushTokens.map(i => i.token)
+      pushNotification(tokens, title, description)
+      if (
+        userData?.notification?.subscription &&
+        userData.device === 'web' &&
+        !userData.inAppSubscription &&
+        !userData.referralUserId
+      ) pushNotification(tokens, tokens, 'Holy Reads Free access 🔔', `Enjoy unlimited free access with holy reads best summaries📚`);
+    }
+
+    res.status(200).send({ message: authControllerResponse.signUpSuccess })
 
   } catch (e: any) {
     next(Boom.badData(e.message))
   }
 }
 
-/** Verify User signup */
-const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction) => {
+/** Verify Email */
+const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.query.token as string;
     let body: any;
-    const isVerifyLater = req?.query?.isVerifyLater;
-    if (isVerifyLater) {
-      if (!req?.query?.email) {
-        return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
-      }
-      body = { email: req?.query?.email };
-    } else {
-      if (!req?.query?.token && !req?.query?.code) {
-        return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
-      }
-  
-      if (!req?.query?.code && !req?.query?.email &&
-        !req?.query?.token
-      ) {
-        return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
-      }
-  
-      body = { email: req?.query?.email, verificationCode: req?.query?.code };
-  
-      if (token) {
-        const decryptToken: any = verifyToken(token)
-        if (!decryptToken.code) {
-          return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
-        }
-        body.email = decryptToken.email
-        body.verificationCode = decryptToken.code
-      }
+    if (!req?.query?.token && !req?.query?.code) {
+      return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
     }
 
+    if (!req?.query?.code && !req?.query?.email &&
+      !req?.query?.token
+    ) {
+      return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
+    }
+
+    body = { email: req?.query?.email, verificationCode: req?.query?.code };
+
+    if (token) {
+      const decryptToken: any = verifyToken(token)
+      if (!decryptToken.code) {
+        return next(Boom.notAcceptable(authControllerResponse.invalidCodeOrTokenError))
+      }
+      body.email = decryptToken.email
+      body.verificationCode = decryptToken.code
+    }
 
     /** Get user from db */
     const user = await usersService.getOneUserByFilter(body)
@@ -293,78 +302,11 @@ const verifyUserSignUp = async (req: Request, res: Response, next: NextFunction)
     }
 
     body = {
-      verified: isVerifyLater ? false : true,
+      verified: true,
       status: 'Active',
       device: user.referralUserId && req.query.device ? req.query.device : user.device,
-      ...!isVerifyLater && { $unset: { verificationCode: 1 } }
     }
-
-    if (!user.inAppSubscription && user.device === 'web' && !user.referralUserId && !user.stripe) {
-      const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ title: 'Monthly' })
-      if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-        return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
-      }
-
-      /** Create stripe customer */
-      const customer = await stripeSubscriptionService.createCustomer(user.email)
-      /** Create stripe subscription */
-      const subscription = await stripeSubscriptionService.createSubscription({
-        planId: subscriptionDetails.stripePlanId,
-        customerId: customer.id,
-        coupon: req.query.coupon as any
-      })
-      body.stripe = {
-        planId: subscriptionDetails.stripePlanId,
-        subscriptionId: subscription.id,
-        customerId: customer.id,
-        createdAt: new Date(),
-        coupon: req?.query?.coupon
-      }
-      body.subscription = subscriptionDetails._id
-    }
-
-    await usersService.updateUser({ _id: user._id }, body)
-    mailchimpService.updateUser(user.email, 'subscribed')
-    const title = 'Welcome to Holy Reads 🎉';
-    const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
-    await notificationsService.createNotification({ userId: user._id, type: 'user', notification: { title, description } })
-
-    /** Get welcome email template */
-    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.welcomeToHolyreads })
-    const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
-    let html = `<p>Dear ${user.email.split('@')[0]},</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]}/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
-
-    if (emailTemplateDetails && emailTemplateDetails.content) {
-      const contentData = { loginURL: `${origins[NODE_ENV]}/account/login` }
-      const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
-      if (htmlData) {
-        html = htmlData
-      }
-    }
-
-    /** sent welcome email */
-    const result = await sentEmail({
-      from: originEmails.marketing,
-      to: user.email,
-      subject,
-      html
-    });
-
-    if (!result) {
-      return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
-    }
-    res.status(200).send({ message: isVerifyLater ? authControllerResponse.signUpSuccess : authControllerResponse.verifySuccess })
-    /** Push notification */
-    if (user && user.pushTokens && user.pushTokens.length && user?.notification?.push) {
-      const tokens = user.pushTokens.map(i => i.token)
-      pushNotification(tokens, title, description)
-      if (
-        user?.notification?.subscription &&
-        user.device === 'web' &&
-        !user.inAppSubscription &&
-        !user.referralUserId
-      ) pushNotification(tokens, tokens, 'Holy Reads Free access 🔔', `Enjoy unlimited free access with holy reads best summaries📚`);
-    }
+    res.status(200).send({ message: authControllerResponse.verifySuccess })
   } catch (e: any) {
     next(Boom.badData(e.message))
   }
@@ -687,13 +629,14 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     }
 
     const libraries = await userService
-    .createUserLibrary({
-          saved: [],
-          completed: [],
-          view: [],
-          smallGroups: [],
-          reading: [],
-    })
+      .createUserLibrary({
+        saved: [],
+        completed: [],
+        view: [],
+        smallGroups: [],
+        reading: [],
+        categories: [],
+      })
 
     const newBody: any = {
       image: body.photoUrl ? body.photoUrl : '',
@@ -711,7 +654,8 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       source: body.source,
       medium: body.medium,
       campaign: body.campaign,
-      libraries: libraries?._id
+      libraries: libraries?._id,
+      isSignedUp: true
     }
 
     const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscription })
@@ -1077,7 +1021,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
 }
 
 /** Resend signUp Email */
-const resendSignUpEmail = async (req: Request, res: Response, next: NextFunction) => {
+const sendVerificationEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const params: { email: string, coupon: any } = req.body
     const user = await usersService.getOneUserByFilter({ email: params.email })
@@ -1128,31 +1072,6 @@ const resendSignUpEmail = async (req: Request, res: Response, next: NextFunction
   }
 }
 
-const verifyLater = async (req: Request, res: Response, next: NextFunction)=>{
-  try {
-    if (!req?.body?.code && !req?.body?.email) {
-      return next(Boom.notAcceptable(authControllerResponse.missingEmailError))
-    }
-
-    /** Get user from db */
-    const user: any = await usersService.getOneUserByFilter({email:req?.body?.email})
-    if (!user) {
-      return next(Boom.notFound(authControllerResponse.invalidOtpError))
-    }
-
-    const body: any = {
-      verified: true,
-      $unset: { verificationCode: 1 }
-    }
-
-    await usersService.updateUser({ _id: user._id }, body)
-    
-    res.status(200).send({ message: authControllerResponse.verifySuccess })
-  } catch (e: any) {
-    next(Boom.badData(e.message))
-  }
-}
-
 export default {
   signInUser,
   signUpUser,
@@ -1161,9 +1080,8 @@ export default {
   appOAuthSignUp,
   appOAuthSignIn,
   forgotPassoword,
-  verifyUserSignUp,
-  resendSignUpEmail,
-  verifyLater,
+  verifyEmail,
+  sendVerificationEmail,
   initializeDeviceAccess,
   appSignUpUser
 };

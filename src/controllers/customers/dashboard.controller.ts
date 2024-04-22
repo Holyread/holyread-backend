@@ -129,8 +129,8 @@ const getReadsOfTheDay = async (request: Request | any, response: Response, next
     try {
         let data: any;
         const params: any = request.query
-        const skip: any = params.skip ? params.skip : dataLimit.skip
-        const limit: any = params.limit ? params.limit : dataLimit.limit
+        const skip: any = params.skip
+        const limit: any = params.limit
 
         const subscriptionStatus = await subscriptionService.getUserSubscriptionStatus(request.user)
         if (subscriptionStatus === 'freemium') {

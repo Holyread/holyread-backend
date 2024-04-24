@@ -118,5 +118,6 @@ BookSummarySchema.index({ categories: -1 });
 BookSummarySchema.index({ title: -1, status: -1 });
 BookSummarySchema.index({ overview: -1, status: -1 });
 BookSummarySchema.index({ bookFor: -1, status: -1 });
+BookSummarySchema.index({ views: 1 })
 
 export const BookSummaryModel = mongoose.model<IBookSummary>('bookSummary', BookSummarySchema)

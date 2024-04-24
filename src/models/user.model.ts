@@ -317,4 +317,18 @@ export const UserSchema = new Schema({
     isSignedUp: { type: Boolean },
 }, { strict: 'throw' })
 
+UserSchema.index({
+    "stripe.coupon": 1,
+    "stripe.subscriptionId": 1,
+    "stripe.status": 1
+})
+
+UserSchema.index({ "deviceId": 1 })
+
+UserSchema.index({ "inAppSubscription.purchaseToken": 1 })
+
+UserSchema.index({ "inAppSubscriptionStatus": 1 })
+
+UserSchema.index({ "oAuth.clientId": 1, "oAuth.provider": 1 })
+
 export const UserModel = mongoose.model<IUser>('user', UserSchema)

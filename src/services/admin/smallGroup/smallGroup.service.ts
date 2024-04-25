@@ -77,10 +77,21 @@ const deleteSmallGroup = async (id: string) => {
     }
 }
 
+/** Get all small group for table */
+const getSmallGroupsList = async () => {
+    try {
+        const result = await SmallGroupModel.find().populate('books', 'title').lean()
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 export default {
     createSmallGroup,
     updateSmallGroup,
     getAllSmallGroups,
     getOneSmallGroupByFilter,
-    deleteSmallGroup
+    deleteSmallGroup,
+    getSmallGroupsList
 }

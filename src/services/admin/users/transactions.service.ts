@@ -221,9 +221,19 @@ const deleteTransaction = async (query: Object) => {
       }
 }
 
+const getTransactionsList = async () => {
+      try {
+          const result = await TransactionsModel.find().lean()
+          return result
+      } catch (e: any) {
+          throw new Error(e)
+      }
+  }
+
 export default {
       getTransaction,
       getUserAnalytics,
       deleteTransaction,
       getAllTransactions,
+      getTransactionsList
 }

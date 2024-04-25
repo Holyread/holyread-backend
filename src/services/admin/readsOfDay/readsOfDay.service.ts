@@ -89,10 +89,24 @@ const deleteReadOfDay = async (id: string) => {
     }
 }
 
+/** Get all read of day for table */
+const getReadsOfDayList = async () => {
+    try {
+        const result: any = await ReadsOfDayModel.find().lean()
+        await result.map(i => {
+            i.createdAt = formattedDate(i.createdAt).replace(/ /g, ' ')
+        })
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 export default {
     createReadOfDay,
     updateReadOfDay,
     getAllReadsOfDay,
     getOneReadOfDayByFilter,
-    deleteReadOfDay
+    deleteReadOfDay,
+    getReadsOfDayList
 }

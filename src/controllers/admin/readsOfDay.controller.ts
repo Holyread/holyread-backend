@@ -21,18 +21,29 @@ const addReadOfDay = async (req: Request, res: Response, next: NextFunction) => 
     try {
         const body = req.body
         /** Get read of day from db */
-        const readOfDay: any = await readsOfDayService.getOneReadOfDayByFilter({ title: req.body.title })
-        if (readOfDay) {
-            return next(Boom.badData(readsOfDayControllerResponse.createReadOfDayFailure))
+        if (body.title) {
+            const readOfDay: any = await readsOfDayService.getOneReadOfDayByFilter({ title: req.body.title })
+            if (readOfDay) {
+                return next(Boom.badData(readsOfDayControllerResponse.createReadOfDayFailure))
+            }
         }
+
         if (body.image) {
             const s3File: any = await uploadFileToS3(body.image, body.title || 'read_of_day', s3Bucket)
             body.image = s3File.name
         }
+
+        if (body.video) {
+            const s3File: any = await uploadFileToS3(body.video, body.title || 'read_of_day' + '-video', { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
+            body.video = s3File.name
+            body.videoFileSize = s3File.size
+        }
         const data = await readsOfDayService.createReadOfDay({
+            contentType: body.contentType,
             title: body.title,
             subTitle: body.subTitle,
             description: body.description,
+            video: body.video,
             image: body.image,
             status: body.status || 'Active'
         })
@@ -54,6 +65,10 @@ const getOneReadOfDay = async (req: Request, res: Response, next: NextFunction) 
         if (data && data.image) {
             data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + data.image
         }
+
+        if (data && data.video) {
+            data.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + data.video
+        }
         if (!data) {
             return next(Boom.notFound(readsOfDayControllerResponse.getReadOfDayFailure))
         }
@@ -66,19 +81,30 @@ const getOneReadOfDay = async (req: Request, res: Response, next: NextFunction) 
 /** Get all read of day by filter */
 const getAllReadsOfDay = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const params = request.query
+        const params: any = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
-        let searchFilter = {}
+        let searchQuery = {}
         if (params.search) {
-            searchFilter = {
+            searchQuery = {
                 $or: [
                     { 'title': await getSearchRegexp(params.search) },
                     { 'status': await getSearchRegexp(params.search) }
                 ]
             }
         }
+
+        const contentTypeQuery = [
+            'Normal',
+            'Video',
+        ].includes(
+            params.status
+        )
+            ? { 'contentType': params.status }
+            : {}
+
+        const searchFilter = { ...searchQuery, ...contentTypeQuery };
 
         const readsOfDaySorting = [];
         switch (params.column) {
@@ -89,7 +115,7 @@ const getAllReadsOfDay = async (request: Request, response: Response, next: Next
                 readsOfDaySorting.push(['createdAt', params.order || 'ASC']);
                 break;
             default:
-                readsOfDaySorting.push(['title', 'DESC']);
+                readsOfDaySorting.push(['createdAt', 'DESC']);
                 break;
         }
 

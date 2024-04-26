@@ -28,6 +28,8 @@ import recommendedBook from './admin/book/recommendedBook.route'
 
 import customNotification from './admin/customNotification.route'
 
+import exportData from './admin/exportData.route'
+
 const router: Router = express.Router()
 
 router.use('/auth', auth)
@@ -63,5 +65,7 @@ router.use('/email-template', adminPassport, emailTemplate)
 
 router.use('/recommended-book', adminPassport, recommendedBook)
 router.use('/notification', adminPassport, customNotification)
+
+router.use('/export-data', adminPassport, exportData)
 
 export default router

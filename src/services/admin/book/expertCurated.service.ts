@@ -76,11 +76,21 @@ const deleteExpertCurated = async (id: string) => {
     }
 }
 
+/** Get all expert Curated for table */
+const getExpertCuratedList = async () => {
+    try {
+        const result = await ExpertCuratedModel.find().lean()
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
 
 export default {
     createExpertCurated,
     getAllExpertCurated,
     getOneExpertCuratedByFilter,
     updateExpertCurated,
-    deleteExpertCurated
+    deleteExpertCurated,
+    getExpertCuratedList
 };

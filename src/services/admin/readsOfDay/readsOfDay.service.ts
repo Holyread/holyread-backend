@@ -17,6 +17,9 @@ const createReadOfDay = async (body: any) => {
         if (result.image) {
             result.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + result.image
         }
+        if (result.video) {
+            result.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + result.video
+        }
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -33,6 +36,10 @@ const updateReadOfDay = async (body: any, id: string) => {
         )
         if (data && data.image) {
             data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + data.image
+        }
+
+        if (data && data.video) {
+            data.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + data.video
         }
         return data
     } catch (e: any) {
@@ -56,6 +63,10 @@ const getAllReadsOfDay = async (skip: number, limit, search: object, sort) => {
         const result: any = await ReadsOfDayModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         await result.map(async (item: any) => {
             item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image
+
+            if (item.video) {
+                item.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + item.video
+            }
         })
         const count = await ReadsOfDayModel.find(search).count()
         await result.map(i => {
@@ -78,10 +89,24 @@ const deleteReadOfDay = async (id: string) => {
     }
 }
 
+/** Get all read of day for table */
+const getReadsOfDayList = async () => {
+    try {
+        const result: any = await ReadsOfDayModel.find().lean()
+        await result.map(i => {
+            i.createdAt = formattedDate(i.createdAt).replace(/ /g, ' ')
+        })
+        return result
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 export default {
     createReadOfDay,
     updateReadOfDay,
     getAllReadsOfDay,
     getOneReadOfDayByFilter,
-    deleteReadOfDay
+    deleteReadOfDay,
+    getReadsOfDayList
 }

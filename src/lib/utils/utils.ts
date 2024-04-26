@@ -11,6 +11,8 @@ import config from '../../../config'
 
 import firebaseAdmin from 'firebase-admin';
 
+import { Worksheet } from 'exceljs';
+
 const algorithm = 'aes-256-cbc';
 const iv = '3ad77bb40d7a3660';
 const inputEncoding = 'utf8';
@@ -373,4 +375,36 @@ export const calculateDateInThePast = (daysAgo) => {
     const dateInPast = new Date();
     dateInPast.setDate(dateInPast.getDate() - daysAgo);
     return dateInPast;
+};
+
+export const setHeaderBackgroundColor = async (wsHeaderCells, ws: Worksheet): Promise<void> => {
+    const worksheet: Worksheet = ws;
+    await Promise.all(wsHeaderCells.map(async (cell) => {
+        worksheet.getCell(cell).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: {
+                argb: 'cccccc',
+            },
+        };
+        worksheet.getCell(cell).font = {
+            name: 'Arial',
+            bold: true,
+        };
+    }));
+};
+
+export const setColumnWidth = async (ws: Worksheet): Promise<void> => {
+    await Promise.all(ws.columns.map(async (column) => {
+        const wsColumn = column;
+        let dataMax = 0;
+        await Promise.all(column.values.map((columnVal: any) => {
+            const columnLength: number = columnVal.toString().length;
+            if (columnLength > dataMax) {
+                dataMax = columnLength;
+            }
+            return columnVal;
+        }));
+        wsColumn.width = dataMax + 2;
+    }));
 };

@@ -136,7 +136,7 @@ const getReadsOfTheDay = async (request: Request | any, response: Response, next
         if (subscriptionStatus === 'freemium') {
             /** Set today start and end */
             const start = new Date();
-            start.setDate(new Date().getDate() - 4);
+            start.setDate(new Date().getDate() - 1);
             start.setHours(0, 0, 0, 0);
             const end = new Date();
             end.setHours(23, 59, 59, 999);

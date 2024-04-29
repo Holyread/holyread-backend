@@ -3,7 +3,7 @@ import cron from 'cron';
 import { fetchNotifications } from '../controllers/customers/notification.controller';
 import { pushNotification, compileHtml, sentEmail } from '../lib/utils/utils';
 import { emailTemplatesTitles, originEmails, origins } from '../constants/app.constant';
-import { renewalReminder } from '../constants/cron.constants';
+import { renewalReminderNotification } from '../constants/cron.constants';
 import { UserModel, getUserType } from '../models/user.model';
 import { io } from '../app';
 
@@ -199,7 +199,7 @@ const start = async () => {
             console.log(`JOB(🟡) Renewal Reminder not initiated due to ${config.NODE_ENV} Environment`);
             return;
       }
-      const schedule = Object.values(renewalReminder.SCHEDULE).join(' ');
+      const schedule = Object.values(renewalReminderNotification.SCHEDULE).join(' ');
       new cron.CronJob(schedule, () => { start() }, null, true);
       console.log('JOB(🟢) Renewal Reminder initiated successfully!');
-})(renewalReminder, config);
+})(renewalReminderNotification, config);

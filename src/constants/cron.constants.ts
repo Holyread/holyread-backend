@@ -1,4 +1,4 @@
-export const readsOfDayDisplayAt = {
+export const setReadsOfDayDisplayAt = {
       SCHEDULE: {
             Minutes: '0',
             Hours: '1',
@@ -8,7 +8,7 @@ export const readsOfDayDisplayAt = {
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 }
-export const dailyDevotional = {
+export const dailyDevotionalNotification = {
       SCHEDULE: {
           Minutes: '0',
           Hours: '8',
@@ -30,7 +30,7 @@ export const publishContent = {
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 }
 
-export const renewalReminder = {
+export const renewalReminderNotification = {
       SCHEDULE: {
             Minutes: '30',
             Hours: '1',
@@ -63,7 +63,7 @@ export const setStripeCouponAndStatus = {
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 }
 
-export const contentUpdateAlert = {
+export const contentUpdateNotification = {
       SCHEDULE: {
           Minutes: '0',
           Hours: '12', //12 PM
@@ -74,7 +74,7 @@ export const contentUpdateAlert = {
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 }
   
-export const engagementMotivation = {
+export const engagementMotivationNotification = {
       SCHEDULE: {
           Minutes: '0',
           Hours: '18', // 6 PM
@@ -85,7 +85,7 @@ export const engagementMotivation = {
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 };
 
-export const unfinishedBookNotifier = {
+export const unfinishedBookNotification = {
       SCHEDULE: {
         Minutes: '0',
         Hours: '10', // Daytime hours (10AM)
@@ -96,7 +96,7 @@ export const unfinishedBookNotifier = {
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 };
 
-export const highlightAndQuoteFeature = {
+export const highlightAndQuoteFeatureNotification = {
       SCHEDULE: {
         Minutes: '0',
         Hours: '14', // Daytime hours (2pm)
@@ -107,7 +107,7 @@ export const highlightAndQuoteFeature = {
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 };
 
-  export const kindleEmailNotifier = {
+  export const kindleSetUpNotification = {
       SCHEDULE: {
             Minutes: '0',
             Hours: '16', // Daytime hours (4pm)

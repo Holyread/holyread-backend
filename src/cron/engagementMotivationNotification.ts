@@ -1,6 +1,6 @@
 import cron from 'cron';
 import config from "../../config";
-import { engagementMotivation } from '../constants/cron.constants';
+import { engagementMotivationNotification } from '../constants/cron.constants';
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
 import { pushNotification, calculateDateInThePast } from '../lib/utils/utils';
 import { awsBucket } from '../constants/app.constant';
@@ -148,7 +148,7 @@ const startEngagementMotivationJob = async () => {
         console.log(`JOB(🟡) engagement motivation not initiated due to ${config.NODE_ENV} Environment`);
         return;
     }
-    const schedule = Object.values(engagementMotivation.SCHEDULE).join(' ');
+    const schedule = Object.values(engagementMotivationNotification.SCHEDULE).join(' ');
     new cron.CronJob(schedule, () => { startEngagementMotivationJob() }, null, true);
     console.log('JOB(🟢) engagement motivation initiated successfully!');
-})(engagementMotivation, config);
+})(engagementMotivationNotification, config);

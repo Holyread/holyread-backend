@@ -79,7 +79,7 @@ const start = async () => {
                         author: bookDetails.author,
                         views: bookDetails.views,
                         coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${bookDetails.coverImage}`,
-                        totalStar: bookDetails.bookRating.star,
+                        totalStar: bookDetails.totalStar,
                         status: bookDetails.status,
                     }
                 }

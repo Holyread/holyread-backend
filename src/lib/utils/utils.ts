@@ -408,3 +408,13 @@ export const setColumnWidth = async (ws: Worksheet): Promise<void> => {
         wsColumn.width = dataMax + 2;
     }));
 };
+
+export const calculateAverageRating = async (ratings) => {
+    let totalStars = 0;
+    ratings.forEach((rating) => {
+        totalStars += rating.star;
+    });
+    const averageRating = ratings.length > 0 ? totalStars / ratings.length : 0;
+    return parseFloat(averageRating.toFixed(1));
+}
+

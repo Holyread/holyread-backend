@@ -57,9 +57,6 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                     }
                 ]);
 
-        delete search.star;
-
-        const star = search.star;
         const count = result[0].total[0]?.count || 0
         const ratings = await ratingService.getBooksRatings(result[0]?.page?.map(i => i && i._id).filter(i => i) as [string], global.currentUser._id)
         const summaries = new Set()
@@ -67,8 +64,6 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
         const saved = libraries?.saved
 
         await Promise.all(result[0]?.page?.map(async oneItem => {
-            const totalStar = ratings[String(oneItem._id)]?.averageStar || 3
-            if (star && star !== Math.trunc(totalStar)) return
             summaries.add({
                 _id: oneItem._id,
                 coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneItem.coverImage,
@@ -82,7 +77,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                 coverImageBackground: oneItem.coverImageBackground,
                 categories: oneItem.categories,
                 isRate: !!ratings[String(oneItem._id)]?.isRate,
-                totalStar,
+                totalStar: oneItem.totalStar,
                 publish: oneItem.publish,
             })
         }))
@@ -96,8 +91,6 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
 /** Get user libraries book summaries */
 const getAllBookSummaries = async (skip: number, limit: number, search: any, sort, library?: any) => {
     try {
-        const star = search.star
-        delete search.star
         search.publish = true
         const aggregate: any = new Set([
             {
@@ -120,6 +113,7 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                     'categories': 1.0,
                     'chapters.name': 1.0,
                     'chapters.size': 1.0,
+                    'totalStar': 1.0,
                     'coverImageBackground': 1.0,
                 }
             },
@@ -201,13 +195,8 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                                 String(oneItem._id)
                         )
                         ?.chaptersCompleted
-                    const totalStar = ratings[String(oneItem._id)]?.averageStar || 3
-                    if (star && star !== Math.trunc(totalStar)) {
-                        --count;
-                        return false
-                    }
+
                     return {
-                        totalStar,
                         ...oneItem,
                         author: oneItem.author,
                         isRate: !!ratings[String(oneItem._id)]?.isRate,
@@ -219,7 +208,7 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                         'views': oneItem.views || 0,
                     }
                 }
-            ))
+                ))
         return {
             count,
             summaries: result.filter(i => i)
@@ -278,9 +267,10 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
         const coverImage = 'libraries.reading.bookId.coverImage'
         const description = 'libraries.reading.bookId.description'
         const coverImageBackground = 'libraries.reading.bookId.coverImageBackground'
+        const totalStar = 'libraries.reading.bookId.totalStar'
 
         const project = {
-            [_id]: '$'+ [_id],
+            [_id]: '$' + [_id],
             [email]: '$' + [email],
             [title]: '$' + [title],
             [views]: '$' + [views],
@@ -294,6 +284,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
             [categories]: '$' + [categories],
             [description]: '$' + [description],
             [coverImageBackground]: '$' + [coverImageBackground],
+            [totalStar]: '$' + [totalStar],
             [coverImage]: {
                 $concat: [
                     awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/',
@@ -314,6 +305,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
             'coverImage': { $first: '$' + [coverImage] },
             'description': { $first: '$' + [description] },
             'coverImageBackground': { $first: '$' + [coverImageBackground] },
+            'totalStar': { $first: '$' + [totalStar] },
         }
 
         const page: any = [{ $limit: limit }]
@@ -407,7 +399,8 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                         'categories': { $first: '$categories' },
                         'coverImage': { $first: '$coverImage' },
                         'description': { $first: '$description' },
-                        'coverImageBackground': { $first: '$coverImageBackground' },   
+                        'coverImageBackground': { $first: '$coverImageBackground' },
+                        'totalStar': { $first: '$totalStar' },
                     }
                 },
                 {
@@ -424,17 +417,17 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                     }
                 },
                 {
-                    $project: { 
-                        'author.createdAt': 0, 
-                        'author.__v': 0, 
+                    $project: {
+                        'author.createdAt': 0,
+                        'author.__v': 0,
                     }
                 },
                 {
                     $facet: {
                         page
                             : skip
-                            ? page.concat({ $skip: skip })
-                            : page,
+                                ? page.concat({ $skip: skip })
+                                : page,
                         total: [{
                             $count: 'count'
                         }]
@@ -443,14 +436,14 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
             ]
         )
         const count = result[0]?.total[0]?.count
-        
+
         const ratings
             = await ratingService
                 .getBooksRatings(
                     result[0].page.map(
                         i => i?._id
                     )
-                    .filter(i => i) as [string],
+                        .filter(i => i) as [string],
                     global.currentUser._id
                 )
 
@@ -476,7 +469,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                     ?.reading
                     ?.find(
                         item =>
-                        String(item.bookId) === String(oneItem._id)
+                            String(item.bookId) === String(oneItem._id)
                     )?.chaptersCompleted
 
             summaries.add({
@@ -489,11 +482,11 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                 reads: Number(
                     (
                         libBookChapters?.length
-                        ?
+                            ?
                             (
                                 100 * libBookChapters?.length
                             ) / oneItem?.chapters
-                        : 0
+                            : 0
                     ).toFixed(0)),
             })
         }))

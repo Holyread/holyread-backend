@@ -2,7 +2,7 @@ import cron from 'cron';
 import config from "../../config";
 import { UserModel, CronLogModel, NotificationsModel } from '../models';
 import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
-import { kindleEmailNotifier } from '../constants/cron.constants';
+import { kindleSetUpNotification } from '../constants/cron.constants';
 
 const start = async () => {
     try {
@@ -90,7 +90,7 @@ const start = async () => {
         console.log(`JOB(🟡) notify kindle email setup not initiated due to ${config.NODE_ENV} Environment`);
         return;
     }
-    const schedule = Object.values(kindleEmailNotifier.SCHEDULE).join(' ');
+    const schedule = Object.values(kindleSetUpNotification.SCHEDULE).join(' ');
     new cron.CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) notify kindle email setup initiated successfully!');
-})(kindleEmailNotifier, config);
+})(kindleSetUpNotification, config);

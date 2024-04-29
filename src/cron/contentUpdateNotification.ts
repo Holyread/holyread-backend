@@ -1,6 +1,7 @@
 import cron from 'cron';
 import config from "../../config";
-import { contentUpdateAlert } from '../constants/cron.constants'
+import { contentUpdateNotification
+ } from '../constants/cron.constants'
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
 import { pushNotification } from '../lib/utils/utils'
 import { awsBucket } from '../constants/app.constant';
@@ -151,7 +152,8 @@ const start = async () => {
         console.log(`JOB(🟡) content update alert not initiated due to ${config.NODE_ENV} Environment`);
         return;
     }
-    const schedule = Object.values(contentUpdateAlert.SCHEDULE).join(' ');
+    const schedule = Object.values(contentUpdateNotification
+.SCHEDULE).join(' ');
     new cron.CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) content update alert initiated successfully!');
-})(contentUpdateAlert, config);
+})(contentUpdateNotification, config);

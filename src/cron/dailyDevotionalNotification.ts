@@ -1,7 +1,7 @@
 import cron from 'cron';
 
 import config from "../../config";
-import { dailyDevotional } from '../constants/cron.constants';
+import { dailyDevotionalNotification } from '../constants/cron.constants';
 import { ReadsOfDayModel, SettingModel, UserModel, CronLogModel, NotificationsModel } from '../models';
 import { groupByKey, pushNotification } from '../lib/utils/utils';
 import { awsBucket } from '../constants/app.constant';
@@ -158,7 +158,7 @@ const start = async () => {
             console.log(`JOB(🟡) Daily devotional not initiated due to ${config.NODE_ENV} Environment`);
             return;
       }
-      const schedule = Object.values(dailyDevotional.SCHEDULE).join(' ');
+      const schedule = Object.values(dailyDevotionalNotification.SCHEDULE).join(' ');
       new cron.CronJob(schedule, () => { start() }, null, true);
       console.log('JOB(🟢) Daily devotional initiated successfully!');
-})(dailyDevotional, config);
+})(dailyDevotionalNotification, config);

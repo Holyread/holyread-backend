@@ -1,6 +1,6 @@
 import cron from 'cron';
 import config from "../../config";
-import { unfinishedBookNotifier } from '../constants/cron.constants'
+import { unfinishedBookNotification } from '../constants/cron.constants'
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
 import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
 import { awsBucket } from '../constants/app.constant';
@@ -151,7 +151,7 @@ const start = async () => {
         console.log(`JOB(🟡) Unfinished book notifier not initiated due to ${config.NODE_ENV} Environment`);
         return;
     }
-    const schedule = Object.values(unfinishedBookNotifier.SCHEDULE).join(' ');
+    const schedule = Object.values(unfinishedBookNotification.SCHEDULE).join(' ');
     new cron.CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) Unfinished book notifier initiated successfully!');
-})(unfinishedBookNotifier, config);
+})(unfinishedBookNotification, config);

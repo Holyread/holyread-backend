@@ -2707,6 +2707,14 @@ const addCategoryToUserLibrary = async (req: Request | any, res: Response, next:
             const userObj: any = Object.assign({}, req.user);
             const query: any = { _id: userObj.libraries };
 
+            if (!req.body.categories) {
+                  return next(
+                        Boom.badData(
+                              authControllerResponse.missingCategoryError
+                        )
+                  )
+            }
+
             // Get the user's library
             userObj.libraries = await userService.getUserLibrary(query);
 

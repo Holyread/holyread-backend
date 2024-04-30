@@ -61,7 +61,8 @@ export const responseMessage = {
         inValidEmailError:'Please add valid email address',
         noUserFound:'No users found',
         addCategorySuccess: 'Category added successfully',
-        getCategorySuccess: 'User selected categories fetched successfully'
+        getCategorySuccess: 'User selected categories fetched successfully',
+        missingCategoryError: 'Select at least one category as a favorite'
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

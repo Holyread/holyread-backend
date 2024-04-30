@@ -5,3 +5,4 @@ import './set-last-transaction-id';
 // import './publish-small-group.script'
 // import './set-verified-and-activate-users.script'
 // import './set-default-content-type-script'
+// import './set-book-rating-script'

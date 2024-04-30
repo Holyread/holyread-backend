@@ -1,7 +1,7 @@
 import cron from 'cron';
 
 import config from "../../config";
-import { readsOfDayDisplayAt } from '../constants/cron.constants'
+import { setReadsOfDayDisplayAt } from '../constants/cron.constants'
 import { getDates } from '../lib/utils/utils'
 import { ReadsOfDayModel } from '../models';
 
@@ -57,7 +57,7 @@ const start = async () => {
             console.log(`JOB(🟡) Reads of day display date filling not initiated due to ${config.NODE_ENV} Environment`);
             return;
       }
-      const schedule = Object.values(readsOfDayDisplayAt.SCHEDULE).join(' ');
+      const schedule = Object.values(setReadsOfDayDisplayAt.SCHEDULE).join(' ');
       new cron.CronJob(schedule, () => { start() }, null, true);
       console.log('JOB(🟢) Reads of day display date filling initiated successfully!');
-})(readsOfDayDisplayAt, config);
+})(setReadsOfDayDisplayAt, config);

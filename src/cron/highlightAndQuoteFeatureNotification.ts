@@ -1,6 +1,6 @@
 import cron from 'cron';
 import config from "../../config";
-import { highlightAndQuoteFeature } from '../constants/cron.constants'
+import { highlightAndQuoteFeatureNotification } from '../constants/cron.constants'
 import { UserModel, CronLogModel, NotificationsModel, HighLightsModel } from '../models';
 import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
 
@@ -94,7 +94,7 @@ const start = async () => {
         console.log(`JOB(🟡) highlight and quote feature not initiated due to ${config.NODE_ENV} Environment`);
         return;
     }
-    const schedule = Object.values(highlightAndQuoteFeature.SCHEDULE).join(' ');
+    const schedule = Object.values(highlightAndQuoteFeatureNotification.SCHEDULE).join(' ');
     new cron.CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) highlight and quote feature initiated successfully!');
-})(highlightAndQuoteFeature, config);
+})(highlightAndQuoteFeatureNotification, config);

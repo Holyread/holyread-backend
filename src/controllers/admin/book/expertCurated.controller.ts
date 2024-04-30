@@ -66,7 +66,7 @@ const getAllExpertCurated = async (request: Request, response: Response, next: N
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
-        let searchFilter = {}
+        let searchFilter: any = {}
         if (params.search) {
             searchFilter = {
                 $or: [
@@ -74,6 +74,15 @@ const getAllExpertCurated = async (request: Request, response: Response, next: N
                     { 'status': await getSearchRegexp(params.search) },
                     { 'description': await getSearchRegexp(params.search) }
                 ]
+            }
+        }
+
+        if (params.bookStatusFilter) {
+            if (params.bookStatusFilter === 'publish') {
+                searchFilter.publish = true;
+            }
+            else if (params.bookStatusFilter === 'pending') {
+                searchFilter.publish = false;
             }
         }
         const expertCuratedSorting = [];

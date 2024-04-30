@@ -82,8 +82,8 @@ const startPublishContentJob = async () => {
                         try {
                               await pushNotification(
                                     tokens,
-                                    '🔔 NEW Publish book for you',
-                                    `📙 Explore the latest with titles like ${content}`,
+                                    '🔔 NEW Summary for you!',
+                                    `📙 Explore the latest summary "${content}"`,
                                     JSON.stringify({
                                           publishContents: {
                                                 _id: publishContent._id,
@@ -107,8 +107,8 @@ const startPublishContentJob = async () => {
                                     userId: user._id,
                                     type: 'user',
                                     notification: {
-                                          title: '🔔 NEW Publish book for you',
-                                          description: `📙 Explore the latest with titles like ${content}`,
+                                          title: '🔔 NEW Summary for you!',
+                                          description: `📙 Explore the latest summary "${content}"`,
                                           success: true,
                                           errorMessage: null,
                                     },
@@ -121,8 +121,8 @@ const startPublishContentJob = async () => {
                                     userId: user._id,
                                     type: 'user',
                                     notification: {
-                                          title: '🔔 NEW Publish book for you',
-                                          description: `📙 Explore the latest with titles like ${content}`,
+                                          title: '🔔 NEW Summary for you!',
+                                          description: `📙 Explore the latest summary "${content}"`,
                                           success: false,
                                           errorMessage: `Users processing error -', ${error.message}`,
                                     },

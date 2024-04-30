@@ -20,15 +20,13 @@ const updateRating = async (body: { bookId: string, star: number, description?: 
 /** Get book ratings */
 const getBooksRatings = async (bookIds: [string], userId: string) => {
       try {
-            const bookRatings = await RatingModel.find({ bookId: { '$in': bookIds } }).select('userId bookId star').lean()
+            const bookRatings = await RatingModel.find({ bookId: { '$in': bookIds } }).select('userId bookId').lean()
             let book = {}
             await Promise.all(bookRatings.map(async (oneRating: any) => {
                   if (!oneRating) {
                         return null
                   }
                   book[String(oneRating.bookId)] = {
-                        star: (book[oneRating.bookId]?.star || 0) + oneRating.star,
-                        users: (book[oneRating.bookId]?.users || 0) + 1,
                         isRate: book[oneRating.bookId]?.isRate || String(userId) === String(oneRating.userId)
                   }
             }))
@@ -51,8 +49,19 @@ const deleteRatings = async (query: Object) => {
       }
 }
 
+const getAllRating = async (query) => {
+      try {
+            const ratings = await RatingModel.find(query);
+            return ratings;
+      } catch (e: any) {
+            throw new Error(e);
+      }
+};
+
+
 export default {
       updateRating,
       getBooksRatings,
-      deleteRatings
+      deleteRatings,
+      getAllRating
 }

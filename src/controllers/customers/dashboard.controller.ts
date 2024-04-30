@@ -232,7 +232,7 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
                 views: bookDetails.views || 0,
                 bookFor: bookDetails.bookFor,
                 bookMark,
-                totalStar: ratings[String(bookDetails._id)]?.averageStar || 3,
+                totalStar: bookDetails.totalStar || 3,
                 isRate: !!ratings[String(bookDetails._id)]?.isRate,
                 reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / bookDetails.chapters?.length : 0).toFixed(0))
             }
@@ -331,7 +331,7 @@ const getFavoriteCategoriesBooks = async (request: any, response: Response, next
                 views: bookDetails.views || 0,
                 bookFor: bookDetails.bookFor,
                 bookMark,
-                totalStar: ratings[String(bookDetails._id)]?.averageStar || 3,
+                totalStar: bookDetails.totalStar || 3,
                 isRate: !!ratings[String(bookDetails._id)]?.isRate,
                 reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / bookDetails.chapters?.length : 0).toFixed(0))
             }

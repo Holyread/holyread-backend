@@ -96,7 +96,7 @@ const startPublishContentJob = async () => {
                                                 author: publishContent.author,
                                                 views: publishContent.views,
                                                 coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${publishContent.coverImage}`,
-                                                totalStar: publishContent.bookRating.star,
+                                                totalStar: publishContent.totalStar,
                                                 status: publishContent.status,
                                           }
                                     })

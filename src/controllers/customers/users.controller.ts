@@ -21,6 +21,7 @@ import {
       imageUrlToBase64,
       capitalizeFirstLetter,
       validateEmail,
+      calculateAverageRating,
 } from '../../lib/utils/utils'
 
 import {
@@ -1801,11 +1802,17 @@ const updateRating = async (
                   star,
                   bookId,
                   description,
-                  userId: userObj._id
+                  userId: userObj._id,
             });
 
+            const ratings = await ratingService.getAllRating({ bookId });
+
+            const averageRating = await calculateAverageRating(ratings);
+
+            await bookService.updateBookSummary(bookId, { totalStar: averageRating });
+
             res.status(200).send({
-                  message: authControllerResponse.bookRatingSuccess
+                  message: authControllerResponse.bookRatingSuccess,
             })
       } catch (e: any) {
             next(Boom.badData(e.message))

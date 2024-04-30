@@ -76,7 +76,7 @@ const getAllSmallGroups = async (request: Request, response: Response, next: Nex
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
-        let searchFilter = {}
+        let searchFilter: any = {}
         if (params.search) {
             const search = await getSearchRegexp(params.search)
             searchFilter = {
@@ -86,6 +86,15 @@ const getAllSmallGroups = async (request: Request, response: Response, next: Nex
             }
             if (Number(search)) {
                 searchFilter['$or'].push({ 'fontSize': Number(search) })
+            }
+        }
+
+        if (params.bookStatusFilter) {
+            if (params.bookStatusFilter === 'publish') {
+                searchFilter.publish = true;
+            }
+            else if (params.bookStatusFilter === 'pending') {
+                searchFilter.publish = false;
             }
         }
 

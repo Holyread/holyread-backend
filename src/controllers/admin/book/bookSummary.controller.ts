@@ -127,6 +127,14 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
         if (params.status && params.status === 'MostPopular') {
             searchFilter.popular = true;
         }
+        if (params.bookStatusFilter) {
+            if (params.bookStatusFilter === 'publish') {
+                searchFilter.publish = true;
+            }
+            else if (params.bookStatusFilter === 'pending') {
+                searchFilter.publish = false;
+            }
+        }
         let summarySorting = [];
         switch (params.column) {
             case 'title':

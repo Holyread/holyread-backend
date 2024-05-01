@@ -33,7 +33,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                     break;
                 case 'Books':
                     // Fetch book list data
-                    const bookData = await bookSummaryService.getAllBookSummaries(0, 0, {}, '');
+                    const bookData = await bookSummaryService.getAllBookSummaries(0, 0, {}, { createdAt: -1 } );
                     const books = bookData.summaries
                     data.push({ dataType, data: books });
                     break;
@@ -56,7 +56,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                     break;
                 case 'Most popular':
                     // Fetch most popular data
-                    const bookList = await bookSummaryService.getAllBookSummaries(0, 0, { popular: true }, '');
+                    const bookList = await bookSummaryService.getAllBookSummaries(0, 0, { popular: true }, { createdAt: -1 } );
                     const mostPopularList = bookList.summaries
                     data.push({ dataType, data: mostPopularList });
                     break;

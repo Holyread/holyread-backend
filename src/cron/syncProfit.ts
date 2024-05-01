@@ -1,4 +1,4 @@
-import * as cron from 'cron';
+import { CronJob } from 'cron';
 
 import config from '../../config';
 import { syncProfits } from '../constants/cron.constants'
@@ -77,6 +77,6 @@ const start = async () => {
             return;
       }
       const schedule = Object.values(syncProfits.SCHEDULE).join(' ');
-      new cron.CronJob(schedule, () => { start() }, undefined, true);
+      new CronJob(schedule, () => { start() }, undefined, true);
       console.log('JOB(🟢) sync profit initiated successfully!');
 })(syncProfits, config);

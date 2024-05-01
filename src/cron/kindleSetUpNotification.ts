@@ -1,4 +1,4 @@
-import * as cron from 'cron';
+import { CronJob } from 'cron';
 import config from '../../config';
 import { UserModel, CronLogModel, NotificationsModel } from '../models';
 import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
@@ -91,6 +91,6 @@ const start = async () => {
         return;
     }
     const schedule = Object.values(kindleSetUpNotification.SCHEDULE).join(' ');
-    new cron.CronJob(schedule, () => { start() }, null, true);
+    new CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) notify kindle email setup initiated successfully!');
 })(kindleSetUpNotification, config);

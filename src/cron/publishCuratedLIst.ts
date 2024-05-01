@@ -1,4 +1,4 @@
-import * as cron from 'cron';
+import { CronJob } from 'cron';
 import config from '../../config';
 import { publishCuratedList } from '../constants/cron.constants';
 import { ExpertCuratedModel, CronLogModel } from '../models';
@@ -45,6 +45,6 @@ const startPublishContentJob = async () => {
         return;
     }
     const schedule = Object.values(publishCuratedList.SCHEDULE).join(' ');
-    new cron.CronJob(schedule, () => { startPublishContentJob() }, undefined, true);
+    new CronJob(schedule, () => { startPublishContentJob() }, undefined, true);
     console.log('JOB(🟢) publish curated initiated successfully!');
 })(publishCuratedList, config);

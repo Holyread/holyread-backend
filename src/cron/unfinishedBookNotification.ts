@@ -1,4 +1,4 @@
-import cron from 'cron';
+import { CronJob } from 'cron';
 import config from '../../config';
 import { unfinishedBookNotification } from '../constants/cron.constants'
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
@@ -152,6 +152,6 @@ const start = async () => {
         return;
     }
     const schedule = Object.values(unfinishedBookNotification.SCHEDULE).join(' ');
-    new cron.CronJob(schedule, () => { start() }, null, true);
+    new CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) Unfinished book notifier initiated successfully!');
 })(unfinishedBookNotification, config);

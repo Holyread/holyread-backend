@@ -1,4 +1,4 @@
-import * as cron from 'cron';
+import { CronJob } from 'cron';
 import config from '../../config';
 import { publishContent } from '../constants/cron.constants';
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
@@ -155,6 +155,6 @@ const startPublishContentJob = async () => {
             return;
       }
       const schedule = Object.values(publishContent.SCHEDULE).join(' ');
-      new cron.CronJob(schedule, () => { startPublishContentJob() }, undefined, true);
+      new CronJob(schedule, () => { startPublishContentJob() }, undefined, true);
       console.log('JOB(🟢) publish contents initiated successfully!');
 })(publishContent, config);

@@ -1,4 +1,4 @@
-import cron from 'cron';
+import { CronJob } from 'cron';
 import config from '../../config';
 import { contentUpdateNotification
  } from '../constants/cron.constants'
@@ -154,6 +154,6 @@ const start = async () => {
     }
     const schedule = Object.values(contentUpdateNotification
 .SCHEDULE).join(' ');
-    new cron.CronJob(schedule, () => { start() }, null, true);
+    new CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) content update alert initiated successfully!');
 })(contentUpdateNotification, config);

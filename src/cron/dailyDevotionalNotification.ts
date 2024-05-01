@@ -1,4 +1,4 @@
-import cron from 'cron';
+import { CronJob } from 'cron';
 import config from '../../config';
 import { dailyDevotionalNotification } from '../constants/cron.constants';
 import { ReadsOfDayModel, SettingModel, UserModel, CronLogModel, NotificationsModel } from '../models';
@@ -158,6 +158,6 @@ const start = async () => {
             return;
       }
       const schedule = Object.values(dailyDevotionalNotification.SCHEDULE).join(' ');
-      new cron.CronJob(schedule, () => { start() }, null, true);
+      new CronJob(schedule, () => { start() }, null, true);
       console.log('JOB(🟢) Daily devotional initiated successfully!');
 })(dailyDevotionalNotification, config);

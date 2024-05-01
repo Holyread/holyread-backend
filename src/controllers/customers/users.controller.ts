@@ -1809,7 +1809,7 @@ const updateRating = async (
 
             const averageRating = await calculateAverageRating(ratings);
 
-            await bookService.updateBookSummary(bookId, { totalStar: averageRating });
+            await bookService.updateBookSummary({ totalStar: averageRating }, { _id: bookId });
 
             res.status(200).send({
                   message: authControllerResponse.bookRatingSuccess,
@@ -2706,6 +2706,14 @@ const addCategoryToUserLibrary = async (req: Request | any, res: Response, next:
       try {
             const userObj: any = Object.assign({}, req.user);
             const query: any = { _id: userObj.libraries };
+
+            if (!req.body.categories) {
+                  return next(
+                        Boom.badData(
+                              authControllerResponse.missingCategoryError
+                        )
+                  )
+            }
 
             // Get the user's library
             userObj.libraries = await userService.getUserLibrary(query);

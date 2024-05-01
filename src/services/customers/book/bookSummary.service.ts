@@ -27,6 +27,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                             categories: 1.0,
                             coverImage: 1.0,
                             description: 1.0,
+                            totalStar: 1.0,
                             coverImageBackground: 1.0,
                         }
                     },
@@ -478,7 +479,6 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                 bookMark: isSaved,
                 isRate: !!ratings[String(oneItem._id)]?.isRate,
                 views: oneItem.views || 0,
-                totalStar: ratings[String(oneItem._id)]?.averageStar || 3,
                 reads: Number(
                     (
                         libBookChapters?.length

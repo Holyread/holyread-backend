@@ -36,7 +36,7 @@ const createTransaction = async (
             }
 
             const user = await userService.getOneUserByFilter({
-                  'stripe.customerId': session.customer
+                  'stripe.customerId': session.customer,
             })
 
             if (
@@ -69,7 +69,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
             if (
                   [
                         'trialing',
-                        'incomplete'
+                        'incomplete',
                   ]
                         .includes(
                               session?.status
@@ -86,7 +86,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
             /** Sent subscription activation email */
             const subscriptionDetails = await subscriptionsService
                   .getOneSubscriptionByFilter({
-                        _id: subscriptionId
+                        _id: subscriptionId,
                   })
 
             const sentSubscriptionEmail = async (
@@ -96,7 +96,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
             ) => {
                   const emailTemplateDetails = await emailTemplateService
                         .getOneEmailTemplateByFilter({
-                              title: emailTemplatesTitles.customer.subscriptionActivated
+                              title: emailTemplatesTitles.customer.subscriptionActivated,
                         })
 
                   const subject = emailTemplateDetails.subject
@@ -136,7 +136,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                                     ?.includes('half')
                                     ? subscriptionDetails.duration
                                     : `1 ${subscriptionDetails.duration}`,
-                              status
+                              status,
                         }
                         const htmlData = await compileHtml(
                               emailTemplateDetails.content,
@@ -150,7 +150,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         from: originEmails.marketing,
                         to: user.email,
                         subject,
-                        html
+                        html,
                   });
                   if (!result) {
                         console.log(
@@ -159,10 +159,9 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         return
                   }
             }
-            /**
-             * In App stripe payment succeed using holyreads payment sheet api
-             * Disabled webhook, not proceed yet
-             * */
+
+            // In App stripe payment succeed using holyreads payment sheet api
+            // Disabled webhook, not proceed yet
             if (event.type === 'payment_intent.succeeded') {
 
                   // Retrieve the payment intent used to pay the subscription
@@ -175,15 +174,16 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         return;
                   }
 
-                  let now = new Date(paymentIntent.created * 1000), planExpiredAt: any;
+                  const now = new Date(paymentIntent.created * 1000);
+                  let planExpiredAt: any;
 
                   switch (subscriptionDetails.duration) {
-                        case "Year":
+                        case 'Year':
                               planExpiredAt = new Date(
                                     now.setMonth(new Date().getMonth() + 12)
                               );
                               break;
-                        case "Half Year":
+                        case 'Half Year':
                               planExpiredAt = new Date(
                                     now.setMonth(new Date().getMonth() + 6)
                               );
@@ -203,7 +203,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                               subscription: subscriptionDetails._id,
                               'stripe.planId': session.metadata?.planId,
                               'stripe.paymentIntent': paymentIntent?.id,
-                              'stripe.ephemeralKey': session.metadata?.ephemeralKey
+                              'stripe.ephemeralKey': session.metadata?.ephemeralKey,
                         })
                   const amount = session?.amount / 100 || Number(subscriptionDetails.price)
                   await sentSubscriptionEmail(
@@ -211,8 +211,8 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         amount,
                         'Active'
                   )
-                  let charge = session?.charges?.data[0]
-                  let transaction: any = {
+                  const charge = session?.charges?.data[0]
+                  const transaction: any = {
                         userId: user._id,
                         latestInvoice: session?.invoice,
                         total: amount,
@@ -227,21 +227,21 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         paymentMethod: charge?.payment_method_details?.card,
                         account: {
                               country: charge?.billing_details?.address?.country,
-                              name: charge?.billing_details?.name
+                              name: charge?.billing_details?.name,
                         },
                         amount: {
-                              subtotal: (session?.amount_received | 0) / 100,
-                              tax: (session?.application_fee_amount | 0) / 100,
-                              total: (session?.amount | 0) / 100,
-                              discount: 0
+                              subtotal: (session?.amount_received || 0) / 100,
+                              tax: (session?.application_fee_amount || 0) / 100,
+                              total: (session?.amount || 0) / 100,
+                              discount: 0,
                         },
                         invoiceAt: now,
                         customer: {
                               email: charge?.billing_details?.email,
                               name: charge?.billing_details?.name,
                               phone: charge?.billing_details?.phone,
-                              shipping: charge?.billing_details
-                        }
+                              shipping: charge?.billing_details,
+                        },
                   }
                   const createdTransaction = await transactionsService.createTransaction(transaction)
                   userService.updateUser({ _id: user._id }, { lastTrnId: createdTransaction._id })
@@ -254,16 +254,16 @@ const processTransaction = async (user: any, session: any, event: any) => {
              */
             if (
                   event.type === 'invoice.payment_succeeded' &&
-                  session['subscription'] &&
-                  session['payment_intent']
+                  session.subscription &&
+                  session.payment_intent
             ) {
                   /**
                    * The subscription automatically activates after successful payment
                    * Set the payment method used to pay the first invoice
                    * as the default payment method for that subscription
                    */
-                  const subscription_id = session['subscription']
-                  const payment_intent_id = session['payment_intent']
+                  const subscription_id = session.subscription
+                  const payment_intent_id = session.payment_intent
 
                   /* Retrieve the payment intent used to pay the subscription */
                   const payment_intent =
@@ -276,11 +276,11 @@ const processTransaction = async (user: any, session: any, event: any) => {
                               subscription_id,
                               {
                                     default_payment_method: payment_intent.payment_method,
-                              },
+                              }
                         );
 
                         console.log(
-                              "Default payment method set for subscription:",
+                              'Default payment method set for subscription:',
                               payment_intent.payment_method
                         );
                   } catch (err) {
@@ -292,7 +292,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                   return;
             }
 
-            let transaction: any = {
+            const transaction: any = {
                   userId: user._id,
                   latestInvoice: session?.latest_invoice,
                   total: (session?.plan?.amount || 0) / 100,
@@ -301,7 +301,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                   device: 'web',
                   stripeSubscriptionId: session.id,
                   event: event.id,
-                  planId: session?.plan?.id
+                  planId: session?.plan?.id,
             }
 
             if (session?.current_period_start) {
@@ -335,8 +335,8 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         type: 'setting',
                         notification: {
                               title: notificationTitle,
-                              description: notificationDescription
-                        }
+                              description: notificationDescription,
+                        },
                   })
 
                   fetchNotifications(io.sockets, { _id: user._id })
@@ -369,13 +369,13 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         taxIds: latestInvoice?.account_tax_ids,
                   }
                   transaction.amount = {
-                        subtotal: (latestInvoice?.subtotal | 0) / 100,
-                        tax: (latestInvoice?.tax | 0) / 100,
-                        total: (latestInvoice?.total | 0) / 100,
+                        subtotal: (latestInvoice?.subtotal || 0) / 100,
+                        tax: (latestInvoice?.tax || 0) / 100,
+                        total: (latestInvoice?.total || 0) / 100,
                         discount: (
                               latestInvoice
                                     ?.total_discount_amounts[0]
-                                    ?.amount | 0
+                                    ?.amount || 0
                         ) / 100,
                   }
                   transaction.invoiceAt =
@@ -388,11 +388,11 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         email: latestInvoice.customer_email,
                         name: latestInvoice.customer_name,
                         phone: latestInvoice.customer_phone,
-                        shipping: latestInvoice.customer_shipping
+                        shipping: latestInvoice.customer_shipping,
                   }
 
                   paymentIntent = await stripeSubscriptionService.getPaymentIntent(
-                        latestInvoice?.payment_intent || session['payment_intent']
+                        latestInvoice?.payment_intent || session.payment_intent
                   );
             }
 
@@ -417,7 +417,6 @@ const processTransaction = async (user: any, session: any, event: any) => {
                   transaction.paymentMethod = paymentMethod?.card
             }
 
-
             /** Process active subscription */
             if (session.status === 'active') {
                   const createdTransaction = await transactionsService.createTransaction(transaction)
@@ -434,7 +433,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                               `Holy Reads ${subscriptionDetails.duration.includes('Half')
                                     ? subscriptionDetails.duration
                                     : '1 ' + subscriptionDetails.duration
-                              } Subscription activated successfully 🎉`)
+                              } Subscription activated successfully 🎉`),
                   ])
                   return
             }
@@ -465,7 +464,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                   'past_due',
                   'unpaid',
                   'canceled',
-                  'incomplete_expired'
+                  'incomplete_expired',
             ]
             const createdTransaction = await transactionsService.createTransaction(transaction)
             userService.updateUser({ _id: user._id }, { lastTrnId: createdTransaction._id })
@@ -484,7 +483,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         .getOneEmailTemplateByFilter({
                               title: emailTemplatesTitles
                                     .customer
-                                    .subscriptionCanceled
+                                    .subscriptionCanceled,
                         })
 
             const subject = emailTemplateDetails.subject
@@ -522,7 +521,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                   emailTemplateDetails.content
             ) {
                   const contentData = {
-                        link: transaction?.paymentLink
+                        link: transaction?.paymentLink,
                   }
                   const htmlData = await compileHtml(
                         emailTemplateDetails.content,
@@ -537,7 +536,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                   from: originEmails.marketing,
                   to: user.email,
                   subject,
-                  html
+                  html,
             });
             if (!result) {
                   console.log(
@@ -549,7 +548,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                   sentNotification(
                         'Holy Reads Subscription Canceled ⛔',
                         `Your Holy Reads ${subscriptionDetails.title} Subscription Canceled`
-                  )
+                  ),
             ])
       } catch (e: any) {
             console.log(
@@ -568,7 +567,7 @@ const createAppTransaction = async (
             const body = request.body;
             const header = request.headers;
             const transaction = await transactionsService.createAppTransaction({
-                  result: { body, header }
+                  result: { body, header },
             })
 
             if (!body?.signedPayload) {
@@ -576,8 +575,8 @@ const createAppTransaction = async (
             }
 
             /* JWS header, payload, and signature representations */
-            var splitParts = body.signedPayload.split('.');
-            if (splitParts.length != 3) {
+            const splitParts = body.signedPayload.split('.');
+            if (splitParts.length !== 3) {
                   return next(Boom.notFound('Invalid signedPayload'));
             }
 
@@ -600,7 +599,7 @@ const createAppTransaction = async (
                   splitParts[0],
                   decodedHeader.x5c[0],
                   {
-                        algorithms: [decodedHeader.alg]
+                        algorithms: [decodedHeader.alg],
                   },
                   function (error: { message: string }, payload: Object) {
                         if (error) {
@@ -609,16 +608,16 @@ const createAppTransaction = async (
                   }
             );
 
-            var payload = splitParts[1];
+            const payload = splitParts[1];
 
             const dataBuff = Buffer.from(payload, 'base64');
             const v2Notification = JSON.parse(dataBuff.toString());
 
             if (!v2Notification?.data) {
-                  return next(Boom.badData('v2Notification is null or is not valid'));
+                  return next(Boom.badData('v2Notification is undefined or is not valid'));
             }
 
-            let v2RenewalInfo = null;
+            let v2RenewalInfo = undefined;
             if (v2Notification?.data?.signedRenewalInfo) {
                   const renewalInfoBuff
                         = Buffer
@@ -626,7 +625,7 @@ const createAppTransaction = async (
                                     v2Notification
                                           .data
                                           .signedRenewalInfo
-                                          .split(".")[1],
+                                          .split('.')[1],
                                     'base64'
                               );
                   v2RenewalInfo = JSON.parse(renewalInfoBuff.toString());
@@ -638,7 +637,7 @@ const createAppTransaction = async (
                               v2Notification
                                     .data
                                     .signedTransactionInfo
-                                    .split(".")[1],
+                                    .split('.')[1],
                               'base64'
                         );
             const v2TransactionInfo = JSON.parse(transactionInfoBuff.toString());
@@ -648,21 +647,21 @@ const createAppTransaction = async (
                         header,
                         v2TransactionInfo,
                         v2RenewalInfo,
-                        v2Notification
-                  }
+                        v2Notification,
+                  },
             })
             const user
                   = await userService.getOneUserByFilter({
                         $or: [
                               {
                                     'inAppSubscription.originalTransactionIdentifierIOS':
-                                          v2TransactionInfo.originalTransactionId
+                                          v2TransactionInfo.originalTransactionId,
                               },
                               {
                                     'inAppSubscription.transactionId':
-                                          v2TransactionInfo?.transactionId
-                              }
-                        ]
+                                          v2TransactionInfo?.transactionId,
+                              },
+                        ],
                   })
             if (!user) {
                   return next(Boom.notFound('User details not found'));
@@ -680,13 +679,13 @@ const createAppTransaction = async (
                   transactionId: v2TransactionInfo?.transactionId,
                   originalTransactionDateIOS: v2TransactionInfo?.originalPurchaseDate,
             }
-            let subscriptionInfo = await subscriptionsService.getOneSubscriptionByFilter({
+            const subscriptionInfo = await subscriptionsService.getOneSubscriptionByFilter({
                   duration:
                         v2TransactionInfo?.productId?.toLowerCase()?.includes('six')
                               ? 'Half Year'
                               : v2TransactionInfo.productId.includes('month')
                                     ? 'Month'
-                                    : 'Year'
+                                    : 'Year',
             })
             if (!subscriptionInfo) {
                   return next(Boom.notFound('Faild to fetch subscription details'))
@@ -702,7 +701,7 @@ const createAppTransaction = async (
                         paymentMethod: null,
                         reason: '',
                         paymentLink: '',
-                        device: 'app'
+                        device: 'app',
                   })
                   userService.updateUser({ _id: user._id }, { lastTrnId: createdTransaction._id })
             }
@@ -723,11 +722,11 @@ const createAppTransaction = async (
                               1) Indicates that the App Store successfully refunded a transaction
                               for a consumable in-app purchase, a non-consumable in-app purchase,
                               an auto-renewable subscription, or a non-renewing subscription.
-                              
+
                               2) The revocationDate contains the timestamp of the refunded transaction.
                               The originalTransactionId and productId identify the original transaction
                               and product. The revocationReason contains the reason.
-                              
+
                               3) To request a list of all refunded transactions for a user,
                               see Get Refund History in the App Store Server API.
                         */
@@ -758,7 +757,7 @@ const createAppTransaction = async (
                               If the subtype is PRICE_INCREASE, the subscription expired because
                               the user didn’t consent to a price increase that requires user consent.
                               If the the subtype is PRODUCT_NOT_FOR_SALE,
-                              the subscription expired because the product wasn’t available for 
+                              the subscription expired because the product wasn’t available for
                               purchase at the time the subscription attempted to renew.
 
                               2) A notification without a subtype indicates that the subscription expired
@@ -769,7 +768,7 @@ const createAppTransaction = async (
                               [
                                     'BILLING_RETRY',
                                     'PRICE_INCREASE',
-                                    'PRODUCT_NOT_FOR_SALE'
+                                    'PRODUCT_NOT_FOR_SALE',
                               ].includes(v2Notification.subtype)
                         ) {
                               inAppSubscriptionStatus = 'Canceled';
@@ -790,7 +789,7 @@ const createAppTransaction = async (
                         await createTransaction()
                         break;
                   case 'SUBSCRIBED':
-                        /* 
+                        /*
                               1) A notification type that along with its subtype indicates that the user
                               subscribed to a product. If the subtype is INITIAL_BUY, the user either
                               purchased or received access through Family Sharing to the subscription
@@ -805,7 +804,7 @@ const createAppTransaction = async (
                         /*
                               1) A notification type that along with its subtype indicates that the user
                               redeemed a promotional offer or offer code.
-                        
+
                               2) If the subtype is INITIAL_BUY, the user redeemed the offer for a
                               first-time purchase. If the subtype is RESUBSCRIBE,
                               the user redeemed an offer to resubscribe to an inactive subscription.
@@ -814,7 +813,7 @@ const createAppTransaction = async (
                               the user redeemed an offer to downgrade their active subscription that goes into
                               effect at the next renewal date. If the user redeemed an offer for their active
                               subscription, you receive an OFFER_REDEEMED notification type without a subtype.
-                        
+
                               3) For more information about promotional offers, see Implementing Promotional
                               Offers in Your App. For more information about offer codes, see Implementing Offer
                               Codes in Your App.
@@ -822,16 +821,16 @@ const createAppTransaction = async (
                         inAppSubscriptionStatus = 'Active'
                         break;
                   case 'PRICE_INCREASE':
-                        /* 
+                        /*
                               1) A notification type that along with its subtype indicates that the system
                               has informed the user of an auto-renewable subscription price increase.
-                        
+
                               2) If the price increase requires user consent,
                               the subtype is PENDING if the user hasn’t yet responded to the price increase,
                               or ACCEPTED if the user has consented to the price increase.
-                        
+
                               3) If the price increase doesn’t require user consent, the subtype is ACCEPTED.
-                        
+
                               4) For more information about how the system calls your app before it
                               displays the price consent sheet for subscription price increases
                               that require customer consent, see paymentQueueShouldShowPriceConsent(_:).
@@ -859,11 +858,11 @@ const createAppTransaction = async (
                               is GRACE_PERIOD, continue to provide service through the grace period.
                               If the subtype is empty, the subscription isn’t in a grace period
                               and you can stop providing the subscription service.
-                              
-                              2) Inform the user that there may be an issue with 
+
+                              2) Inform the user that there may be an issue with
                               their billing information.
                               The App Store continues to retry billing for 60 days,
-                              or until the user resolves their billing issue or cancels 
+                              or until the user resolves their billing issue or cancels
                               their subscription,
                               whichever comes first. For more information, see Reducing
                               Involuntary Subscriber Churn.
@@ -886,7 +885,7 @@ const createAppTransaction = async (
                               1) Indicates that the billing grace period has ended without
                               renewing the subscription, so you can turn off access
                               to service or content. Inform the user that there may
-                              be an issue with their billing information. 
+                              be an issue with their billing information.
                               The App Store continues to retry billing for 60 days,
                               or until the user resolves their billing issue or
                               cancels their subscription, whichever comes first.
@@ -908,13 +907,13 @@ const createAppTransaction = async (
                               2) If the subtype is empty, the user changed their renewal preference
                               back to the current subscription, effectively canceling a downgrade.
                         */
-                        if (v2Notification.subtype == 'UPGRADE') {
+                        if (v2Notification.subtype === 'UPGRADE') {
                               inAppSubscriptionStatus = 'Active';
                               await createTransaction()
                         }
                         break;
                   case 'DID_CHANGE_RENEWAL_STATUS':
-                        /* 
+                        /*
                               1) A notification type that along with its subtype indicates that the user
                               made a change to the subscription renewal status.
                               If the subtype is AUTO_RENEW_ENABLED, the user re-enabled subscription
@@ -933,9 +932,9 @@ const createAppTransaction = async (
                         inAppSubscription: {
                               ...user.inAppSubscription,
                               ...inAppPurchaseBody,
-                              expiredAt: new Date(v2TransactionInfo.expiresDate)
+                              expiredAt: new Date(v2TransactionInfo.expiresDate),
                         },
-                        inAppSubscriptionStatus
+                        inAppSubscriptionStatus,
                   })
 
             response.status(200).send({ message: 'OK' });
@@ -954,7 +953,7 @@ const createGoogleTransaction = async (
             const body = request.body;
             const header = request.headers;
             const transaction = await transactionsService.createAppTransaction({
-                  result: { body, header }
+                  result: { body, header },
             })
 
             if (!body?.message?.data) {
@@ -977,7 +976,7 @@ const createGoogleTransaction = async (
                         .status(200)
                         .send({
                               message:
-                                    'Test or one time product notification received'
+                                    'Test or one time product notification received',
                         });
             }
             if (
@@ -990,22 +989,22 @@ const createGoogleTransaction = async (
                   );
             }
 
-            let subscriptionNotification =
+            const subscriptionNotification =
                   decodedData.subscriptionNotification;
 
             await transactionsService.updateAppTransaction({ _id: transaction._id }, {
                   result: {
                         body,
                         header,
-                        subscriptionNotification
-                  }
+                        subscriptionNotification,
+                  },
             })
 
             const user = await userService
                   .getOneUserByFilter({
                         'inAppSubscription.purchaseToken':
                               subscriptionNotification
-                                    .purchaseToken
+                                    .purchaseToken,
                   })
 
             if (!user) {
@@ -1021,7 +1020,7 @@ const createGoogleTransaction = async (
             const inAppPurchaseBody = {
                   ...user.inAppSubscription,
                   subscriptionNotification,
-                  purchaseStateAndroid: subscriptionNotification?.notificationType
+                  purchaseStateAndroid: subscriptionNotification?.notificationType,
             }
 
             const subscription = await SubscriptionsModel
@@ -1059,10 +1058,10 @@ const createGoogleTransaction = async (
                         userId: user._id,
                         total: Number(subscription?.price),
                         status: inAppSubscriptionStatus,
-                        paymentMethod: null,
+                        paymentMethod: undefined,
                         reason: '',
                         paymentLink: '',
-                        device: 'app'
+                        device: 'app',
                   })
                   userService.updateUser({ _id: user._id }, { lastTrnId: createdTransaction._id })
             }
@@ -1117,7 +1116,7 @@ const createGoogleTransaction = async (
                         */
                         break;
                   case 6:
-                        /* 
+                        /*
                               (6) SUBSCRIPTION_IN_GRACE_PERIOD
                               - A subscription has entered grace period (if enabled).
                         */
@@ -1139,7 +1138,7 @@ const createGoogleTransaction = async (
                         createTransaction()
                         break;
                   case 8:
-                        /* 
+                        /*
                               (8) SUBSCRIPTION_PRICE_CHANGE_CONFIRMED
                               - A subscription price change has successfully
                                 been confirmed by the user.
@@ -1192,14 +1191,14 @@ const createGoogleTransaction = async (
                         inAppSubscription: {
                               ...user.inAppSubscription,
                               ...inAppPurchaseBody,
-                              expiredAt: new Date(expiredAt)
+                              expiredAt: new Date(expiredAt),
                         },
-                        inAppSubscriptionStatus
+                        inAppSubscriptionStatus,
                   }
             )
             response.status(200)
                   .send({
-                        message: 'OK'
+                        message: 'OK',
                   });
       } catch ({ message }: any) {
             return next(Boom.badData(message as string))

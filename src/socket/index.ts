@@ -2,8 +2,8 @@ import { fetchNotifications, clearNotifications } from '../controllers/customers
 
 module.exports = (io) => {
       io.on('connection', async (socket) => {
-            socket.on("error", (err) => {
-                  if (err && err.message === "unauthorized event") {
+            socket.on('error', (err) => {
+                  if (err && err.message === 'unauthorized event') {
                         socket.disconnect();
                   }
             });

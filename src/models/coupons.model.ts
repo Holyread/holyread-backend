@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface ICoupons extends mongoose.Document {
     code: string,
@@ -38,21 +38,21 @@ export const CouponsSchema = new Schema({
         type: String,
         required: true,
         index: true,
-        unique: true
+        unique: true,
     },
     expireDate: {
         type: Date,
         required: true,
-        index: true
+        index: true,
     },
     redeemCount: {
         type: Number,
         required: true,
-        index: true
+        index: true,
     },
     discount: {
         type: Number,
-        required: true
+        required: true,
     },
     duration: {
         type: String,
@@ -61,17 +61,17 @@ export const CouponsSchema = new Schema({
             'once',
             'forever',
             'repeating',
-        ]
+        ],
     },
     type: {
         type: String,
         enum: [
             'yearly',
-            'monthly'
-        ]
+            'monthly',
+        ],
     },
     maxRedemptions: {
-        type: Number
+        type: Number,
     },
     createdAt: {
         type: Date, default: () => {

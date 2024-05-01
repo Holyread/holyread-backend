@@ -8,7 +8,7 @@ const createPlan = async (title: string, price: number, interval: string, interv
                   amount: Number((price * 100).toFixed(2)),
                   currency: 'usd',
                   interval: interval.toLowerCase(),
-                  product: { name: title }
+                  product: { name: title },
             }
             if (intervalCount) {
                   body.interval_count = intervalCount
@@ -63,7 +63,6 @@ const addPrice = async (productId: string, price: number, interval: string, inte
       }
 }
 
-
 const getProductPrices = async (productId: string) => {
       try {
             const productPrices = await stripe.prices.list({
@@ -79,5 +78,5 @@ export default {
       createPlan,
       retrievePlan,
       deletePlanById,
-      addPrice
+      addPrice,
 }

@@ -1,6 +1,5 @@
-import cron from 'cron';
-
-import config from "../../config";
+import * as cron from 'cron';
+import config from '../../config';
 import { setStripeCouponAndStatus } from '../constants/cron.constants'
 import stripeSubscriptionServices from '../services/stripe/subscription'
 
@@ -20,7 +19,7 @@ const start = async () => {
       'stripe.status': { $ne: 'active' },
       $or: [
         { 'stripe.coupon': { $exists: false } },
-        { 'stripe.coupon': { $eq: null } },
+        { 'stripe.coupon': { $eq: undefined } },
       ],
     })
       .select(['stripe'])
@@ -32,7 +31,7 @@ const start = async () => {
       try {
         const subscription = await stripeSubscriptionServices.retrieveSubscription(user.stripe.subscriptionId);
         const couponId = subscription?.discount?.coupon?.id;
-  
+
         const body = {
           ...(couponId && { 'stripe.coupon': couponId }),
           ...(subscription?.status && { 'stripe.status': subscription.status }),
@@ -41,9 +40,9 @@ const start = async () => {
       } catch (error) {
         continue;
       }
-      
+
     }
-    
+
     console.log('JOB(✅) coupon added successfully!');
   } catch (error: any) {
     console.log('JOB(🔴) coupon add Error is - ', error.message);
@@ -56,6 +55,6 @@ const start = async () => {
     return;
   }
   const schedule = Object.values(setStripeCouponAndStatus.SCHEDULE).join(' ');
-  new cron.CronJob(schedule, () => { start() }, null, true);
+  new cron.CronJob(schedule, () => { start() }, undefined, true);
   console.log('JOB(🟢) coupon add initiated successfully!');
 })(setStripeCouponAndStatus, config);

@@ -1,8 +1,6 @@
 import { SmallGroupModel } from '../models/index'
 
-/**
- * Initialize small group published  by machine user
-*/
+// Initialize small group published  by machine user
 (async () => {
     try {
         /** Find smallGroup */

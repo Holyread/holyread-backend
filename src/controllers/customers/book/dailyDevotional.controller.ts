@@ -24,7 +24,7 @@ const getOneDailyDevotional = async (request: Request, response: Response, next:
         if (data.image) {
             data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + data.image
         }
-        response.status(200).json({ message: readsOfDayControllerResponse.fetchReadOfDaySuccess, data: data })
+        response.status(200).json({ message: readsOfDayControllerResponse.fetchReadOfDaySuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }

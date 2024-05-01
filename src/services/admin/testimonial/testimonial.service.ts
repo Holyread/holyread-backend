@@ -53,7 +53,7 @@ const getOneTestimonialByFilter = async (query: any) => {
 const getAllTestimonials = async (skip: number, limit, search: object, sort) => {
     try {
         const result = await TestimonialModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        const count = await TestimonialModel.find(search).count()
+        const count = await TestimonialModel.find(search).countDocuments()
         await Promise.all(result.map(async (item: any) => {
             if (!item) {
                 return
@@ -83,5 +83,5 @@ export default {
     updateTestimonial,
     getAllTestimonials,
     getOneTestimonialByFilter,
-    deleteTestimonial
+    deleteTestimonial,
 }

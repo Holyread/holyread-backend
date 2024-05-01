@@ -1,32 +1,32 @@
 import mongoose, { Schema, Types } from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface ITransactions extends mongoose.Document {
     latestInvoice?: string,
     planCreatedAt: Date,
     planExpiredAt: Date,
     userId: Types.ObjectId,
-    total: Number,
+    total: number,
     status: string,
-    paymentMethod?: Object,
+    paymentMethod?: object,
     account?: {
         country: string,
         name: string,
         taxIds?: string,
     },
     amount?: {
-        subtotal: Number,
+        subtotal: number,
         tax?: string,
-        total: Number,
-        discount?: Number
+        total: number,
+        discount?: number
     },
-    statusTransitions?: { type: Object },
+    statusTransitions?: { type: object },
     customer?: {
         email: string,
         name: string,
         phone?: string,
-        shipping: Object
+        shipping: object
     },
     invoiceAt?: { type: Date },
     reason?: string,
@@ -43,26 +43,26 @@ export type createTransationsType = {
     planCreatedAt: Date,
     planExpiredAt: Date,
     userId: Types.ObjectId,
-    total: Number,
+    total: number,
     status: string,
-    paymentMethod?: Object,
+    paymentMethod?: object,
     account?: {
         country: string,
         name: string,
         taxIds: string,
     },
     amount?: {
-        subtotal: Number,
+        subtotal: number,
         tax?: string,
-        total: Number,
-        discount?: Number
+        total: number,
+        discount?: number
     },
-    statusTransitions?: { type: Object },
+    statusTransitions?: { type: object },
     customer?: {
         email: string,
         name: string,
         phone?: string,
-        shipping: Object
+        shipping: object
     },
     invoiceAt?: { type: Date },
     reason?: string,
@@ -79,26 +79,26 @@ export type getTransactionsType = {
     planCreatedAt: Date,
     planExpiredAt: Date,
     userId: Types.ObjectId,
-    total: Number,
+    total: number,
     status: string,
-    paymentMethod?: Object,
+    paymentMethod?: object,
     account?: {
         country: string,
         name: string,
         taxIds: string,
     },
     amount?: {
-        subtotal: Number,
+        subtotal: number,
         tax?: string,
-        total: Number,
-        discount?: Number
+        total: number,
+        discount?: number
     },
-    statusTransitions?: { type: Object },
+    statusTransitions?: { type: object },
     customer?: {
         email: string,
         name: string,
         phone?: string,
-        shipping: Object
+        shipping: object
     },
     invoiceAt?: { type: Date },
     reason?: string,
@@ -118,7 +118,7 @@ export const TransactionsSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'user',
         required: true,
-        index: true
+        index: true,
     },
     total: { type: Number },
     status: { type: String },
@@ -132,14 +132,14 @@ export const TransactionsSchema = new Schema({
         subtotal: Number,
         tax: String,
         total: Number,
-        discount: Number
+        discount: Number,
     },
     statusTransitions: { type: Object },
     customer: {
         email: String,
         name: String,
         phone: String,
-        shipping: Object
+        shipping: Object,
     },
     invoiceAt: { type: Date },
     reason: { type: String, default: '' },

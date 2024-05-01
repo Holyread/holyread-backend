@@ -38,7 +38,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     const token: string = getToken({ email: user.email, id: user._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
-      data: { _id: user._id, email: user.email, token, type: user.type, verified: user.verified }
+      data: { _id: user._id, email: user.email, token, type: user.type, verified: user.verified },
     })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -67,16 +67,16 @@ const initializeDeviceAccess = async (req: Request, res: Response, next: NextFun
         categories: [],
       });
 
-      const email = body.deviceId + "@holyreads-temp.com";
+      const email = body.deviceId + '@holyreads-temp.com';
       const userData = {
         email,
-        type: "User",
-        status: "Active",
+        type: 'User',
+        status: 'Active',
         device: body.device,
         verified: false,
         deviceId: body.deviceId,
         isSignedUp: false,
-        libraries: libraries ? libraries._id : null,
+        libraries: libraries ? libraries._id : undefined,
       };
 
       user = await usersService.createUser(userData);
@@ -114,7 +114,7 @@ const appSignUpUser = async (
   const user = await usersService.getOneUserByFilter({
     deviceId: body.deviceId,
   });
-  
+
   if (!user) {
     return res.status(404).send({ message: authControllerResponse.noUserFound });
   }
@@ -145,7 +145,7 @@ const appSignUpUser = async (
   }
 
   const userData = {
-    image: body.image || "",
+    image: body.image || '',
     email: body.email,
     password: body.password,
     device: body.device,
@@ -183,8 +183,8 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       await emailTemplateService.getOneEmailTemplateByFilter({
         title: emailTemplatesTitles.customer.welcomeToHolyreads,
       });
-    const subject = emailTemplateDetails?.subject || "Welcome To Holy Reads";
-    let html = `<p>Dear ${body.email.split("@")[0]
+    const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads';
+    let html = `<p>Dear ${body.email.split('@')[0]
       },</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]
       }/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`;
 
@@ -204,7 +204,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       from: originEmails.marketing,
       to: body.email,
       subject,
-      html
+      html,
     });
 
     if (!result) {
@@ -338,7 +338,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
       from: originEmails.marketing,
       to: email,
       subject,
-      html
+      html,
     });
 
     if (!result) {
@@ -346,7 +346,7 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     }
     await usersService.updateUser({ _id: user._id }, { verificationCode })
     res.status(200).send({
-      message: adminControllerResponse.sendVerificationEmailSuccess
+      message: adminControllerResponse.sendVerificationEmailSuccess,
     })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -401,7 +401,7 @@ const appOAuthSignIn = async (req: Request, res: any, next: NextFunction) => {
     const token: string = getToken({ email: user.email, 'oauthClientId': body.id, id: user._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
-      data: { _id: user._id, email: user.email, token, type: user.type, userName: user?.email?.split('@')[0] || '' }
+      data: { _id: user._id, email: user.email, token, type: user.type, userName: user?.email?.split('@')[0] || '' },
     })
 
   } catch (e: any) {
@@ -435,9 +435,9 @@ const handleExistingAppUser = async (
   }
 
   const newBody: any = {
-    image: body.photoUrl ? body.photoUrl : "",
-    type: "User",
-    status: "Active",
+    image: body.photoUrl ? body.photoUrl : '',
+    type: 'User',
+    status: 'Active',
     verified: true,
     oAuth: [
       {
@@ -447,7 +447,7 @@ const handleExistingAppUser = async (
         default: true,
       },
     ],
-    device: body?.device?.toLowerCase() || "",
+    device: body?.device?.toLowerCase() || '',
     email: body.email,
     source: body.source,
     medium: body.medium,
@@ -469,23 +469,23 @@ const handleExistingAppUser = async (
         ...body.inAppSubscription,
         createdAt: new Date(),
       };
-      newBody.inAppSubscriptionStatus = "Active";
+      newBody.inAppSubscriptionStatus = 'Active';
       newBody.subscription = subscriptionDetails._id;
     }
     /** Create new user using social login */
-    const data: any =await usersService.updateUser({ _id: existingUser._id }, newBody);
-    mailchimpService.updateUser(data.email, "subscribed");
+    const data: any = await usersService.updateUser({ _id: existingUser._id }, newBody);
+    mailchimpService.updateUser(data.email, 'subscribed');
     const token: string = getToken({
       email: data.email,
       oauthClientId: body.id,
       id: data._id,
     });
-    const title = "Welcome to Holy Reads 🎉";
+    const title = 'Welcome to Holy Reads 🎉';
     const description =
-      "Summarizing the best of Christian publishing for your busy schedule 📚";
+      'Summarizing the best of Christian publishing for your busy schedule 📚';
     await notificationsService.createNotification({
       userId: data._id,
-      type: "user",
+      type: 'user',
       notification: { title, description },
     });
 
@@ -494,9 +494,9 @@ const handleExistingAppUser = async (
       await emailTemplateService.getOneEmailTemplateByFilter({
         title: emailTemplatesTitles.customer.welcomeToHolyreads,
       });
-    const subject = emailTemplateDetails?.subject || "Welcome To Holy Reads";
+    const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads';
     let html = `<p>Dear ${
-      body.email.split("@")[0]
+      body.email.split('@')[0]
     },</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${
       origins[NODE_ENV]
     }/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`;
@@ -527,10 +527,10 @@ const handleExistingAppUser = async (
       message: authControllerResponse.loginSuccess,
       data: {
         _id: data._id,
-        email: data.email || "",
+        email: data.email || '',
         token,
         type: newBody.type,
-        userName: body?.email?.split("@")[0] || "",
+        userName: body?.email?.split('@')[0] || '',
       },
     });
 
@@ -584,7 +584,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
           email: body.email,
           provider: body.provider,
           clientId: body.id,
-          default: emailUser?.oAuth?.length ? false : true
+          default: emailUser?.oAuth?.length ? false : true,
         })
         :
         emailUser.oAuth[index] = { ...emailUser.oAuth[index], email: body.email }
@@ -602,7 +602,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       const token: string = getToken({
         email: emailUser.email,
         'oauthClientId': body.id,
-        id: emailUser._id
+        id: emailUser._id,
       })
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
@@ -611,11 +611,11 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
           _id: emailUser._id,
           type: emailUser.type,
           email: emailUser.email || '',
-          userName: emailUser.email.split('@')[0] || ''
-        }
+          userName: emailUser.email.split('@')[0] || '',
+        },
       })
     }
-    if(body.deviceId){
+    if (body.deviceId) {
       return await handleExistingAppUser(req, res, next)
      }
     let base64: any;
@@ -647,7 +647,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         clientId: body.id,
         provider: body.provider,
         email: body.email,
-        default: true
+        default: true,
       }],
       device: body?.device?.toLowerCase() || '',
       email: body.email,
@@ -655,7 +655,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       medium: body.medium,
       campaign: body.campaign,
       libraries: libraries?._id,
-      isSignedUp: true
+      isSignedUp: true,
     }
 
     const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscription })
@@ -693,7 +693,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       from: originEmails.marketing,
       to: body.email,
       subject,
-      html
+      html,
     });
 
     if (!result) {
@@ -701,7 +701,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     }
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
-      data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: body?.email?.split('@')[0] || '' }
+      data: { _id: data._id, email: data.email || '', token, type: newBody.type, userName: body?.email?.split('@')[0] || '' },
     })
 
     /** Push notification */
@@ -749,7 +749,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
 
     const query: any = {
       'oAuth.clientId': body.id,
-      'oAuth.provider': body.provider
+      'oAuth.provider': body.provider,
     }
     const user: any = await usersService.getOneUserByFilter(query)
     if (user?.type === 'Admin') {
@@ -799,8 +799,8 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
           _id: user._id,
           type: user.type,
           email: user.email,
-          userName: user?.email?.split('@')[0] || ''
-        }
+          userName: user?.email?.split('@')[0] || '',
+        },
       })
     }
     /** if emailuser exist then link oauth */
@@ -812,12 +812,12 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
           email: body.email,
           provider: body.provider,
           clientId: body.id,
-          default: emailUser?.oAuth?.length ? false : true
+          default: emailUser?.oAuth?.length ? false : true,
         })
         : emailUser.oAuth[index] = {
           ...emailUser.oAuth[index],
           clientId: body.id,
-          email: body.email
+          email: body.email,
         }
 
       await usersService.updateUser(
@@ -832,7 +832,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       const token: string = getToken({
         email: emailUser.email,
         'oauthClientId': body.id,
-        id: emailUser._id
+        id: emailUser._id,
       })
       return res.status(200).json({
         message: authControllerResponse.loginSuccess,
@@ -841,8 +841,8 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
           _id: emailUser._id,
           type: emailUser.type,
           email: emailUser.email,
-          userName: emailUser?.email?.split('@')[0] || ''
-        }
+          userName: emailUser?.email?.split('@')[0] || '',
+        },
       })
     }
 
@@ -866,13 +866,13 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
         clientId: body.id,
         provider: body.provider,
         email: body.email,
-        default: true
+        default: true,
       }],
       device: 'web',
       email: body.email,
       source: body.source,
       medium: body.medium,
-      campaign: body.campaign
+      campaign: body.campaign,
     }
 
     const subscriptionDetails = await subscriptionsService
@@ -896,14 +896,14 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     const subscription = await stripeSubscriptionService.createSubscription({
       planId: subscriptionDetails.stripePlanId,
       customerId: customer.id,
-      coupon: body.coupon as any
+      coupon: body.coupon as any,
     })
     newBody.stripe = {
       planId: subscriptionDetails.stripePlanId,
       subscriptionId: subscription.id,
       customerId: customer.id,
       createdAt: new Date(),
-      coupon: body.coupon
+      coupon: body.coupon,
     }
     newBody.subscription = subscriptionDetails._id
 
@@ -912,7 +912,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     const token: string = getToken({
       email: data.email,
       'oauthClientId': body.id,
-      id: data._id
+      id: data._id,
     })
     const title = 'Welcome to Holy Reads 🎉';
     const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
@@ -921,14 +921,14 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       type: 'user',
       notification: {
         title,
-        description
-      }
+        description,
+      },
     })
 
     /** Get welcome email template */
     const emailTemplateDetails = await emailTemplateService
       .getOneEmailTemplateByFilter({
-        title: emailTemplatesTitles.customer.welcomeToHolyreads
+        title: emailTemplatesTitles.customer.welcomeToHolyreads,
       })
 
     const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
@@ -958,7 +958,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
 
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = {
-        loginURL: `${origins[NODE_ENV]}/account/login`
+        loginURL: `${origins[NODE_ENV]}/account/login`,
       }
       const htmlData = await compileHtml(
         emailTemplateDetails.content, contentData
@@ -973,7 +973,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       from: originEmails.marketing,
       to: body.email,
       subject,
-      html
+      html,
     });
 
     if (!result) {
@@ -991,8 +991,8 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
         _id: data._id,
         type: newBody.type,
         email: data.email || '',
-        userName: body?.email?.split('@')[0] || ''
-      }
+        userName: body?.email?.split('@')[0] || '',
+      },
     })
 
     /** Push notification */
@@ -1035,7 +1035,7 @@ const sendVerificationEmail = async (req: Request, res: Response, next: NextFunc
 
     const verificationCode = user.verificationCode || Math.floor(1000 + Math.random() * 9000)
     const token: string = getToken({ code: String(verificationCode), email: params.email })
-    let link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
+    let link = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
     if (params.coupon) {
       link = link + `&coupon=${params.coupon}`
     }
@@ -1055,7 +1055,7 @@ const sendVerificationEmail = async (req: Request, res: Response, next: NextFunc
       from: originEmails.marketing,
       to: params.email,
       subject,
-      html
+      html,
     });
 
     if (!result) {
@@ -1063,7 +1063,7 @@ const sendVerificationEmail = async (req: Request, res: Response, next: NextFunc
     }
 
     res.status(200).send({
-      message: adminControllerResponse.sendVerificationEmailSuccess
+      message: adminControllerResponse.sendVerificationEmailSuccess,
     })
 
     usersService.updateUser({ _id: user._id }, { verificationCode })
@@ -1083,5 +1083,5 @@ export default {
   verifyEmail,
   sendVerificationEmail,
   initializeDeviceAccess,
-  appSignUpUser
+  appSignUpUser,
 };

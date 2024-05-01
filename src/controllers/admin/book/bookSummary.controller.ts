@@ -37,18 +37,29 @@ const addSummary = async (req: Request, res: Response, next: NextFunction) => {
             }
         }
         if (body.coverImage) {
-            const s3File: any = await uploadFileToS3(body.coverImage, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage' })
+            const s3File: any = await uploadFileToS3(
+                body.coverImage,
+                body.title,
+                { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage' }
+            );
             body.coverImage = s3File.name
         }
         if (body.bookReadFile) {
-            const s3File: any = await uploadFileToS3(body.bookReadFile, body.title + '-reads', { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/reads' })
+            const s3File: any = await uploadFileToS3(
+                body.bookReadFile,
+                body.title + '-reads',
+                { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/reads' }
+            );
             body.bookReadFile = s3File.name
         }
         if (body.chapters && body.chapters.length) {
             await Promise.all(body.chapters.map(async oneChapter => {
                 if (oneChapter.audioFile) {
-                    const s3File: any = await uploadFileToS3(oneChapter.audioFile, oneChapter.name, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' })
-                    oneChapter.audioFile = s3File.name
+                    const s3File: any = await uploadFileToS3(
+                        oneChapter.audioFile,
+                        oneChapter.name,
+                        { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' }
+                    ); oneChapter.audioFile = s3File.name
                     oneChapter.size = s3File.size
                 }
             }));
@@ -62,11 +73,16 @@ const addSummary = async (req: Request, res: Response, next: NextFunction) => {
         const data = await bookSummaryService.createBookSummary(body)
         res.status(200).send({
             message: bookSummaryControllerResponse.createBookSummarySuccess,
-            data
+            data,
         })
         const user = await userService.getOneUserByFilter({ email: 'bot@holyreads.com' })
         if (user) {
-            await ratingService.updateRating({ bookId: data._id, star: Number(`${randomNumberInRange(3,5)}.${randomNumberInRange(1,5)}`), description: '', userId: user._id })
+            await ratingService.updateRating({
+                bookId: data._id,
+                star: Number(`${randomNumberInRange(3, 5)}.${randomNumberInRange(1, 5)}`),
+                description: '',
+                userId: user._id,
+            });
         }
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -99,7 +115,7 @@ const getOneSummary = async (req: Request, res: Response, next: NextFunction) =>
             });
         }
         if (data.categories) {
-            const categoryObj = await bookCategoryService.getAllBookCategory(0, 0, { _id: { $in: data.categories } }, [['createdAt', 'DESC']])
+            const categoryObj = await bookCategoryService.getAllBookCategory(0, 0, { _id: { $in: data.categories } }, [['createdAt', 'desc']])
             data.categories = categoryObj.categories
         }
         res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummarySuccess, data })
@@ -121,7 +137,7 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
                 $or: [
                     { 'title': await getSearchRegexp(params.search) },
                     { 'status': await getSearchRegexp(params.search) },
-                ]
+                ],
             }
         }
         if (params.status && params.status === 'MostPopular') {
@@ -138,23 +154,23 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
         let summarySorting = [];
         switch (params.column) {
             case 'title':
-                summarySorting.push(['title', params.order || 'ASC']);
+                summarySorting.push(['title', params.order || 'asc']);
                 break;
             case 'status':
-                summarySorting.push(['status', params.order || 'ASC']);
+                summarySorting.push(['status', params.order || 'asc']);
                 break;
             case 'author':
-                summarySorting.push(['author', params.order || 'ASC']);
+                summarySorting.push(['author', params.order || 'asc']);
                 break;
             case 'createdAt':
-                summarySorting.push(['createdAt', params.order || 'ASC']);
+                summarySorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                summarySorting.push(['title', 'ASC'])
+                summarySorting.push(['title', 'asc'])
                 break;
         }
         if (params.status && params.status === 'NewlyAdded') {
-            summarySorting = [['createdAt', 'DESC']];
+            summarySorting = [['createdAt', 'desc']];
         }
         const data: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), searchFilter, summarySorting)
         data.summaries.forEach((element: any) => {
@@ -197,7 +213,11 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
         }
         if (req.body.coverImage && req.body.coverImage.includes('base64')) {
             await removeS3File(summaryDetails.coverImage, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage' })
-            const s3File: any = await uploadFileToS3(req.body.coverImage, summaryDetails.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage' })
+            const s3File: any = await uploadFileToS3(
+                req.body.coverImage,
+                summaryDetails.title,
+                { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage' }
+            );
             req.body.coverImage = s3File.name
         }
         if (req.body.coverImage && req.body.coverImage.startsWith('http')) {
@@ -208,7 +228,11 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
         }
         if (req.body.bookReadFile && req.body.bookReadFile.includes('base64')) {
             await removeS3File(summaryDetails.bookReadFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/reads' })
-            const s3File: any = await uploadFileToS3(req.body.bookReadFile, summaryDetails.title + '-reads', { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/reads' })
+            const s3File: any = await uploadFileToS3(
+                req.body.bookReadFile,
+                summaryDetails.title + '-reads',
+                { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/reads' }
+            );
             req.body.bookReadFile = s3File.name
         }
         if (req.body.bookReadFile && req.body.bookReadFile.startsWith('http')) {
@@ -230,7 +254,11 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
                     if (chapterdetails && chapterdetails.audioFile) {
                         await removeS3File(chapterdetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' })
                     }
-                    const s3File: any = await uploadFileToS3(oneChapter.audioFile, oneChapter.name, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' })
+                    const s3File: any = await uploadFileToS3(
+                        oneChapter.audioFile,
+                        oneChapter.name,
+                        { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' }
+                    );
                     oneChapter.audioFile = s3File.name
                     oneChapter.size = s3File.size
                 }

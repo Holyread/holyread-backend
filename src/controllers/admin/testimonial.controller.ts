@@ -33,11 +33,11 @@ const addTestimonial = async (req: Request, res: Response, next: NextFunction) =
             name: body.name,
             image: body.image,
             description: body.description,
-            status: 'Active'
+            status: 'Active',
         })
         res.status(200).send({
             message: testimonialControllerResponse.createTestimonialSuccess,
-            data
+            data,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -74,21 +74,21 @@ const getAllTestimonial = async (request: Request, response: Response, next: Nex
             searchFilter = {
                 $or: [
                     { 'name': await getSearchRegexp(params.search) },
-                    { 'status': await getSearchRegexp(params.search) }
-                ]
+                    { 'status': await getSearchRegexp(params.search) },
+                ],
             }
         }
 
         const testimonialSorting = [];
         switch (params.column) {
             case 'name':
-                testimonialSorting.push(['name', params.order || 'ASC']);
+                testimonialSorting.push(['name', params.order || 'asc']);
                 break;
             case 'createdAt':
-                testimonialSorting.push(['createdAt', params.order || 'ASC']);
+                testimonialSorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                testimonialSorting.push(['name', 'DESC']);
+                testimonialSorting.push(['name', 'desc']);
                 break;
         }
 

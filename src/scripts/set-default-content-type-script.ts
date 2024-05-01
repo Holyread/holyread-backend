@@ -1,8 +1,6 @@
 import { ReadsOfDayModel } from '../models/index'
 
-/**
- * Initialize readsOfDays  by machine user
-*/
+// Initialize readsOfDays  by machine user
 (async () => {
     try {
         /** Find readsOfDays */

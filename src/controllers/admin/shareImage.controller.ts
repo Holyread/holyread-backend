@@ -31,7 +31,7 @@ const addShareImage = async (req: Request, res: Response, next: NextFunction) =>
         })
         res.status(200).send({
             message: shareImageControllerResponse.createShareImageSuccess,
-            data
+            data,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -68,8 +68,8 @@ const getAllShareImages = async (request: Request, response: Response, next: Nex
             const search = await getSearchRegexp(params.search)
             searchFilter = {
                 $or: [
-                    { 'fontColor': search }
-                ]
+                    { 'fontColor': search },
+                ],
             }
             if (Number(search)) {
                 searchFilter['$or'].push({ 'fontSizr': Number(search) })
@@ -79,16 +79,16 @@ const getAllShareImages = async (request: Request, response: Response, next: Nex
         const shareImageSorting = [];
         switch (params.column) {
             case 'fontColor':
-                shareImageSorting.push(['fontColor', params.order || 'ASC']);
+                shareImageSorting.push(['fontColor', params.order || 'asc']);
                 break;
             case 'fontSize':
-                shareImageSorting.push(['fontSize', params.order || 'ASC']);
+                shareImageSorting.push(['fontSize', params.order || 'asc']);
                 break;
             case 'createdAt':
-                shareImageSorting.push(['createdAt', params.order || 'ASC']);
+                shareImageSorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                shareImageSorting.push(['fontColor', 'DESC']);
+                shareImageSorting.push(['fontColor', 'desc']);
                 break;
         }
 

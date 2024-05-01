@@ -14,9 +14,9 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
             { $sort: sort },
             { $skip: skip },
             { $limit: limit },
-            { $sample: { size: count } }
+            { $sample: { size: count } },
         ]
-        
+
         let smallgroupsList = await SmallGroupModel.aggregate(aggregatePipeline).exec()
         smallgroupsList = await Promise.all(await smallgroupsList.map(async (item) => {
             if (item && item.books && item.books.length) {
@@ -28,7 +28,7 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
                         item.publishedBooks.push(bookDetails);
                     }
                 }
-            }      
+            }
             return {
                 _id: item._id,
                 iceBreaker: item.iceBreaker,
@@ -38,7 +38,7 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
                 coverImage: `${awsBucket[NODE_ENV].s3BaseURL}/${awsBucket.smallGroupDirectory}/${item.coverImage}`,
                 backgroundColor: item.backgroundColor,
                 books: item.publishedBooks || [],
-                bookMark: global?.currentUser?.smallGroups?.includes(String(item._id)) || false
+                bookMark: global?.currentUser?.smallGroups?.includes(String(item._id)) || false,
             }
         }))
         return { smallgroupsList, count }
@@ -82,7 +82,7 @@ const getOneSmallGroupByFilter = async (query: any) => {
             const ans = answers.find(a => a.question === index);
             q = {
                 question: q,
-                answer: ans?.answer || ''
+                answer: ans?.answer || '',
             }
             return q
         })
@@ -105,5 +105,5 @@ const getSmallGroupForHandout = async (query: any) => {
 export default {
     getAllSmallGroups,
     getOneSmallGroupByFilter,
-    getSmallGroupForHandout
+    getSmallGroupForHandout,
 }

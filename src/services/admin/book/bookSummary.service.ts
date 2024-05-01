@@ -81,7 +81,7 @@ const getOneBookSummaryByFilter = async (query: any) => {
 const getBooksCountForDashboard = async () => {
     try {
         const result = await BookSummaryModel.aggregate([{ '$group': { '_id': '_id', 'chapters': { '$sum': { '$size': '$chapters' } } } }])
-        const count: number = await BookSummaryModel.count().lean().exec()
+        const count: number = await BookSummaryModel.countDocuments().lean().exec()
         return { count, summaries: result }
     } catch (e: any) {
         throw new Error(e)
@@ -112,40 +112,40 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
                 {
                     '$match': {
                         'libraries': {
-                            '$exists': true
-                        }
-                    }
+                            '$exists': true,
+                        },
+                    },
                 },
                 {
-                    "$lookup": {
-                        "from": "userlibraries",
-                        "localField": "libraries",
-                        "foreignField": "_id",
-                        "as": "libraries"
-                    }
+                    '$lookup': {
+                        'from': 'userlibraries',
+                        'localField': 'libraries',
+                        'foreignField': '_id',
+                        'as': 'libraries',
+                    },
                 },
                 {
                     '$unwind': {
-                        'path': '$libraries'
-                    }
+                        'path': '$libraries',
+                    },
                 },
                 {
                     '$match': {
                         'libraries.reading.bookId': {
-                            '$exists': true
-                        }
-                    }
+                            '$exists': true,
+                        },
+                    },
                 },
                 {
                     '$project': {
                         'email': 1.0,
-                        'libraries': 1.0
-                    }
+                        'libraries': 1.0,
+                    },
                 },
                 {
                     '$unwind': {
-                        'path': '$libraries.reading'
-                    }
+                        'path': '$libraries.reading',
+                    },
                 },
                 {
                     '$group': {
@@ -155,14 +155,14 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
                             updatedAt: '$libraries.reading.updatedAt',
                             'chapters': {
                                 '$sum': {
-                                    '$size': '$libraries.reading.chaptersCompleted'
-                                }
-                            }
-                        }
-                    }
+                                    '$size': '$libraries.reading.chaptersCompleted',
+                                },
+                            },
+                        },
+                    },
                 },
                 {
-                    '$match': query
+                    '$match': query,
                 },
                 {
                     '$group': {
@@ -170,49 +170,49 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
                         'emails': {
                             '$push': {
                                 'email': '$_id.email',
-                                'chapters': '$_id.chapters'
-                            }
+                                'chapters': '$_id.chapters',
+                            },
                         },
-                    }
+                    },
                 },
                 {
                     '$group': {
                         '_id': '$_id',
                         'total': {
                             '$sum': {
-                                '$size': '$emails'
-                            }
-                        }
-                    }
+                                '$size': '$emails',
+                            },
+                        },
+                    },
                 },
                 {
                     '$sort': {
-                        'total': -1.0
-                    }
+                        'total': -1.0,
+                    },
                 },
                 {
-                    "$lookup": {
-                        "from": "booksummaries",
-                        "localField": "_id",
-                        "foreignField": "_id",
-                        "as": "_id"
-                    }
+                    '$lookup': {
+                        'from': 'booksummaries',
+                        'localField': '_id',
+                        'foreignField': '_id',
+                        'as': '_id',
+                    },
                 },
                 {
                     $project: {
                         _id: '$_id._id',
                         title: '$_id.title',
-                        total: '$total'
-                    }
+                        total: '$total',
+                    },
                 },
                 {
                     $facet: {
                         page: [{ $limit: 5 }],
                         total: [{
-                            $count: 'count'
-                        }]
-                    }
-                }
+                            $count: 'count',
+                        }],
+                    },
+                },
             ]
         )
         const totalReaders = result[0]?.total[0]?.count
@@ -220,7 +220,7 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
             return {
                 _id: i._id[0],
                 title: i.title[0],
-                total: Math.trunc((i.total / totalReaders) * 100) + '%'
+                total: Math.trunc((i.total / totalReaders) * 100) + '%',
             }
         })
         return result
@@ -246,8 +246,15 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
             const categoriesIds = categories.map(oneCategory => oneCategory._id)
             search['$or'].push({ 'categories': { '$in': categoriesIds } })
         }
-        const result: any = await BookSummaryModel.find(search).populate('author', 'name').populate('categories', 'title').skip(skip).limit(limit).sort(sort).lean().exec()
-        const count: number = await BookSummaryModel.find(search).count().lean().exec()
+        const result: any = await BookSummaryModel.find(search)
+            .populate('author', 'name')
+            .populate('categories', 'title')
+            .skip(skip)
+            .limit(limit)
+            .sort(sort)
+            .lean()
+            .exec();
+        const count: number = await BookSummaryModel.find(search).countDocuments().lean().exec()
         return { count, summaries: result }
     } catch (e: any) {
         throw new Error(e)
@@ -290,5 +297,5 @@ export default {
     getOneBookSummaryByFilter,
     deleteBookSummary,
     getBooksCountForDashboard,
-    getTopReadsBooks
+    getTopReadsBooks,
 }

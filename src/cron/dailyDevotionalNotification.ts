@@ -1,6 +1,5 @@
 import cron from 'cron';
-
-import config from "../../config";
+import config from '../../config';
 import { dailyDevotionalNotification } from '../constants/cron.constants';
 import { ReadsOfDayModel, SettingModel, UserModel, CronLogModel, NotificationsModel } from '../models';
 import { groupByKey, pushNotification } from '../lib/utils/utils';
@@ -25,7 +24,7 @@ const start = async () => {
 
             /** Get Read of days */
             const readOfDay = await ReadsOfDayModel.findOne({
-                  displayAt: { $gte: new Date(start), $lte: new Date(end) }
+                  displayAt: { $gte: new Date(start), $lte: new Date(end) },
             }).select('title description image').lean().exec();
 
             // Check if read of the day exists
@@ -44,11 +43,11 @@ const start = async () => {
                   $or: [
                         {
                               'inAppSubscription': { $exists: true },
-                              'inAppSubscriptionStatus': 'Active'
+                              'inAppSubscriptionStatus': 'Active',
                         },
                         {
                               'stripe': { $exists: true },
-                              'stripe.status': 'active'
+                              'stripe.status': 'active',
                         },
                   ],
             }).select('timeZone pushTokens').lean().exec()
@@ -79,10 +78,10 @@ const start = async () => {
                               dailyDevotionalTime[0] = Number(dailyDevotionalTime[0]) - 12;
                         } else if (Number(dailyDevotionalTime[0]) < 12) {
                               meridian = 'AM';
-                              if (Number(dailyDevotionalTime[0]) == 0) dailyDevotionalTime[0] = 12;
+                              if (Number(dailyDevotionalTime[0]) === 0) dailyDevotionalTime[0] = 12;
                         }
 
-                        if (time[1] === meridian && Number(hours) == Number(dailyDevotionalTime[0]) && Number(minutes) === Number(dailyDevotionalTime[1])) {
+                        if (time[1] === meridian && Number(hours) === Number(dailyDevotionalTime[0]) && Number(minutes) === Number(dailyDevotionalTime[1])) {
                               const tokenSet = new Set();
                               result[timeZone]?.map(item => {
                                     item?.pushTokens?.forEach((ti: { token: string }) => tokenSet.add(ti.token));
@@ -96,9 +95,9 @@ const start = async () => {
                                           dailyDevotional: {
                                                 _id: readOfDay._id,
                                                 description: readOfDay.description,
-                                                image: awsBucket[config.NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + readOfDay.image
-                                          }
-                                    }
+                                                image: awsBucket[config.NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + readOfDay.image,
+                                          },
+                                    },
                               };
 
                               const tokens: any = Array.from(tokenSet);
@@ -113,9 +112,9 @@ const start = async () => {
                                                 title: notificationPayload.title,
                                                 description: notificationPayload.body,
                                                 success: true,
-                                                errorMessage: null,
+                                                errorMessage: undefined,
                                           },
-                                          createdAt: new Date()
+                                          createdAt: new Date(),
                                     });
                                     await notificationLog.save();
                               });
@@ -131,7 +130,7 @@ const start = async () => {
                                     success: true,
                                     errorMessage: `Users processing error -', ${error.message}`,
                               },
-                              createdAt: new Date()
+                              createdAt: new Date(),
                         });
                         await notificationLog.save();
                   }
@@ -147,7 +146,7 @@ const start = async () => {
                   jobName: 'daily_devotional_notifier',
                   status: 'failed',
                   endedAt: new Date(),
-                  message: `daily devotional job failed: ${error.message}`
+                  message: `daily devotional job failed: ${error.message}`,
             });
             await cronLog.save();
       }

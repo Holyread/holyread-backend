@@ -15,7 +15,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
     try {
         const { selectedDataTypes } = request.body;
         const fileName = `export_data_${Date.now()}.xlsx`;
-        let data = [];
+        const data = [];
         const workbook = new excel.Workbook();
 
         // Fetch data based on selected data types
@@ -85,7 +85,6 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
             { header: 'Created At', key: 'createdAt' },
             { header: 'Display At', key: 'displayAt' },
         ];
-
 
         /* set header */
         const curatedExcelHeader = [
@@ -192,10 +191,9 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                         item.image,
                         item.status,
                         item.createdAt,
-                        item.displayAt // Add displayAt column
+                        item.displayAt, // Add displayAt column
                     ]);
-                }
-                else if (dataType === 'Curated list') {
+                } else if (dataType === 'Curated list') {
                     wsCuratedList.addRow([
                         item.title,
                         item.description,
@@ -205,10 +203,9 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                         item.image,
                         item.status,
                         item.createdAt,
-                        item.updatedAt // Add displayAt column
+                        item.updatedAt, // Add displayAt column
                     ]);
-                }
-                else if (dataType === 'Small group') {
+                } else if (dataType === 'Small group') {
                     wsSmallGroup.addRow([
                         item.title,
                         item.description,
@@ -219,10 +216,9 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                         item.status,
                         item.iceBreaker,
                         item.createdAt,
-                        item.updatedAt // Add displayAt column
+                        item.updatedAt, // Add displayAt column
                     ]);
-                }
-                else if (dataType === 'Most popular') {
+                } else if (dataType === 'Most popular') {
                     wsMostPopularBooks.addRow([
                         item.title,
                         item.description,
@@ -238,8 +234,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                         item.createdAt,
                         item.updatedAt,
                     ]);
-                }
-                else if (dataType === 'Books') {
+                } else if (dataType === 'Books') {
                     wsBooks.addRow([
                         item.title,
                         item.description,
@@ -255,8 +250,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                         item.createdAt,
                         item.updatedAt,
                     ]);
-                }
-                else if (dataType === 'Transactions') {
+                } else if (dataType === 'Transactions') {
                     wsTransactions.addRow([
                         item.userId,
                         item.paymentLink,
@@ -268,10 +262,9 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                         item.total,
                         item.device,
                         item.planCreatedAt,
-                        item.planExpiredAt
+                        item.planExpiredAt,
                     ]);
-                }
-                else if (dataType === 'Users') {
+                } else if (dataType === 'Users') {
                     wsUsers.addRow([
                         item.firstName,
                         item.lastName,

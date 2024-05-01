@@ -1,6 +1,6 @@
 import stripeSubscriptionServices from '../services/stripe/subscription'
 
-/** Confirm payment intent */
+// Confirm payment intent
 (async () => {
       try {
             const pi = await stripeSubscriptionServices.getPaymentIntents()

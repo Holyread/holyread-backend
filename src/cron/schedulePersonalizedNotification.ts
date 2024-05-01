@@ -1,5 +1,5 @@
-import cron from 'cron';
-import config from "../../config";
+import * as cron from 'cron';
+import config from '../../config';
 import { schedulePersonalizeNotification } from '../constants/cron.constants'
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
 import { pushNotification } from '../lib/utils/utils'
@@ -56,7 +56,7 @@ const start = async () => {
                 'views',
                 'coverImage',
                 'totalStar',
-                'status'
+                'status',
             ]).populate('author').lean().exec();
 
             /** Get book rating */
@@ -81,20 +81,20 @@ const start = async () => {
                         coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${bookDetails.coverImage}`,
                         totalStar: bookDetails.totalStar,
                         status: bookDetails.status,
-                    }
-                }
+                    },
+                },
             };
             try {
                 await pushNotification(tokens, notificationPayload.title, notificationPayload.body, JSON.stringify(notificationPayload.data));
                 notificationsSent.push({
                     userId: user._id,
-                    success: true
+                    success: true,
                 });
             } catch (error: any) {
                 notificationsSent.push({
                     userId: user._id,
                     success: false,
-                    errorMessage: error.message
+                    errorMessage: error.message,
                 });
             }
         }
@@ -115,7 +115,7 @@ const start = async () => {
                     success: notification.success,
                     errorMessage: notification.errorMessage,
                 },
-                createdAt: new Date()
+                createdAt: new Date(),
             });
             await notificationLog.save();
         }
@@ -126,7 +126,7 @@ const start = async () => {
             jobName: 'schedule_personalize_notification',
             status: 'failed',
             endedAt: new Date(),
-            message: `schedule personalize notification job failed: ${error.message}`
+            message: `schedule personalize notification job failed: ${error.message}`,
         });
         await cronLog.save();
     }
@@ -138,6 +138,6 @@ const start = async () => {
         return;
     }
     const schedule = Object.values(schedulePersonalizeNotification.SCHEDULE).join(' ');
-    new cron.CronJob(schedule, () => { start() }, null, true);
+    new cron.CronJob(schedule, () => { start() }, undefined, true);
     console.log('JOB(🟢) schedule personalize notification initiated successfully!');
 })(schedulePersonalizeNotification, config);

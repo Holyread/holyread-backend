@@ -21,5 +21,5 @@ const getHandout = async (query: { [key: string]: any }) => {
 
 export default {
     updateHandout,
-    getHandout
+    getHandout,
 }

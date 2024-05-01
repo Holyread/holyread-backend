@@ -1,17 +1,17 @@
 import mongoose, {Schema} from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface IInAppNotification extends mongoose.Document {
-    result: Object
+    result: object
 }
 
 export type createInAppNotificationType = {
-    result: Object
+    result: object
 }
 
 export type getInAppNotificationType = {
-    result: Object
+    result: object
 }
 
 export const InAppNotificationSchema = new Schema({

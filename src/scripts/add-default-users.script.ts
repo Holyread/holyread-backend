@@ -22,7 +22,7 @@ const createAdminBody = {
       password: 'A4admin',
       verified: true,
       device: 'web',
-      image: data.userpic
+      image: data.userpic,
 };
 
 const createBotBody: any = {
@@ -33,7 +33,7 @@ const createBotBody: any = {
       verified: true,
       type: 'User',
       status: 'Active',
-      device: 'web'
+      device: 'web',
 };
 
 /** Create Admin */
@@ -41,15 +41,15 @@ const createBotBody: any = {
       try {
             const users: any = await UserModel.find({ subscription: { $exists: true } });
             users.map(user => {
-                  user.subscription = Types.ObjectId(user.subscription);
+                  user.subscription = new Types.ObjectId(user.subscription);
                   user.save();
             })
             await UserModel.updateMany(
                   {
-                        inAppSubscriptionStatus: 'active'
+                        inAppSubscriptionStatus: 'active',
                   },
                   {
-                        inAppSubscriptionStatus: 'Active'
+                        inAppSubscriptionStatus: 'Active',
                   }
             )
             /** Create bot user */
@@ -99,4 +99,3 @@ const createBotBody: any = {
       }
       return true;
 })(createAdminBody);
-

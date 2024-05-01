@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface IRating extends mongoose.Document {
     description: string,
@@ -27,7 +27,7 @@ export type getRatingType = {
 export const RatingSchema = new Schema({
     description: { type: String, default: '' },
     star: {
-        type: Number, required: true, index: true, min: [1, 'Rating star should be grater than or equal 1'], max: [5, 'Rating star should be less than or equal 5']
+        type: Number, required: true, index: true, min: [1, 'Rating star should be grater than or equal 1'], max: [5, 'Rating star should be less than or equal 5'],
     },
     userId: { type: String, required: true, index: true },
     bookId: { type: String, required: true, index: true },

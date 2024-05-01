@@ -14,7 +14,7 @@ const createHighLight = async (body: any) => {
             userId: body.userId,
             chapterId: body.chapterId,
             bookId: body.bookId,
-            'highLights.startIndex': body.startIndex
+            'highLights.startIndex': body.startIndex,
         }
         if (body.startIndex !== body.endIndex) {
             body['highLights.endIndex'] = body.endIndex
@@ -23,24 +23,24 @@ const createHighLight = async (body: any) => {
             throw new Error(highLightsControllerResponse.invalidHighLightColor)
         }
         const existingHighLight = await HighLightsModel.findOne(query).lean().exec()
-        let now = new Date()
+        const now = new Date()
         if (existingHighLight) {
-            let newBody: any = {
+            const newBody: any = {
                 '$set': {
                     'highLights.$.startIndex': body.startIndex,
                     'highLights.$.endIndex': body.endIndex,
                     'highLights.$.text': body.text,
-                }
+                },
             }
             if (body.note) {
                 newBody.note = body.note
             }
             if (body.color && !body.textDecoration) {
-                newBody['$set'] = { ...newBody['$set'], 'highLights.$.color': body.color, 'highLights.$.updatedAt': now }
+                newBody.$set = { ...newBody.$set, 'highLights.$.color': body.color, 'highLights.$.updatedAt': now }
                 newBody.updatedAt = now
             }
             if (body.textDecoration && !body.color) {
-                newBody['$set'] = { ...newBody['$set'], 'highLights.$.textDecoration': body.textDecoration, 'highLights.$.updatedAt': now }
+                newBody.$set = { ...newBody.$set, 'highLights.$.textDecoration': body.textDecoration, 'highLights.$.updatedAt': now }
                 newBody.updatedAt = now
             }
             const data: any = await HighLightsModel.findOneAndUpdate(query, newBody, { new: true }).lean().exec()
@@ -55,7 +55,7 @@ const createHighLight = async (body: any) => {
             'startIndex': body.startIndex,
             'endIndex': body.endIndex,
             'text': body.text,
-            updatedAt: now
+            updatedAt: now,
         }
         if (body.textDecoration) {
             highLights.textDecoration = body.textDecoration
@@ -64,12 +64,12 @@ const createHighLight = async (body: any) => {
             {
                 userId: body.userId,
                 chapterId: body.chapterId,
-                bookId: body.bookId
+                bookId: body.bookId,
             },
             {
                 '$push': { highLights },
                 $setOnInsert: { createdAt: now },
-                updatedAt: now
+                updatedAt: now,
             },
             { upsert: true, new: true }
         ).lean().exec()
@@ -88,22 +88,22 @@ const updateHighLight = async (body: any, id: string) => {
         }
         const now = new Date()
         if (body.color) {
-            newBody['$set'] = { ...newBody['$set'], 'highLights.$.color': body.color }
+            newBody.$set = { ...newBody.$set, 'highLights.$.color': body.color }
         }
         if (body.note || body.note === '') {
-            newBody['$set'] = { ...newBody['$set'], 'highLights.$.note': body.note }
+            newBody.$set = { ...newBody.$set, 'highLights.$.note': body.note }
         }
         if (body.textDecoration) {
-            newBody['$set'] = { ...newBody['$set'], 'highLights.$.textDecoration': body.textDecoration }
+            newBody.$set = { ...newBody.$set, 'highLights.$.textDecoration': body.textDecoration }
         }
         if (body.color === null) {
-            newBody['$unset'] = { ...newBody['$unset'], 'highLights.$.color': 1 }
+            newBody.$unset = { ...newBody.$unset, 'highLights.$.color': 1 }
         }
         if (body.textDecoration === null) {
-            newBody['$unset'] = { ...newBody['$unset'], 'highLights.$.textDecoration': 1 }
+            newBody.$unset = { ...newBody.$unset, 'highLights.$.textDecoration': 1 }
         }
         if (Object.keys(newBody).length) {
-            newBody['$set'] = { ...newBody['$set'], 'highLights.$.updatedAt': now }
+            newBody.$set = { ...newBody.$set, 'highLights.$.updatedAt': now }
         }
         const data: any = await HighLightsModel.updateOne(
             { 'highLights._id': id, userId: body.userId },
@@ -119,7 +119,7 @@ const updateHighLight = async (body: any, id: string) => {
 const getHighLightByFilter = async (skip: number, limit, search: object, sort) => {
     try {
         const result: any = await HighLightsModel.find(search).skip(skip).limit(limit).sort(sort).lean().exec()
-        const count: any = await HighLightsModel.count(search).lean().exec()
+        const count: any = await HighLightsModel.countDocuments(search).lean().exec()
         return { highLightsBooks: result, count }
     } catch (e: any) {
         throw new Error(e)
@@ -135,7 +135,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
         let result = await HighLightsModel.aggregate([
             {
                 $match: {
-                    ...filter
+                    ...filter,
                 },
             },
             {
@@ -145,34 +145,34 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     userId: -1,
                     createdAt: -1,
                     highLights: 1,
-                    updatedAt :1
-                }
+                    updatedAt : 1,
+                },
             },
             {
-                "$lookup": {
-                    "from": "booksummaries",
-                    "localField": "bookId",
-                    "foreignField": "_id",
-                    "as": "bookId"
-                }
+                '$lookup': {
+                    'from': 'booksummaries',
+                    'localField': 'bookId',
+                    'foreignField': '_id',
+                    'as': 'bookId',
+                },
             },
             {
-                "$lookup": {
-                    "from": "bookauthors",
-                    "localField": "bookId.author",
-                    "foreignField": "_id",
-                    "as": "author"
-                }
-            },
-            {
-                $unwind: {
-                    'path': '$bookId'
-                }
+                '$lookup': {
+                    'from': 'bookauthors',
+                    'localField': 'bookId.author',
+                    'foreignField': '_id',
+                    'as': 'author',
+                },
             },
             {
                 $unwind: {
-                    'path': '$author'
-                }
+                    'path': '$bookId',
+                },
+            },
+            {
+                $unwind: {
+                    'path': '$author',
+                },
             },
             {
                 $project: {
@@ -184,8 +184,8 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     'bookId.coverImage': {
                         $concat: [
                             awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/',
-                            '$bookId.coverImage'
-                        ]
+                            '$bookId.coverImage',
+                        ],
                     },
                     'bookId.coverImageBackground': 1.0,
                     'bookId.chapters.name': 1.0,
@@ -195,14 +195,14 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     'bookId.overview': 1.0,
                     'highLights': 1.0,
                     'createdAt': -1.0,
-                    'updatedAt':1.0
-                }
-            }
+                    'updatedAt': 1.0,
+                },
+            },
         ])
         if (!result.length && filter.bookId) {
             return { highLightsBooks: [{ count: 0, highlights: [] }] }
         }
-        let newResult = []
+        const newResult = []
         await Promise.all(await result.map(async (item: any) => {
             const bookDetails = item?.bookId
             if (!bookDetails) return
@@ -229,7 +229,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                     overview: bookDetails.overview,
                     highLights: item.highLights,
                     count: item.highLights && item.highLights.length ? item.highLights.length : 0,
-                    updatedAt: item.updatedAt
+                    updatedAt: item.updatedAt,
                 })
             } else {
                 const existingUpdatedAt = newResult[existingHighLight].updatedAt
@@ -252,24 +252,20 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
                 i.highLights.sort((a, b) =>
                     (new Date(a.updatedAt).getTime() > new Date(b.updatedAt).getTime())
                         ? -1
-                        : ((new Date(b.updatedAt).getTime() > new Date(a.updatedAt).getTime()) ? 1 : 0))    
+                        : ((new Date(b.updatedAt).getTime() > new Date(a.updatedAt).getTime()) ? 1 : 0))
             if (!search) {
                 i.highLights = i.highLights.slice(skip, limit ? skip + limit : i.highLights.length)
                 return true
-            }
-            else if (i.title.toLowerCase().includes(search)) {
+            } else if (i.title.toLowerCase().includes(search)) {
                 i.highLights = i.highLights.slice(skip, limit ? skip + limit : i.highLights.length)
                 return true
-            }
-            else if (i.author && i.author.name.toLowerCase().includes(search)) {
+            } else if (i.author && i.author.name.toLowerCase().includes(search)) {
                 i.highLights = i.highLights.slice(skip, limit ? skip + limit : i.highLights.length)
                 return true
-            }
-            else if (filter.bookId && i.highLights.find(o => o.chapter.name.toLowerCase().includes(search))) {
+            } else if (filter.bookId && i.highLights.find(o => o.chapter.name.toLowerCase().includes(search))) {
                 i.highLights = i.highLights.slice(skip, limit ? skip + limit : i.highLights.length)
                 return true
-            }
-            else if (filter.bookId) {
+            } else if (filter.bookId) {
                 i.highLights = i.highLights.filter(oneHl => {
                     return (
                         (
@@ -301,11 +297,11 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
 const deleteHighLight = async (userId: string, id: string, highLightId: string) => {
     try {
         await HighLightsModel.findOneAndUpdate(
-            { '_id': id, userId: userId },
+            { '_id': id, userId },
             {
                 '$pull': {
-                    'highLights': { '_id': highLightId }
-                }
+                    'highLights': { '_id': highLightId },
+                },
             }
         )
         return true
@@ -314,9 +310,8 @@ const deleteHighLight = async (userId: string, id: string, highLightId: string) 
     }
 }
 
-
 /** Remove high lights */
-const deleteHighLights = async (query: Object) => {
+const deleteHighLights = async (query: object) => {
     try {
         await HighLightsModel.deleteMany(query)
         return true
@@ -331,5 +326,5 @@ export default {
     getHighLightByFilter,
     getHighLightsByFilter,
     deleteHighLight,
-    deleteHighLights
+    deleteHighLights,
 }

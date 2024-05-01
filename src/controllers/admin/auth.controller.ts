@@ -36,7 +36,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
       from: originEmails.marketing,
       to: params.email,
       subject,
-      html
+      html,
     });
 
     if (!result) {
@@ -47,7 +47,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
       return next(Boom.badData(adminControllerResponse.updateCodeFailure))
     }
     res.status(200).send({
-      message: adminControllerResponse.sendVerificationEmailSuccess
+      message: adminControllerResponse.sendVerificationEmailSuccess,
     })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -77,13 +77,13 @@ const resendSignInOtp = async (req: Request, res: Response, next: NextFunction) 
       from: originEmails.marketing,
       to: params.email,
       subject,
-      html
+      html,
     });
     if (!result) {
       return next(Boom.badData(adminControllerResponse.sentEmailFailure))
     }
     res.status(200).send({
-      message: adminControllerResponse.sendVerificationEmailSuccess
+      message: adminControllerResponse.sendVerificationEmailSuccess,
     })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -94,15 +94,15 @@ const resendSignInOtp = async (req: Request, res: Response, next: NextFunction) 
 const verifySignInOtp = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const params: { code: string } = req.body
-    const user = await usersService.getOneUserByFilter({ verificationCode: params.code, type: {$in:['Admin','SubAdmin']} })
-   
+    const user = await usersService.getOneUserByFilter({ verificationCode: params.code, type: {$in: ['Admin', 'SubAdmin']} })
+
     if (!user) {
       return next(Boom.badData(authControllerResponse.invalidOtpError))
     }
     const token: string = getToken({ email: user.email, id: user._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
-      data: { _id: user._id, email: user.email, token, type: user.type }
+      data: { _id: user._id, email: user.email, token, type: user.type },
     })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -134,15 +134,15 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
       from: originEmails.marketing,
       to: email,
       subject,
-      html
+      html,
     });
-  
+
     if (!result) {
       return next(Boom.badData(adminControllerResponse.updateCodeFailure))
     }
     await usersService.updateUser({ _id: user._id }, { verificationCode })
     res.status(200).send({
-      message: adminControllerResponse.sendVerificationEmailSuccess
+      message: adminControllerResponse.sendVerificationEmailSuccess,
     })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -157,8 +157,8 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
       return next(Boom.notFound(adminControllerResponse.passwordMissingError))
     }
     /** Get user from db */
-    
-    const userObj: any = await usersService.getOneUserByFilter({ verificationCode: code, type: {$in:['Admin','SubAdmin']} })
+
+    const userObj: any = await usersService.getOneUserByFilter({ verificationCode: code, type: {$in: ['Admin', 'SubAdmin']} })
 
     if (!userObj) {
       return next(Boom.notFound(adminControllerResponse.updateCodeFailure))

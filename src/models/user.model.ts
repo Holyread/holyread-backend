@@ -1,6 +1,6 @@
 import mongoose, { Schema, Types } from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface IUser extends mongoose.Document {
     firstName?: string,
@@ -46,12 +46,12 @@ export interface IUser extends mongoose.Document {
     oAuth?: [{
         clientId: string,
         provider: string,
-        email: String,
-        default: Boolean
+        email: string,
+        default: boolean
     }],
     referralUserId?: string,
     kindleEmail?: string,
-    inAppSubscription?: Object, // default key - createdAt(Date)
+    inAppSubscription?: object, // default key - createdAt(Date)
     inAppSubscriptionStatus?: string,
     stripe: {
         subscriptionId?: string,
@@ -123,12 +123,12 @@ export type createUserType = {
     oAuth?: [{
         clientId: string,
         provider: string,
-        email: String,
-        default: Boolean
+        email: string,
+        default: boolean
     }],
     referralUserId?: string,
     kindleEmail?: string,
-    inAppSubscription?: Object, // default key - createdAt(Date)
+    inAppSubscription?: object, // default key - createdAt(Date)
     inAppSubscriptionStatus?: string,
     stripe: {
         subscriptionId?: string,
@@ -144,7 +144,7 @@ export type createUserType = {
     },
     device: string,
     maxDevices: [string],
-    codes: Object,
+    codes: object,
     timeZone?: string,
     createdAt: Date,
     updatedAt: Date,
@@ -201,12 +201,12 @@ export type getUserType = {
     oAuth?: [{
         clientId: string,
         provider: string,
-        email: String,
-        default: Boolean
+        email: string,
+        default: boolean
     }],
     referralUserId?: string,
     kindleEmail?: string,
-    inAppSubscription?: Object, // default key - createdAt(Date)
+    inAppSubscription?: object, // default key - createdAt(Date)
     inAppSubscriptionStatus?: string,
     stripe: {
         subscriptionId?: string,
@@ -222,7 +222,7 @@ export type getUserType = {
     },
     device: string,
     maxDevices: [string],
-    codes: Object,
+    codes: object,
     timeZone?: string,
     createdAt: Date,
     updatedAt: Date,
@@ -273,14 +273,14 @@ export const UserSchema = new Schema({
     downloadOverWifi: { type: Boolean, default: false },
     pushTokens: [{
         deviceId: String,
-        token: String
+        token: String,
     }],
     libraries: { type: Schema.Types.ObjectId, ref: 'userLibrary', index: true },
     oAuth: [{
         clientId: String,
         provider: String,
         email: String,
-        default: Boolean
+        default: Boolean,
     }],
     referralUserId: { type: Schema.Types.ObjectId, ref: 'user' },
     kindleEmail: { type: String, validate: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ },
@@ -318,17 +318,17 @@ export const UserSchema = new Schema({
 }, { strict: 'throw' })
 
 UserSchema.index({
-    "stripe.coupon": 1,
-    "stripe.subscriptionId": 1,
-    "stripe.status": 1
+    'stripe.coupon': 1,
+    'stripe.subscriptionId': 1,
+    'stripe.status': 1,
 })
 
-UserSchema.index({ "deviceId": 1 })
+UserSchema.index({ 'deviceId': 1 })
 
-UserSchema.index({ "inAppSubscription.purchaseToken": 1 })
+UserSchema.index({ 'inAppSubscription.purchaseToken': 1 })
 
-UserSchema.index({ "inAppSubscriptionStatus": 1 })
+UserSchema.index({ 'inAppSubscriptionStatus': 1 })
 
-UserSchema.index({ "oAuth.clientId": 1, "oAuth.provider": 1 })
+UserSchema.index({ 'oAuth.clientId': 1, 'oAuth.provider': 1 })
 
 export const UserModel = mongoose.model<IUser>('user', UserSchema)

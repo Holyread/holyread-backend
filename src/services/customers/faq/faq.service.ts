@@ -11,5 +11,5 @@ const getAllFaqs = async () => {
 }
 
 export default {
-      getAllFaqs
+      getAllFaqs,
 }

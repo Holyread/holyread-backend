@@ -3,7 +3,7 @@ import { EmailTemplateModel } from '../../../models/index'
 /** Create email template */
 const createEmailTemplate = async (body: any) => {
       try {
-            let result: any = await EmailTemplateModel.create(body)
+            const result: any = await EmailTemplateModel.create(body)
             return result
       } catch (e: any) {
             throw new Error(e)
@@ -38,8 +38,8 @@ const getOneEmailTemplateByFilter = async (query: any) => {
 const getAllEmailTemplates = async (skip: number, limit, search: object, sort) => {
       try {
             const emailTemplates: any = await EmailTemplateModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-            const count = await EmailTemplateModel.find(search).count()
-            return { count, emailTemplates: emailTemplates }
+            const count = await EmailTemplateModel.find(search).countDocuments()
+            return { count, emailTemplates }
       } catch (e: any) {
             throw new Error(e)
       }
@@ -60,5 +60,5 @@ export default {
       updateEmailTemplate,
       getOneEmailTemplateByFilter,
       getAllEmailTemplates,
-      deleteEmailTemplate
+      deleteEmailTemplate,
 }

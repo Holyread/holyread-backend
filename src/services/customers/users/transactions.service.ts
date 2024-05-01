@@ -27,7 +27,7 @@ const updateAppTransaction = async (query: object, body: createInAppNotification
 }
 
 /** Delete user transactions */
-const deleteTransaction = async (query: Object) => {
+const deleteTransaction = async (query: object) => {
       try {
             await TransactionsModel.deleteMany(query)
       } catch (e: any) {

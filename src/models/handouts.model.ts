@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface IHandouts extends mongoose.Document {
     answers: [{
@@ -33,11 +33,11 @@ export type getHandoutsType = {
 export const HandoutsSchema = new Schema({
     answers: [{
         question: Number,
-        answer: String
+        answer: String,
     }],
     user: { type: Schema.Types.ObjectId, ref: 'user', required: true },
     smallGroup: {
-        type: Schema.Types.ObjectId, ref: 'smallgroup', required: true
+        type: Schema.Types.ObjectId, ref: 'smallgroup', required: true,
     },
 }, { strict: 'throw', timestamps: true })
 

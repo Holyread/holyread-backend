@@ -7,7 +7,7 @@ import { UserModel } from '../models';
         await Promise.all(users.map(async (element) => {
             await UserModel.updateOne(
                 { _id: element._id },
-                { verified: true, status: 'Active' },
+                { verified: true, status: 'Active' }
             );
         }));
 

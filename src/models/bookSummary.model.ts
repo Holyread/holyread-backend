@@ -1,5 +1,6 @@
 import mongoose, { Schema, Types } from 'mongoose'
-mongoose.set('useCreateIndex', true)
+
+mongoose.set('autoIndex', true);
 
 export interface IBookSummary extends mongoose.Document {
     title: string,
@@ -20,10 +21,10 @@ export interface IBookSummary extends mongoose.Document {
         audioFile: string,
         size: number
     }],
-    views?: Number,
+    views?: number,
     status?: 'Active' | 'Deactive',
     publish?: boolean,
-    totalStar? : number,
+    totalStar?: number,
 }
 
 export type createBookSummaryType = {
@@ -45,10 +46,10 @@ export type createBookSummaryType = {
         audioFile: string,
         size: number
     }],
-    views?: Number,
+    views?: number,
     status?: 'Active' | 'Deactive',
     publish?: boolean,
-    totalStar? : number,
+    totalStar?: number,
 }
 
 export type getBookSummaryType = {
@@ -71,10 +72,10 @@ export type getBookSummaryType = {
         audioFile: string,
         size: number
     }],
-    views?: Number,
+    views?: number,
     status?: 'Active' | 'Deactive',
     publish?: boolean,
-    totalStar? : number,
+    totalStar?: number,
 }
 
 export const BookSummarySchema = new Schema({
@@ -83,7 +84,7 @@ export const BookSummarySchema = new Schema({
         type: Schema.Types.ObjectId,
         required: true,
         ref: 'bookAuthor',
-        index: true
+        index: true,
     },
     description: { type: String, default: '' },
     overview: { type: String, default: '' },
@@ -91,7 +92,7 @@ export const BookSummarySchema = new Schema({
     categories: [{
         type: Schema.Types.ObjectId,
         ref: 'bookCategory',
-        required: true
+        required: true,
     }],
     coverImage: { type: String, default: '' },
     coverImageBackground: { type: String },
@@ -103,7 +104,7 @@ export const BookSummarySchema = new Schema({
         name: { type: String },
         description: { type: String },
         audioFile: { type: String },
-        size: { type: Number }
+        size: { type: Number },
     }],
     views: { type: Number, default: 0 },
     publish: { type: Boolean, default: false },

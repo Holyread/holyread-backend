@@ -52,7 +52,7 @@ const getOneExpertCuratedByFilter = async (query: any) => {
 const getAllExpertCurated = async (skip: number, limit, search: object, sort) => {
     try {
         const result = await ExpertCuratedModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        const count: number = await ExpertCuratedModel.find(search).count()
+        const count: number = await ExpertCuratedModel.find(search).countDocuments()
         if (result.length) {
             await Promise.all(result.map(item => {
                 if (item && item.image) {
@@ -92,5 +92,5 @@ export default {
     getOneExpertCuratedByFilter,
     updateExpertCurated,
     deleteExpertCurated,
-    getExpertCuratedList
+    getExpertCuratedList,
 };

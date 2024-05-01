@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface IBookAuthor extends mongoose.Document {
     name: string,
@@ -28,5 +28,5 @@ export const BookAuthorSchema = new Schema({
     },
     updatedAt: { type: Date },
 }, { strict: 'throw' })
-                        
+
 export const BookAuthorModel = mongoose.model<IBookAuthor>('bookAuthor', BookAuthorSchema)

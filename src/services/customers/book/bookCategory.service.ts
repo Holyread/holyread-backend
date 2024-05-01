@@ -14,16 +14,16 @@ const getAllBookCategories = async (skip: number, limit, search: object, sort) =
                     title: 1.0,
                     image: { $concat: [
                         awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/category/',
-                        '$image'
+                        '$image',
                     ] },
-                    status: 1.0
-                }
+                    status: 1.0,
+                },
             },
             {
-                $match: search
+                $match: search,
             },
             {
-                $sort: sort
+                $sort: sort,
             },
             {
                 $facet: {
@@ -32,10 +32,10 @@ const getAllBookCategories = async (skip: number, limit, search: object, sort) =
                         ? page.concat({ $limit: limit })
                         : page,
                     total: [{
-                        $count: 'count'
-                    }]
-                }
-            }
+                        $count: 'count',
+                    }],
+                },
+            },
         ])
         const count = result[0].total[0].count
         return { categories: result[0]?.page, count }
@@ -64,5 +64,5 @@ const getCategoriesDetails = async (categoryIds: string[]) => {
 
 export default {
     getAllBookCategories,
-    getCategoriesDetails
+    getCategoriesDetails,
 }

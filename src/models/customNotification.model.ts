@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface ICustomNotifications extends mongoose.Document {
     title: string,
@@ -21,7 +21,7 @@ export const CustomNotificationsSchema = new Schema({
             return new Date()
         },
     },
-    totalUsers: { type: Number }
+    totalUsers: { type: Number },
 }, { strict: 'throw' })
 
 export const CustomNotificationsModel = mongoose.model<ICustomNotifications>('customNotifications', CustomNotificationsSchema)

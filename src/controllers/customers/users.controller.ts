@@ -1809,7 +1809,7 @@ const updateRating = async (
 
             const averageRating = await calculateAverageRating(ratings);
 
-            await bookService.updateBookSummary(bookId, { totalStar: averageRating });
+            await bookService.updateBookSummary({ totalStar: averageRating }, { _id: bookId });
 
             res.status(200).send({
                   message: authControllerResponse.bookRatingSuccess,

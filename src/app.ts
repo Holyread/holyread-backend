@@ -146,7 +146,6 @@ if (config.NODE_ENV !== 'test') {
   });
 }
 
-
 export {
   app,
   io

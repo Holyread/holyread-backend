@@ -1,4 +1,4 @@
-export const setReadsOfDayDisplayAt = {
+      export const setReadsOfDayDisplayAt = {
       SCHEDULE: {
             Minutes: '0',
             Hours: '1',
@@ -66,14 +66,14 @@ export const setStripeCouponAndStatus = {
 export const contentUpdateNotification = {
       SCHEDULE: {
           Minutes: '0',
-          Hours: '12', //12 PM
+          Hours: '12', // 12 PM
           DayOfMonth: '*/4',
           Months: '*',
           DayOfWeek: '*',
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
-}
-  
+};
+
 export const engagementMotivationNotification = {
       SCHEDULE: {
           Minutes: '0',

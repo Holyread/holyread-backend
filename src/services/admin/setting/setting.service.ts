@@ -26,5 +26,5 @@ const getSetting = async () => {
 
 export default {
       updateSetting,
-      getSetting
+      getSetting,
 }

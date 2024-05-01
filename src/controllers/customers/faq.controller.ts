@@ -6,7 +6,6 @@ import { responseMessage } from '../../constants/message.constant'
 
 const FaqControllerResponse = responseMessage.FaqControllerResponse
 
-
 /** Get all Faqs */
 const getAllFaqs = async (request: Request, response: Response, next: NextFunction) => {
     try {

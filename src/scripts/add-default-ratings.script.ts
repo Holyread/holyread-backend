@@ -1,14 +1,12 @@
 import { UserModel, RatingModel, BookSummaryModel } from '../models/index'
 import { randomNumberInRange } from '../lib/utils/utils'
 
-/**
- * Initialize default ratings for books by machine user
-*/
+// Initialize default ratings for books by machine user
 (async () => {
       try {
             /** Find bot user */
             const botUser = await UserModel.findOne({
-                  email: 'bot@holyreads.com'
+                  email: 'bot@holyreads.com',
             })
             .select('_id')
             .lean()

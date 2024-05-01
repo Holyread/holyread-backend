@@ -1,6 +1,6 @@
-import cron from 'cron';
+import * as cron from 'cron';
 
-import config from "../../config";
+import config from '../../config';
 import { syncProfits } from '../constants/cron.constants'
 import stripeSubscriptionServices from '../services/stripe/subscription'
 import transactionServices from '../services/admin/users/transactions.service'
@@ -12,17 +12,17 @@ const start = async () => {
             console.log('JOB(🟢) sync profit Started successfully!');
 
             let yearlyProfit = await stripeSubscriptionServices.retrieveProfit('year')
-            let weeklyProfit = await stripeSubscriptionServices.retrieveProfit('week')
-            let monthlyProfit = await stripeSubscriptionServices.retrieveProfit('month')
+            const weeklyProfit = await stripeSubscriptionServices.retrieveProfit('week')
+            const monthlyProfit = await stripeSubscriptionServices.retrieveProfit('month')
 
             const transactionsInfo = await transactionServices.getAllTransactions(
                   0,
                   0,
                   {
                         userId: { $exists: true },
-                        device: 'app'
+                        device: 'app',
                   },
-                  [['createdAt', 'ASC']]
+                  [['createdAt', 'asc']]
             )
             const now = new Date();
             now.setHours(0, 0, 0, 0);
@@ -40,24 +40,21 @@ const start = async () => {
                   if (new Date(i.createdAt).getTime() >= new Date(yearAgo).getTime()) {
                         if (['did_renew', 'subscribed'].includes(i.status)) {
                               yearlyProfit += i.total
-                        }
-                        else if (['refund'].includes(i.status)) {
+                        } else if (['refund'].includes(i.status)) {
                               yearlyProfit -= i.total
                         }
                   }
                   if (new Date(i.createdAt).getTime() >= new Date(monthAgo).getTime()) {
                         if (['did_renew', 'subscribed'].includes(i.status)) {
                               yearlyProfit += i.total
-                        }
-                        else if (['refund'].includes(i.status)) {
+                        } else if (['refund'].includes(i.status)) {
                               yearlyProfit -= i.total
                         }
                   }
                   if (new Date(i.createdAt).getTime() >= new Date(weekAgo).getTime()) {
                         if (['did_renew', 'subscribed'].includes(i.status)) {
                               yearlyProfit += i.total
-                        }
-                        else if (['refund'].includes(i.status)) {
+                        } else if (['refund'].includes(i.status)) {
                               yearlyProfit -= i.total
                         }
                   }
@@ -80,6 +77,6 @@ const start = async () => {
             return;
       }
       const schedule = Object.values(syncProfits.SCHEDULE).join(' ');
-      new cron.CronJob(schedule, () => { start() }, null, true);
+      new cron.CronJob(schedule, () => { start() }, undefined, true);
       console.log('JOB(🟢) sync profit initiated successfully!');
 })(syncProfits, config);

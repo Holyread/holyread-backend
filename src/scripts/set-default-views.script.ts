@@ -1,15 +1,15 @@
 import { randomNumberInRange } from '../lib/utils/utils';
 import { BookSummaryModel, ExpertCuratedModel } from '../models/index'
 
-/** Set default views */
+// Set default views
 (async () => {
       try {
             const books = await BookSummaryModel.find(
                   {
                         $or: [
                               { views: { $exists: false } },
-                              { views: 0 }
-                        ]
+                              { views: 0 },
+                        ],
                   }
             ).select([]).lean();
 
@@ -17,8 +17,8 @@ import { BookSummaryModel, ExpertCuratedModel } from '../models/index'
                   {
                         $or: [
                               { views: { $exists: false } },
-                              { views: 0 }
-                        ]
+                              { views: 0 },
+                        ],
                   }
             ).select([]).lean();
 

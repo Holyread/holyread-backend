@@ -53,7 +53,7 @@ const getOneShareImageByFilter = async (query: any) => {
 const getAllShareImage = async (skip: number, limit, search: object, sort) => {
     try {
         const result = await ShareImageModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        const count = await ShareImageModel.find(search).count()
+        const count = await ShareImageModel.find(search).countDocuments()
         await Promise.all(result.map(async (item: any) => {
             if (!item) {
                 return
@@ -83,5 +83,5 @@ export default {
     updateShareImage,
     getAllShareImage,
     getOneShareImageByFilter,
-    deleteShareImage
+    deleteShareImage,
 }

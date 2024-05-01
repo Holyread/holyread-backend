@@ -37,7 +37,7 @@ const addSmallGroup = async (req: Request, res: Response, next: NextFunction) =>
         const data = await smallGroupService.createSmallGroup(body)
         res.status(200).send({
             message: smallGroupControllerResponse.createSmallGroupSuccess,
-            data
+            data,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -81,8 +81,8 @@ const getAllSmallGroups = async (request: Request, response: Response, next: Nex
             const search = await getSearchRegexp(params.search)
             searchFilter = {
                 $or: [
-                    { 'title': search }
-                ]
+                    { 'title': search },
+                ],
             }
             if (Number(search)) {
                 searchFilter['$or'].push({ 'fontSize': Number(search) })
@@ -101,22 +101,22 @@ const getAllSmallGroups = async (request: Request, response: Response, next: Nex
         const smallGroupsSorting = [];
         switch (params.column) {
             case 'title':
-                smallGroupsSorting.push(['title', params.order || 'ASC']);
+                smallGroupsSorting.push(['title', params.order || 'asc']);
                 break;
             case 'iceBreaker':
-                smallGroupsSorting.push(['iceBreaker', params.order || 'ASC']);
+                smallGroupsSorting.push(['iceBreaker', params.order || 'asc']);
                 break;
             case 'description':
-                smallGroupsSorting.push(['description', params.order || 'ASC']);
+                smallGroupsSorting.push(['description', params.order || 'asc']);
                 break;
             case 'introduction':
-                smallGroupsSorting.push(['introduction', params.order || 'ASC']);
+                smallGroupsSorting.push(['introduction', params.order || 'asc']);
                 break;
             case 'createdAt':
-                smallGroupsSorting.push(['createdAt', params.order || 'ASC']);
+                smallGroupsSorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                smallGroupsSorting.push(['title', 'DESC']);
+                smallGroupsSorting.push(['title', 'desc']);
                 break;
         }
 

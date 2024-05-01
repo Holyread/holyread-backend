@@ -11,5 +11,5 @@ const getAllCms = async () => {
 }
 
 export default {
-      getAllCms
+      getAllCms,
 }

@@ -2,9 +2,8 @@ import { calculateAverageRating } from '../lib/utils/utils';
 import { BookSummaryModel } from '../models/index'
 import ratingService from '../services/customers/book/rating.service';
 
-/**
- * Initialize books  by machine user
-*/
+// Initialize books  by machine user
+
 (async () => {
     try {
         /** Find books */
@@ -15,7 +14,7 @@ import ratingService from '../services/customers/book/rating.service';
             .exec()
 
         if (!books?.length) {
-            console.log('ReadsOfDays is empty')
+            console.log('Books is empty')
             return false;
         }
         await Promise.all(books.map(async item => {
@@ -27,7 +26,7 @@ import ratingService from '../services/customers/book/rating.service';
                 { upsert: true }
             )
 
-            console.log('readsOfDaysId: ', item._id)
+            console.log('ratingIds: ', item._id)
         }))
 
         console.log('Rating added successfully')

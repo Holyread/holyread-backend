@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface IReadsOfDay extends mongoose.Document {
     title: string,
@@ -56,7 +56,7 @@ export const ReadsOfDaySchema = new Schema({
         },
     },
     updatedAt: { type: Date },
-    displayAt: { type: Date }
+    displayAt: { type: Date },
 }, { strict: 'throw' })
 
 export const ReadsOfDayModel = mongoose.model<IReadsOfDay>('readsOfDay', ReadsOfDaySchema)

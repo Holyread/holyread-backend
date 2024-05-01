@@ -1,6 +1,6 @@
 import mongoose, {Schema} from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface IFaq extends mongoose.Document {
     question: string,

@@ -3,7 +3,7 @@ import { CmsModel } from '../../../models/index'
 /** Create Cms */
 const createCms = async (body: any) => {
       try {
-            let result: any = await CmsModel.create(body)
+            const result: any = await CmsModel.create(body)
             return result
       } catch (e: any) {
             throw new Error(e)
@@ -38,7 +38,7 @@ const getOneCmsByFilter = async (query: any) => {
 const getAllCms = async (skip: number, limit, search: object, sort) => {
       try {
             const CmssList: any = await CmsModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-            const count = await CmsModel.find(search).count()
+            const count = await CmsModel.find(search).countDocuments()
             return { count, cmsList: CmssList }
       } catch (e: any) {
             throw new Error(e)
@@ -60,5 +60,5 @@ export default {
       updateCms,
       getOneCmsByFilter,
       getAllCms,
-      deleteCms
+      deleteCms,
 }

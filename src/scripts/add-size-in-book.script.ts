@@ -1,9 +1,9 @@
 /**
- * Script used for add size for books audio and video 
- * This script was required in past due to some bug 
- * 
+ * Script used for add size for books audio and video
+ * This script was required in past due to some bug
+ *
  * when admin tried to update book chapter
- * at that time audio has been removed 
+ * at that time audio has been removed
  * in above case we was need this script
  * now issue has been solved so script not rquired yet
  */
@@ -27,17 +27,17 @@ import { awsBucket } from '../constants/app.constant';
 
             const query = {
                   '$or': [
-                        { 
+                        {
                               'videoFileSize': {
-                                    '$exists': false
-                              }
+                                    '$exists': false,
+                              },
                         },
                         {
                               'chapters.size': {
-                                    '$exists': false
-                              }
+                                    '$exists': false,
+                              },
                         },
-                  ]
+                  ],
             }
             const sizeLessBookList = await BookSummaryModel
                   .find(query)
@@ -52,13 +52,13 @@ import { awsBucket } from '../constants/app.constant';
                         ) {
                               const s3BooksContents = await s3.listObjects({
                                     Bucket: 'holyreads-develop',
-                                    Prefix: `books/video/${oneBook.videoFile}`
+                                    Prefix: `books/video/${oneBook.videoFile}`,
                               }).promise();
 
                               oneBook.videoFileSize = s3BooksContents
                                     .Contents
                                     .find(
-                                          oneContent => 
+                                          oneContent =>
                                                 oneContent
                                                       .Key
                                                       .includes(
@@ -73,7 +73,7 @@ import { awsBucket } from '../constants/app.constant';
                               ) {
                                     const s3BooksContents = await s3.listObjects({
                                           Bucket: 'holyreads-develop',
-                                          Prefix: `books/audio/${oneChapter.audioFile}`
+                                          Prefix: `books/audio/${oneChapter.audioFile}`,
                                     }).promise();
 
                                     oneChapter.size = s3BooksContents

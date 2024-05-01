@@ -1,4 +1,4 @@
-import { ReadsOfDayModel } from "../../../models"
+import { ReadsOfDayModel } from '../../../models'
 
 /** Get daily devotional by id */
 const getOneDailyDevotional = async (query: any) => {

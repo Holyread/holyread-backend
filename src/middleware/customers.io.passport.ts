@@ -13,17 +13,17 @@ export default async (socket: any, next: NextFunction): Promise<any> => {
             .findOne({
                 $or: [
                     { email: details?.email },
-                    { 'oAuth.clientId': details.oauthClientId }
+                    { 'oAuth.clientId': details.oauthClientId },
                 ],
                 _id: details.id,
-                type: 'User'
+                type: 'User',
             })
             .lean().exec()
     if (!userDetails) {
         console.log('User not authorized')
         return next(new Error('User not authorized'));
     }
-    const notificationsDetails = await NotificationsModel.find({ userId: userDetails._id }).sort([['createdAt', 'DESC']]).lean().exec()
+    const notificationsDetails = await NotificationsModel.find({ userId: userDetails._id }).sort([['createdAt', 'desc']]).lean().exec()
     userDetails.notifications = notificationsDetails
     socket.user = userDetails
     next();

@@ -20,7 +20,7 @@ const addAuthor = async (req: Request, res: Response, next: NextFunction) => {
         const data = await authorService.createAuthor(body)
         res.status(200).send({
             message: authorControllerResponse.createAuthorSuccess,
-            data
+            data,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -38,7 +38,7 @@ const getOneAuthor = async (req: Request, res: Response, next: NextFunction) => 
         }
         res.status(200).send({
             message: authorControllerResponse.fetchAuthorSuccess,
-            data: authorObj
+            data: authorObj,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -58,19 +58,19 @@ const getAllAuthors = async (request: Request, response: Response, next: NextFun
                 $or: [
                     { name: await getSearchRegexp(params.search) },
                     { about: await getSearchRegexp(params.search) },
-                ]
+                ],
             }
         }
         const authorListSorting = [];
         switch (params.column) {
             case 'title':
-                authorListSorting.push(['name', params.order || 'ASC']);
+                authorListSorting.push(['name', params.order || 'asc']);
                 break;
             case 'createdAt':
-                authorListSorting.push(['createdAt', params.order || 'ASC']);
+                authorListSorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                authorListSorting.push(['name', 'DESC']);
+                authorListSorting.push(['name', 'desc']);
                 break;
         }
 

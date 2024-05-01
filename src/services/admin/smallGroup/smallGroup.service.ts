@@ -53,7 +53,7 @@ const getOneSmallGroupByFilter = async (query: any) => {
 const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
     try {
         const result = await SmallGroupModel.find(search).populate('books', 'title').skip(skip).limit(limit).sort(sort).lean()
-        const count = await SmallGroupModel.find(search).count()
+        const count = await SmallGroupModel.find(search).countDocuments()
         if (result.length) {
             await Promise.all(result.map(item => {
                 if (item && item.coverImage) {
@@ -93,5 +93,5 @@ export default {
     getAllSmallGroups,
     getOneSmallGroupByFilter,
     deleteSmallGroup,
-    getSmallGroupsList
+    getSmallGroupsList,
 }

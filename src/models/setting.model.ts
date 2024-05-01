@@ -1,6 +1,6 @@
 import mongoose, {Schema} from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface ISetting extends mongoose.Document {
     metaKeyword?: string;

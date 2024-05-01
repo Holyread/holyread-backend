@@ -20,7 +20,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
                         { email: details?.email },
                     ],
                     _id: details.id,
-                    type: 'User'
+                    type: 'User',
                 })
                 .lean()
                 .exec();
@@ -42,7 +42,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             //     return next(Boom.forbidden('User not verfied'));
             // }
             if (
-                false && 
+                false &&
                 !req.path.includes('logout') &&
                 !userDetails.maxDevices.includes(req?.headers?.device) &&
                 userDetails?.maxDevices?.length >= (maxDeviceLogin || 3)
@@ -55,7 +55,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             }
 
             const refUser: any = await UserModel.findOne({
-                _id: userDetails.referralUserId
+                _id: userDetails.referralUserId,
             }).select('firstName lastName email').lean().exec();
 
             if (refUser) { userDetails.referralUserId = refUser }

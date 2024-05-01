@@ -32,11 +32,11 @@ const addCategory = async (req: Request, res: Response, next: NextFunction) => {
         const data = await bookCategoryService.createBookCategory({
             title: body.title,
             image: body.image,
-            status: body.status
+            status: body.status,
         })
         res.status(200).send({
             message: bookCategoryControllerResponse.createBookCategorySuccess,
-            data
+            data,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -73,21 +73,21 @@ const getAllCategory = async (request: Request, response: Response, next: NextFu
             searchFilter = {
                 $or: [
                     { 'title': await getSearchRegexp(params.search) },
-                    { 'status': await getSearchRegexp(params.search) }
-                ]
+                    { 'status': await getSearchRegexp(params.search) },
+                ],
             }
         }
 
         const categorySorting = [];
         switch (params.column) {
             case 'title':
-                categorySorting.push(['title', params.order || 'ASC']);
+                categorySorting.push(['title', params.order || 'asc']);
                 break;
             case 'createdAt':
-                categorySorting.push(['createdAt', params.order || 'ASC']);
+                categorySorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                categorySorting.push(['title', 'DESC']);
+                categorySorting.push(['title', 'desc']);
                 break;
         }
 

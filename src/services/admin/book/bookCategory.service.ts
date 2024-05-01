@@ -53,7 +53,7 @@ const getOneBookCategoryByFilter = async (query: any) => {
 const getAllBookCategory = async (skip: number, limit, search: object, sort) => {
     try {
         const result = await BookCategoryModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        let count = await BookCategoryModel.find(search).count()
+        const count = await BookCategoryModel.find(search).countDocuments()
         await Promise.all(result.map(async (item: any) => {
             if (!item) {
                 return
@@ -94,5 +94,5 @@ export default {
     getAllBookCategory,
     getAllBookCategoriesNames,
     getOneBookCategoryByFilter,
-    deleteBookCategory
+    deleteBookCategory,
 }

@@ -14,7 +14,7 @@ const getAllRatings = async (request: Request | any, response: Response, next: N
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
-        let searchFilter: any = {}
+        const searchFilter: any = {}
         if (params.star) {
             searchFilter.star = params.star
         }
@@ -24,20 +24,20 @@ const getAllRatings = async (request: Request | any, response: Response, next: N
         if (params.bookId) {
             searchFilter.bookId = params.bookId
         }
-        let sorting = { column: 'star', order: 'DESC' };
+        let sorting = { column: 'star', order: 'desc' };
 
         switch (params.column) {
             case 'star':
-                sorting = { column: 'star', order: params.order || 'DESC' };
+                sorting = { column: 'star', order: params.order || 'desc' };
                 break;
             case 'bookTitle':
-                sorting = { column: 'bookTitle', order: params.order || 'ASC' };
+                sorting = { column: 'bookTitle', order: params.order || 'asc' };
                 break;
             case 'ratings':
-                sorting = { column: 'ratings', order: params.order || 'ASC' };
+                sorting = { column: 'ratings', order: params.order || 'asc' };
                 break;
             case 'user':
-                sorting = searchFilter.bookId ? { column: 'user', order: params.order || 'ASC' } : sorting;
+                sorting = searchFilter.bookId ? { column: 'user', order: params.order || 'asc' } : sorting;
                 break;
             default:
                 break;

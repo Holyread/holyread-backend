@@ -41,8 +41,8 @@ const getOneUserByFilter = async (query: any, select = []) => {
     const result: any = await UserModel.findOne(query)
       .select(select)
       .populate({
-        path: "subscription",
-        select: "title",
+        path: 'subscription',
+        select: 'title',
       })
       .lean()
       .exec();
@@ -57,7 +57,7 @@ const getAllUsers = async (
     skip: number,
     limit: number,
     search: object,
-    sort: object
+    sort:  Record<string, any>
 ) => {
     try {
         const page: any = [
@@ -66,7 +66,7 @@ const getAllUsers = async (
         if (limit) {
             page.push({ $limit: limit })
         }
-        let result: any
+        const result: any
             = await UserModel
                 .aggregate([
                     {
@@ -85,15 +85,15 @@ const getAllUsers = async (
                             image: {
                                 $concat: [
                                     awsBucket[NODE_ENV].s3BaseURL + '/users/',
-                                    '$image'
-                                ]
+                                    '$image',
+                                ],
                             },
                             inAppSubscriptionStatus: 1.0,
                             'inAppSubscription.createdAt': 1.0,
                             'inAppSubscription.expiredAt': 1.0,
                             'inAppSubscription.coupon': 1.0,
-                            'inAppSubscription.purchaseToken': 1.0
-                        }
+                            'inAppSubscription.purchaseToken': 1.0,
+                        },
                     },
                     {
                         $lookup: {
@@ -101,7 +101,7 @@ const getAllUsers = async (
                             foreignField: '_id',
                             from: 'subscriptions',
                             localField: 'subscription',
-                        }
+                        },
                     },
                     {
                         $lookup: {
@@ -109,7 +109,7 @@ const getAllUsers = async (
                             foreignField: '_id',
                             from: 'transactions',
                             localField: 'lastTrnId',
-                        }
+                        },
                     },
                     {
                         $match: search,
@@ -126,21 +126,21 @@ const getAllUsers = async (
                             'subscription.description': 0,
                             'subscription.stripePlanId': 0,
                             'subscription.intervalCount': 0,
-                        }
+                        },
                     },
                     {
-                        $sort: sort
+                        $sort: sort,
                     },
                     {
                         $facet: {
                             page,
                             total: [
                                 {
-                                    $count: 'count'
-                                }
-                            ]
-                        }
-                    }
+                                    $count: 'count',
+                                },
+                            ],
+                        },
+                    },
                 ]);
         const users = result[0]?.page;
 

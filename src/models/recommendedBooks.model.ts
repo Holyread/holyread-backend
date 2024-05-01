@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface IRecommendedBook extends mongoose.Document {
     book: string
@@ -20,7 +20,7 @@ export const RecommendedBookSchema = new Schema({
         type: Schema.Types.ObjectId,
         required: true,
         ref: 'bookSummary',
-        index: true
+        index: true,
     },
     createdAt: {
         type: Date, default: () => {

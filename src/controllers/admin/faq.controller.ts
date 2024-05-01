@@ -15,7 +15,7 @@ const addFaq = async (req: Request, res: Response, next: NextFunction) => {
         const data = await faqService.createFaq(body)
         res.status(200).send({
             message: FaqControllerResponse.createFaqSuccess,
-            data
+            data,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -33,7 +33,7 @@ const getOneFaq = async (req: Request, res: Response, next: NextFunction) => {
         }
         res.status(200).send({
             message: FaqControllerResponse.fetchFaqSuccess,
-            data: faqObj
+            data: faqObj,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -54,25 +54,25 @@ const getAllFaqs = async (request: Request, response: Response, next: NextFuncti
                     { question: await getSearchRegexp(params.search) },
                     { answer: await getSearchRegexp(params.search) },
                     { status: await getSearchRegexp(params.search) },
-                ]
+                ],
             }
         }
         const faqsSorting = [];
         switch (params.column) {
             case 'question':
-                faqsSorting.push(['question', params.order || 'ASC']);
+                faqsSorting.push(['question', params.order || 'asc']);
                 break;
             case 'answer':
-                faqsSorting.push(['answer', params.order || 'ASC']);
+                faqsSorting.push(['answer', params.order || 'asc']);
                 break;
             case 'status':
-                faqsSorting.push(['status', params.order || 'ASC']);
+                faqsSorting.push(['status', params.order || 'asc']);
                 break;
             case 'createdAt':
-                faqsSorting.push(['createdAt', params.order || 'ASC']);
+                faqsSorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                faqsSorting.push(['createdAt', 'DESC']);
+                faqsSorting.push(['createdAt', 'desc']);
                 break;
         }
 

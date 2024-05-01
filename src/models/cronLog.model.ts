@@ -1,12 +1,12 @@
 import mongoose, { Schema } from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface ICronLog extends mongoose.Document {
     jobName?: string,
     message?: string,
     status?: 'running' | 'success' | 'failed',
-    endedAt : Date
+    endedAt: Date
 }
 
 export type createCronLogType = {

@@ -14,7 +14,7 @@ const dashboardControllerResponse = responseMessage.dashboardControllerResponse
 const getDashboard = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const users = await usersService.getAllUsersForDashboard({
-            device: { $in: ['android', 'ios', 'web']} 
+            device: { $in: ['android', 'ios', 'web']},
         }, 'device');
         const usersByGroup = groupByKey(users, 'device')
         const bookSummary: any = await bookSummaryService.getBooksCountForDashboard()
@@ -23,14 +23,14 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
             data: {
                 users: {
                     count: users.length,
-                    androidCount: usersByGroup['android'].length,
-                    iosCount: usersByGroup['ios'].length,
-                    webCount: usersByGroup['web'].length
+                    androidCount: usersByGroup.android.length,
+                    iosCount: usersByGroup.ios.length,
+                    webCount: usersByGroup.web.length,
                 },
                 audio: { count: bookSummary.summaries[0].chapters },
                 video: { count: bookSummary.count },
-                book: { count: bookSummary.count }
-            }
+                book: { count: bookSummary.count },
+            },
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -42,7 +42,7 @@ const getTopReadsBooks = async (request: Request, response: Response, next: Next
         const bookSummary: any = await bookSummaryService.getTopReadsBooks(request.query.duration as 'year' | 'month' | 'week')
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
-            data: bookSummary
+            data: bookSummary,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -58,7 +58,7 @@ const getUserAnaylatics = async (request: Request, response: Response, next: Nex
                 );
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
-            data
+            data,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))

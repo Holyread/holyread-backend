@@ -12,13 +12,13 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
 
         let query: any = {
             email: req.body?.email,
-            password: encrypt(req.body?.password || '')
+            password: encrypt(req.body?.password || ''),
         }
 
         if (req.body?.id && req.body?.provider) {
             query = {
                 'oAuth.clientId': req.body.id,
-                'oAuth.provider': req.body?.provider
+                'oAuth.provider': req.body?.provider,
             }
         }
 
@@ -31,7 +31,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
         ) {
             const token: string = getToken({
                 email: userDetails.email,
-                id: userDetails._id
+                id: userDetails._id,
             })
 
             return next(
@@ -39,7 +39,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
                     'You are already using this Holy Reads account on 3 devices. Please log out from one of your devices and try again.',
                     {
                         token,
-                        devices: userDetails?.maxDevices
+                        devices: userDetails?.maxDevices,
                     }
                 )
             )
@@ -49,15 +49,15 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
         Promise.all([
             UserModel.findOneAndUpdate(
                 { _id: userDetails?._id },
-                { 
+                {
                     maxDevices: [
                         ...new Set([
                             ...userDetails?.maxDevices || [],
-                            req.headers.device
-                        ])
-                    ]
+                            req.headers.device,
+                        ]),
+                    ],
                 }
-            )
+            ),
         ]);
     } catch (error: any) {
         next(Boom.badRequest(error));

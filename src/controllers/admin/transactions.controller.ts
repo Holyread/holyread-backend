@@ -17,19 +17,19 @@ const getAllTransactions = async (request: Request | any, response: Response, ne
         const trnSorting = [];
         switch (params.column) {
             case 'status':
-                trnSorting.push(['status', params.order || 'ASC']);
+                trnSorting.push(['status', params.order || 'asc']);
                 break;
             case 'email':
-                trnSorting.push(['email', params.order || 'ASC']);
+                trnSorting.push(['email', params.order || 'asc']);
                 break;
             case 'total':
-                trnSorting.push(['total', params.order || 'ASC']);
+                trnSorting.push(['total', params.order || 'asc']);
                 break;
             case 'date':
-                trnSorting.push(['date', params.order || 'ASC']);
+                trnSorting.push(['date', params.order || 'asc']);
                 break;
             default:
-                trnSorting.push(['date', 'DESC']);
+                trnSorting.push(['date', 'desc']);
                 break;
         }
         if (params.from) {
@@ -44,7 +44,7 @@ const getAllTransactions = async (request: Request | any, response: Response, ne
             {
                 keyword: params?.search?.trim()?.toLowerCase(),
                 from: params.from,
-                to: params.to
+                to: params.to,
             },
             trnSorting
         )

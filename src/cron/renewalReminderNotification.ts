@@ -1,5 +1,4 @@
-import cron from 'cron';
-
+import * as cron from 'cron';
 import { fetchNotifications } from '../controllers/customers/notification.controller';
 import { pushNotification, compileHtml, sentEmail } from '../lib/utils/utils';
 import { emailTemplatesTitles, originEmails, origins } from '../constants/app.constant';
@@ -10,7 +9,7 @@ import { io } from '../app';
 import notificationsService from '../services/customers/notifications/notifications.service';
 import emailTemplateService from '../services/admin/emailTemplate/emailTemplate.service';
 import stripeSubscriptionServices from '../services/stripe/subscription'
-import config from "../../config";
+import config from '../../config';
 
 /** Send and push notification */
 const sentNotification = async (title: string, description: string, user: getUserType) => {
@@ -36,7 +35,7 @@ const sentSubscriptionEmail = async (user, title, description) => {
       try {
             const emailTemplateDetails =
                   await emailTemplateService.getOneEmailTemplateByFilter({
-                        title: emailTemplatesTitles.customer.HolyreadsPlanUpgrade
+                        title: emailTemplatesTitles.customer.HolyreadsPlanUpgrade,
                   }),
                   subject = emailTemplateDetails?.subject || `Holy Reads Renewal Reminder`;
 
@@ -46,9 +45,9 @@ const sentSubscriptionEmail = async (user, title, description) => {
                   const
                         contentData = {
                               username: user.email.split('@')[0],
-                              description: description,
+                              description,
                               link: origins[config.NODE_ENV],
-                              title
+                              title,
                         },
                         htmlData = await compileHtml(
                               emailTemplateDetails.content,
@@ -62,9 +61,9 @@ const sentSubscriptionEmail = async (user, title, description) => {
                   from: originEmails.marketing,
                   to: user.email,
                   subject,
-                  html
+                  html,
             });
-            
+
             if (!result) {
                   console.log('Failed to sent an renewal reminder email');
             }
@@ -81,12 +80,12 @@ const start = async () => {
             const users = await UserModel.find({ $or: [
                         {
                               'inAppSubscription.createdAt': { $exists: true },
-                              'inAppSubscriptionStatus': 'Active'
+                              'inAppSubscriptionStatus': 'Active',
                         },
                         {
-                              'stripe.subscriptionId': { $exists: true } 
+                              'stripe.subscriptionId': { $exists: true },
                         },
-                  ], status: 'Active'
+                  ], status: 'Active',
             }).select([
                   'pushTokens',
                   'inAppSubscription',
@@ -95,7 +94,7 @@ const start = async () => {
                   'stripe.subscriptionId',
                   'subscription',
                   'notification',
-                  'email'
+                  'email',
             ]).populate('subscription', 'title duration').lean().exec();
 
             if (!users?.length) {
@@ -119,7 +118,7 @@ const start = async () => {
                   );
             users.map((user: any, index) => {
                   try {
-                        let subscription = subscriptions[index] || {}
+                        const subscription = subscriptions[index] || {}
                         const now = new Date()
                         const timeAfter24 =
                               now.getTime() + (1000 * 60 * 60 * 24),
@@ -139,9 +138,7 @@ const start = async () => {
                                     !['active', 'trialing'].includes(subscription?.status) ||
                                     !subscription?.current_period_end
                               )
-                        ) { return; }
-
-                        else if (user?.inAppSubscription?.expiredAt) {
+                        ) { return; } else if (user?.inAppSubscription?.expiredAt) {
 
                               if (
                                     /** If notified within 24 hours then skip */
@@ -152,22 +149,22 @@ const start = async () => {
                         const message = {
                               active: {
                                     title: 'Holy Reads Renewal Reminder ⏳',
-                                    description: `Holy Reads gently reminds to you that, Your ${user?.subscription?.title} plan will upgrade tomorrow ✨`
-                              }
+                                    description: `Holy Reads gently reminds to you that, Your ${user?.subscription?.title} plan will upgrade tomorrow ✨`,
+                              },
                         }
 
                         emailPromises.push(
                               sentSubscriptionEmail(
-                                    user, message['active'].title, message['active'].description
+                                    user, message.active.title, message.active.description
                               ).catch(() => { return undefined; })
                         )
                         notificationPromises.push(
                               sentNotification(
-                                    message['active'].title, message['active'].description, user
+                                    message.active.title, message.active.description, user
                               ).catch(() => { return undefined; })
                         )
 
-                        let body = user.inAppSubscription
+                        const body = user.inAppSubscription
                               ? { 'inAppSubscription.planRenewRemindeAt': now }
                               : { 'stripe.planRenewRemindeAt': new Date() }
 
@@ -185,7 +182,7 @@ const start = async () => {
             await Promise.all([
                   ...emailPromises,
                   ...userPromises,
-                  ...notificationPromises
+                  ...notificationPromises,
             ])
 
             console.log('JOB(✅) Renewal Reminder executed successfully!');

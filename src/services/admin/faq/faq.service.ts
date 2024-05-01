@@ -4,7 +4,7 @@ import { FaqModel } from '../../../models/index'
 const createFaq = async (body: any) => {
       try {
             body.status = 'Active'
-            let result: any = await FaqModel.create(body)
+            const result: any = await FaqModel.create(body)
             result.status === 'Active' ? result.status = true : result.status = false
             return result
       } catch (e: any) {
@@ -49,7 +49,7 @@ const getAllFaqs = async (skip: number, limit, search: object, sort) => {
             faqsList.forEach(item => {
                   item.status === 'Active' ? item.status = true : item.status = false
             })
-            const count = await FaqModel.find(search).count()
+            const count = await FaqModel.find(search).countDocuments()
             return { count, faqs: faqsList }
       } catch (e: any) {
             throw new Error(e)
@@ -71,5 +71,5 @@ export default {
       updateFaq,
       getOneFaqByFilter,
       getAllFaqs,
-      deleteFaq
+      deleteFaq,
 }

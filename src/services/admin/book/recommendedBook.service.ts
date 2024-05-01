@@ -3,7 +3,7 @@ import { RecommendedBookModel } from '../../../models/index'
 /** Create recommended book */
 const createRecommendedBook = async (body: any) => {
       try {
-            let result: any = await RecommendedBookModel.create(body)
+            const result: any = await RecommendedBookModel.create(body)
             return result
       } catch (e: any) {
             throw new Error(e)
@@ -41,8 +41,8 @@ const getOneRecommendedBookByFilter = async (query: any) => {
 const getAllRecommendedBooks = async (skip: number, limit, search: object, sort) => {
       try {
             const recommendedBooks = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).populate({ path: 'book', populate: { path: 'author', select: 'name' } }).lean().exec()
-            const count = await RecommendedBookModel.find(search).count()
-            return { count, recommendedBooks: recommendedBooks }
+            const count = await RecommendedBookModel.find(search).countDocuments()
+            return { count, recommendedBooks }
       } catch (e: any) {
             throw new Error(e)
       }
@@ -63,5 +63,5 @@ export default {
       updateRecommendedBook,
       getOneRecommendedBookByFilter,
       getAllRecommendedBooks,
-      deleteRecommendedBook
+      deleteRecommendedBook,
 }

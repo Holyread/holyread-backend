@@ -66,7 +66,7 @@ const createCustomer = async (email?: string, source?: string) => {
                         postal_code: '97712',
                         state: 'CA',
                   },
-                  source
+                  source,
             }
             if (email) {
                   body.email = email
@@ -87,7 +87,7 @@ const getCustomer = async (id: string) => {
             const customer = await stripe.customers.retrieve(id);
             return customer
       } catch (error: any) {
-            return null
+            return undefined
       }
 }
 
@@ -151,7 +151,7 @@ const getCouponList = async (list = [], startAfter = {}) => {
             const { data, has_more: hasMore }
                   = await stripe.coupons.list({
                         starting_after: startAfter,
-                        limit: 100
+                        limit: 100,
                   });
             list = list.concat(data);
             startAfter = data[data.length - 1].id;
@@ -171,7 +171,7 @@ const getOneCoupon = async (id: string) => {
             const coupon = await stripe.coupons.retrieve(id);
             return coupon;
       } catch ({ message }: any) {
-            return null;
+            return undefined;
       }
 };
 
@@ -209,7 +209,7 @@ const createSubscription = async (params: {
                   ],
                   payment_behavior: 'default_incomplete',
                   expand: ['latest_invoice.payment_intent'],
-                  trial_period_days: params.status === 'active' ? 0 : trailDays
+                  trial_period_days: params.status === 'active' ? 0 : trailDays,
             }
             if (params.coupon) {
                   const couponList = await getCouponList();
@@ -253,7 +253,7 @@ const updateSubscription = async (params: {
                         price: params.planId,
                   }],
                   payment_behavior: 'default_incomplete',
-                  trial_end: 'now'
+                  trial_end: 'now',
             }
             if (params.coupon) {
                   body.coupon = params.coupon
@@ -280,7 +280,7 @@ const getWebHookList = async () => {
             const { data } = await stripe.webhookEndpoints.list();
             return data;
       } catch (e) {
-            return null;
+            return undefined;
       }
 };
 
@@ -290,7 +290,7 @@ const deleteWebHook = async (id) => {
             const { deleted } = await stripe.webhookEndpoints.del(id);
             return deleted;
       } catch (e) {
-            return null;
+            return undefined;
       }
 };
 
@@ -299,7 +299,7 @@ const createWebhook = async () => {
       const url: string = serverOrigins[config.NODE_ENV] + '/api/v1/webhook/transactions';
       const webhooks: any[] = await getWebHookList()
 
-      let existingHook: boolean = false;
+      let existingHook = false;
       /** Delete local webhooks */
       webhooks?.map(wi => {
             if (wi.url === url) {
@@ -310,10 +310,10 @@ const createWebhook = async () => {
       });
       if (existingHook || config.NODE_ENV === 'local') return;
 
-      const enabled_events: String[] = [
+      const enabled_events: string[] = [
             'customer.subscription.updated',
             'customer.subscription.created',
-            'invoice.payment_succeeded'
+            'invoice.payment_succeeded',
       ];
       await stripe.webhookEndpoints.create({ url, enabled_events });
       console.log('Subscription webhook created successfully')
@@ -326,12 +326,12 @@ const getInvoice = async (id: string) => {
             const invoice = await stripe.invoices.retrieve(id);
             return invoice
       } catch (error) {
-            return null
+            return undefined
       }
 }
 
 /** Get invoices */
-const getInvoices = async (query: Object, invoices = [], starting_after = {}) => {
+const getInvoices = async (query: object, invoices = [], starting_after = {}) => {
       try {
             const { data, has_more }
                   = await stripe.invoices.list({ ...query, starting_after });
@@ -347,7 +347,7 @@ const getInvoices = async (query: Object, invoices = [], starting_after = {}) =>
 }
 
 /** Get refunds */
-const getRefunds = async (query: Object, refunds = [], starting_after = {}) => {
+const getRefunds = async (query: object, refunds = [], starting_after = {}) => {
       try {
             const { data, has_more }
                   = await stripe.refunds.list({ ...query, starting_after });
@@ -367,7 +367,7 @@ const getRefunds = async (query: Object, refunds = [], starting_after = {}) => {
 /** Retrive total profit */
 const retrieveProfit = async (duration = 'year') => {
       try {
-            let now: Date | Number = new Date();
+            let now: Date | number = new Date();
             now.setHours(0, 0, 0, 0);
             switch (duration) {
                   case 'week':
@@ -403,7 +403,7 @@ const retrieveProfit = async (duration = 'year') => {
 const createPaymentIntent = async (data: any) => {
       try {
             const paymentIntent = await stripe.paymentIntents.create({
-                  ...data
+                  ...data,
             });
             return paymentIntent
       } catch ({ message }: any) {
@@ -433,7 +433,7 @@ const getPaymentIntents = async (list = [], startAfter = {}) => {
             const { data, has_more: hasMore }
                   = await stripe.paymentIntents.list({
                         starting_after: startAfter,
-                        limit: 100
+                        limit: 100,
                   });
             list = list.concat(data);
             startAfter = data[data.length - 1].id;
@@ -451,7 +451,7 @@ const getPaymentIntent = async (id: string) => {
             const paymentIntent = await stripe.paymentIntents.retrieve(id);
             return paymentIntent
       } catch (error) {
-            return null
+            return undefined
       }
 }
 
@@ -461,7 +461,7 @@ const getPaymentMethod = async (id: string) => {
             const paymentMethod = await stripe.paymentMethods.retrieve(id);
             return paymentMethod
       } catch (error) {
-            return null
+            return undefined
       }
 }
 
@@ -473,7 +473,7 @@ const createEphemeralKey = async (customerId: string) => {
                   { apiVersion: '2020-03-02' }
             );
       } catch (error) {
-            return null
+            return undefined
       }
 }
 

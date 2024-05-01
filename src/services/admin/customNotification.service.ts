@@ -10,14 +10,13 @@ const getUserNotifications = async (skip: number, limit, search: object, sort) =
             i.createdAt = formattedDate(i.createdAt).replace(/ /g, ' ');
         });
 
-        const count = await CustomNotificationsModel.find(search).count()
+        const count = await CustomNotificationsModel.find(search).countDocuments()
 
         return { count, notifications };
     } catch (e: any) {
         throw new Error(e);
     }
 };
-
 
 /** Create notifications */
 const createNotification = async (body: any) => {
@@ -42,5 +41,5 @@ const deleteNotification = async (id) => {
 export default {
     getUserNotifications,
     createNotification,
-    deleteNotification
+    deleteNotification,
 }

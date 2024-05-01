@@ -21,7 +21,14 @@ const clearNotifications = async (socket, query) => {
 /** create user notification */
 const createUserNotification = async (req: Request | any, res: Response | any, next: NextFunction) => {
       try {
-            await notificationServices.createNotification({ notification: { title: req.body.title, description: req.body.description }, type: req.body.type, userId: req.user._id })
+            await notificationServices.createNotification({
+                  notification: {
+                        title: req.body.title,
+                        description: req.body.description,
+                  },
+                  type: req.body.type,
+                  userId: req.user._id,
+            });
             res.status(200).send({ message: notificationsControllerResponse.createNotificationSuccess })
             if (req.body.title.includes('subscription') && !req.user?.notification?.subscription) return;
             /** Push notification */

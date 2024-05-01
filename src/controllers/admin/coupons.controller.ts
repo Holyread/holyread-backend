@@ -21,7 +21,7 @@ const addCoupon = async (req: Request, res: Response, next: NextFunction) => {
                     duration: body.duration || 'once',
                     expireDate: new Date(body.expireDate),
                     percentOff: Number(body.discount || 0),
-                    maxRedemptions: body.maxRedemptions
+                    maxRedemptions: body.maxRedemptions,
                 });
 
         if (!couponDetails?.id) {
@@ -33,7 +33,7 @@ const addCoupon = async (req: Request, res: Response, next: NextFunction) => {
         }
 
         const data = await coupoonsService.createCoupon({
-            ...couponDetails,type:body.type
+            ...couponDetails, type: body.type,
         })
 
         if (!data._id) {
@@ -96,42 +96,42 @@ const getAllCoupons = async (request: Request, response: Response, next: NextFun
                 $or: [
                     { code: await getSearchRegexp(params.search) },
                     { duration: await getSearchRegexp(params.search) },
-                ]
+                ],
             }
         }
         if (
             params.search &&
-            (Number(params.search) || Number(params.search) == 0)
+            (Number(params.search) || Number(params.search) === 0)
         ) {
             searchFilter['$or'] = [
                 ...searchFilter['$or'],
                 { discount: params.search },
-                { maxRedemptions: params.search }
+                { maxRedemptions: params.search },
             ]
         }
 
         const couponsSorting = [];
         switch (params.column) {
             case 'code':
-                couponsSorting.push(['code', params.order || 'ASC']);
+                couponsSorting.push(['code', params.order || 'asc']);
                 break;
             case 'discount':
-                couponsSorting.push(['discount', params.order || 'ASC']);
+                couponsSorting.push(['discount', params.order || 'asc']);
                 break;
             case 'duration':
-                couponsSorting.push(['duration', params.order || 'ASC']);
+                couponsSorting.push(['duration', params.order || 'asc']);
                 break;
             case 'maxRedemptions':
-                couponsSorting.push(['maxRedemptions', params.order || 'ASC']);
+                couponsSorting.push(['maxRedemptions', params.order || 'asc']);
                 break;
             case 'expireDate':
-                couponsSorting.push(['expireDate', params.order || 'ASC']);
+                couponsSorting.push(['expireDate', params.order || 'asc']);
                 break;
             case 'createdAt':
-                couponsSorting.push(['createdAt', params.order || 'ASC']);
+                couponsSorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                couponsSorting.push(['createdAt', 'DESC']);
+                couponsSorting.push(['createdAt', 'desc']);
                 break;
         }
 
@@ -168,12 +168,12 @@ const deleteCoupon = async (req: Request, res: Response, next: NextFunction) => 
         }
         await Promise.all([
             coupoonsService.deleteCoupon(id),
-            stripeSubscriptionService.deleteCoupon(data.code)
+            stripeSubscriptionService.deleteCoupon(data.code),
         ])
         return res
             .status(200)
             .send({
-                message: couponsControllerResponse.deleteCouponSuccess
+                message: couponsControllerResponse.deleteCouponSuccess,
             })
 
     } catch (e: any) {

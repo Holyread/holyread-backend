@@ -1,6 +1,5 @@
 import cron from 'cron';
-
-import config from "../../config";
+import config from '../../config';
 import { setReadsOfDayDisplayAt } from '../constants/cron.constants'
 import { getDates } from '../lib/utils/utils'
 import { ReadsOfDayModel } from '../models';
@@ -10,8 +9,8 @@ const start = async () => {
             console.log('JOB(🟢) Reads of day display date filling Started successfully!');
             /** Find reads of days list have missing displayAt */
             const now = new Date();
-            now.setHours(0,0,0,0);
-            const upcomingReadsOfDays = await ReadsOfDayModel.find({ displayAt: { $gte:  now } }).select('_id').lean().exec();
+            now.setHours(0, 0, 0, 0);
+            const upcomingReadsOfDays = await ReadsOfDayModel.find({ displayAt: { $gte: now } }).select('_id').lean().exec();
 
             if (!upcomingReadsOfDays.length) {
                   await ReadsOfDayModel.updateMany({}, { $unset: { displayAt: 1 } })
@@ -24,8 +23,10 @@ const start = async () => {
             const lastDisplayAtDateRecord = await ReadsOfDayModel.findOne({}).sort({ displayAt: -1 }).select('displayAt').lean();
 
             /** start date as today or last displayAt of record */
-            const start: any = new Date(lastDisplayAtDateRecord?.displayAt)?.setDate(new Date(lastDisplayAtDateRecord?.displayAt)?.getDate() + 1) || new Date().setDate(new Date().getDate() - 4);
-            const end = (start * 1) + ((missingDatesReadsOfDays.length)*24*3600*1000);
+            const start: any =
+                  new Date(lastDisplayAtDateRecord?.displayAt)?.setDate(new Date(lastDisplayAtDateRecord?.displayAt)?.getDate() + 1) ||
+                  new Date().setDate(new Date().getDate() - 4);
+            const end = (start * 1) + ((missingDatesReadsOfDays.length) * 24 * 3600 * 1000);
 
             /** dates array equal to missing dates records length */
             const dates = getDates(start, end);

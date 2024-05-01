@@ -15,7 +15,7 @@ const createCoupon = async (
       }
 ) => {
       try {
-            let result: any = await CouponsModel.create({
+            const result: any = await CouponsModel.create({
                   code: body.id,
                   duration: body.duration,
                   discount: body.percent_off,
@@ -24,7 +24,7 @@ const createCoupon = async (
                   updatedAt: new Date(body.created * 1000),
                   maxRedemptions: body.max_redemptions || undefined,
                   expireDate: new Date(body.redeem_by * 1000),
-                  type: body.type
+                  type: body.type,
             })
             return result.toJSON()
       } catch (e: any) {
@@ -58,7 +58,7 @@ const getAllCoupons = async (skip: number, limit, search: object, sort) => {
                   i.expireDate = formattedDate(i.expireDate).replace(/ /g, ' ')
             })
 
-            const count = await CouponsModel.find(search).count()
+            const count = await CouponsModel.find(search).countDocuments()
             return { count, coupons }
       } catch (e: any) {
             throw new Error(e)

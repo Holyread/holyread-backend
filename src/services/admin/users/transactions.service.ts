@@ -9,7 +9,7 @@ const getAllTransactions = async (
       sort: any
 ) => {
       try {
-            let result: any = await TransactionsModel
+            const result: any = await TransactionsModel
                   .find({})
                   .select([
                         'total',
@@ -30,12 +30,12 @@ const getAllTransactions = async (
                         select: [
                               'email',
                               'inAppSubscription',
-                              'subscription'
+                              'subscription',
                         ],
                         populate: {
                               path: 'subscription',
-                              select: 'duration title saves price'
-                        }
+                              select: 'duration title saves price',
+                        },
                   })
                   .lean()
                   .exec();
@@ -52,19 +52,19 @@ const getAllTransactions = async (
                               new Date(i.createdAt).getTime() < search.from ||
                               new Date(i.createdAt).getTime() > search.to
                         )
-                  ) { return null }
+                  ) { return undefined }
                   /** return if date less then start */
                   if (
                         search.from &&
                         !search.to &&
                         new Date(i.createdAt).getTime() < search.from
-                  ) { return null }
+                  ) { return undefined }
                   /** return if date grater then end */
                   if (
                         !search.from &&
                         search.to &&
                         new Date(i.createdAt).getTime() > search.to
-                  ) { return null }
+                  ) { return undefined }
                   const shipping = i?.customer?.shipping?.address
                   const data = {
                         _id: i._id,
@@ -73,7 +73,7 @@ const getAllTransactions = async (
                         createdAt: i?.createdAt,
                         status: i?.status,
                         paymentLink: i?.paymentLink,
-                        payment: i?.device === 'app' ? ['fa fa-mobile', i?.userId?.inAppSubscription?.purchaseToken? 'In-App (Android)' : 'In-App (IOS)'] : ['fa-cc-' + i?.paymentMethod?.brand?.toLowerCase(), i?.paymentMethod?.brand || ''],
+                        payment: i?.device === 'app' ? ['fa fa-mobile', i?.userId?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)'] : ['fa-cc-' + i?.paymentMethod?.brand?.toLowerCase(), i?.paymentMethod?.brand || ''],
                         reason: i.reason,
                         latestInvoice: i.latestInvoice || 'in_' + i._id,
                         subscription: i?.userId?.subscription,
@@ -81,13 +81,13 @@ const getAllTransactions = async (
                         account: i.account,
                         customer: {
                               ...i.customer,
-                              shipping: shipping && shipping?.line1 + ' ,' + shipping?.country + ' ' + shipping?.postal_code
+                              shipping: shipping && shipping?.line1 + ' ,' + shipping?.country + ' ' + shipping?.postal_code,
                         },
                         subTotal: i?.amount?.subtotal || 0,
                         tax: i?.amount?.tax || 0,
                         total: i?.amount?.total || i.total,
                         discount: i?.amount?.discount || 0,
-                        device: i?.device
+                        device: i?.device,
                   }
                   /** Replace negetive total to zero */
                   data.total = Number(data.total) < 0 ? 0.00 : Number(data.total)
@@ -97,8 +97,8 @@ const getAllTransactions = async (
                         search.keyword &&
                         !data?.status?.toLowerCase()?.includes(search.keyword) &&
                         !data?.email?.toLowerCase()?.includes(search.keyword) &&
-                        Math.trunc(data?.total) != search.keyword
-                  ) { return null }
+                        Math.trunc(data?.total) !== search.keyword
+                  ) { return undefined }
                   transactions.add(data)
             })
             transactions = [...transactions].filter(i => i)
@@ -119,7 +119,7 @@ const getAllTransactions = async (
 /** Get user analytics */
 const getUserAnalytics = async (duration = 'year') => {
       try {
-            let now = new Date();
+            const now = new Date();
             switch (duration) {
                   case 'year':
                         now.setMonth(now.getMonth() - 12);
@@ -134,27 +134,27 @@ const getUserAnalytics = async (duration = 'year') => {
             now.setHours(0, 0, 0, 0);
             now.setDate(now.getDate() + 1);
 
-            let transactions: any = await TransactionsModel
+            const transactions: any = await TransactionsModel
                   .find({ userId: { $exists: true }, createdAt: { $gt: now }, status: { $in: ['active', 'subscribed', 'did_renew'] } })
                   .select(
                         'userId total status createdAt amount device'
                   )
-                  .sort([['createdAt', 'ASC']])
+                  .sort([['createdAt', 'asc']])
                   .lean()
                   .exec();
 
             const today = new Date();
             today.setHours(23, 59, 59, 999);
             const dates = getDates(now, today);
-            let
-                  users: any = [],
-                  plans: any = [],
-                  titles = new Set(),
-                  totalUsers = 0,
-                  totalPlans = 0,
-                  totalRevenue = 0;
 
-            let revenues = [];
+            const users: any = [];
+            const plans: any = [];
+            const titles = new Set();
+            let totalUsers = 0;
+            let totalPlans = 0;
+            let totalRevenue = 0;
+
+            const revenues = [];
 
             dates.map((i) => {
                   const iTransactions =
@@ -171,7 +171,7 @@ const getUserAnalytics = async (duration = 'year') => {
                         const first: any = iTransactions?.splice(0, 1)[0]
                         user.add(first?.userId);
                         plan++;
-                        if (first.total && first.status == 'active') {
+                        if (first.total && first.status === 'active') {
                               revenue += first.total;
                         }
                         totalUsers++;
@@ -184,7 +184,7 @@ const getUserAnalytics = async (duration = 'year') => {
                         formattedDate(i, {
                               day: 'numeric',
                               month: 'numeric',
-                              year: 'numeric'
+                              year: 'numeric',
                         }).replace(/ /g, '/')
                   );
                   users.push([...user].length);
@@ -205,7 +205,7 @@ const getUserAnalytics = async (duration = 'year') => {
 
 const getTransaction = async (query: object) => {
       try {
-            const transaction = await TransactionsModel.findOne(query).sort([['createdAt', 'DESC']]).lean().exec();
+            const transaction = await TransactionsModel.findOne(query).sort([['createdAt', 'desc']]).lean().exec();
             return transaction;
       } catch ({ message }: any) {
             return {}
@@ -213,7 +213,7 @@ const getTransaction = async (query: object) => {
 }
 
 /** Delete user transactions */
-const deleteTransaction = async (query: Object) => {
+const deleteTransaction = async (query: object) => {
       try {
             await TransactionsModel.deleteMany(query)
       } catch (e: any) {
@@ -223,17 +223,17 @@ const deleteTransaction = async (query: Object) => {
 
 const getTransactionsList = async () => {
       try {
-          const result = await TransactionsModel.find().lean()
-          return result
+            const result = await TransactionsModel.find().lean()
+            return result
       } catch (e: any) {
-          throw new Error(e)
+            throw new Error(e)
       }
-  }
+}
 
 export default {
       getTransaction,
       getUserAnalytics,
       deleteTransaction,
       getAllTransactions,
-      getTransactionsList
+      getTransactionsList,
 }

@@ -1,5 +1,5 @@
 import cron from 'cron';
-import config from "../../config";
+import config from '../../config';
 import { contentUpdateNotification
  } from '../constants/cron.constants'
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
@@ -27,8 +27,8 @@ const start = async () => {
         const newPublishBook = await BookSummaryModel.findOne({
             publish: true, publishedAt: {
                 $gte: today,
-                $lt: tomorrow
-            }
+                $lt: tomorrow,
+            },
         }).select([
             '_id',
             'description',
@@ -41,7 +41,7 @@ const start = async () => {
             'views',
             'coverImage',
             'totalStar',
-            'status'
+            'status',
         ]).populate('author').lean().exec();
 
         let publishContent;
@@ -96,20 +96,20 @@ const start = async () => {
                         coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${publishContent.coverImage}`,
                         totalStar: publishContent.bookRating.star,
                         status: publishContent.status,
-                    }
-                }
+                    },
+                },
             };
             try {
                 await pushNotification(tokens, notificationPayload.title, notificationPayload.body, JSON.stringify(notificationPayload.data));
                 notificationsSent.push({
                     userId: user._id,
-                    success: true
+                    success: true,
                 });
             } catch (error: any) {
                 notificationsSent.push({
                     userId: user._id,
                     success: false,
-                    errorMessage: error.message
+                    errorMessage: error.message,
                 });
             }
         }
@@ -130,7 +130,7 @@ const start = async () => {
                     success: notification.success,
                     errorMessage: notification.errorMessage,
                 },
-                createdAt: new Date()
+                createdAt: new Date(),
             });
             await notificationLog.save();
         }
@@ -141,7 +141,7 @@ const start = async () => {
             jobName: 'content_update_alert',
             status: 'failed',
             endedAt: new Date(),
-            message: `content update alert job failed: ${error.message}`
+            message: `content update alert job failed: ${error.message}`,
         });
         await cronLog.save();
     }

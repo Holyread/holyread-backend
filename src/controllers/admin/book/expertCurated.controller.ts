@@ -33,7 +33,7 @@ const addExpertCurated = async (req: Request, res: Response, next: NextFunction)
         const data = await expertCuratedService.createExpertCurated(body)
         res.status(200).send({
             message: expertCuratedControllerResponse.createExpertCuratedSuccess,
-            data
+            data,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -72,8 +72,8 @@ const getAllExpertCurated = async (request: Request, response: Response, next: N
                 $or: [
                     { 'title': await getSearchRegexp(params.search) },
                     { 'status': await getSearchRegexp(params.search) },
-                    { 'description': await getSearchRegexp(params.search) }
-                ]
+                    { 'description': await getSearchRegexp(params.search) },
+                ],
             }
         }
 
@@ -88,16 +88,16 @@ const getAllExpertCurated = async (request: Request, response: Response, next: N
         const expertCuratedSorting = [];
         switch (params.column) {
             case 'title':
-                expertCuratedSorting.push(['title', params.order || 'ASC']);
+                expertCuratedSorting.push(['title', params.order || 'asc']);
                 break;
             case 'status':
-                expertCuratedSorting.push(['status', params.order || 'ASC']);
+                expertCuratedSorting.push(['status', params.order || 'asc']);
                 break;
             case 'createdAt':
-                expertCuratedSorting.push(['createdAt', params.order || 'ASC']);
+                expertCuratedSorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                expertCuratedSorting.push(['title', 'DESC']);
+                expertCuratedSorting.push(['title', 'desc']);
                 break;
         }
 

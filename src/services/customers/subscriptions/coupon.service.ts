@@ -14,7 +14,7 @@ const getOneCouponByFilter = async (query: any) => {
                               'duration',
                               'expireDate',
                               'maxRedemptions',
-                              'type'
+                              'type',
                         ])
                         .lean();
             return result
@@ -41,7 +41,7 @@ const getAllCoupons = async (skip: number, limit, search: object, sort) => {
                         .sort(sort)
                         .lean();
 
-            const count = await CouponsModel.find(search).count()
+            const count = await CouponsModel.find(search).countDocuments()
             return { count, coupons }
       } catch (e: any) {
             throw new Error(e)

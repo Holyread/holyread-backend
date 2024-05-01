@@ -38,7 +38,7 @@ const getAllRatings = async (skip: number, limit, search: any, sort: { column: s
                                     ratings[index].ratings[
                                           `${oneRating.star}`
                                     ]?.users || 0
-                              ) + 1
+                              ) + 1,
                         }
                   } else {
                         const bookDetails = books.find(
@@ -51,11 +51,11 @@ const getAllRatings = async (skip: number, limit, search: any, sort: { column: s
                               ratings: {
                                     [`${oneRating.star}`]: {
                                           stars: oneRating.star,
-                                          users: 1
-                                    }
+                                          users: 1,
+                                    },
                               },
                               bookTitle: bookDetails.title,
-                              bookCoverImage: awsBucket[config.NODE_ENV].s3BaseURL + '/books/coverImage/' + bookDetails.coverImage
+                              bookCoverImage: awsBucket[config.NODE_ENV].s3BaseURL + '/books/coverImage/' + bookDetails.coverImage,
                         })
                   }
             }))
@@ -63,21 +63,21 @@ const getAllRatings = async (skip: number, limit, search: any, sort: { column: s
             ratings = ratings.map(item => {
                   let stars = 0
                   let users = 0
-                  for (let i in item.ratings) {
-                        stars += item.ratings[i].stars
-                        users += item.ratings[i].users
-                  }
+                  item.ratings.forEach(rating => {
+                        stars += rating.stars;
+                        users += rating.users;
+                  });
                   item.star = Number((stars / users).toFixed(1))
 
                   if (
                         search.star &&
                         Number(search.star) !== Math.trunc(item.star || 0)
-                  ) { return null }
+                  ) { return undefined }
 
                   if (
                         search.search &&
                         !item.bookTitle.toLowerCase().includes(search.search)
-                  ) { return null }
+                  ) { return undefined }
 
                   item.ratings = users
                   return item
@@ -97,7 +97,7 @@ const getAllRatings = async (skip: number, limit, search: any, sort: { column: s
             })
             return {
                   count,
-                  ratings: ratings.slice(skip, skip + limit)
+                  ratings: ratings.slice(skip, skip + limit),
             }
       } catch (e: any) {
             throw new Error(e)
@@ -114,7 +114,7 @@ const getBookRatings = async (skip: number, limit, search: any, sort: { column: 
             const users = await UserModel.find({ _id: { '$in': userIds } }).select('email').lean().exec()
             let ratings = await Promise.all(bookRatings.map(async (oneRating: any) => {
                   if (!oneRating) {
-                        return null
+                        return undefined
                   }
                   oneRating.star = oneRating.star || 0
                   const user = users.find(oneUser => String(oneUser._id) === String(oneRating.userId))
@@ -125,9 +125,9 @@ const getBookRatings = async (skip: number, limit, search: any, sort: { column: 
                         star: oneRating.star,
                         bookTitle: bookDetails.title,
                         bookCoverImage: awsBucket[config.NODE_ENV].s3BaseURL + '/books/coverImage/' + bookDetails.coverImage,
-                        ratings: oneRating.description
+                        ratings: oneRating.description,
                   }
-                  if (search.star && Math.trunc(item.star || 0) !== Math.trunc(search.star || 0)) return null
+                  if (search.star && Math.trunc(item.star || 0) !== Math.trunc(search.star || 0)) return undefined
                   if (
                         search.search &&
                         (
@@ -135,7 +135,7 @@ const getBookRatings = async (skip: number, limit, search: any, sort: { column: 
                               !item.user.toLowerCase().includes(search.search) &&
                               !item.ratings.toLowerCase().includes(search.search)
                         )
-                  ) return null
+                  ) return undefined
                   return item
             }))
             ratings = ratings.filter(i => i)
@@ -157,5 +157,5 @@ const getBookRatings = async (skip: number, limit, search: any, sort: { column: 
 
 export default {
       getAllRatings,
-      getBookRatings
+      getBookRatings,
 }

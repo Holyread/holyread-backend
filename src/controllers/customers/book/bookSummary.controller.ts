@@ -21,31 +21,31 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
         const params = request.query
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        let bookSearchFilter: any = { status: 'Active', search: {} }
-        let authorSearchFilter: any = {}
+        const bookSearchFilter: any = { status: 'Active', search: {} }
+        const authorSearchFilter: any = {}
         if (params.category) {
-            bookSearchFilter.search.categories = { $in: [Types.ObjectId(params.category as any)] }
+            bookSearchFilter.search.categories = { $in: [new Types.ObjectId(params.category as any)] }
         }
         if (params.search) {
-            bookSearchFilter.search['$or'] = [{ title: await getSearchRegexp(params.search) }]
-            bookSearchFilter.search['$or'].push({ 'author.name': await getSearchRegexp(params.search) })
+            bookSearchFilter.search.$or = [{ title: await getSearchRegexp(params.search) }]
+            bookSearchFilter.search.$or.push({ 'author.name': await getSearchRegexp(params.search) })
             authorSearchFilter.name = await getSearchRegexp(params.search)
         }
         if (params.author) {
-            bookSearchFilter.search['author._id'] = Types.ObjectId(params.author as string)
+            bookSearchFilter.search['author._id'] = new Types.ObjectId(params.author as string)
         }
-        const bookSummariesList: any = await bookSummaryService.getAllBookSummariesForDiscover(Number(skip), Number(limit), bookSearchFilter, [['createdAt', 'DESC']])
+        const bookSummariesList: any = await bookSummaryService.getAllBookSummariesForDiscover(Number(skip), Number(limit), bookSearchFilter, [['createdAt', 'desc']])
         if (params.author) {
             response.status(200).json({
                 message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
-                data: bookSummariesList
+                data: bookSummariesList,
             })
             return
         }
-        const authorsList: any = await bookAuthorService.getAllAuthors(Number(skip), Number(limit), authorSearchFilter, [['createdAt', 'DESC']])
+        const authorsList: any = await bookAuthorService.getAllAuthors(Number(skip), Number(limit), authorSearchFilter, [['createdAt', 'desc']])
         response.status(200).json({
             message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
-            data: { books: bookSummariesList, authors: authorsList }
+            data: { books: bookSummariesList, authors: authorsList },
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -68,7 +68,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                 'active',
                 'subscribed',
                 'did_renew',
-                'offer_redeemed'
+                'offer_redeemed',
             ].includes(
                 req.user?.inAppSubscriptionStatus?.toLowerCase()
             )
@@ -83,7 +83,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                 'active',
                 'subscribed',
                 'did_renew',
-                'offer_redeemed'
+                'offer_redeemed',
             ].includes(
                 req.user?.inAppSubscriptionStatus?.toLowerCase()
             )
@@ -99,7 +99,9 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                     )
                 isPlanActive = s?.status === 'active'
                 isPlanExpired = !['active', 'trialing'].includes(s?.status?.toLowerCase())
-            } catch (e) { }
+            } catch (e: any) {
+                next(Boom.badData(e.message))
+             }
         }
         /*if (
             !req.user.inAppSubscription &&
@@ -133,7 +135,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             end.setHours(23, 59, 59, 999);
 
             /** Filter current days new view books */
-            let todayViews = []; let isExist = false;
+            const todayViews = []; let isExist = false;
             req.user.libraries = await userService.getUserLibrary({ _id: req.user.libraries })
             req?.user?.libraries?.view.map(i => {
                 const createdAt = new Date(i.createdAt).getTime();
@@ -164,12 +166,13 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             });
         }
         res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummarySuccess, data })
+
         if (!req.user?.libraries?._id) {
             req.user.libraries = await userService.getUserLibrary({ _id: req.user.libraries }, ['view'])
         }
 
         /** Incress book views */
-        if (!req.user?.libraries?.view.find(i => String(i.bookId) === (req.params.id))) {
+        if (!req.user?.libraries?.view?.find(i => String(i.bookId) === (req.params.id))) {
             await bookSummaryService.updateBookSummary({ '$inc': { views: 1 } }, { _id: req.params.id })
         }
     } catch (e: any) {

@@ -4,7 +4,7 @@ import { SubscriptionsModel } from '../../../models/index'
 const createSubscription = async (body: any) => {
       try {
             body.status = 'Active'
-            let result: any = await SubscriptionsModel.create(body)
+            const result: any = await SubscriptionsModel.create(body)
             result.status === 'Active' ? result.status = true : result.status = false
             return result.toJSON()
       } catch (e: any) {
@@ -22,7 +22,7 @@ const updateSubscription = async (body: any, id: string) => {
                   { ...body, updatedAt: new Date() },
                   { new: true }
             ).lean()
-            updatedSubscription.status === 'Active' ? updatedSubscription.status = true : updatedSubscription.status = false 
+            updatedSubscription.status === 'Active' ? updatedSubscription.status = true : updatedSubscription.status = false
             return updatedSubscription
       } catch (e: any) {
             throw new Error(e)
@@ -49,7 +49,7 @@ const getAllSubscriptions = async (skip: number, limit, search: object, sort) =>
             subscriptionsList.forEach(item => {
                   item.status === 'Active' ? item.status = true : item.status = false
             })
-            const count = await SubscriptionsModel.find(search).count()
+            const count = await SubscriptionsModel.find(search).countDocuments()
             return { count, subscriptions: subscriptionsList }
       } catch (e: any) {
             throw new Error(e)
@@ -82,5 +82,5 @@ export default {
       getOneSubscriptionByFilter,
       getAllSubscriptions,
       getAllSubscriptionsName,
-      deleteSubscription
+      deleteSubscription,
 }

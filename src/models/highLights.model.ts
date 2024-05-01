@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose'
-mongoose.set('useCreateIndex', true)
+
+mongoose.set('autoIndex', true);
 
 export interface IHighLights extends mongoose.Document {
     bookId: string,
@@ -58,7 +59,7 @@ export const HighLightsSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'user',
         required: true,
-        index: true
+        index: true,
     },
     highLights: [{
         color: { type: String, required: true },
@@ -67,7 +68,7 @@ export const HighLightsSchema = new Schema({
         note: { type: String },
         textDecoration: { type: String },
         text: { type: String },
-        updatedAt: { type: Date }
+        updatedAt: { type: Date },
     }],
     createdAt: {
         type: Date, default: () => {

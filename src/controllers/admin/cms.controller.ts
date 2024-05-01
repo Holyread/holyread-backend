@@ -19,7 +19,7 @@ const addCms = async (req: Request, res: Response, next: NextFunction) => {
         const data = await cmsService.createCms(body)
         res.status(200).send({
             message: cmsControllerResponse.createCmsSuccess,
-            data
+            data,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -37,7 +37,7 @@ const getOneCms = async (req: Request, res: Response, next: NextFunction) => {
         }
         res.status(200).send({
             message: cmsControllerResponse.fetchCmsSuccess,
-            data: cmsObj
+            data: cmsObj,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -60,28 +60,28 @@ const getAllCms = async (request: Request, response: Response, next: NextFunctio
                     { metaKeyword: await getSearchRegexp(params.search) },
                     { metaDescription: await getSearchRegexp(params.search) },
                     { content: await getSearchRegexp(params.search) },
-                ]
+                ],
             }
         }
         const cmsSorting = [];
         switch (params.column) {
             case 'title':
-                cmsSorting.push(['title', params.order || 'ASC']);
+                cmsSorting.push(['title', params.order || 'asc']);
                 break;
             case 'metaTitle':
-                cmsSorting.push(['metaTitle', params.order || 'ASC']);
+                cmsSorting.push(['metaTitle', params.order || 'asc']);
                 break;
             case 'metaKeyword':
-                cmsSorting.push(['metaKeyword', params.order || 'ASC']);
+                cmsSorting.push(['metaKeyword', params.order || 'asc']);
                 break;
             case 'metaDescription':
-                cmsSorting.push(['metaDescription', params.order || 'ASC']);
+                cmsSorting.push(['metaDescription', params.order || 'asc']);
                 break;
             case 'createdAt':
-                cmsSorting.push(['createdAt', params.order || 'ASC']);
+                cmsSorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                cmsSorting.push(['title', 'DESC']);
+                cmsSorting.push(['title', 'desc']);
                 break;
         }
 

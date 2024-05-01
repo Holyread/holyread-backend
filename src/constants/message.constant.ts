@@ -57,12 +57,12 @@ export const responseMessage = {
         socialLinkError: 'User is authorized as admin. Please use another email.',
         invalidCodeOrTokenError: 'Invalid code or token provided',
         invalidOtpError: 'Incorrect OTP',
-        invalidDateError:'Start date should less or equal to end date',
-        inValidEmailError:'Please add valid email address',
-        noUserFound:'No users found',
+        invalidDateError: 'Start date should less or equal to end date',
+        inValidEmailError: 'Please add valid email address',
+        noUserFound: 'No users found',
         addCategorySuccess: 'Category added successfully',
         getCategorySuccess: 'User selected categories fetched successfully',
-        missingCategoryError: 'Select at least one category as a favorite'
+        missingCategoryError: 'Select at least one category as a favorite',
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',
@@ -83,7 +83,7 @@ export const responseMessage = {
         sentEmailFailure: 'The email did not send. Please try again.',
         forgotPassowrdSuccess: 'Password updated successfully',
         passwordMissingError: 'Password is missing',
-        notificationSuccess: 'Notification sent successfully'
+        notificationSuccess: 'Notification sent successfully',
     },
     subscriptionsControllerResponse: {
         createSubscriptionSuccess: 'Subscription added successfully',
@@ -107,7 +107,7 @@ export const responseMessage = {
         fetchBookCategorySuccess: 'Book category details fetched successfully',
         fetchBookCategoriesSuccess: 'Book categories list fetched successfully',
         createBookCategoryFailure: 'Book category already added',
-        getBookCategoryFailure: 'Failed to fetch book category details'
+        getBookCategoryFailure: 'Failed to fetch book category details',
     },
     bookSummaryControllerResponse: {
         createBookSummarySuccess: 'Book summary added successfully',
@@ -124,10 +124,10 @@ export const responseMessage = {
         recommendedBookError: 'This summary is locked because it already exists in your recommended list.',
         sendBookToKindleSuccess: 'The summary was successfully sent to your Kindle.',
         sendBookToKindleEmailFailure: 'The summary was not sent to your Kindle email.',
-        getBookRatingsSuccess: 'Book ratings fetched successfully'
+        getBookRatingsSuccess: 'Book ratings fetched successfully',
     },
     dashboardControllerResponse: {
-        getDashboardSuccess: 'Dashboard details fetched successfully'
+        getDashboardSuccess: 'Dashboard details fetched successfully',
     },
     authorControllerResponse: {
         createAuthorSuccess: 'Author added successfully',
@@ -146,7 +146,7 @@ export const responseMessage = {
         fetchExpertCuratedSuccess: 'Expert curated details fetched successfully',
         fetchAllExpertCuratedSuccess: 'Expert curated list fetched successfully',
         createExpertCuratedFailure: 'Expert curated already added',
-        getExpertCuratedFailure: 'Failed to fetch Expert curated details'
+        getExpertCuratedFailure: 'Failed to fetch Expert curated details',
     },
     recommendedBookControllerResponse: {
         createRecommendedBookSuccess: 'Recommended book added successfully',
@@ -155,7 +155,7 @@ export const responseMessage = {
         deleteRecommendedBookSuccess: 'Recommended book deleted successfully',
         fetchRecommendedBookSuccess: 'Recommended book details fetched successfully',
         fetchRecommendedBooksSuccess: 'Recommended books list fetched successfully',
-        getRecommendedBookFailure: 'Failed to fetch recommended book details'
+        getRecommendedBookFailure: 'Failed to fetch recommended book details',
     },
     testimonialControllerResponse: {
         createTestimonialSuccess: 'Testimonial added successfully',
@@ -164,7 +164,7 @@ export const responseMessage = {
         fetchTestimonialSuccess: 'Testimonial details fetched successfully',
         fetchTestimonialsSuccess: 'Testimonials list fetched successfully',
         createTestimonialFailure: 'Testimonial already added',
-        getTestimonialFailure: 'Failed to fetch testimonial details'
+        getTestimonialFailure: 'Failed to fetch testimonial details',
     },
     shareImageControllerResponse: {
         createShareImageSuccess: 'Share image added successfully',
@@ -174,7 +174,7 @@ export const responseMessage = {
         fetchShareImagesSuccess: 'Share images list fetched successfully',
         createShareImageFailure: 'Failed to create share image image',
         shareImageExistError: 'Share image already added',
-        getShareImageFailure: 'Failed to fetch share image details'
+        getShareImageFailure: 'Failed to fetch share image details',
     },
     readsOfDayControllerResponse: {
         createReadOfDaySuccess: 'Read of the Day added successfully.',
@@ -183,7 +183,7 @@ export const responseMessage = {
         fetchReadOfDaySuccess: 'Read of day details fetched successfully',
         fetchReadsOfDaySuccess: 'Reads of day list fetched successfully',
         createReadOfDayFailure: 'Read of day already added',
-        getReadOfDayFailure: 'Failed to fetch Read of day details'
+        getReadOfDayFailure: 'Failed to fetch Read of day details',
     },
     smallGroupControllerResponse: {
         createSmallGroupSuccess: 'Small group added successfully',
@@ -193,7 +193,7 @@ export const responseMessage = {
         fetchSmallGroupsSuccess: 'Small groups list fetched successfully',
         createSmallGroupFailure: 'Failed to create Small group image',
         smallGroupExistError: 'Small group already added',
-        getSmallGroupFailure: 'Failed to fetch small group details'
+        getSmallGroupFailure: 'Failed to fetch small group details',
     },
     highLightsControllerResponse: {
         createHighLightSuccess: 'High light added successfully',
@@ -202,7 +202,7 @@ export const responseMessage = {
         fetchHighLightsSuccess: 'High lights list fetched successfully',
         invalidHighLightColor: 'Color value should be HEX',
         getHighLightFailure: 'Failed to fetch High light details',
-        invalidStartIndexError: 'Start index should be less then end index.'
+        invalidStartIndexError: 'Start index should be less then end index.',
     },
     cmsControllerResponse: {
         createCmsSuccess: 'Cms added successfully',
@@ -247,7 +247,7 @@ export const responseMessage = {
         getTransactionsSuccess: 'Transactions listed successfully',
     },
     handoutsControllerResponse: {
-        updateHandoutSuccess: 'Handout updated successfully'
+        updateHandoutSuccess: 'Handout updated successfully',
     },
     couponsControllerResponse: {
         couponCreateError: 'Failed to create coupon',
@@ -256,6 +256,6 @@ export const responseMessage = {
         fetchCouponSuccess: 'Coupon details fetched successfully',
         fetchCouponsSuccess: 'Coupons list fetched successfully',
         deleteCouponSuccess: 'Coupon removed successfully',
-        invalidCoupon: 'Coupon is not valid'
-    }
+        invalidCoupon: 'Coupon is not valid',
+    },
 }

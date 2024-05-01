@@ -1,5 +1,5 @@
-import cron from 'cron';
-import config from "../../config";
+import * as cron from 'cron';
+import config from '../../config';
 import { UserModel, CronLogModel, NotificationsModel } from '../models';
 import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
 import { kindleSetUpNotification } from '../constants/cron.constants';
@@ -25,7 +25,7 @@ const start = async () => {
             'notification.push': true,
             'notification.userActivityAlerts': true,
             kindleEmail: { $exists: false },
-            createdAt: { $lte: fiveDaysAgo }
+            createdAt: { $lte: fiveDaysAgo },
         }).select('timeZone pushTokens').lean().exec();
 
         // Send notifications to matching users
@@ -40,13 +40,13 @@ const start = async () => {
                 await pushNotification(tokens, notificationPayload.title, notificationPayload.body);
                 notificationsSent.push({
                     userId: user._id,
-                    success: true
+                    success: true,
                 });
             } catch (error: any) {
                 notificationsSent.push({
                     userId: user._id,
                     success: false,
-                    errorMessage: error.message
+                    errorMessage: error.message,
                 });
             }
         }
@@ -68,7 +68,7 @@ const start = async () => {
                     success: notification.success,
                     errorMessage: notification.errorMessage,
                 },
-                createdAt: new Date()
+                createdAt: new Date(),
             });
             await notificationLog.save();
         }
@@ -79,7 +79,7 @@ const start = async () => {
             jobName: 'notify_kindle_email_setup',
             status: 'failed',
             endedAt: new Date(),
-            message: `Notify kindle email setup job failed: ${error.message}`
+            message: `Notify kindle email setup job failed: ${error.message}`,
         });
         await cronLog.save();
     }

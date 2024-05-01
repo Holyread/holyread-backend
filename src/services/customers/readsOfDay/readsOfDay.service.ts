@@ -8,7 +8,7 @@ const NODE_ENV = config.NODE_ENV
 const getAllReadsOfDays = async (skip: number, limit, search: object, sort) => {
     try {
         const readsOfTheDayList: any = await ReadsOfDayModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        let count: any = await ReadsOfDayModel.count(search).lean().exec()
+        const count: any = await ReadsOfDayModel.countDocuments(search).lean().exec()
         readsOfTheDayList.map(async (item: any) => {
             item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image
         })

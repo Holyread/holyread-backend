@@ -1,4 +1,4 @@
-import * as cron from 'cron';
+import { CronJob } from 'cron';
 import { fetchNotifications } from '../controllers/customers/notification.controller';
 import { pushNotification, compileHtml, sentEmail } from '../lib/utils/utils';
 import { emailTemplatesTitles, originEmails, origins } from '../constants/app.constant';
@@ -197,6 +197,6 @@ const start = async () => {
             return;
       }
       const schedule = Object.values(renewalReminderNotification.SCHEDULE).join(' ');
-      new cron.CronJob(schedule, () => { start() }, null, true);
+      new CronJob(schedule, () => { start() }, null, true);
       console.log('JOB(🟢) Renewal Reminder initiated successfully!');
 })(renewalReminderNotification, config);

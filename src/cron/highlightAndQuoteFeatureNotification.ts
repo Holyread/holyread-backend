@@ -1,4 +1,4 @@
-import cron from 'cron';
+import { CronJob } from 'cron';
 import config from '../../config';
 import { highlightAndQuoteFeatureNotification } from '../constants/cron.constants'
 import { UserModel, CronLogModel, NotificationsModel, HighLightsModel } from '../models';
@@ -95,6 +95,6 @@ const start = async () => {
         return;
     }
     const schedule = Object.values(highlightAndQuoteFeatureNotification.SCHEDULE).join(' ');
-    new cron.CronJob(schedule, () => { start() }, null, true);
+    new CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) highlight and quote feature initiated successfully!');
 })(highlightAndQuoteFeatureNotification, config);

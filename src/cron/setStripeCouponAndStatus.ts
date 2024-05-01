@@ -1,4 +1,4 @@
-import * as cron from 'cron';
+import { CronJob } from 'cron';
 import config from '../../config';
 import { setStripeCouponAndStatus } from '../constants/cron.constants'
 import stripeSubscriptionServices from '../services/stripe/subscription'
@@ -55,6 +55,6 @@ const start = async () => {
     return;
   }
   const schedule = Object.values(setStripeCouponAndStatus.SCHEDULE).join(' ');
-  new cron.CronJob(schedule, () => { start() }, undefined, true);
+  new CronJob(schedule, () => { start() }, undefined, true);
   console.log('JOB(🟢) coupon add initiated successfully!');
 })(setStripeCouponAndStatus, config);

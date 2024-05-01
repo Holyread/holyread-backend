@@ -1,4 +1,4 @@
-import * as cron from 'cron';
+import { CronJob } from 'cron';
 import config from '../../config';
 import { schedulePersonalizeNotification } from '../constants/cron.constants'
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
@@ -138,6 +138,6 @@ const start = async () => {
         return;
     }
     const schedule = Object.values(schedulePersonalizeNotification.SCHEDULE).join(' ');
-    new cron.CronJob(schedule, () => { start() }, undefined, true);
+    new CronJob(schedule, () => { start() }, undefined, true);
     console.log('JOB(🟢) schedule personalize notification initiated successfully!');
 })(schedulePersonalizeNotification, config);

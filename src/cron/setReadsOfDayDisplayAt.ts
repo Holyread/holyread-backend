@@ -1,4 +1,4 @@
-import cron from 'cron';
+import { CronJob } from 'cron';
 import config from '../../config';
 import { setReadsOfDayDisplayAt } from '../constants/cron.constants'
 import { getDates } from '../lib/utils/utils'
@@ -59,6 +59,6 @@ const start = async () => {
             return;
       }
       const schedule = Object.values(setReadsOfDayDisplayAt.SCHEDULE).join(' ');
-      new cron.CronJob(schedule, () => { start() }, null, true);
+      new CronJob(schedule, () => { start() }, null, true);
       console.log('JOB(🟢) Reads of day display date filling initiated successfully!');
 })(setReadsOfDayDisplayAt, config);

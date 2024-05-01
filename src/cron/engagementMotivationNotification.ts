@@ -1,4 +1,4 @@
-import cron from 'cron';
+import { CronJob } from 'cron';
 import config from '../../config';
 import { engagementMotivationNotification } from '../constants/cron.constants';
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
@@ -149,6 +149,6 @@ const startEngagementMotivationJob = async () => {
         return;
     }
     const schedule = Object.values(engagementMotivationNotification.SCHEDULE).join(' ');
-    new cron.CronJob(schedule, () => { startEngagementMotivationJob() }, null, true);
+    new CronJob(schedule, () => { startEngagementMotivationJob() }, null, true);
     console.log('JOB(🟢) engagement motivation initiated successfully!');
 })(engagementMotivationNotification, config);

@@ -5,20 +5,20 @@ import config from '../../../config'
 
 const updateUser = async (
       email: string,
-      status: 'subscribed' | 'unsubscribed' | 'cleaned' | 'pending' | 'transactional',
+      status: 'subscribed' | 'unsubscribed' | 'cleaned' | 'pending' | 'transactional'
 ) => {
       try {
             if (config.NODE_ENV !== 'production') return null;
-            const subscriberHash = crypto.createHash("md5")
+            const subscriberHash = crypto.createHash('md5')
                   .update(email.toLowerCase())
-                  .digest("hex");
+                  .digest('hex');
             const listId = '3ca29e1117';
             const auth = Buffer.from(
                   `anystring:${config.MAILCHIMP_API_KEY}`
             ).toString('base64');
             const data = {
                   email_address: email,
-                  status
+                  status,
             };
 
             await axios.put(
@@ -26,10 +26,10 @@ const updateUser = async (
                   data,
                   {
                         headers: {
-                              Accept: "application/json",
-                              'Content-Type': "application/json",
-                              Authorization: `Basic ${auth}`
-                        }
+                              Accept: 'application/json',
+                              'Content-Type': 'application/json',
+                              Authorization: `Basic ${auth}`,
+                        },
                   }
             );
       } catch (error: any) {
@@ -38,5 +38,5 @@ const updateUser = async (
 };
 
 export default {
-      updateUser
+      updateUser,
 }

@@ -23,7 +23,7 @@ const getUserSubscriptionStatus = async (user) => {
                         'active',
                         'subscribed',
                         'did_renew',
-                        'offer_redeemed'
+                        'offer_redeemed',
                   ].includes(
                         user?.inAppSubscriptionStatus?.toLowerCase()
                   )
@@ -38,7 +38,7 @@ const getUserSubscriptionStatus = async (user) => {
                         'active',
                         'subscribed',
                         'did_renew',
-                        'offer_redeemed'
+                        'offer_redeemed',
                   ].includes(
                         user?.inAppSubscriptionStatus?.toLowerCase()
                   )
@@ -54,15 +54,14 @@ const getUserSubscriptionStatus = async (user) => {
                               )
                         isPlanActive = s?.status === 'active'
                         isPlanExpired = !['active', 'trialing'].includes(s?.status?.toLowerCase())
-                  } catch (e) { }
+                  } catch (e) { console.log(e) }
             }
 
             if (!isPlanActive || isPlanExpired) {
-                  subscriptionStatus = "freemium"
+                  subscriptionStatus = 'freemium'
                   return subscriptionStatus
-            }
-            else {
-                  subscriptionStatus = "premium"
+            } else {
+                  subscriptionStatus = 'premium'
                   return subscriptionStatus
             }
       } catch (e: any) {
@@ -72,5 +71,5 @@ const getUserSubscriptionStatus = async (user) => {
 
 export default {
       getAllSubscriptions,
-      getUserSubscriptionStatus
+      getUserSubscriptionStatus,
 }

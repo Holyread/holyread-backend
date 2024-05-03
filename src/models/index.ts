@@ -36,14 +36,13 @@ import { CustomNotificationsModel } from './customNotification.model'
 import { CronLogModel } from './cronLog.model'
 
 const NODE_ENV = config.NODE_ENV
-const option = { useNewUrlParser: true, useUnifiedTopology: true }
 
 mongoose.Promise = global.Promise
 
 // Dont connect to real db when running test configuration
 if (NODE_ENV !== 'test') {
   mongoose
-    .connect(config.DBURL, option)
+    .connect(config.DBURL)
     .then(
       async result =>
         console.log('DB connected successfully')

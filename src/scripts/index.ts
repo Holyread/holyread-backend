@@ -6,3 +6,4 @@ import './set-last-transaction-id';
 // import './set-verified-and-activate-users.script'
 // import './set-default-content-type-script'
 // import './set-book-rating-script'
+// import './remove-duplicate-push-token.script'

@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface INotifications extends mongoose.Document {
     notification: {
@@ -28,7 +28,7 @@ export const NotificationsSchema = new Schema({
         type: Date, default: () => {
             return new Date()
         },
-    }
+    },
 }, { strict: 'throw' })
 
 export const NotificationsModel = mongoose.model<INotifications>('notifications', NotificationsSchema)

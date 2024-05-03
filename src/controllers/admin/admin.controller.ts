@@ -27,7 +27,7 @@ const getAdmin = async (req: Request | any, res: Response, next: NextFunction) =
         delete data.password
         delete data.library
         delete data.smallGroups
-        res.status(200).send({ message: adminControllerResponse.fetchAdminSuccess, data: data })
+        res.status(200).send({ message: adminControllerResponse.fetchAdminSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }
@@ -42,7 +42,7 @@ const updateAdmin = async (req: Request | any, res: Response, next: NextFunction
         }
         if (req.body.image && req.body.image.includes('base64')) {
             await removeS3File(data.image, s3Bucket)
-            const s3File: any = await uploadFileToS3(req.body.image, data.firstName || data.email.substring(0, data.email.lastIndexOf("@")), s3Bucket)
+            const s3File: any = await uploadFileToS3(req.body.image, data.firstName || data.email.substring(0, data.email.lastIndexOf('@')), s3Bucket)
             req.body.image = s3File.name
         }
         if (req.body.image && req.body.image.startsWith('http')) {

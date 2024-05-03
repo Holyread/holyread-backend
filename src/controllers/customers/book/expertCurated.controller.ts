@@ -33,16 +33,16 @@ const getOneExpertCurated = async (req: Request, res: Response, next: NextFuncti
 
         res.status(200).send({
             message: expertCuratedControllerResponse.fetchExpertCuratedSuccess,
-            data
+            data,
         })
-        
+
         /** Incress curated views */
         expertCuratedService
             .updateOneExpertCurated(
                 { _id: id },
                 { '$inc': { views: 1 } }
             )
-        
+
     } catch (e: any) {
         next(Boom.badData(e.message))
     }
@@ -61,8 +61,8 @@ const getAllExpertCurated = async (request: Request, response: Response, next: N
                 $or: [
                     { 'title': await getSearchRegexp(params.search) },
                     { 'status': await getSearchRegexp(params.search) },
-                    { 'description': await getSearchRegexp(params.search) }
-                ]
+                    { 'description': await getSearchRegexp(params.search) },
+                ],
             }
         }
         params.order = String(params.order || 'asc').toLowerCase() === 'asc' ? 1.0 : -1.0

@@ -101,7 +101,7 @@ const getUserAccount = async (
 ) => {
       try {
             /** Get current user */
-            let userObj: any = Object.assign({}, req.user)
+            const userObj: any = Object.assign({}, req.user)
 
             userObj?.oAuth.length === 1 ? userObj.loginType = userObj.oAuth[0]?.provider : userObj.loginType = 'NORMAL'
 
@@ -111,10 +111,10 @@ const getUserAccount = async (
             }
             userObj.isEmailLinked = !!userObj.password
 
-            let subscriptionDetails
+            const subscriptionDetails
                   = await subscriptionService
                         .getOneSubscriptionByFilter({
-                              _id: userObj.subscription
+                              _id: userObj.subscription,
                         })
 
             /** set default subscription end date with 10 days trial */
@@ -123,7 +123,7 @@ const getUserAccount = async (
                         .getTime() + (trailDays * 24 * 60 * 60 * 1000);
 
             if (subscriptionDetails?._id) {
-                  let months
+                  const months
                         = subscriptionDetails.duration === 'Month'
                               ? 1 : subscriptionDetails.duration === 'Half Year'
                                     ? 6 : 12;
@@ -154,7 +154,7 @@ const getUserAccount = async (
                   = await notificationsService
                         .getUserNotifications({ userId: userObj._id })
 
-            if (userObj.email.endsWith("@holyreads-temp.com")) {
+            if (userObj.email.endsWith('@holyreads-temp.com')) {
                   userObj.isSignedUp = false;
             } else {
                   userObj.isSignedUp = true;
@@ -163,7 +163,7 @@ const getUserAccount = async (
             userObj.notifications = notifications
             res.status(200).send({
                   message: authControllerResponse.getUserSuccess,
-                  data: userObj
+                  data: userObj,
             })
 
             if (!userObj.libraries) {
@@ -184,7 +184,7 @@ const getUserAccount = async (
                   {
                         lastSeen: new Date(),
                         libraries: userObj.libraries,
-                        isSignedUp: userObj.isSignedUp
+                        isSignedUp: userObj.isSignedUp,
                   }
             );
       } catch (e: any) {
@@ -206,13 +206,13 @@ const getBlessFriend = async (
             }
 
             /** Get current user */
-            let userObj: any
+            const userObj: any
                   = await usersService
                         .getOneUserByFilter({ email: req.params.email })
 
             res.status(200).send({
                   message: authControllerResponse.getUserSuccess,
-                  data: { email: userObj?.email || null }
+                  data: { email: userObj?.email || null },
             })
       } catch (e: any) {
             next(Boom.badData(e.message))
@@ -229,7 +229,7 @@ const getChangePasswordCode = async (
             const emailTemplateDetails
                   = await emailTemplateService
                         .getOneEmailTemplateByFilter({
-                              title: emailTemplatesTitles.customer.forgotPassword
+                              title: emailTemplatesTitles.customer.forgotPassword,
                         })
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
             const subject = 'Change Password Verification'
@@ -261,7 +261,7 @@ const getChangePasswordCode = async (
             ) {
                   const contentData = {
                         username: userObj.email.split('@')[0],
-                        otp: verificationCode
+                        otp: verificationCode,
                   }
                   const htmlData
                         = await compileHtml(
@@ -277,7 +277,7 @@ const getChangePasswordCode = async (
                   from: originEmails.marketing,
                   to: userObj.email,
                   subject,
-                  html
+                  html,
             });
 
             await usersService.updateUser(
@@ -288,12 +288,12 @@ const getChangePasswordCode = async (
                               expiredIn: new Date(
                                     new Date()
                                           .setMinutes(new Date().getMinutes() + 5)
-                              )
-                        }
+                              ),
+                        },
                   }
             )
             res.status(200).send({
-                  message: authControllerResponse.chnagePasswordRequest
+                  message: authControllerResponse.chnagePasswordRequest,
             })
       } catch (e: any) {
             next(Boom.badData(e.message))
@@ -370,8 +370,8 @@ const changePassword = async (
                   {
                         password: newPassword || password,
                         $unset: {
-                              'codes.changePassword': 1
-                        }
+                              'codes.changePassword': 1,
+                        },
                   }
             )
             const notificationTitle = 'Change Password'
@@ -383,8 +383,8 @@ const changePassword = async (
                         type: 'setting',
                         notification: {
                               title: notificationTitle,
-                              description: notificationDescription
-                        }
+                              description: notificationDescription,
+                        },
                   }
             )
 
@@ -393,7 +393,7 @@ const changePassword = async (
             const emailTemplateDetails
                   = await emailTemplateService
                         .getOneEmailTemplateByFilter({
-                              title: emailTemplatesTitles.customer.changePassword
+                              title: emailTemplatesTitles.customer.changePassword,
                         })
 
             const subject = emailTemplateDetails.subject || 'Holy Reads Password Changed'
@@ -438,10 +438,10 @@ const changePassword = async (
                   from: originEmails.marketing,
                   to: userObj.email,
                   subject,
-                  html
+                  html,
             });
             res.status(200).send({
-                  message: authControllerResponse.passwordUpdateSuccess
+                  message: authControllerResponse.passwordUpdateSuccess,
             })
             /** Push notification */
             if (
@@ -482,7 +482,7 @@ const emailAuth = async (
 
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
             const token: string = getToken({ code: String(verificationCode), email, password: encrypt(password), _id: userObj._id })
-            const link: string = `${origins[NODE_ENV]}/account/verify-user?email-auth=true&token=${token}`
+            const link = `${origins[NODE_ENV]}/account/verify-user?email-auth=true&token=${token}`
 
             const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthVerification })
             const subject = emailTemplateDetails.subject || 'Customer Email Auth Verification'
@@ -504,7 +504,7 @@ const emailAuth = async (
                   from: originEmails.marketing,
                   to: email,
                   subject,
-                  html
+                  html,
             });
             if (!result) {
                   return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
@@ -573,7 +573,7 @@ const verifyEmailAuth = async (
 
             const existingEmailUser = await userService.getOneUserByFilter({
                   email,
-                  _id: { $ne: _id }
+                  _id: { $ne: _id },
             })
 
             if (existingEmailUser) {
@@ -589,7 +589,7 @@ const verifyEmailAuth = async (
             const user: any
                   = await usersService
                         .getOneUserByFilter({
-                              verificationCode: code, _id
+                              verificationCode: code, _id,
                         })
 
             if (!user) {
@@ -606,7 +606,7 @@ const verifyEmailAuth = async (
                   status: 'Active',
                   $unset: { verificationCode: 1 },
                   email,
-                  password: password
+                  password,
             })
             if (user.email !== email) {
                   mailchimpService.updateUser(user.email, 'unsubscribed')
@@ -614,7 +614,7 @@ const verifyEmailAuth = async (
             mailchimpService.updateUser(email, 'subscribed');
             const emailTemplateDetails = await emailTemplateService
                   .getOneEmailTemplateByFilter({
-                        title: emailTemplatesTitles.customer.emailAuthEnabled
+                        title: emailTemplatesTitles.customer.emailAuthEnabled,
                   })
 
             const subject = emailTemplateDetails.subject
@@ -642,7 +642,7 @@ const verifyEmailAuth = async (
 
             if (emailTemplateDetails && emailTemplateDetails.content) {
                   const contentData = {
-                        username: email.split('@')[0]
+                        username: email.split('@')[0],
                   }
                   const htmlData = await compileHtml(
                         emailTemplateDetails.content,
@@ -657,7 +657,7 @@ const verifyEmailAuth = async (
                   from: originEmails.marketing,
                   to: email,
                   subject,
-                  html
+                  html,
             });
             if (false && !result) {
                   /** Return status 404 not found */
@@ -677,13 +677,13 @@ const verifyEmailAuth = async (
                         type: 'setting',
                         notification: {
                               title,
-                              description
-                        }
+                              description,
+                        },
                   })
 
             fetchNotifications(io.sockets, { _id: user._id })
             res.status(200).send({
-                  message: authControllerResponse.emailAuthEnabledSuccess
+                  message: authControllerResponse.emailAuthEnabledSuccess,
             })
             /** Push notification */
             if (
@@ -708,12 +708,11 @@ const getUserSubscription = async (
 ) => {
       try {
             /** Get current user */
-            let data: any = Object.assign({}, req.user)
+            const data: any = Object.assign({}, req.user)
             let subscriptionEndDate = new Date(
                   data.createdAt
             )
                   .getTime() + (24 * 60 * 60 * 1000);
-
 
             if (!data.stripe) {
                   data.subscriptionStatus = 'freemium';
@@ -722,7 +721,7 @@ const getUserSubscription = async (
                   try {
                         data.subscription = await subscriptionService
                               .getOneSubscriptionByFilter({
-                                    _id: data.subscription
+                                    _id: data.subscription,
                               })
                         data.subscriptionStatus = ['Active'].includes(data?.inAppSubscriptionStatus) ? data?.inAppSubscriptionStatus : 'freemium';
                         if (data?.stripe?.subscriptionId) {
@@ -735,8 +734,7 @@ const getUserSubscription = async (
                                           }
                                           data.inAppSubscriptionStatus = capitalizeFirstLetter(res.status)
                                     })
-                        }
-                        else if (false && data?.stripe?.paymentIntent) {
+                        } else if (false && data?.stripe?.paymentIntent) {
                               await stripeSubscriptionService
                                     .getPaymentIntent(data.stripe?.paymentIntent)
                                     .then(res => {
@@ -750,7 +748,7 @@ const getUserSubscription = async (
 
                         /** set default subscription end date with 10 days trial */
                         if (data.subscription?._id) {
-                              let months = data.subscription.duration === 'Month'
+                              const months = data.subscription.duration === 'Month'
                                     ? 1 : data.subscription.duration === 'Half Year'
                                           ? 6 : 12;
 
@@ -782,7 +780,7 @@ const getUserSubscription = async (
                   .status(200)
                   .send({
                         message: authControllerResponse.getUserSuccess,
-                        data
+                        data,
                   })
       } catch ({ message }: any) {
             next(Boom.badData(message as string))
@@ -795,7 +793,7 @@ const getCoupon = async (
       next: NextFunction
 ) => {
       try {
-            let coupon = await stripeSubscriptionService
+            const coupon = await stripeSubscriptionService
                   .getOneCoupon(
                         req.params.coupon
                   )
@@ -813,7 +811,7 @@ const getCoupon = async (
 
             res.status(200).send({
                   message: couponControllerResponse.fetchCouponSuccess,
-                  data: { ...coupon, type: data.type }
+                  data: { ...coupon, type: data.type },
             })
 
       } catch ({ message }: any) {
@@ -833,7 +831,7 @@ const updateUserAccount = async (
 ) => {
       try {
             /** Get current user */
-            let userObj: any = Object.assign({}, req.user)
+            const userObj: any = Object.assign({}, req.user)
             const body: any = {
                   email: userObj.email,
                   firstName: req.body.firstName || userObj.firstName,
@@ -884,7 +882,7 @@ const updateUserAccount = async (
                   downloadOverWifi:
                         typeof eval(req.body?.downloadOverWifi) === 'boolean'
                               ? req.body?.downloadOverWifi
-                              : userObj?.downloadOverWifi || false
+                              : userObj?.downloadOverWifi || false,
             }
 
             if (req.body.kindleEmail) {
@@ -927,7 +925,7 @@ const updateUserAccount = async (
                   } else {
                         body.pushTokens.push({
                               deviceId: req.body.pushTokens.deviceId,
-                              token: req.body.pushTokens.token
+                              token: req.body.pushTokens.token,
                         })
                   }
             }
@@ -935,7 +933,7 @@ const updateUserAccount = async (
                   const userConflicts = await userService.getOneUserByFilter(
                         {
                               'oAuth.clientId': req.body.id,
-                              _id: { '$ne': String(userObj._id) }
+                              _id: { '$ne': String(userObj._id) },
                         }
                   )
                   if (userConflicts) {
@@ -950,16 +948,15 @@ const updateUserAccount = async (
                               provider: req.body.provider,
                               clientId: req.body.id,
                               email: req.body.oAuthEmail
-                                    || ''
+                                    || '',
                         })
-                  }
-                  else {
+                  } else {
                         oAuth[index] = {
                               ...oAuth[index],
                               clientId: req.body.id,
                               email: req.body.oAuthEmail
                                     || oAuth[index].email
-                                    || ''
+                                    || '',
                         }
                   }
                   body.oAuth = oAuth
@@ -1011,7 +1008,7 @@ const updateUserAccount = async (
                         .getOneEmailTemplateByFilter({
                               title: req.body.inAppSubscription.status === 'Active'
                                     ? emailTemplatesTitles.customer.subscriptionActivated
-                                    : emailTemplatesTitles.customer.subscriptionCanceled
+                                    : emailTemplatesTitles.customer.subscriptionCanceled,
                         })
                   const subject = emailTemplateDetails.subject
                         || `Holy Reads Subscription ${req.body.inAppSubscription.status}`
@@ -1034,15 +1031,15 @@ const updateUserAccount = async (
                               </strong>
                         </p>
                   `
-                  let now = userObj?.inAppSubscription?.createdAt
+                  const now = userObj?.inAppSubscription?.createdAt
                   let subscriptionEndDate;
                   switch (subscriptionDetails.duration) {
-                        case "Year":
+                        case 'Year':
                               subscriptionEndDate = new Date(
                                     now.setMonth(now.getMonth() + 12)
                               );
                               break;
-                        case "Half Year":
+                        case 'Half Year':
                               subscriptionEndDate = new Date(
                                     now.setMonth(now.getMonth() + 6)
                               );
@@ -1073,8 +1070,8 @@ const updateUserAccount = async (
                         type: 'setting',
                         notification: {
                               title: notificationTitle,
-                              description: notificationDescription
-                        }
+                              description: notificationDescription,
+                        },
                   })
                   fetchNotifications(io.sockets, { _id: userObj._id })
 
@@ -1082,7 +1079,7 @@ const updateUserAccount = async (
                         from: originEmails.marketing,
                         to: userObj.email,
                         subject,
-                        html
+                        html,
                   });
                   if (!result) {
                         return next(
@@ -1093,7 +1090,7 @@ const updateUserAccount = async (
                   }
             }
             res.status(200).send({
-                  message: authControllerResponse.userUpdateSuccess
+                  message: authControllerResponse.userUpdateSuccess,
             })
             const kindleTitle = userObj.kindleEmail
                   ? 'Update Kindle Email' : 'Add Kindle Email'
@@ -1106,8 +1103,8 @@ const updateUserAccount = async (
                               type: 'setting',
                               notification: {
                                     title: kindleTitle,
-                                    description: kindleDescription
-                              }
+                                    description: kindleDescription,
+                              },
                         })
                   fetchNotifications(
                         io.sockets,
@@ -1152,7 +1149,7 @@ const getShareOptionImageUrl = async (
                         'share-image',
                         {
                               ...s3Bucket,
-                              documentDirectory: 'users/share-options'
+                              documentDirectory: 'users/share-options',
                         }
                   )
                   req.body.image = s3File.name
@@ -1161,7 +1158,7 @@ const getShareOptionImageUrl = async (
                   = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.usersDirectory + '/share-options/' + req.body.image
             return res.status(200).send({
                   message: authControllerResponse.addShareImage,
-                  data: { image: imageUrl }
+                  data: { image: imageUrl },
             })
       } catch ({ message }: any) {
             return next(Boom.badData(message as string))
@@ -1180,7 +1177,7 @@ const getEncodeImage = async (
             }
             return res.status(200).send({
                   message: authControllerResponse.encodeImageSuccess,
-                  data: { image: req.body.image }
+                  data: { image: req.body.image },
             })
       } catch ({ message }: any) {
             return next(Boom.badData(message as string))
@@ -1212,28 +1209,28 @@ const updateUserLibrary = async (
             userObj.libraries = await usersService.getUserLibrary(query)
 
             if (section === 'completed') {
-                  req.body['$addToSet'] = {
-                        'completed': req.body.completed
+                  req.body.$addToSet = {
+                        'completed': req.body.completed,
                   }
                   delete req.body.completed
                   message = authControllerResponse.markAsCompletedBook
             }
             if (type === 'add' && section === 'saved') {
-                  req.body['$addToSet'] = {
-                        'saved': req.body.saved
+                  req.body.$addToSet = {
+                        'saved': req.body.saved,
                   }
                   delete req.body.saved
                   message = authControllerResponse.savedBook
             }
             if (type === 'delete' && section === 'saved') {
-                  req.body['$pull'] = { 'saved': req.body.saved }
+                  req.body.$pull = { 'saved': req.body.saved }
                   delete req.body.saved
                   message = authControllerResponse.unSavedBook
             }
             if (section === 'reading') {
                   const bookSummary = await bookService.findBook({
                         _id: req.body.bookId,
-                        'chapters._id': req.body.chapter
+                        'chapters._id': req.body.chapter,
                   })
                   if (!bookSummary) {
                         return next(Boom.notFound(
@@ -1267,7 +1264,7 @@ const updateUserLibrary = async (
                         return res
                               .status(200)
                               .send({
-                                    message: authControllerResponse.userUpdateSuccess
+                                    message: authControllerResponse.userUpdateSuccess,
                               })
                   }
 
@@ -1281,9 +1278,9 @@ const updateUserLibrary = async (
 
                   query['reading.bookId'] = req.body.bookId
 
-                  req.body['$set'] = {
+                  req.body.$set = {
                         'reading.$.updatedAt': new Date(),
-                        'reading.$.chaptersCompleted': readingObj.chaptersCompleted
+                        'reading.$.chaptersCompleted': readingObj.chaptersCompleted,
                   }
 
                   delete req.body.bookId
@@ -1302,7 +1299,7 @@ const updateUserLibrary = async (
                         }
                         userObj.libraries.reading.push({
                               updatedAt: new Date(),
-                              bookId: Types.ObjectId(req.body.bookId),
+                              bookId: new Types.ObjectId(req.body.bookId),
                               chaptersCompleted: [],
                         })
                         await usersService.updateUserLibrary(
@@ -1314,18 +1311,18 @@ const updateUserLibrary = async (
                   await userService.updateUserLibrary(
                         {
                               _id: query._id,
-                              'reading.bookId': Types.ObjectId(req.body.bookId)
+                              'reading.bookId': new Types.ObjectId(req.body.bookId),
                         },
                         {
                               '$set': {
-                                    'reading.$.updatedAt': new Date()
-                              }
+                                    'reading.$.updatedAt': new Date(),
+                              },
                         }
                   );
             }
             if (section === 'view') {
                   const bookSummary = await bookService.findBook({
-                        _id: req.body.bookId
+                        _id: req.body.bookId,
                   })
                   if (!bookSummary) {
                         return next(
@@ -1347,36 +1344,36 @@ const updateUserLibrary = async (
                         }
                         userObj.libraries.view.push({
                               bookId: req.body.bookId,
-                              createdAt: new Date()
+                              createdAt: new Date(),
                         })
                         await usersService.updateUserLibrary(
                               query, userObj.libraries
                         )
                         await addToReads()
                         return res.status(200).send({
-                              message: authControllerResponse.userUpdateSuccess
+                              message: authControllerResponse.userUpdateSuccess,
                         })
                   }
 
                   query['view.bookId'] = req.body.bookId
-                  req.body['$set'] = {
-                        'view.$.bookId': req.body.bookId
+                  req.body.$set = {
+                        'view.$.bookId': req.body.bookId,
                   }
                   await addToReads()
                   delete req.body.bookId
             }
             /** Add to User small group */
             if (type === 'add' && section === 'smallGroup') {
-                  req.body['$addToSet'] = {
-                        'smallGroups': req.body.smallGroup
+                  req.body.$addToSet = {
+                        'smallGroups': req.body.smallGroup,
                   }
                   delete req.body.smallGroup
                   message = authControllerResponse.savedBook
             }
             /** Delete from User small group */
             if (type === 'delete' && section === 'smallGroup') {
-                  req.body['$pull'] = {
-                        'smallGroups': req.body.smallGroup
+                  req.body.$pull = {
+                        'smallGroups': req.body.smallGroup,
                   }
                   delete req.body.smallGroup
                   message = authControllerResponse.unSavedBook
@@ -1404,13 +1401,13 @@ const getUserLibrary = async (
                   bookId,
                   section,
                   skip = dataLimit.skip,
-                  limit = dataLimit.limit
+                  limit = dataLimit.limit,
             } = req.query as any
 
             /** Get current user */
-            let userObj: any = Object.assign({}, req.user)
+            const userObj: any = Object.assign({}, req.user)
             userObj.libraries = await usersService.getUserLibrary({
-                  _id: userObj.libraries
+                  _id: userObj.libraries,
             })
             if (bookId && !section) {
                   const book = userObj?.libraries?.saved?.find(
@@ -1424,8 +1421,8 @@ const getUserLibrary = async (
                         message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
                         data: {
                               library: userObj.libraries,
-                              saved: book ? true : false
-                        }
+                              saved: book ? true : false,
+                        },
                   })
                   return null
             }
@@ -1433,11 +1430,11 @@ const getUserLibrary = async (
             if (section === 'saved' && userObj?.libraries?.saved?.length) {
                   const search: any = {
                         _id: {
-                              $in: bookId ? [bookId] : userObj.libraries.saved
-                        }
+                              $in: bookId ? [bookId] : userObj.libraries.saved,
+                        },
                   }
                   if (author) {
-                        search['author._id'] = Types.ObjectId(author)
+                        search['author._id'] = new Types.ObjectId(author)
                   }
                   if (star) {
                         search.star = Number(star)
@@ -1447,8 +1444,8 @@ const getUserLibrary = async (
                         0,
                         search,
                         {
-                              'createdAt': String(sort || 'ASC')
-                                    .toLowerCase() === 'asc' ? 1.0 : -1.0
+                              'createdAt': String(sort || 'asc')
+                                    .toLowerCase() === 'asc' ? 1.0 : -1.0,
                         }
                   )
                   if (data.summaries?.length) {
@@ -1473,7 +1470,7 @@ const getUserLibrary = async (
                   }
                   res.status(200).send({
                         message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
-                        data
+                        data,
                   })
                   return null
             }
@@ -1481,11 +1478,11 @@ const getUserLibrary = async (
             if (section === 'completed' && userObj?.libraries?.completed?.length) {
                   const search: any = {
                         _id: {
-                              $in: bookId ? [bookId] : userObj.libraries.completed
-                        }
+                              $in: bookId ? [bookId] : userObj.libraries.completed,
+                        },
                   }
                   if (author) {
-                        search['author._id'] = Types.ObjectId(author)
+                        search['author._id'] = new Types.ObjectId(author)
                   }
                   if (star) {
                         search.star = Number(star)
@@ -1495,8 +1492,8 @@ const getUserLibrary = async (
                         0,
                         search,
                         {
-                              'createdAt': String(sort || 'ASC')
-                                    .toLowerCase() === 'asc' ? 1.0 : -1.0
+                              'createdAt': String(sort || 'asc')
+                                    .toLowerCase() === 'asc' ? 1.0 : -1.0,
                         }
                   )
                   if (data.summaries?.length) {
@@ -1527,7 +1524,7 @@ const getUserLibrary = async (
                   }
                   res.status(200).send({
                         message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
-                        data
+                        data,
                   })
                   return null
             }
@@ -1542,8 +1539,7 @@ const getUserLibrary = async (
                         !userObj.libraries?.completed?.find(
                               cb => String(cb) === String(bookId)
                         )
-                  ) { bookIds.add(bookId) }
-                  else if (!bookId) {
+                  ) { bookIds.add(bookId) } else if (!bookId) {
                         userObj.libraries.reading.map(oneBook => {
                               if (
                                     oneBook.bookId &&
@@ -1556,10 +1552,10 @@ const getUserLibrary = async (
 
                   /** Prepare query to get users reads book details */
                   const search: any = {
-                        _id: { $in: [...bookIds] }
+                        _id: { $in: [...bookIds] },
                   }
                   if (author) {
-                        search['author._id'] = Types.ObjectId(author)
+                        search['author._id'] = new Types.ObjectId(author)
                   }
                   if (star) {
                         search.star = Number(star)
@@ -1613,13 +1609,13 @@ const getUserLibrary = async (
                         )
                   res.status(200).send({
                         message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
-                        data
+                        data,
                   })
                   return null
             }
             res.status(200).send({
                   message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
-                  data: []
+                  data: [],
             })
       } catch ({ message }: any) {
             next(Boom.badData(message as string))
@@ -1635,7 +1631,7 @@ const submitQuery = async (
             const {
                   subject,
                   message,
-                  phone
+                  phone,
             }: {
                   subject: string,
                   message: string,
@@ -1645,7 +1641,7 @@ const submitQuery = async (
             const userObj = Object.assign({}, req.user)
             const emailTemplateDetails = await emailTemplateService
                   .getOneEmailTemplateByFilter({
-                        title: emailTemplatesTitles.admin.customerInquiry
+                        title: emailTemplatesTitles.admin.customerInquiry,
                   })
             const sub = emailTemplateDetails.subject || 'Customer Inquiry'
             let html = `
@@ -1681,7 +1677,7 @@ const submitQuery = async (
                         email: userObj.email,
                         phone_number: userObj.contactNumber || phone,
                         subject,
-                        message
+                        message,
                   }
                   const htmlData = await compileHtml(
                         emailTemplateDetails.content,
@@ -1695,7 +1691,7 @@ const submitQuery = async (
                   from: originEmails.marketing,
                   to: originEmails.contactUs,
                   subject: sub,
-                  html
+                  html,
             });
 
             if (!result) {
@@ -1706,7 +1702,7 @@ const submitQuery = async (
                   )
             }
             res.status(200).send({
-                  message: authControllerResponse.submitQuerySuccess
+                  message: authControllerResponse.submitQuerySuccess,
             })
       } catch ({ message }: any) {
             next(Boom.badData(message as string))
@@ -1721,7 +1717,7 @@ const submitFeedback = async (
       try {
             const {
                   title,
-                  feedback
+                  feedback,
             }: {
                   title: string,
                   feedback: string
@@ -1729,7 +1725,7 @@ const submitFeedback = async (
             const userObj = Object.assign({}, req.user)
             const emailTemplateDetails = await emailTemplateService
                   .getOneEmailTemplateByFilter({
-                        title: emailTemplatesTitles.admin.customerFeedback
+                        title: emailTemplatesTitles.admin.customerFeedback,
                   })
             const subject = emailTemplateDetails.subject || 'Customer Feedback'
             let html = `
@@ -1748,7 +1744,7 @@ const submitFeedback = async (
                   const contentData = {
                         email: userObj.email,
                         title,
-                        feedback
+                        feedback,
                   }
                   const htmlData = await compileHtml(
                         emailTemplateDetails.content, contentData
@@ -1762,7 +1758,7 @@ const submitFeedback = async (
                   from: originEmails.marketing,
                   to: originEmails.contactUs,
                   subject,
-                  html
+                  html,
             });
 
             if (!result) {
@@ -1774,7 +1770,7 @@ const submitFeedback = async (
             }
 
             res.status(200).send({
-                  message: authControllerResponse.submitQuerySuccess
+                  message: authControllerResponse.submitQuerySuccess,
             })
       } catch ({ message }: any) {
             next(Boom.badData(message as string))
@@ -1835,7 +1831,7 @@ const blessFriend = async (
             delete body.friendEmail
             const refUser: any = await usersService
                   .getOneUserByFilter({
-                        email: req.user.email
+                        email: req.user.email,
                   })
             if (!refUser) {
                   return next(
@@ -1856,7 +1852,7 @@ const blessFriend = async (
             }
             const subscriptionDetails = await subscriptionService
                   .getOneSubscriptionByFilter({
-                        _id: body.subscription
+                        _id: body.subscription,
                   })
             if (!subscriptionDetails) {
                   /** Return status code 404 not found */
@@ -1869,9 +1865,9 @@ const blessFriend = async (
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
             const token: string = getToken({
                   code: String(verificationCode),
-                  email: body.email
+                  email: body.email,
             })
-            const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
+            const link = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
 
             const inviteUserBody: any = {
                   image: '',
@@ -1907,14 +1903,14 @@ const blessFriend = async (
                   }
                   subscriptionEndDate = new Date(subscription.current_period_end * 1000)
                   if (subscription.status === 'trialing') {
-                        let now = new Date(subscriptionEndDate)
+                        const now = new Date(subscriptionEndDate)
                         switch (subscriptionDetails.duration) {
-                              case "Year":
+                              case 'Year':
                                     subscriptionEndDate = new Date(
                                           now.setMonth(now.getMonth() + 12)
                                     );
                                     break;
-                              case "Half Year":
+                              case 'Half Year':
                                     subscriptionEndDate = new Date(
                                           now.setMonth(now.getMonth() + 6)
                                     );
@@ -1929,17 +1925,17 @@ const blessFriend = async (
             } else {
                   inviteUserBody.inAppSubscription = {
                         ...body.inAppSubscription,
-                        createdAt: new Date()
+                        createdAt: new Date(),
                   }
                   inviteUserBody.inAppSubscriptionStatus = 'Active'
-                  let now = new Date()
+                  const now = new Date()
                   switch (subscriptionDetails.duration) {
-                        case "Year":
+                        case 'Year':
                               subscriptionEndDate = new Date(
                                     now.setMonth(new Date().getMonth() + 12)
                               );
                               break;
-                        case "Half Year":
+                        case 'Half Year':
                               subscriptionEndDate = new Date(
                                     now.setMonth(new Date().getMonth() + 6)
                               );
@@ -1970,9 +1966,9 @@ const blessFriend = async (
                               title: {
                                     $in: [
                                           emailTemplatesTitles.customer.sendInvitation,
-                                          emailTemplatesTitles.customer.blessFriend
-                                    ]
-                              }
+                                          emailTemplatesTitles.customer.blessFriend,
+                                    ],
+                              },
                         },
                         []
                   )
@@ -1997,7 +1993,7 @@ const blessFriend = async (
             const sendInvitationSubject = sendInvitationTemplate?.subject
                   || 'Send Invitation'
 
-            let blessFriendHtml = `     
+            let blessFriendHtml = `
                   <p>
                         Dear ${refUser.email.split('@')[0]},
                   </p>
@@ -2057,7 +2053,7 @@ const blessFriend = async (
                               .substr(
                                     0, refUser.email.indexOf('@')
                               ),
-                        plan: subscriptionDetails.duration + 'ly'
+                        plan: subscriptionDetails.duration + 'ly',
                   }
                   const htmlData = await compileHtml(
                         blessFriendTemplate.content,
@@ -2076,7 +2072,7 @@ const blessFriend = async (
                         email: body.email,
                         password: body.password,
                         sendername: refUser.email.split('@')[0],
-                        plan: subscriptionDetails.duration + 'ly'
+                        plan: subscriptionDetails.duration + 'ly',
                   }
                   const htmlData = await compileHtml(
                         sendInvitationTemplate.content,
@@ -2091,14 +2087,14 @@ const blessFriend = async (
                   from: originEmails.marketing,
                   to: refUser.email,
                   subject: blessFriendSubject,
-                  html: blessFriendHtml
+                  html: blessFriendHtml,
             });
 
             const sendInvitationResult = await sentEmail({
                   from: originEmails.marketing,
                   to: body.email,
                   subject: sendInvitationSubject,
-                  html: sentInvitationHtml
+                  html: sentInvitationHtml,
             });
 
             if (!blessFriendEmailResult || !sendInvitationResult) {
@@ -2115,20 +2111,20 @@ const blessFriend = async (
                   type: 'setting',
                   notification: {
                         title: 'Holy Reads Invitation 🎁',
-                        description: refUser.email.split('@')[0] + ' invited to you ✨'
-                  }
+                        description: refUser.email.split('@')[0] + ' invited to you ✨',
+                  },
             })
             fetchNotifications(io.sockets, { _id: invitedUserDetails._id })
 
             if (!inviteUserBody?.inAppSubscription) {
                   return res.status(200).send({
-                        message: authControllerResponse.blessFriendSuccess
+                        message: authControllerResponse.blessFriendSuccess,
                   })
             }
 
             const emailTemplateDetails = await emailTemplateService
                   .getOneEmailTemplateByFilter({
-                        title: emailTemplatesTitles.customer.chooseSubscription
+                        title: emailTemplatesTitles.customer.chooseSubscription,
                   })
             const subject = emailTemplateDetails.subject || 'Subscription'
             let html = `
@@ -2161,7 +2157,7 @@ const blessFriend = async (
                               ?.toLowerCase()
                               ?.includes('half')
                               ? subscriptionDetails.duration
-                              : `1 ${subscriptionDetails.duration}`
+                              : `1 ${subscriptionDetails.duration}`,
                   }
                   const htmlData = await compileHtml(
                         emailTemplateDetails.content,
@@ -2175,7 +2171,7 @@ const blessFriend = async (
                   from: originEmails.marketing,
                   to: body.email,
                   subject,
-                  html
+                  html,
             });
             if (!result) {
                   return next(
@@ -2186,7 +2182,7 @@ const blessFriend = async (
             }
 
             res.status(200).send({
-                  message: authControllerResponse.blessFriendSuccess
+                  message: authControllerResponse.blessFriendSuccess,
             })
       } catch (e: any) {
             next(Boom.badData(e.message))
@@ -2203,7 +2199,7 @@ const paymentSheet = async (
             const userObj = req.user
             const subscriptionDetails = await subscriptionService
                   .getOneSubscriptionByFilter({
-                        _id: req.body.subscription
+                        _id: req.body.subscription,
                   })
             if (!subscriptionDetails) {
                   /** Return status code 404 not found */
@@ -2242,8 +2238,8 @@ const paymentSheet = async (
                   metadata: {
                         planId: subscriptionDetails.stripePlanId,
                         ephemeralKey: ephemeralKey?.id,
-                        hrSubscriptionId: String(subscriptionDetails._id)
-                  }
+                        hrSubscriptionId: String(subscriptionDetails._id),
+                  },
             });
 
             res.status(200).send({
@@ -2253,8 +2249,8 @@ const paymentSheet = async (
                         clientSecret: paymentIntent?.client_secret,
                         customerEmail: userObj.email,
                         customerId: userObj?.stripe?.customerId,
-                        ephemeralKey: ephemeralKey?.secret
-                  }
+                        ephemeralKey: ephemeralKey?.secret,
+                  },
             })
 
       } catch ({ message }: any) {
@@ -2273,7 +2269,7 @@ const subscribePlan = async (
 
             const subscriptionDetails = await subscriptionService
                   .getOneSubscriptionByFilter({
-                        _id: req.body.subscription
+                        _id: req.body.subscription,
                   })
             if (!subscriptionDetails) {
                   /** Return status code 404 not found */
@@ -2291,18 +2287,18 @@ const subscribePlan = async (
                         subscription: req.body.subscription,
                         inAppSubscription: {
                               ...req.body.inAppSubscription,
-                              createdAt: new Date()
+                              createdAt: new Date(),
                         },
                         inAppSubscriptionStatus: 'Active',
                   }
-                  let now = new Date()
+                  const now = new Date()
                   switch (subscriptionDetails.duration) {
-                        case "Year":
+                        case 'Year':
                               subscriptionEndDate = new Date(
                                     now.setMonth(new Date().getMonth() + 12)
                               );
                               break;
-                        case "Half Year":
+                        case 'Half Year':
                               subscriptionEndDate = new Date(
                                     now.setMonth(new Date().getMonth() + 6)
                               );
@@ -2354,7 +2350,7 @@ const subscribePlan = async (
                               [
                                     'canceled',
                                     'incomplete',
-                                    'incomplete_expired'
+                                    'incomplete_expired',
                               ].includes(
                                     retrieveSubscription.status
                               )
@@ -2386,14 +2382,14 @@ const subscribePlan = async (
                         )
                   }
                   if (subscription.status === 'trialing') {
-                        let now = new Date(subscriptionEndDate)
+                        const now = new Date(subscriptionEndDate)
                         switch (subscriptionDetails.duration) {
-                              case "Year":
+                              case 'Year':
                                     subscriptionEndDate = new Date(
                                           now.setMonth(now.getMonth() + 12)
                                     );
                                     break;
-                              case "Half Year":
+                              case 'Half Year':
                                     subscriptionEndDate = new Date(
                                           now.setMonth(now.getMonth() + 6)
                                     );
@@ -2437,14 +2433,14 @@ const subscribePlan = async (
                                     ?.stripe
                                     ?.customerId,
                               ephemeralKey: ephemeralKey
-                                    ?.secret
-                        }
+                                    ?.secret,
+                        },
                   })
             }
 
             const emailTemplateDetails = await emailTemplateService
                   .getOneEmailTemplateByFilter({
-                        title: emailTemplatesTitles.customer.chooseSubscription
+                        title: emailTemplatesTitles.customer.chooseSubscription,
                   })
             const subject = emailTemplateDetails.subject || 'Holy Reads Subscription'
             let html = `
@@ -2497,8 +2493,8 @@ const subscribePlan = async (
                   type: 'setting',
                   notification: {
                         title: notificationTitle,
-                        description: notificationDescription
-                  }
+                        description: notificationDescription,
+                  },
             })
             fetchNotifications(
                   io.sockets,
@@ -2509,7 +2505,7 @@ const subscribePlan = async (
                   from: originEmails.marketing,
                   to: userObj.email,
                   subject,
-                  html
+                  html,
             });
             if (!result) {
                   return next(
@@ -2523,8 +2519,8 @@ const subscribePlan = async (
                   message: subscriptionsControllerResponse.createSubscriptionSuccess,
                   data: !req.body?.inAppSubscription ? {
                         subscriptionStatus: subscription.status,
-                        customerEmail: userObj.email
-                  } : { subscription: subscriptionDetails._id }
+                        customerEmail: userObj.email,
+                  } : { subscription: subscriptionDetails._id },
             })
 
             /** Push notification */
@@ -2556,7 +2552,7 @@ const deleteUser = async (
             await usersService.deleteUser(userObj._id)
             mailchimpService.updateUser(userObj.email, 'unsubscribed')
             res.status(200).send({
-                  message: authControllerResponse.deleteUserSuccess
+                  message: authControllerResponse.deleteUserSuccess,
             })
             if (userObj && userObj.image) {
                   removeS3File(userObj.image, s3Bucket)
@@ -2569,16 +2565,16 @@ const deleteUser = async (
             }
             Promise.all([
                   ratingService.deleteRatings({
-                        userId: userObj._id
+                        userId: userObj._id,
                   }),
                   highLightsService.deleteHighLights({
-                        userId: userObj._id
+                        userId: userObj._id,
                   }),
                   transactionsService.deleteTransaction({
-                        userId: userObj._id
+                        userId: userObj._id,
                   }),
                   notificationsService.deleteNotifications({
-                        userId: userObj._id
+                        userId: userObj._id,
                   }),
             ])
       } catch ({ message }: any) {
@@ -2596,7 +2592,7 @@ const logout = async (
 ) => {
       try {
             /** Get current user */
-            let userObj: any = Object.assign({}, req.user)
+            const userObj: any = Object.assign({}, req.user)
             let maxDevices = [];
             let pushTokens = [];
             /** Logout from specific device */
@@ -2614,7 +2610,7 @@ const logout = async (
                   { maxDevices, pushTokens }
             )
             res.status(200).send({
-                  message: authControllerResponse.userLogoutSuccess
+                  message: authControllerResponse.userLogoutSuccess,
             })
       } catch ({ message }: any) {
             return next(Boom.badData(message as string))
@@ -2629,7 +2625,7 @@ const updateHandout = async (
       try {
             const smallGroup = await smallGroupService
                   .getSmallGroupForHandout({
-                        _id: req.params.smallGroup
+                        _id: req.params.smallGroup,
                   })
             if (!smallGroup) {
                   /** Return status code 404 not found */
@@ -2644,7 +2640,7 @@ const updateHandout = async (
                   : -1
             const {
                   question,
-                  answer
+                  answer,
             }: {
                   question: number,
                   answer: string
@@ -2655,46 +2651,45 @@ const updateHandout = async (
                   !smallGroup?.questions[question]
             ) {
                   return res.status(200).send({
-                        message: handoutsControllerResponse.updateHandoutSuccess
+                        message: handoutsControllerResponse.updateHandoutSuccess,
                   })
             }
 
             const handout = await handoutsService
                   .getHandout({
                         user: req.user._id,
-                        smallGroup: smallGroup._id
+                        smallGroup: smallGroup._id,
                   });
-            let query = {
+            const query = {
                   user: req.user._id,
-                  smallGroup: smallGroup._id
+                  smallGroup: smallGroup._id,
             };
             let body: any = {
-                  answers: [{ answer, question }]
+                  answers: [{ answer, question }],
             };
 
-            let ans = handout?.answers?.find(i => i.question === question)
+            const ans = handout?.answers?.find(i => i.question === question)
             if (handout && !ans) {
                   body = {
                         '$push': {
                               'answers': {
                                     answer,
-                                    question
-                              }
-                        }
+                                    question,
+                              },
+                        },
                   }
-            }
-            else if (ans) {
+            } else if (ans) {
                   body = {
                         '$set': {
-                              'answers.$.answer': answer
-                        }
+                              'answers.$.answer': answer,
+                        },
                   }
                   query['answers.question'] = question
             }
 
             await handoutsService.updateHandout(query, body);
             res.status(200).send({
-                  message: handoutsControllerResponse.updateHandoutSuccess
+                  message: handoutsControllerResponse.updateHandoutSuccess,
             })
       } catch (e: any) {
             next(Boom.badData(e.message))
@@ -2725,7 +2720,7 @@ const addCategoryToUserLibrary = async (req: Request | any, res: Response, next:
             await userService.updateUserLibrary(query, userObj.libraries);
 
             res.status(200).send({
-                  message: authControllerResponse.addCategorySuccess
+                  message: authControllerResponse.addCategorySuccess,
             });
       } catch (e: any) {
             next(Boom.badData(e.message));
@@ -2745,7 +2740,7 @@ const getUserSelectedCategory = async (req: Request | any, res: Response, next: 
 
             res.status(200).send({
                   message: authControllerResponse.getCategorySuccess,
-                  categories
+                  categories,
             });
       } catch (e: any) {
             next(Boom.badData(e.message));

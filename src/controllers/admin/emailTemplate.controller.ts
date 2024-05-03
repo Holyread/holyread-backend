@@ -19,7 +19,7 @@ const addEmailTemplate = async (req: Request, res: Response, next: NextFunction)
         const data = await emailTemplateService.createEmailTemplate(body)
         res.status(200).send({
             message: emailTemplateControllerResponse.createEmailTemplateSuccess,
-            data
+            data,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -37,7 +37,7 @@ const getOneEmailTemplate = async (req: Request, res: Response, next: NextFuncti
         }
         res.status(200).send({
             message: emailTemplateControllerResponse.fetchEmailTemplateSuccess,
-            data: emailTemplateObj
+            data: emailTemplateObj,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -58,22 +58,22 @@ const getAllEmailTemplates = async (request: Request, response: Response, next: 
                     { title: await getSearchRegexp(params.search) },
                     { subject: await getSearchRegexp(params.search) },
                     { content: await getSearchRegexp(params.search) },
-                ]
+                ],
             }
         }
         const emailTemplateSorting = [];
         switch (params.column) {
             case 'title':
-                emailTemplateSorting.push(['title', params.order || 'ASC']);
+                emailTemplateSorting.push(['title', params.order || 'asc']);
                 break;
             case 'subject':
-                emailTemplateSorting.push(['subject', params.order || 'ASC']);
+                emailTemplateSorting.push(['subject', params.order || 'asc']);
                 break;
             case 'createdAt':
-                emailTemplateSorting.push(['createdAt', params.order || 'ASC']);
+                emailTemplateSorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                emailTemplateSorting.push(['title', 'DESC']);
+                emailTemplateSorting.push(['title', 'desc']);
                 break;
         }
 

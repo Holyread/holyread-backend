@@ -51,17 +51,17 @@ const getAllCoupons = async (request: Request, response: Response, next: NextFun
                 $or: [
                     { code: await getSearchRegexp(params.search) },
                     { duration: await getSearchRegexp(params.search) },
-                ]
+                ],
             }
         }
         if (
             params.search &&
-            (Number(params.search) || Number(params.search) == 0)
+            (Number(params.search) || Number(params.search) === 0)
         ) {
             searchFilter['$or'] = [
                 ...searchFilter['$or'],
                 { discount: params.search },
-                { maxRedemptions: params.search }
+                { maxRedemptions: params.search },
             ]
         }
 

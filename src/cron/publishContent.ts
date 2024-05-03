@@ -1,5 +1,5 @@
-import cron from 'cron';
-import config from "../../config";
+import { CronJob } from 'cron';
+import config from '../../config';
 import { publishContent } from '../constants/cron.constants';
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
 import { randomNumberInRange, pushNotification } from '../lib/utils/utils';
@@ -98,7 +98,7 @@ const startPublishContentJob = async () => {
                                                 coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${publishContent.coverImage}`,
                                                 totalStar: publishContent.totalStar,
                                                 status: publishContent.status,
-                                          }
+                                          },
                                     })
                               );
 
@@ -110,9 +110,9 @@ const startPublishContentJob = async () => {
                                           title: '🔔 NEW Summary for you!',
                                           description: `📙 Explore the latest summary "${content}"`,
                                           success: true,
-                                          errorMessage: null,
+                                          errorMessage: undefined,
                                     },
-                                    createdAt: new Date()
+                                    createdAt: new Date(),
                               });
                               await notificationLog.save();
                         } catch (error: any) {
@@ -126,7 +126,7 @@ const startPublishContentJob = async () => {
                                           success: false,
                                           errorMessage: `Users processing error -', ${error.message}`,
                                     },
-                                    createdAt: new Date()
+                                    createdAt: new Date(),
                               });
                               await notificationLog.save();
                         }
@@ -143,7 +143,7 @@ const startPublishContentJob = async () => {
                   jobName: 'publish_contents',
                   status: 'failed',
                   endedAt: new Date(),
-                  message: `publish contents execution Error is: ${error.message}`
+                  message: `publish contents execution Error is: ${error.message}`,
             });
             await cronLog.save();
       }
@@ -155,6 +155,6 @@ const startPublishContentJob = async () => {
             return;
       }
       const schedule = Object.values(publishContent.SCHEDULE).join(' ');
-      new cron.CronJob(schedule, () => { startPublishContentJob() }, null, true);
+      new CronJob(schedule, () => { startPublishContentJob() }, undefined, true);
       console.log('JOB(🟢) publish contents initiated successfully!');
 })(publishContent, config);

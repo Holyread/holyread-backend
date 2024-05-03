@@ -34,7 +34,8 @@ const addReadOfDay = async (req: Request, res: Response, next: NextFunction) => 
         }
 
         if (body.video) {
-            const s3File: any = await uploadFileToS3(body.video, body.title || 'read_of_day' + '-video', { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
+            const s3File: any =
+                await uploadFileToS3(body.video, body.title || 'read_of_day' + '-video', { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
             body.video = s3File.name
             body.videoFileSize = s3File.size
         }
@@ -45,11 +46,11 @@ const addReadOfDay = async (req: Request, res: Response, next: NextFunction) => 
             description: body.description,
             video: body.video,
             image: body.image,
-            status: body.status || 'Active'
+            status: body.status || 'Active',
         })
         res.status(200).send({
             message: readsOfDayControllerResponse.createReadOfDaySuccess,
-            data
+            data,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -90,8 +91,8 @@ const getAllReadsOfDay = async (request: Request, response: Response, next: Next
             searchQuery = {
                 $or: [
                     { 'title': await getSearchRegexp(params.search) },
-                    { 'status': await getSearchRegexp(params.search) }
-                ]
+                    { 'status': await getSearchRegexp(params.search) },
+                ],
             }
         }
 
@@ -109,13 +110,13 @@ const getAllReadsOfDay = async (request: Request, response: Response, next: Next
         const readsOfDaySorting = [];
         switch (params.column) {
             case 'title':
-                readsOfDaySorting.push(['title', params.order || 'ASC']);
+                readsOfDaySorting.push(['title', params.order || 'asc']);
                 break;
             case 'createdAt':
-                readsOfDaySorting.push(['createdAt', params.order || 'ASC']);
+                readsOfDaySorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                readsOfDaySorting.push(['createdAt', 'DESC']);
+                readsOfDaySorting.push(['createdAt', 'desc']);
                 break;
         }
 

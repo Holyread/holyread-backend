@@ -1,5 +1,5 @@
-import cron from 'cron';
-import config from "../../config";
+import { CronJob } from 'cron';
+import config from '../../config';
 import { publishSmallGroup } from '../constants/cron.constants';
 import { SmallGroupModel, CronLogModel } from '../models';
 
@@ -31,7 +31,7 @@ const startPublishContentJob = async () => {
             jobName: 'small_group',
             status: 'failed',
             endedAt: new Date(),
-            message: `small group execution Error is: ${error.message}`
+            message: `small group execution Error is: ${error.message}`,
         });
         await cronLog.save();
     }
@@ -43,6 +43,6 @@ const startPublishContentJob = async () => {
         return;
     }
     const schedule = Object.values(publishSmallGroup.SCHEDULE).join(' ');
-    new cron.CronJob(schedule, () => { startPublishContentJob() }, null, true);
+    new CronJob(schedule, () => { startPublishContentJob() }, undefined, true);
     console.log('JOB(🟢) small group initiated successfully!');
 })(publishSmallGroup, config);

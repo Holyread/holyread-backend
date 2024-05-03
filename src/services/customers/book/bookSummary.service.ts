@@ -13,7 +13,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
 
         const totalCount = await BookSummaryModel.find({ publish: true }).countDocuments()
 
-        let result: any
+        const result: any
             = await BookSummaryModel
                 .aggregate([
                     {
@@ -29,7 +29,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                             description: 1.0,
                             totalStar: 1.0,
                             coverImageBackground: 1.0,
-                        }
+                        },
                     },
                     {
                         $lookup: {
@@ -37,25 +37,25 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                             foreignField: '_id',
                             from: 'bookauthors',
                             localField: 'author',
-                        }
+                        },
                     },
                     {
-                        $match: search.search
+                        $match: search.search,
                     },
                     { $sample: { size: totalCount } },
                     {
                         $facet: {
                             page: [
                                 { $skip: skip },
-                                { $limit: limit }
+                                { $limit: limit },
                             ],
                             total: [
                                 {
-                                    $count: 'count'
-                                }
-                            ]
-                        }
-                    }
+                                    $count: 'count',
+                                },
+                            ],
+                        },
+                    },
                 ]);
 
         const count = result[0].total[0]?.count || 0
@@ -106,8 +106,8 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                     'coverImage': {
                         $concat: [
                             awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/',
-                            '$coverImage'
-                        ]
+                            '$coverImage',
+                        ],
                     },
                     'views': '$views',
                     'createdAt': -1.0,
@@ -116,33 +116,33 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                     'chapters.size': 1.0,
                     'totalStar': 1.0,
                     'coverImageBackground': 1.0,
-                }
+                },
             },
             {
                 $lookup: {
-                    from: "bookauthors",
-                    localField: "author",
-                    foreignField: "_id",
-                    as: "author"
-                }
+                    from: 'bookauthors',
+                    localField: 'author',
+                    foreignField: '_id',
+                    as: 'author',
+                },
             },
             {
-                $unwind: '$author'
+                $unwind: '$author',
             },
             {
                 $project: {
                     'author.__v': 0,
                     'author.createdAt': 0,
-                }
+                },
             },
             {
-                $sort: sort
-            }
+                $sort: sort,
+            },
         ])
 
         if (Object.keys(search).length) {
             aggregate.add({
-                $match: search
+                $match: search,
             })
         }
         const page: any = [{ $skip: skip }]
@@ -152,19 +152,19 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                 page: limit ? page.concat({ $limit: limit }) : page,
                 total: [
                     {
-                        $count: 'count'
-                    }
-                ]
-            }
+                        $count: 'count',
+                    },
+                ],
+            },
         })
 
         let result: any
             = await BookSummaryModel
                 .aggregate([
-                    ...aggregate
+                    ...aggregate,
                 ])
 
-        let count: any = result[0]?.total[0]?.count
+        const count: any = result[0]?.total[0]?.count
         const ratings
             = await ratingService
                 .getBooksRatings(
@@ -202,17 +202,23 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                         author: oneItem.author,
                         isRate: !!ratings[String(oneItem._id)]?.isRate,
                         chapters: library ? oneItem.chapters : undefined,
-                        reads: Number((libBookChapters && libBookChapters?.length ? (100 * libBookChapters?.length) / oneItem?.chapters?.length : 0).toFixed(0)),
+                        reads: Number(
+                            (
+                                libBookChapters && libBookChapters?.length
+                                    ? (100 * libBookChapters?.length) / oneItem?.chapters?.length
+                                    : 0
+                            ).toFixed(0)
+                        ),
                         bookMark: libraries?.saved?.find(
                             b => String(b) === String(oneItem._id)
                         ) ? true : false,
                         'views': oneItem.views || 0,
-                    }
+                    };
                 }
                 ))
         return {
             count,
-            summaries: result.filter(i => i)
+            summaries: result.filter(i => i),
         }
     } catch (e: any) {
         throw new Error(e)
@@ -289,9 +295,9 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
             [coverImage]: {
                 $concat: [
                     awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/',
-                    '$' + [coverImage]
-                ]
-            }
+                    '$' + [coverImage],
+                ],
+            },
         }
 
         const select = {
@@ -311,80 +317,80 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
 
         const page: any = [{ $limit: limit }]
 
-        let result = await UserModel.aggregate(
+        const result = await UserModel.aggregate(
             [
                 {
                     '$match': {
                         'libraries': {
-                            '$exists': true
-                        }
-                    }
+                            '$exists': true,
+                        },
+                    },
                 },
                 {
-                    "$lookup": {
-                        "from": "userlibraries",
-                        "localField": "libraries",
-                        "foreignField": "_id",
-                        "as": "libraries"
-                    }
+                    '$lookup': {
+                        'from': 'userlibraries',
+                        'localField': 'libraries',
+                        'foreignField': '_id',
+                        'as': 'libraries',
+                    },
                 },
                 {
                     '$unwind': {
-                        'path': '$libraries'
-                    }
+                        'path': '$libraries',
+                    },
                 },
                 {
                     '$match': {
                         'libraries.reading.bookId': {
-                            '$exists': true
-                        }
-                    }
+                            '$exists': true,
+                        },
+                    },
                 },
                 {
                     '$unwind': {
-                        'path': '$libraries.reading'
-                    }
+                        'path': '$libraries.reading',
+                    },
                 },
                 {
-                    "$lookup": {
-                        "from": "booksummaries",
-                        "localField": "libraries.reading.bookId",
-                        "foreignField": "_id",
-                        "as": "libraries.reading.bookId"
-                    }
+                    '$lookup': {
+                        'from': 'booksummaries',
+                        'localField': 'libraries.reading.bookId',
+                        'foreignField': '_id',
+                        'as': 'libraries.reading.bookId',
+                    },
                 },
                 {
                     '$unwind': {
-                        'path': '$libraries.reading.bookId'
-                    }
+                        'path': '$libraries.reading.bookId',
+                    },
                 },
                 {
-                    '$project': project
+                    '$project': project,
                 },
                 {
                     '$match': {
                         'libraries.reading.bookId.publish': true,
                         'libraries.reading.bookId._id': { $exists: true },
-                    }
+                    },
                 },
                 {
                     '$group': {
                         '_id': '$libraries.reading.bookId._id',
                         'emails': {
                             '$push': {
-                                'email': '$email'
-                            }
+                                'email': '$email',
+                            },
                         },
-                        ...select
-                    }
+                        ...select,
+                    },
                 },
                 {
                     '$group': {
                         '_id': '$_id',
                         'total': {
                             '$sum': {
-                                '$size': '$emails'
-                            }
+                                '$size': '$emails',
+                            },
                         },
                         'title': { $first: '$title' },
                         'views': { $first: '$views' },
@@ -392,8 +398,8 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                         'author': { $first: '$author' },
                         'chapters': {
                             '$sum': {
-                                '$size': '$chapters'
-                            }
+                                '$size': '$chapters',
+                            },
                         },
                         'overview': { $first: '$overview' },
                         'updatedAt': { $first: '$updatedAt' },
@@ -402,26 +408,26 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                         'description': { $first: '$description' },
                         'coverImageBackground': { $first: '$coverImageBackground' },
                         'totalStar': { $first: '$totalStar' },
-                    }
+                    },
                 },
                 {
                     '$sort': {
-                        'total': -1.0
-                    }
+                        'total': -1.0,
+                    },
                 },
                 {
-                    "$lookup": {
-                        "from": "bookauthors",
-                        "localField": "author",
-                        "foreignField": "_id",
-                        "as": "author"
-                    }
+                    '$lookup': {
+                        'from': 'bookauthors',
+                        'localField': 'author',
+                        'foreignField': '_id',
+                        'as': 'author',
+                    },
                 },
                 {
                     $project: {
                         'author.createdAt': 0,
                         'author.__v': 0,
-                    }
+                    },
                 },
                 {
                     $facet: {
@@ -430,10 +436,10 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                                 ? page.concat({ $skip: skip })
                                 : page,
                         total: [{
-                            $count: 'count'
-                        }]
-                    }
-                }
+                            $count: 'count',
+                        }],
+                    },
+                },
             ]
         )
         const count = result[0]?.total[0]?.count
@@ -451,7 +457,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
         const libraries
             = await usersService
                 .getUserLibrary({
-                    _id: global.currentUser.libraries
+                    _id: global.currentUser.libraries,
                 })
         const summaries = new Set();
 
@@ -525,7 +531,7 @@ const findRandomBooks = async (query: any, count: any) => {
     try {
         const data: any = await BookSummaryModel.aggregate([
             query,
-            { $sample: { size: count } }
+            { $sample: { size: count } },
         ])
         return data
     } catch (e: any) {
@@ -541,11 +547,11 @@ export default {
     getMostPopularBooks,
     updateBookSummary,
     findBooks,
-    findRandomBooks
+    findRandomBooks,
 }
 
 /*
-fix search 
+fix search
 get one book with book author name instead of book author id
 
 */

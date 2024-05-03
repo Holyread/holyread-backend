@@ -60,7 +60,7 @@ router.post('/email-auth/verify', customerPassport, verifyEmailAuth)
 router.get('/change-password/code', customerPassport, getChangePasswordCode)
 router.post('/share-options-image', customerPassport, getShareOptionImageUrl)
 
-router.post('/categories',customerPassport, addCategoryToUserLibrary)
-router.get('/categories',customerPassport, getUserSelectedCategory)
+router.post('/categories', customerPassport, addCategoryToUserLibrary)
+router.get('/categories', customerPassport, getUserSelectedCategory)
 
 export default router

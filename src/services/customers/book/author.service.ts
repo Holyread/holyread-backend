@@ -3,7 +3,7 @@ import { BookAuthorModel } from '../../../models/index'
 /** Get all author options list */
 const getAllAuthorsOptionsList = async () => {
       try {
-            const authorsOptionsList = await BookAuthorModel.find({}).select('name').sort([['name', 'ASC']])
+            const authorsOptionsList = await BookAuthorModel.find({}).select('name').sort([['name', 'asc']])
             return authorsOptionsList
       } catch (e: any) {
             throw new Error(e)
@@ -22,5 +22,5 @@ const findAuthor = async (query: any) => {
 
 export default {
       getAllAuthorsOptionsList,
-      findAuthor
+      findAuthor,
 }

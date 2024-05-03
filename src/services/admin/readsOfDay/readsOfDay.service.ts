@@ -68,7 +68,7 @@ const getAllReadsOfDay = async (skip: number, limit, search: object, sort) => {
                 item.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + item.video
             }
         })
-        const count = await ReadsOfDayModel.find(search).count()
+        const count = await ReadsOfDayModel.find(search).countDocuments()
         await result.map(i => {
             i.createdAt = formattedDate(i.createdAt).replace(/ /g, ' ')
         })
@@ -108,5 +108,5 @@ export default {
     getAllReadsOfDay,
     getOneReadOfDayByFilter,
     deleteReadOfDay,
-    getReadsOfDayList
+    getReadsOfDayList,
 }

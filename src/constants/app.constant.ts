@@ -40,15 +40,15 @@ export const serverOrigins = {
 export const awsBucket = {
     local: {
         bucketName: 'holyreads-develop',
-        s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com'
+        s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com',
     },
     development: {
         bucketName: 'holyreads-develop',
-        s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com'
+        s3BaseURL: 'https://holyreads-develop.s3.amazonaws.com',
     },
     production: {
         bucketName: 'holyreads-production',
-        s3BaseURL: 'https://holyreads-production.s3.amazonaws.com'
+        s3BaseURL: 'https://holyreads-production.s3.amazonaws.com',
     },
     region: 'us-east-1',
     bookDirectory: 'books',
@@ -73,7 +73,7 @@ export const dataLimit = {
 export const originEmails = {
     kindle: 'kindle@holyreads.com',
     marketing: 'noreply@holyreads.com',
-    contactUs: 'info@holyreads.com'
+    contactUs: 'info@holyreads.com',
 }
 
 export const emailTemplatesTitles = {
@@ -98,7 +98,7 @@ export const emailTemplatesTitles = {
         forgotPassword: 'Forgot Password',
         customerInquiry: 'Customer Inquiry',
         customerFeedback: 'Customer Feedback',
-    }
+    },
 }
 
 export const fireStoreConfig = {
@@ -111,7 +111,7 @@ export const fireStoreConfig = {
     'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
     'token_uri': 'https://oauth2.googleapis.com/token',
     'auth_provider_x509_cert_url': 'https://www.googleapis.com/oauth2/v1/certs',
-    'client_x509_cert_url': 'https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbog5%40holyreads-1649330389089.iam.gserviceaccount.com'
+    'client_x509_cert_url': 'https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbog5%40holyreads-1649330389089.iam.gserviceaccount.com',
 }
 
-export const trailDays =10
+export const trailDays = 10

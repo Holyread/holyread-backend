@@ -86,7 +86,7 @@ export const uploadFileToS3 = async (
             if (!docContentType) { return reject(new Error('File must be in base64 format')) }
             const base64 = base64Document.indexOf(';base64,')
 
-            let docExtension: string = ''
+            let docExtension = ''
             let pattern: any = /^data:image\/\w+;base64,/
             if (base64Document.indexOf('data:video/') > -1) {
                 docExtension = base64Document.substring('data:video/'.length, base64Document.indexOf(';base64'))
@@ -103,8 +103,7 @@ export const uploadFileToS3 = async (
                 pattern = /^data:application\/\w+;base64,/
             } else if (base64Document.indexOf('data:image/') > -1) {
                 docExtension = base64Document.substring('data:image/'.length, base64Document.indexOf(';base64'))
-            }
-            else {
+            } else {
                 return reject(new Error('File type not supported'))
             }
 
@@ -167,16 +166,16 @@ export const sentEmail = async (params: {
         to: params.to,
         subject: params.subject,
         headers: {
-            "X-Laziness-level": 1000,
-            "charset": 'UTF-8'
+            'X-Laziness-level': 1000,
+            'charset': 'UTF-8',
         },
         html: params.html,
     };
     let credentials: any = {
         auth: {
             user: params.from,
-            pass: params.sentToKindle ? config.KINDLE_SMTP_SECRET : config.SMTP_SECRET
-        }
+            pass: params.sentToKindle ? config.KINDLE_SMTP_SECRET : config.SMTP_SECRET,
+        },
     };
 
     if (!params.sentToKindle) {
@@ -193,7 +192,7 @@ export const sentEmail = async (params: {
         credentials = {
             ...credentials,
             service: 'gmail',
-            host: 'smtp.gmail.com'
+            host: 'smtp.gmail.com',
         }
     }
 
@@ -244,7 +243,7 @@ export const compileHtml = async (source: string, data: any) => {
 
 export const randomNumberInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
 
-export const pushNotification = async (tokens: string[], title: string, description: string, args = "") => {
+export const pushNotification = async (tokens: string[], title: string, description: string, args = '') => {
     firebaseAdmin.messaging().sendToDevice(
         tokens, {
         notification: {
@@ -252,8 +251,8 @@ export const pushNotification = async (tokens: string[], title: string, descript
             body: description,
         },
         data: {
-            info: args
-        }
+            info: args,
+        },
     }).then(response => {
         response.results.forEach((result, index) => {
             const error = result.error;
@@ -326,10 +325,10 @@ export const decodeHTMLEntities = (text: string) => {
         ['gt', '>'],
         ['nbsp', ' '],
         ['quot', '"'],
-        ['&nbsp;', ' ']
+        ['&nbsp;', ' '],
     ];
 
-    for (var i = 0, max = entities.length; i < max; ++i)
+    for (let i = 0, max = entities.length; i < max; ++i)
         text = text.replace(new RegExp('&' + entities[i][0] + ';', 'g'), entities[i][1]);
 
     return text;
@@ -341,7 +340,7 @@ export const imageUrlToBase64 = async (imageUrl: string) => {
             imageUrl,
             { responseType: 'arraybuffer' }
         )
-        return "data:" + headers["content-type"] + ";base64," + Buffer.from(data).toString('base64');
+        return 'data:' + headers['content-type'] + ';base64,' + Buffer.from(data).toString('base64');
     } catch ({ message }: any) {
         return null;
     }
@@ -362,7 +361,7 @@ export const formattedDate = (
                 : {
                     day: 'numeric',
                     month: 'short',
-                    year: 'numeric'
+                    year: 'numeric',
                 }
         )
 };
@@ -417,4 +416,3 @@ export const calculateAverageRating = async (ratings) => {
     const averageRating = ratings.length > 0 ? totalStars / ratings.length : 0;
     return parseFloat(averageRating.toFixed(1));
 }
-

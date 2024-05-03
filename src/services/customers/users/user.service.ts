@@ -19,8 +19,8 @@ const getOneUserByFilter = async (query: any) => {
     try {
         const result: any = await UserModel.findOne(query).select('-password').lean().exec()
         if (result) {
-            const notifications = await NotificationsModel.find({ userId: result._id }).sort([['createdAt', 'DESC']]).lean().exec()
-            result.notifications = notifications    
+            const notifications = await NotificationsModel.find({ userId: result._id }).sort([['createdAt', 'desc']]).lean().exec()
+            result.notifications = notifications
         }
         return result
     } catch (e: any) {
@@ -29,7 +29,7 @@ const getOneUserByFilter = async (query: any) => {
 }
 
 /** Get user library */
-const getUserLibrary = async (query: any, select: String[] = []) => {
+const getUserLibrary = async (query: any, select: string[] = []) => {
     try {
         const result: any = await UserLibraryModel.findOne(query).select(select).lean().exec()
         return result
@@ -87,5 +87,5 @@ export default {
     getUserLibrary,
     updateUserLibrary,
     getOneUserByFilter,
-    createUserLibrary
+    createUserLibrary,
 }

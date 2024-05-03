@@ -17,20 +17,20 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
         const { description, title, userFilter } = req.body
         const users: string[] = [];
 
-        let commonUserObj: any = {
-            "notification.push": true,
-            status: "Active",
+        const commonUserObj: any = {
+            'notification.push': true,
+            status: 'Active',
         };
 
-        if (userFilter === "InActiveUsers") {
+        if (userFilter === 'InActiveUsers') {
             // Filter inactive users based on lastSeen value in the last 7 days
             const sevenDaysAgo = calculateDateInThePast(7);
             commonUserObj.lastSeen = { $lte: sevenDaysAgo };
         }
 
-        let mobileUserObj: any = {
+        const mobileUserObj: any = {
             ...commonUserObj,
-            "pushTokens.0": { $exists: true },
+            'pushTokens.0': { $exists: true },
         };
 
         if (userFilter?.toLowerCase()?.includes('cancelled plan')) {
@@ -47,7 +47,7 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
 
         const mobileUsers = await usersService.getAllUsersForDashboard(mobileUserObj, 'timeZone pushTokens')
 
-        /**push notification */
+        // push notification
         await Promise.all(mobileUsers?.map(user => {
             pushNotification(
                 user?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
@@ -57,20 +57,20 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
             users.push(user._id);
         }))
 
-        let webUserObj = {
+        const webUserObj = {
             ...commonUserObj,
-            device: "web",
+            device: 'web',
         }
 
         if (userFilter?.toLowerCase()?.includes('cancelled plan')) {
-            webUserObj['$or'] = [
-                ...(webUserObj['$or'] || []), 
+            webUserObj.$or = [
+                ...(webUserObj.$or || []),
                 { 'stripe.status': 'canceled' }]
         }
 
         if (userFilter?.toLowerCase()?.includes('freemium')) {
-            webUserObj['$or'] = [
-                ...(webUserObj['$or'] || []),
+            webUserObj.$or = [
+                ...(webUserObj.$or || []),
                 {
                     'stripe.status': {
                         $in: [
@@ -79,12 +79,11 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
                             'past_due',
                             'unpaid',
                             'incomplete_expired',
-                        ]
-                    }
-                }
+                        ],
+                    },
+                },
             ]
         }
-
 
         if (userFilter?.toLowerCase()?.includes('presignupusers')) {
             webUserObj.isSignedUp = false
@@ -102,7 +101,7 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
                         description: `${description}`,
                     },
                 });
-                /**send notification */
+                // send notification
                 fetchNotifications(io.sockets, { _id: user._id })
 
                 // If notification creation is successful
@@ -117,7 +116,7 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
             title,
             description,
             type: 'customNotification',
-            totalUsers: users.length
+            totalUsers: users.length,
         })
         return res.status(200).send({ message: adminControllerResponse.notificationSuccess })
     } catch (e: any) {
@@ -138,25 +137,25 @@ const getUserNotifications = async (req: Request, res: Response, next: NextFunct
                 $or: [
                     { title: await getSearchRegexp(params.search) },
                     { description: await getSearchRegexp(params.search) },
-                ]
+                ],
             }
         }
         const notificationSorting = [];
         switch (params.column) {
             case 'title':
-                notificationSorting.push(['title', params.order || 'ASC']);
+                notificationSorting.push(['title', params.order || 'asc']);
                 break;
             case 'description':
-                notificationSorting.push(['subject', params.order || 'ASC']);
+                notificationSorting.push(['subject', params.order || 'asc']);
                 break;
             case 'totalUsers':
-                notificationSorting.push(['totalUsers', params.order || 'ASC']);
+                notificationSorting.push(['totalUsers', params.order || 'asc']);
                 break;
             case 'createdAt':
-                notificationSorting.push(['createdAt', params.order || 'ASC']);
+                notificationSorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                notificationSorting.push(['createdAt', 'DESC']);
+                notificationSorting.push(['createdAt', 'desc']);
                 break;
         }
 
@@ -168,7 +167,7 @@ const getUserNotifications = async (req: Request, res: Response, next: NextFunct
         }
         res.status(200).send({
             message: notificationsControllerResponse.fetchNotificationSuccess,
-            data: notifications
+            data: notifications,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))

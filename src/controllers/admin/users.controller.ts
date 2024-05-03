@@ -48,13 +48,13 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             return next(Boom.badData(authControllerResponse.userAlreadyExistError))
         }
         if (body.image) {
-            const s3File: any = await uploadFileToS3(body.image, body.email.substring(0, body.email.lastIndexOf("@")), s3Bucket)
+            const s3File: any = await uploadFileToS3(body.image, body.email.substring(0, body.email.lastIndexOf('@')), s3Bucket)
             body.image = s3File.name
         }
         const password = (Math.random() + 1).toString(36).substring(2)
         const verificationCode = Math.floor(1000 + Math.random() * 9000)
         const token: string = getToken({ code: String(verificationCode), email: body.email })
-        const link: string = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
+        const link = `${origins[NODE_ENV]}/account/verify-user?token=${token}`
         const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.customerRegistration })
         const subject = emailTemplateDetails.subject || 'Account Verification'
         let html = `<p>Dear ${body.email.split('@')[0]}, You have registerd on holy reads by admin <b><p>Your account details are as below:</p><p>email: ${body.email}</p><p>password: ${password}</p></b><b>Please click <a href=${link}>here</a> to verify your email and activate your account.</b></p>`
@@ -71,7 +71,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             from: originEmails.marketing,
             to: body.email,
             subject,
-            html
+            html,
         });
 
         if (!result) {
@@ -86,7 +86,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             type: 'User',
             status: 'Active',
             verified: true,
-            device: 'web'
+            device: 'web',
         }
         const subscriptionDetails = body.subscription && await subscriptionService.getOneSubscriptionByFilter({ _id: body.subscription })
         if (body.subscription) {
@@ -95,13 +95,13 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             }
             const customer = await stripeSubscriptionService.createCustomer(body.email as any)
             const subscription = await stripeSubscriptionService.createSubscription({
-                planId: subscriptionDetails.stripePlanId, customerId: customer.id
+                planId: subscriptionDetails.stripePlanId, customerId: customer.id,
             })
             newBody.stripe = {
                 planId: subscriptionDetails.stripePlanId,
                 subscriptionId: subscription.id,
                 customerId: customer.id,
-                createdAt: new Date()
+                createdAt: new Date(),
             }
             newBody.subscription = subscriptionDetails._id
         }
@@ -111,15 +111,22 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             message: adminControllerResponse.addUserSuccess,
             data: {
                 _id: data._id,
-                email: data.email
-            }
+                email: data.email,
+            },
         })
         const title = 'Welcome to Holy Reads 🎉';
         const description = 'Summarizing the best of Christian publishing for your busy schedule';
         await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
         const createSubscriptionTitle = 'Holy Reads Subscription'
         const createSubscriptionDesc = `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} Subscription activated successfully`
-        await notificationsService.createNotification({ userId: data._id, type: 'setting', notification: { title: createSubscriptionTitle, description: createSubscriptionDesc } })
+        await notificationsService.createNotification({
+            userId: data._id,
+            type: 'setting',
+            notification: {
+                title: createSubscriptionTitle,
+                description: createSubscriptionDesc,
+            },
+        });
         fetchNotifications(io.sockets, { _id: data._id })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -164,7 +171,7 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                 { 'device': await getSearchRegexp(params.search) },
                 { 'transaction.total': await getSearchRegexp(params.search) },
             ],
-            type: 'User'
+            type: 'User',
         } : {}
 
         const planQuery = [
@@ -182,13 +189,13 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
         if (params?.paymentModeFilter === 'ios') {
             paymentModeQuery = {
                 'inAppSubscription.purchaseToken': { $exists: false },
-                'transaction.device': 'app'
+                'transaction.device': 'app',
             }
         }
         if (params?.paymentModeFilter === 'android') {
             paymentModeQuery = {
                 'inAppSubscription.purchaseToken': { $exists: true },
-                'transaction.device': 'app'
+                'transaction.device': 'app',
             }
         }
         if (params?.paymentModeFilter === 'web') {
@@ -199,7 +206,7 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             searchFilter = {
                 ...searchQuery,
                 ...planQuery,
-                ...paymentModeQuery
+                ...paymentModeQuery,
             }
         }
 
@@ -224,13 +231,13 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             }
         }
 
-        searchFilter['type'] = 'User'
+        searchFilter.type = 'User'
 
         if (
             params?.statusFilter?.toLowerCase()?.includes('freemium')
         ) {
-            searchFilter['$or'] = [
-                ...(searchFilter['$or'] || []),
+            searchFilter.$or = [
+                ...(searchFilter.$or || []),
                 {
                     'stripe.status': {
                         $in: [
@@ -239,48 +246,48 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                             'past_due',
                             'unpaid',
                             'incomplete_expired',
-                        ]
-                    }
+                        ],
+                    },
                 },
                 {
                     stripe: { $exists: false },
                     inAppSubscription: { $exists: false },
                     ...planQuery,
                     ...searchQuery,
-                    ...paymentModeQuery
-                }
+                    ...paymentModeQuery,
+                },
             ]
         }
 
         if (
             params?.statusFilter?.toLowerCase()?.includes('cancelled plan')
         ) {
-            searchFilter['$or'] = [
-                ...(searchFilter['$or'] || []),
+            searchFilter.$or = [
+                ...(searchFilter.$or || []),
                 {
                     'stripe.status': 'canceled',
                     ...planQuery,
                     ...searchQuery,
-                    ...paymentModeQuery
+                    ...paymentModeQuery,
                 },
                 {
                     'inAppSubscriptionStatus': 'Canceled',
                     ...planQuery,
                     ...searchQuery,
-                    ...paymentModeQuery
+                    ...paymentModeQuery,
                 },
             ]
         }
         if (
             params?.statusFilter?.toLowerCase()?.includes('presignupusers')
         ) {
-            searchFilter['$or'] = [
-                ...(searchFilter['$or'] || []),
+            searchFilter.$or = [
+                ...(searchFilter.$or || []),
                 {
                     'isSignedUp': false,
                     ...planQuery,
                     ...searchQuery,
-                    ...paymentModeQuery
+                    ...paymentModeQuery,
                 },
             ]
         }
@@ -309,23 +316,23 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
         if (
             params?.statusFilter?.toLowerCase()?.includes('paid user')
         ) {
-            searchFilter['$or'] = [
-                ...(searchFilter['$or'] || []),
+            searchFilter.$or = [
+                ...(searchFilter.$or || []),
                 {
                     'inAppSubscription': { $exists: true },
                     'inAppSubscriptionStatus': 'Active',
                     device: { $in: ['ios', 'android'] },
-                    'stripe.coupon': { $eq: null },
+                    'stripe.coupon': { $eq: undefined },
                     ...planQuery,
                     ...searchQuery,
-                    ...paymentModeQuery
+                    ...paymentModeQuery,
                 },
                 {
                     'stripe.status': 'active',
-                    'stripe.coupon': { $eq: null },
+                    'stripe.coupon': { $eq: undefined },
                     ...planQuery,
                     ...searchQuery,
-                    ...paymentModeQuery
+                    ...paymentModeQuery,
                 },
             ]
         }
@@ -340,17 +347,17 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     'inAppSubscriptionStatus': 'Active',
                     device: { $in: ['ios', 'android'] },
                     'stripe.status': 'active',
-                    'stripe.coupon': { $exists: true, $ne: null },
+                    'stripe.coupon': { $exists: true, $ne: undefined },
                     ...planQuery,
                     ...searchQuery,
-                    ...paymentModeQuery
+                    ...paymentModeQuery,
                 },
                 {
                     'stripe.status': 'active',
-                    'stripe.coupon': { $exists: true, $ne: null },
+                    'stripe.coupon': { $exists: true, $ne: undefined },
                     ...planQuery,
                     ...searchQuery,
-                    ...paymentModeQuery
+                    ...paymentModeQuery,
                 },
             ]
         }
@@ -406,11 +413,9 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
                 if (!i.stripe?.status) {
                     i.subscriptionStatus = 'Freemium'
-                }
-                else if (['trialing', 'incomplete'].includes(i.stripe?.status)) {
+                } else if (['trialing', 'incomplete'].includes(i.stripe?.status)) {
                     i.subscriptionStatus = 'Freemium'
-                }
-                else if (i.stripe?.status === 'active') {
+                } else if (i.stripe?.status === 'active') {
                     i.subscriptionStatus = 'Activated'
                 } else if (i.stripe?.status === 'canceled') {
                     i.subscriptionStatus = 'Cancelled'
@@ -418,7 +423,7 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     [
                         'past_due',
                         'unpaid',
-                        'incomplete_expired'
+                        'incomplete_expired',
                     ].includes(i.stripe?.status)
                 ) {
                     i.subscriptionStatus = 'Freemium'
@@ -435,7 +440,7 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
         }))
         response.status(200).json({
             message: authControllerResponse.getUsersSuccess,
-            data: { count, users }
+            data: { count, users },
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -452,7 +457,7 @@ const updateUser = async (req: Request | any, res: Response, next: NextFunction)
         if (!userObj) {
             return next(Boom.notFound(authControllerResponse.getUserError))
         }
-        if (req.body.image === null) {
+        if (req.body.image === undefined) {
             await removeS3File(userObj.image, s3Bucket)
         }
         if (req.body.image && req.body.image.includes('base64')) {
@@ -477,13 +482,13 @@ const updateUser = async (req: Request | any, res: Response, next: NextFunction)
                 /** Create stripe subscription */
                 subscription = await stripeSubscriptionService.createSubscription({
                     planId: subscriptionDetails.stripePlanId,
-                    customerId: customer.id
+                    customerId: customer.id,
                 })
             } else {
                 /** Update stripe subscription */
                 await stripeSubscriptionService.updateSubscription({
                     planId: subscriptionDetails.stripePlanId,
-                    subscriptionId: userObj.stripe.subscriptionId
+                    subscriptionId: userObj.stripe.subscriptionId,
                 })
                 subscription = await stripeSubscriptionService.retrieveSubscription(userObj.stripe.subscriptionId)
             }
@@ -521,7 +526,7 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
             ratingService.deleteRatings({ userId: userObj._id }),
             highLightsService.deleteHighLights({ userId: userObj._id }),
             transactionsService.deleteTransaction({ userId: userObj._id }),
-            notificationsService.deleteNotifications({ userId: userObj._id })
+            notificationsService.deleteNotifications({ userId: userObj._id }),
         ])
     } catch (e: any) {
         return next(Boom.badData(e.message))
@@ -535,4 +540,3 @@ export {
     deleteUser,
     getAllUsers,
 }
-

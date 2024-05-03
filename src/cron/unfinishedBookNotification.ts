@@ -1,5 +1,5 @@
-import cron from 'cron';
-import config from "../../config";
+import { CronJob } from 'cron';
+import config from '../../config';
 import { unfinishedBookNotification } from '../constants/cron.constants'
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
 import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
@@ -70,7 +70,7 @@ const start = async () => {
                 'views',
                 'coverImage',
                 'totalStar',
-                'status'
+                'status',
             ]).populate('author').lean().exec();
 
             /** Get book rating */
@@ -95,20 +95,20 @@ const start = async () => {
                         coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${bookDetails.coverImage}`,
                         totalStar: bookDetails.bookRating.star,
                         status: bookDetails.status,
-                    }
-                }
+                    },
+                },
             };
             try {
                 await pushNotification(tokens, notificationPayload.title, notificationPayload.body, JSON.stringify(notificationPayload.data));
                 notificationsSent.push({
                     userId: user._id,
-                    success: true
+                    success: true,
                 });
             } catch (error: any) {
                 notificationsSent.push({
                     userId: user._id,
                     success: false,
-                    errorMessage: error.message
+                    errorMessage: error.message,
                 });
             }
         }
@@ -129,7 +129,7 @@ const start = async () => {
                     success: notification.success,
                     errorMessage: notification.errorMessage,
                 },
-                createdAt: new Date()
+                createdAt: new Date(),
             });
             await notificationLog.save();
         }
@@ -140,7 +140,7 @@ const start = async () => {
             jobName: 'unfinished_book_notifier',
             status: 'failed',
             endedAt: new Date(),
-            message: `Unfinished book notifier job failed: ${error.message}`
+            message: `Unfinished book notifier job failed: ${error.message}`,
         });
         await cronLog.save();
     }
@@ -152,6 +152,6 @@ const start = async () => {
         return;
     }
     const schedule = Object.values(unfinishedBookNotification.SCHEDULE).join(' ');
-    new cron.CronJob(schedule, () => { start() }, null, true);
+    new CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) Unfinished book notifier initiated successfully!');
 })(unfinishedBookNotification, config);

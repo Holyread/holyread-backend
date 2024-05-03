@@ -3,7 +3,7 @@ import { BookAuthorModel, BookSummaryModel } from '../../../models/index'
 /** Create Author */
 const createAuthor = async (body: any) => {
       try {
-            let result: any = await BookAuthorModel.create(body)
+            const result: any = await BookAuthorModel.create(body)
             return result
       } catch (e: any) {
             throw new Error(e)
@@ -17,7 +17,7 @@ const updateAuthor = async (body: any, id: string) => {
                   { _id: id },
                   { ...body, updatedAt: new Date() },
                   { new: true }
-            ).lean() 
+            ).lean()
             return result
       } catch (e: any) {
             throw new Error(e)
@@ -38,9 +38,9 @@ const getOneAuthorByFilter = async (query: any) => {
 const getAllAuthors = async (skip: number, limit, search: object, sort) => {
       try {
             const authorsList: any = await BookAuthorModel.find(search).select('name about').skip(skip).limit(limit).sort(sort).lean()
-            const count = await BookAuthorModel.find(search).count();
+            const count = await BookAuthorModel.find(search).countDocuments();
             await Promise.all(authorsList.map(async oneAuthor => {
-                  oneAuthor.booksCount = await BookSummaryModel.count({ author: oneAuthor._id })
+                  oneAuthor.booksCount = await BookSummaryModel.countDocuments({ author: oneAuthor._id })
             }))
             return { count, authors: authorsList }
       } catch (e: any) {
@@ -74,5 +74,5 @@ export default {
       getOneAuthorByFilter,
       getAllAuthors,
       getAllAuthorsOptionsList,
-      deleteAuthor
+      deleteAuthor,
 }

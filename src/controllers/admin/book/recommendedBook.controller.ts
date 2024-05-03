@@ -25,7 +25,7 @@ const addRecommendedBook = async (req: Request, res: Response, next: NextFunctio
         const data = await recommendedBookService.createRecommendedBook({ book: body.book })
         res.status(200).send({
             message: recommendedBookControllerResponse.createRecommendedBookSuccess,
-            data
+            data,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -43,7 +43,7 @@ const getOneRecommendedBook = async (req: Request, res: Response, next: NextFunc
         }
         res.status(200).send({
             message: recommendedBookControllerResponse.fetchRecommendedBookSuccess,
-            data
+            data,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -59,18 +59,18 @@ const getAllRecommendedBooks = async (request: Request, response: Response, next
 
         let searchFilter = {}
         if (params.search) {
-            searchFilter = { "book.title": await getSearchRegexp(params.search) }
+            searchFilter = { 'book.title': await getSearchRegexp(params.search) }
         }
         const listSorting = [];
         switch (params.column) {
             case 'book':
-                listSorting.push(['book.title', params.order || 'ASC']);
+                listSorting.push(['book.title', params.order || 'asc']);
                 break;
             case 'createdAt':
-                listSorting.push(['createdAt', params.order || 'ASC']);
+                listSorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                listSorting.push(['createdAt', 'DESC']);
+                listSorting.push(['createdAt', 'desc']);
                 break;
         }
 

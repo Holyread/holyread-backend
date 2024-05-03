@@ -1,5 +1,5 @@
-import cron from 'cron';
-import config from "../../config";
+import { CronJob } from 'cron';
+import config from '../../config';
 import { highlightAndQuoteFeatureNotification } from '../constants/cron.constants'
 import { UserModel, CronLogModel, NotificationsModel, HighLightsModel } from '../models';
 import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
@@ -29,7 +29,7 @@ const start = async () => {
             'pushTokens.0': { $exists: true },
             'notification.push': true,
             'notification.userActivityAlerts': true,
-            createdAt: { $lte: fourDaysAgo }
+            createdAt: { $lte: fourDaysAgo },
         }).select('timeZone pushTokens').lean().exec();
 
         // Send notifications to matching users
@@ -44,13 +44,13 @@ const start = async () => {
                 await pushNotification(tokens, notificationPayload.title, notificationPayload.body);
                 notificationsSent.push({
                     userId: user._id,
-                    success: true
+                    success: true,
                 });
             } catch (error: any) {
                 notificationsSent.push({
                     userId: user._id,
                     success: false,
-                    errorMessage: error.message
+                    errorMessage: error.message,
                 });
             }
         }
@@ -72,7 +72,7 @@ const start = async () => {
                     success: notification.success,
                     errorMessage: notification.errorMessage,
                 },
-                createdAt: new Date()
+                createdAt: new Date(),
             });
             await notificationLog.save();
         }
@@ -83,7 +83,7 @@ const start = async () => {
             jobName: 'highlight_and_quote_feature',
             status: 'failed',
             endedAt: new Date(),
-            message: `Highlight and quote feature job failed: ${error.message}`
+            message: `Highlight and quote feature job failed: ${error.message}`,
         });
         await cronLog.save();
     }
@@ -95,6 +95,6 @@ const start = async () => {
         return;
     }
     const schedule = Object.values(highlightAndQuoteFeatureNotification.SCHEDULE).join(' ');
-    new cron.CronJob(schedule, () => { start() }, null, true);
+    new CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) highlight and quote feature initiated successfully!');
 })(highlightAndQuoteFeatureNotification, config);

@@ -1,8 +1,7 @@
-import cron from 'cron';
-import config from "../../config";
+import { CronJob } from 'cron';
+import config from '../../config';
 import { publishCuratedList } from '../constants/cron.constants';
 import { ExpertCuratedModel, CronLogModel } from '../models';
-
 
 const startPublishContentJob = async () => {
     try {
@@ -34,7 +33,7 @@ const startPublishContentJob = async () => {
             jobName: 'publish_curated',
             status: 'failed',
             endedAt: new Date(),
-            message: `publish curated execution Error is: ${error.message}`
+            message: `publish curated execution Error is: ${error.message}`,
         });
         await cronLog.save();
     }
@@ -46,6 +45,6 @@ const startPublishContentJob = async () => {
         return;
     }
     const schedule = Object.values(publishCuratedList.SCHEDULE).join(' ');
-    new cron.CronJob(schedule, () => { startPublishContentJob() }, null, true);
+    new CronJob(schedule, () => { startPublishContentJob() }, undefined, true);
     console.log('JOB(🟢) publish curated initiated successfully!');
 })(publishCuratedList, config);

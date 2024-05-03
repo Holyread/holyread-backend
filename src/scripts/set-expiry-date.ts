@@ -1,21 +1,21 @@
 import { UserModel, SubscriptionsModel } from '../models/index'
 import stripeSubscriptionServices from '../services/stripe/subscription'
-/** Set default book views */
+// Set default book views
 (async () => {
       try {
             const googleStoreUsers = await UserModel.find({
                   device: 'android',
-                  inAppSubscription: { $exists: true }
+                  inAppSubscription: { $exists: true },
             }).lean().exec();
 
             const appStoreUsers = await UserModel.find({
                   device: 'ios',
-                  inAppSubscription: { $exists: true }
+                  inAppSubscription: { $exists: true },
             }).lean().exec();
 
             const webUsers = await UserModel.find({
                   device: 'web',
-                  stripe: { $exists: true }
+                  stripe: { $exists: true },
             }).lean().exec();
 
             const subscriptions = await SubscriptionsModel
@@ -25,7 +25,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
 
             const getMonths = (subscription) => {
                   const duration = subscriptions.find(
-                        s => String(s._id) == subscription
+                        s => String(s._id) === subscription
                   )?.duration;
 
                   let months = 1;
@@ -75,10 +75,9 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                                                 .transaction
                                                 .expiresDate
                                     ),
-                                    inAppSubscriptionStatus
+                                    inAppSubscriptionStatus,
                               }
-                        }
-                        else if (
+                        } else if (
                               item
                                     ?.inAppSubscription
                                     ?.transactionDate
@@ -116,7 +115,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                                           : item.inAppSubscriptionStatus;
                               body = {
                                     'inAppSubscription.expiredAt': expiredAt,
-                                    inAppSubscriptionStatus
+                                    inAppSubscriptionStatus,
                               }
                         }
 
@@ -124,12 +123,12 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                               { _id: item._id },
                               body
                         )
-                  } catch ({ message }: any) { }
+                  } catch ({ message }: any) { console.log(message) }
             }))
 
             await Promise.all(googleStoreUsers.map(async (item: any) => {
                   try {
-                        let dataAndroid = JSON.parse(
+                        const dataAndroid = JSON.parse(
                               item?.inAppSubscription?.dataAndroid
                               ||
                               '{}'
@@ -162,10 +161,9 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
 
                               body = {
                                     'inAppSubscription.expiredAt': expiredAt,
-                                    inAppSubscriptionStatus
+                                    inAppSubscriptionStatus,
                               }
-                        }
-                        else if (
+                        } else if (
                               item?.inAppSubscription?.transactionDate &&
                               item?.inAppSubscriptionStatus === 'Active'
                         ) {
@@ -190,14 +188,14 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
 
                               body = {
                                     'inAppSubscription.expiredAt': expiredAt,
-                                    inAppSubscriptionStatus
+                                    inAppSubscriptionStatus,
                               }
                         }
                         await UserModel.updateOne(
                               { _id: item._id },
                               body
                         )
-                  } catch ({ message }: any) { }
+                  } catch ({ message }: any) { console.log(message) }
             }))
 
             await Promise.all(webUsers.map(async (item: any) => {
@@ -220,10 +218,10 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                                                       .current_period_end
                                                 *
                                                 1000
-                                          )
+                                          ),
                                     }
                               )
-                  } catch ({ message }: any) { }
+                  } catch ({ message }: any) { console.log(message) }
             }))
 
             console.log('expiry date added successfully');

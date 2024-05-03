@@ -1,6 +1,6 @@
 import mongoose, {Schema} from 'mongoose'
 
-mongoose.set('useCreateIndex', true)
+mongoose.set('autoIndex', true);
 
 export interface ISmallGroup extends mongoose.Document {
     title: string,
@@ -57,14 +57,14 @@ export const SmallGroupSchema = new Schema({
         type: Schema.Types.ObjectId,
         required: true,
         ref: 'bookSummary',
-        index: true
+        index: true,
     }],
     description: { type: String, required: true },
     status: { type: String, default: 'Active' },
     iceBreaker: { type: String, default: '' },
     introduction: { type: String, default: '' },
     questions: [{
-        type: String, index: true
+        type: String, index: true,
     }],
     backgroundColor: { type: String, default: '' },
     coverImage: { type: String, required: true },

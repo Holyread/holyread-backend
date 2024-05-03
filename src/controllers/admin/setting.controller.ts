@@ -16,7 +16,7 @@ const getSetting = async (req: Request, res: Response, next: NextFunction) => {
         }
         res.status(200).send({
             message: settingControllerResponse.fetchSettingSuccess,
-            data: cmsObj
+            data: cmsObj,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))

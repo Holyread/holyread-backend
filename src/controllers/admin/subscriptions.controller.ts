@@ -33,7 +33,7 @@ const addSubscription = async (req: Request, res: Response, next: NextFunction) 
         delete data.stripePlanId
         res.status(200).send({
             message: subscriptionsControllerResponse.createSubscriptionSuccess,
-            data
+            data,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -52,7 +52,7 @@ const getOneSubscription = async (req: Request, res: Response, next: NextFunctio
         delete subscriptionObj.stripePlanId
         res.status(200).send({
             message: subscriptionsControllerResponse.fetchSubscriptionSuccess,
-            data: subscriptionObj
+            data: subscriptionObj,
         })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -75,28 +75,28 @@ const getAllSubscriptions = async (request: Request, response: Response, next: N
                     { saves: params.search },
                     { status: await getSearchRegexp(params.search) },
                     { duration: params.search },
-                ]
+                ],
             }
         }
         const subscriptionsSorting = [];
         switch (params.column) {
             case 'title':
-                subscriptionsSorting.push(['title', params.order || 'ASC']);
+                subscriptionsSorting.push(['title', params.order || 'asc']);
                 break;
             case 'price':
-                subscriptionsSorting.push(['price', params.order || 'ASC']);
+                subscriptionsSorting.push(['price', params.order || 'asc']);
                 break;
             case 'duration':
-                subscriptionsSorting.push(['duration', params.order || 'ASC']);
+                subscriptionsSorting.push(['duration', params.order || 'asc']);
                 break;
             case 'status':
-                subscriptionsSorting.push(['status', params.order || 'ASC']);
+                subscriptionsSorting.push(['status', params.order || 'asc']);
                 break;
             case 'createdAt':
-                subscriptionsSorting.push(['createdAt', params.order || 'ASC']);
+                subscriptionsSorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
-                subscriptionsSorting.push(['title', 'DESC']);
+                subscriptionsSorting.push(['title', 'desc']);
                 break;
         }
 

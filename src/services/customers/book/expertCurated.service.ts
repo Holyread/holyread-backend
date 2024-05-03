@@ -23,23 +23,23 @@ const getAllExpertCurateds = async (skip: number, limit, search: any, sort) => {
                     image: {
                         $concat: [
                             awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/',
-                            '$image'
-                        ]
+                            '$image',
+                        ],
                     },
-                }
-            }
+                },
+            },
         ])
 
         if (Object.keys(search).length) {
             aggregate.add({
-                $match: search
+                $match: search,
             })
         }
         aggregate.add({
-            $sort: sort
+            $sort: sort,
         })
         aggregate.add({
-            $sample: { size: count }
+            $sample: { size: count },
         })
         aggregate.add({
             $facet: {
@@ -48,20 +48,20 @@ const getAllExpertCurateds = async (skip: number, limit, search: any, sort) => {
                         ? page.concat({ $limit: limit })
                         : page,
                 total: [{
-                    $count: 'count'
-                }]
-            }
+                    $count: 'count',
+                }],
+            },
         })
 
         const result
             = await ExpertCuratedModel
                 .aggregate([
-                    ...aggregate
+                    ...aggregate,
                 ])
 
         return {
             curatedList: result[0]?.page,
-            count: result[0].total[0]?.count
+            count: result[0].total[0]?.count,
         }
     } catch (e: any) {
         throw new Error(e)
@@ -91,5 +91,5 @@ const updateOneExpertCurated = async (query: any, data: any) => {
 export default {
     getAllExpertCurateds,
     updateOneExpertCurated,
-    getOneExpertCuratedByFilter
+    getOneExpertCuratedByFilter,
 };

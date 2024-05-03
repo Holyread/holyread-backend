@@ -1,5 +1,5 @@
-import cron from 'cron';
-import config from "../../config";
+import { CronJob } from 'cron';
+import config from '../../config';
 import { engagementMotivationNotification } from '../constants/cron.constants';
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
 import { pushNotification, calculateDateInThePast } from '../lib/utils/utils';
@@ -40,7 +40,7 @@ const startEngagementMotivationJob = async () => {
             'views',
             'coverImage',
             'totalStar',
-            'status'
+            'status',
         ]).populate('author').lean().exec();
 
         if (!newPublishBook) {
@@ -63,7 +63,7 @@ const startEngagementMotivationJob = async () => {
             'pushTokens.0': { $exists: true },
             'notification.push': true,
             'notification.userActivityAlerts': true,
-            lastSeen: { $lte: threeDaysAgo }
+            lastSeen: { $lte: threeDaysAgo },
         }).select('pushTokens').lean().exec();
 
         if (!users.length) {
@@ -93,7 +93,7 @@ const startEngagementMotivationJob = async () => {
                             coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${publishContent.coverImage}`,
                             totalStar: publishContent.bookRating.star,
                             status: publishContent.status,
-                        }
+                        },
                     })
                 );
 
@@ -105,9 +105,9 @@ const startEngagementMotivationJob = async () => {
                         title: '🔔 We miss you at Holy Reads!',
                         description: `📙 You've missed out on some uplifting content like ${publishContent.title}.`,
                         success: true,
-                        errorMessage: null,
+                        errorMessage: undefined,
                     },
-                    createdAt: new Date()
+                    createdAt: new Date(),
                 });
                 await notificationLog.save();
             } catch (error: any) {
@@ -121,7 +121,7 @@ const startEngagementMotivationJob = async () => {
                         success: false,
                         errorMessage: `Users processing error -', ${error.message}`,
                     },
-                    createdAt: new Date()
+                    createdAt: new Date(),
                 });
                 await notificationLog.save();
             }
@@ -137,7 +137,7 @@ const startEngagementMotivationJob = async () => {
             jobName: 'engagement_motivation',
             status: 'failed',
             endedAt: new Date(),
-            message: `engagement motivation execution Error is: ${error.message}`
+            message: `engagement motivation execution Error is: ${error.message}`,
         });
         await cronLog.save();
     }
@@ -149,6 +149,6 @@ const startEngagementMotivationJob = async () => {
         return;
     }
     const schedule = Object.values(engagementMotivationNotification.SCHEDULE).join(' ');
-    new cron.CronJob(schedule, () => { startEngagementMotivationJob() }, null, true);
+    new CronJob(schedule, () => { startEngagementMotivationJob() }, null, true);
     console.log('JOB(🟢) engagement motivation initiated successfully!');
 })(engagementMotivationNotification, config);

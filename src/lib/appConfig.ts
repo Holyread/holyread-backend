@@ -6,7 +6,7 @@ const handleError = async (err: any, req: Request, res: Response, next: NextFunc
 
     const errorResponse = Object.assign({ stack: err.stack, errorCode: err.errorCode }, err.output && err.output.payload ? err.output.payload : err, err.data)
     console.log('app errors', err.stack)
-    const statusCode = err.output && err.output.statusCode ? err.output.statusCode : 500
+    const statusCode = err.output && err.output.statusCode ? err.output.statusCode : 422
     return res.status(statusCode).json(errorResponse)
 }
 

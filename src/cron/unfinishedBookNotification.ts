@@ -35,7 +35,7 @@ const start = async () => {
 
         function getRandomBookFromReading(userData) {
             const readingArray = userData.libraries.reading;
-            const yesterday = calculateDateInThePast(1);
+            const yesterday = calculateDateInThePast(9);
 
             // Filter the readingArray to include only books updated yesterday
             const updatedYesterday = readingArray.filter(book => {

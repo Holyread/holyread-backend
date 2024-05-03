@@ -63,10 +63,10 @@ const getAllRatings = async (skip: number, limit, search: any, sort: { column: s
             ratings = ratings.map(item => {
                   let stars = 0
                   let users = 0
-                  item.ratings.forEach(rating => {
-                        stars += rating.stars;
-                        users += rating.users;
-                  });
+                  for (let i in item.ratings) {
+                        stars += item.ratings[i].stars
+                        users += item.ratings[i].users
+                  }
                   item.star = Number((stars / users).toFixed(1))
 
                   if (

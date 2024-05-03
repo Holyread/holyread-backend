@@ -52,8 +52,8 @@ const startEngagementMotivationJob = async () => {
         const bookRating = await RatingModel.findOne({ bookId: newPublishBook._id }).select('star').lean().exec();
         const publishContent = { ...newPublishBook, bookRating };
 
-        // Calculate the date three days ago
-        const threeDaysAgo = calculateDateInThePast(3);
+        // Calculate the date seven days ago
+        const sevenDaysAgo = calculateDateInThePast(7);
 
         // Find active users with a defined timeZone, at least one push token,
         // enabled push notifications, and whose lastSeen date is on or before three days ago
@@ -63,7 +63,7 @@ const startEngagementMotivationJob = async () => {
             'pushTokens.0': { $exists: true },
             'notification.push': true,
             'notification.userActivityAlerts': true,
-            lastSeen: { $lte: threeDaysAgo },
+            lastSeen: { $lte: sevenDaysAgo },
         }).select('pushTokens').lean().exec();
 
         if (!users.length) {

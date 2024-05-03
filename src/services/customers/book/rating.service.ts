@@ -45,12 +45,11 @@ const getBooksRatings = async (bookIds: [string], userId: string) => {
                         isRate: book[oneRating.bookId]?.isRate || String(userId) === String(oneRating.userId),
                   };
             }))
-            Object.keys(book).forEach(item => {
+            for (const item in book) {
                   book[item] = {
-                        averageStar: Number((book[item].star / book[item].users).toFixed(1)),
                         isRate: book[item].isRate,
                   };
-            });
+            }
             return book;
       } catch (e: any) {
             throw new Error(e);

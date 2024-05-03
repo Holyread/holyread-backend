@@ -66,8 +66,8 @@ export const setStripeCouponAndStatus = {
 export const contentUpdateNotification = {
       SCHEDULE: {
           Minutes: '0',
-          Hours: '12', // 12 PM
-          DayOfMonth: '*/4',
+          Hours: '10', // 10 AM
+          DayOfMonth: '*/7',
           Months: '*',
           DayOfWeek: '*',
       },
@@ -77,8 +77,8 @@ export const contentUpdateNotification = {
 export const engagementMotivationNotification = {
       SCHEDULE: {
           Minutes: '0',
-          Hours: '18', // 6 PM
-          DayOfMonth: '*',
+          Hours: '8', // 8AM
+          DayOfMonth: '*/7', //Every seven days
           Months: '*',
           DayOfWeek: '*',
       },
@@ -104,7 +104,7 @@ export const highlightAndQuoteFeatureNotification = {
         Months: '*',
         DayOfWeek: '*',
       },
-      JOBRESTRICTENV: ['local'], // 'local','development','production'
+      JOBRESTRICTENV: ['local', 'development', 'production'], // 'local','development','production'
 };
 
   export const kindleSetUpNotification = {
@@ -115,7 +115,7 @@ export const highlightAndQuoteFeatureNotification = {
             Months: '*',
             DayOfWeek: '*',
           },
-      JOBRESTRICTENV: ['local'], // 'local','development','production'
+      JOBRESTRICTENV: ['local', 'development', 'production'], // 'local','development','production'
 };
 
 export const schedulePersonalizeNotification = {
@@ -126,7 +126,7 @@ export const schedulePersonalizeNotification = {
           Months: '*', // Every month
           DayOfWeek: '*', // Every day of the week
          },
-      JOBRESTRICTENV: ['local'], // 'local','development','production'
+      JOBRESTRICTENV: ['local', 'development', 'production'], // 'local','development','production'
 };
 
 export const publishSmallGroup = {

@@ -236,8 +236,7 @@ const getOneBookSummaryByFilter = async (query: any) => {
         if (data.author) {
             data.author = await BookAuthorModel.findOne({ _id: data.author }).lean().exec()
         }
-        data.totalStar = ratings[String(data._id)]?.averageStar || 3,
-            data.isRate = !!ratings[String(data._id)]?.isRate
+        data.isRate = !!ratings[String(data._id)]?.isRate
         data.views = data.views || 0
         data.bookMark = libraries?.saved?.find(b => String(b) === String(data?._id)) ? true : false
         data.reads = Number((libBookChapters?.length ? (100 * libBookChapters?.length) / data?.chapters?.length : 0).toFixed(0))

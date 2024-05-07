@@ -135,6 +135,8 @@ const getDailyDevotional = async (request: Request | any, response: Response, ne
         const params: any = request.query
         const skip: any = params.skip
         const limit: any = params.limit
+        const userObj: any = Object.assign({}, request.user);
+        const query: any = { _id: userObj.libraries };
 
         const subscriptionStatus = await subscriptionService.getUserSubscriptionStatus(request.user)
         if (subscriptionStatus === 'freemium') {
@@ -146,7 +148,14 @@ const getDailyDevotional = async (request: Request | any, response: Response, ne
             end.setHours(23, 59, 59, 999);
             data = await dailyDevotionalService.getAllDailyDevotional(Number(skip), Number(limit), { displayAt: { $gte: new Date(start), $lte: new Date(end) } }, [['displayAt', 'desc']])
         } else {
-            data = await dailyDevotionalService.getAllDailyDevotional(Number(skip), Number(limit), {}, [['displayAt', 'desc']])
+            userObj.libraries = await userService.getUserLibrary(query);
+            if (!userObj?.libraries?.devotionalCategories?.length) {
+                data = await dailyDevotionalService.getAllDailyDevotional(Number(skip), Number(limit), {}, [['displayAt', 'desc']])
+            }
+            else {
+                const categories = userObj?.libraries?.devotionalCategories;
+                data = await dailyDevotionalService.getAllDailyDevotional(Number(skip), Number(limit), { category: categories }, [['displayAt', 'desc']])
+            }
         }
 
         response.status(200).json({

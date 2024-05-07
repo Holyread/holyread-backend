@@ -13,6 +13,8 @@ export interface IUserLibrary extends mongoose.Document {
         updatedAt: Date,
         chaptersCompleted: [string],
     }],
+    devotionalCategories: [string],
+    devotionalViews: [Types.ObjectId],
 }
 
 export type createUserLibraryType = {
@@ -28,6 +30,8 @@ export type createUserLibraryType = {
         updatedAt: Date,
         chaptersCompleted: [string],
     }],
+    devotionalCategories: [string],
+    devotionalViews: [Types.ObjectId],
 }
 
 export type getUserLibraryType = {
@@ -44,6 +48,8 @@ export type getUserLibraryType = {
         updatedAt: Date,
         chaptersCompleted: [string],
     }],
+    devotionalCategories: [string]
+    devotionalViews: [Types.ObjectId],
 }
 
 export const UserLibrarySchema = new Schema({
@@ -60,6 +66,8 @@ export const UserLibrarySchema = new Schema({
         updatedAt: { type: Date },
     }],
     categories: [{ type: Schema.Types.ObjectId }],
+    devotionalCategories: [{ type: String }],
+    devotionalViews: [{ type: Schema.Types.ObjectId }],
 }, { strict: 'throw' })
 
 export const UserLibraryModel =

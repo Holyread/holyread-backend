@@ -71,6 +71,7 @@ import notificationsService
       from '../../services/customers/notifications/notifications.service';
 
 import mailchimpService from '../../services/mailchimp'
+import dailyDevotionalService from '../../services/customers/dailyDevotional/dailyDevotional.service';
 
 const NODE_ENV = config.NODE_ENV
 
@@ -86,6 +87,7 @@ const bookSummaryControllerResponse
       = responseMessage.bookSummaryControllerResponse
 const subscriptionsControllerResponse
       = responseMessage.subscriptionsControllerResponse
+const { dailyDevotionalControllerResponse } = responseMessage
 
 const s3Bucket = {
       region: awsBucket.region,
@@ -1378,7 +1380,13 @@ const updateUserLibrary = async (
                   delete req.body.smallGroup
                   message = authControllerResponse.unSavedBook
             }
-
+            if (section === 'devotionalViews') {
+                  req.body.$addToSet = {
+                        'devotionalViews': req.body.devotionalViews,
+                  }
+                  delete req.body.devotionalViews
+                  message = authControllerResponse.userUpdateSuccess
+            }
             await usersService.updateUserLibrary(query, req.body)
             return res.status(200).send({ message })
 
@@ -1609,6 +1617,33 @@ const getUserLibrary = async (
                         )
                   res.status(200).send({
                         message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
+                        data,
+                  })
+                  return null
+            }
+            if (section === 'devotionalViews' && userObj?.libraries?.devotionalViews?.length) {
+                  const search: any = {
+                        _id: {
+                              $in: bookId ? [bookId] : userObj.libraries.devotionalViews,
+                        },
+                  }
+                  const data = await dailyDevotionalService.getAllDailyDevotional(
+                        0,
+                        0,
+                        search,
+                        {
+                              'createdAt': String(sort || 'asc')
+                                    .toLowerCase() === 'asc' ? 1.0 : -1.0,
+                        }
+                  )
+                  data.count = data.dailyDevotionalList.length
+                  data.dailyDevotionalList = data.dailyDevotionalList
+                        .slice(
+                              Number(skip),
+                              Number(skip) + Number(limit)
+                        )
+                  res.status(200).send({
+                        message: dailyDevotionalControllerResponse.fetchDailyDevotionalsSuccess,
                         data,
                   })
                   return null
@@ -2747,6 +2782,56 @@ const getUserSelectedCategory = async (req: Request | any, res: Response, next: 
       }
 };
 
+const subscribeDevotionalCategory = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const userObj: any = Object.assign({}, req.user);
+            const query: any = { _id: userObj.libraries };
+
+            if (!req.body.devotionalCategories) {
+                  return next(
+                        Boom.badData(
+                              authControllerResponse.missingCategoryError
+                        )
+                  )
+            }
+
+            // Get the user's library
+            userObj.libraries = await userService.getUserLibrary(query);
+
+            // Replace old categories with new categories
+            userObj.libraries.devotionalCategories = req.body.devotionalCategories;
+
+            // Update the user's library
+            await userService.updateUserLibrary(query, userObj.libraries);
+
+            res.status(200).send({
+                  message: authControllerResponse.addCategorySuccess,
+            });
+      } catch (e: any) {
+            next(Boom.badData(e.message));
+      }
+};
+
+const getUserSelectedDevotionalCategory = async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+            const userObj: any = Object.assign({}, req.user);
+            const query: any = { _id: userObj.libraries };
+
+            // Get the user's library
+            userObj.libraries = await userService.getUserLibrary(query);
+
+            // Fetch details of categories
+            const devotionalCategories = userObj.libraries.devotionalCategories.map((categoryId: any) => categoryId);
+
+            res.status(200).send({
+                  message: authControllerResponse.getCategorySuccess,
+                  devotionalCategories,
+            });
+      } catch (e: any) {
+            next(Boom.badData(e.message));
+      }
+};
+
 export {
       logout,
       getCoupon,
@@ -2771,5 +2856,7 @@ export {
       getChangePasswordCode,
       getShareOptionImageUrl,
       addCategoryToUserLibrary,
-      getUserSelectedCategory
+      getUserSelectedCategory,
+      subscribeDevotionalCategory,
+      getUserSelectedDevotionalCategory
 }

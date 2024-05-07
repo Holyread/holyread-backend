@@ -183,7 +183,7 @@ export const responseMessage = {
         fetchDailyDevotionalSuccess: 'Daily devotional details fetched successfully',
         fetchDailyDevotionalsSuccess: 'Daily devotional list fetched successfully',
         createDailyDevotionalFailure: 'Daily devotional already added',
-        getRDailyDevotionalFailure: 'Failed to fetch Daily devotional details',
+        getDailyDevotionalFailure: 'Failed to fetch Daily devotional details',
     },
     smallGroupControllerResponse: {
         createSmallGroupSuccess: 'Small group added successfully',

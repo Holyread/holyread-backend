@@ -1,13 +1,13 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 
-import readsOfDayService from '../../services/admin/readsOfDay/readsOfDay.service'
+import dailyDevotionalService from '../../services/admin/dailyDevotional/dailyDevotional.service'
 import { responseMessage } from '../../constants/message.constant'
 import { removeS3File, uploadFileToS3, getSearchRegexp } from '../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../constants/app.constant'
 import config from '../../../config'
 
-const readsOfDayControllerResponse = responseMessage.readsOfDayControllerResponse
+const dailyDevotionalControllerResponse = responseMessage.dailyDevotionalControllerResponse
 
 const NODE_ENV = config.NODE_ENV
 const s3Bucket = {
@@ -16,15 +16,15 @@ const s3Bucket = {
     documentDirectory: `${awsBucket.readsOfDayDirectory}`,
 }
 
-/** Add read of day */
-const addReadOfDay = async (req: Request, res: Response, next: NextFunction) => {
+/** Add Daily Devotional */
+const addDailyDevotional = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
-        /** Get read of day from db */
+        /** Get daily devotional from db */
         if (body.title) {
-            const readOfDay: any = await readsOfDayService.getOneReadOfDayByFilter({ title: req.body.title })
-            if (readOfDay) {
-                return next(Boom.badData(readsOfDayControllerResponse.createReadOfDayFailure))
+            const dailyDevotional: any = await dailyDevotionalService.getOneDailyDevotionalByFilter({ title: req.body.title })
+            if (dailyDevotional) {
+                return next(Boom.badData(dailyDevotionalControllerResponse.createDailyDevotionalFailure))
             }
         }
 
@@ -39,17 +39,18 @@ const addReadOfDay = async (req: Request, res: Response, next: NextFunction) => 
             body.video = s3File.name
             body.videoFileSize = s3File.size
         }
-        const data = await readsOfDayService.createReadOfDay({
+        const data = await dailyDevotionalService.createDailyDevotional({
             contentType: body.contentType,
             title: body.title,
             subTitle: body.subTitle,
             description: body.description,
             video: body.video,
             image: body.image,
+            category: body.category,
             status: body.status || 'Active',
         })
         res.status(200).send({
-            message: readsOfDayControllerResponse.createReadOfDaySuccess,
+            message: dailyDevotionalControllerResponse.createDailyDevotionalSuccess,
             data,
         })
     } catch (e: any) {
@@ -57,12 +58,12 @@ const addReadOfDay = async (req: Request, res: Response, next: NextFunction) => 
     }
 }
 
-/**  Get one read of day by id */
-const getOneReadOfDay = async (req: Request, res: Response, next: NextFunction) => {
+/**  Get one daily devotional by id */
+const getOneDailyDevotional = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
-        /** Get read of day from db */
-        const data: any = await readsOfDayService.getOneReadOfDayByFilter({ _id: id })
+        /** Get daily devotional from db */
+        const data: any = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id })
         if (data && data.image) {
             data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + data.image
         }
@@ -71,16 +72,16 @@ const getOneReadOfDay = async (req: Request, res: Response, next: NextFunction) 
             data.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + data.video
         }
         if (!data) {
-            return next(Boom.notFound(readsOfDayControllerResponse.getReadOfDayFailure))
+            return next(Boom.notFound(dailyDevotionalControllerResponse.getRDailyDevotionalFailure))
         }
-        res.status(200).send({ message: readsOfDayControllerResponse.fetchReadOfDaySuccess, data })
+        res.status(200).send({ message: dailyDevotionalControllerResponse.fetchDailyDevotionalSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }
 }
 
-/** Get all read of day by filter */
-const getAllReadsOfDay = async (request: Request, response: Response, next: NextFunction) => {
+/** Get all daily devotional by filter */
+const getAllDailyDevotional = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params: any = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
@@ -91,6 +92,7 @@ const getAllReadsOfDay = async (request: Request, response: Response, next: Next
             searchQuery = {
                 $or: [
                     { 'title': await getSearchRegexp(params.search) },
+                    { 'category': await getSearchRegexp(params.search) },
                     { 'status': await getSearchRegexp(params.search) },
                 ],
             }
@@ -112,7 +114,10 @@ const getAllReadsOfDay = async (request: Request, response: Response, next: Next
             case 'title':
                 readsOfDaySorting.push(['title', params.order || 'asc']);
                 break;
-            case 'createdAt':
+            case 'category':
+                readsOfDaySorting.push(['category', params.order || 'asc']);
+                break;
+            case 'category':
                 readsOfDaySorting.push(['createdAt', params.order || 'asc']);
                 break;
             default:
@@ -120,21 +125,21 @@ const getAllReadsOfDay = async (request: Request, response: Response, next: Next
                 break;
         }
 
-        const data = await readsOfDayService.getAllReadsOfDay(Number(skip), Number(limit), searchFilter, readsOfDaySorting)
-        response.status(200).json({ message: readsOfDayControllerResponse.fetchReadsOfDaySuccess, data })
+        const data = await dailyDevotionalService.getAllDailyDevotional(Number(skip), Number(limit), searchFilter, readsOfDaySorting)
+        response.status(200).json({ message: dailyDevotionalControllerResponse.fetchDailyDevotionalsSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }
 }
 
-/** Update read of day */
-const updateReadOfDay = async (req: Request, res: Response, next: NextFunction) => {
+/** Update daily devotional */
+const updateDailyDevotional = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
-        /** Get read of day from db */
-        const readOfDayDetails: any = await readsOfDayService.getOneReadOfDayByFilter({ _id: id })
+        /** Get daily devotional from db */
+        const readOfDayDetails: any = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id })
         if (!readOfDayDetails) {
-            return next(Boom.notFound(readsOfDayControllerResponse.getReadOfDayFailure))
+            return next(Boom.notFound(dailyDevotionalControllerResponse.getRDailyDevotionalFailure))
         }
         if (req.body.image === null) {
             await removeS3File(readOfDayDetails.image, s3Bucket)
@@ -147,26 +152,32 @@ const updateReadOfDay = async (req: Request, res: Response, next: NextFunction) 
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = readOfDayDetails.image
         }
-        await readsOfDayService.updateReadOfDay(req.body, id)
-        return res.status(200).send({ message: readsOfDayControllerResponse.updateReadOfDaySuccess })
+        await dailyDevotionalService.updateDailyDevotional(req.body, id)
+        return res.status(200).send({ message: dailyDevotionalControllerResponse.updateDailyDevotionalSuccess })
     } catch (e: any) {
         return next(Boom.badData(e.message))
     }
 }
 
-/** Remove read of day */
-const deleteReadOfDay = async (req: Request, res: Response, next: NextFunction) => {
+/** Remove daily devotional */
+const deleteDailyDevotional = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
-        const readOfDayDetails: any = await readsOfDayService.getOneReadOfDayByFilter({ _id: id })
+        const readOfDayDetails: any = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id })
         if (readOfDayDetails && readOfDayDetails.image) {
             await removeS3File(readOfDayDetails.image, s3Bucket)
         }
-        await readsOfDayService.deleteReadOfDay(id)
-        return res.status(200).send({ message: readsOfDayControllerResponse.deleteReadOfDaySuccess })
+        await dailyDevotionalService.deleteDailyDevotional(id)
+        return res.status(200).send({ message: dailyDevotionalControllerResponse.deleteDailyDevotionalSuccess })
     } catch (e: any) {
         return next(Boom.badData(e.message))
     }
 }
 
-export { addReadOfDay, getOneReadOfDay, getAllReadsOfDay, updateReadOfDay, deleteReadOfDay }
+export {
+    addDailyDevotional,
+    getAllDailyDevotional,
+    updateDailyDevotional,
+    deleteDailyDevotional,
+    getOneDailyDevotional,
+}

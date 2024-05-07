@@ -5,7 +5,7 @@ import Boom from '@hapi/boom';
 import bookSummaryService from '../../services/customers/book/bookSummary.service'
 import bookCategoryService from '../../services/customers/book/bookCategory.service'
 import expertCuratedService from '../../services/customers/book/expertCurated.service'
-import readsOfDayService from '../../services/customers/readsOfDay/readsOfDay.service'
+import dailyDevotionalService from '../../services/customers/dailyDevotional/dailyDevotional.service'
 import ratingService from '../../services/customers/book/rating.service'
 import autherService from '../../services/customers/book/author.service'
 import smallGroupService from '../../services/customers/smallGroup/smallGroup.service'
@@ -128,8 +128,8 @@ const getCuratedsList = async (request: Request, response: Response, next: NextF
     }
 }
 
-/** Get reads of the day for Dashboard */
-const getReadsOfTheDay = async (request: Request | any, response: Response, next: NextFunction) => {
+/** Get daily devotional for Dashboard */
+const getDailyDevotional = async (request: Request | any, response: Response, next: NextFunction) => {
     try {
         let data: any;
         const params: any = request.query
@@ -144,9 +144,9 @@ const getReadsOfTheDay = async (request: Request | any, response: Response, next
             start.setHours(0, 0, 0, 0);
             const end = new Date();
             end.setHours(23, 59, 59, 999);
-            data = await readsOfDayService.getAllReadsOfDays(Number(skip), Number(limit), { displayAt: { $gte: new Date(start), $lte: new Date(end) } }, [['displayAt', 'desc']])
+            data = await dailyDevotionalService.getAllDailyDevotional(Number(skip), Number(limit), { displayAt: { $gte: new Date(start), $lte: new Date(end) } }, [['displayAt', 'desc']])
         } else {
-            data = await readsOfDayService.getAllReadsOfDays(Number(skip), Number(limit), {}, [['displayAt', 'desc']])
+            data = await dailyDevotionalService.getAllDailyDevotional(Number(skip), Number(limit), {}, [['displayAt', 'desc']])
         }
 
         response.status(200).json({
@@ -408,7 +408,7 @@ export {
     getCuratedsList,
     getLatestBooks,
     getPopularBooks,
-    getReadsOfTheDay,
+    getDailyDevotional,
     getRecentReads,
     getRecommendedBooks,
     getSmallGroups,

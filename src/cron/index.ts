@@ -1,5 +1,5 @@
 import './dailyDevotionalNotification';
-import './setReadsOfDayDisplayAt';
+import './setDailyDevotionalDisplayAt';
 import './renewalReminderNotification';
 import './publishContent';
 import './syncProfit';

@@ -176,14 +176,14 @@ export const responseMessage = {
         shareImageExistError: 'Share image already added',
         getShareImageFailure: 'Failed to fetch share image details',
     },
-    readsOfDayControllerResponse: {
-        createReadOfDaySuccess: 'Read of the Day added successfully.',
-        updateReadOfDaySuccess: 'Read of day updated successfully',
-        deleteReadOfDaySuccess: 'Read of day deleted successfully',
-        fetchReadOfDaySuccess: 'Read of day details fetched successfully',
-        fetchReadsOfDaySuccess: 'Reads of day list fetched successfully',
-        createReadOfDayFailure: 'Read of day already added',
-        getReadOfDayFailure: 'Failed to fetch Read of day details',
+    dailyDevotionalControllerResponse: {
+        createDailyDevotionalSuccess: 'Daily devotional added successfully.',
+        updateDailyDevotionalSuccess: 'Daily devotional updated successfully',
+        deleteDailyDevotionalSuccess: 'Daily devotional deleted successfully',
+        fetchDailyDevotionalSuccess: 'Daily devotional details fetched successfully',
+        fetchDailyDevotionalsSuccess: 'Daily devotional list fetched successfully',
+        createDailyDevotionalFailure: 'Daily devotional already added',
+        getRDailyDevotionalFailure: 'Failed to fetch Daily devotional details',
     },
     smallGroupControllerResponse: {
         createSmallGroupSuccess: 'Small group added successfully',

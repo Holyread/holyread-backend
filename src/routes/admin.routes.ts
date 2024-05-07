@@ -12,7 +12,7 @@ import author  from './admin/book/author.route'
 
 import dashboard  from './admin/dashboard.route'
 import shareImage from './admin/shareImage.route'
-import readsOfDay from './admin/readsOfDay.route'
+import dailyDevotional from './admin/dailyDevotional.route'
 import smallGroup from './admin/smallGroup.route'
 
 import testimonial   from './admin/testimonial.route'
@@ -51,7 +51,7 @@ router.use('/dashboard', adminPassport, dashboard)
 router.use('/share-image', adminPassport, shareImage)
 router.use('/small-group', adminPassport, smallGroup)
 
-router.use('/reads-of-day', adminPassport, readsOfDay)
+router.use('/daily-devotional', adminPassport, dailyDevotional)
 router.use('/testimonial', adminPassport, testimonial)
 
 router.use('/book-summary', adminPassport, bookSummary)

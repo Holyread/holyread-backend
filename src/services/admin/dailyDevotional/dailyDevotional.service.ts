@@ -1,18 +1,18 @@
-import { ReadsOfDayModel } from '../../../models/index'
+import { DailyDvotionalModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
 import { formattedDate } from '../../../lib/utils/utils'
 
 const NODE_ENV = config.NODE_ENV
-const readsOfDayControllerResponse = responseMessage.readsOfDayControllerResponse
+const dailyDevotionalControllerResponse = responseMessage.dailyDevotionalControllerResponse
 
-/** Add read of day */
-const createReadOfDay = async (body: any) => {
+/** Add Daily Devotional*/
+const createDailyDevotional = async (body: any) => {
     try {
-        const result = await ReadsOfDayModel.create(body)
+        const result = await DailyDvotionalModel.create(body)
         if (!result) {
-            throw new Error(readsOfDayControllerResponse.createReadOfDayFailure)
+            throw new Error(dailyDevotionalControllerResponse.createDailyDevotionalFailure)
         }
         if (result.image) {
             result.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + result.image
@@ -26,10 +26,10 @@ const createReadOfDay = async (body: any) => {
     }
 }
 
-/** Modify read of day */
-const updateReadOfDay = async (body: any, id: string) => {
+/** Modify Daily Devotional */
+const updateDailyDevotional = async (body: any, id: string) => {
     try {
-        const data: any = await ReadsOfDayModel.findOneAndUpdate(
+        const data: any = await DailyDvotionalModel.findOneAndUpdate(
             { _id: id },
             { ...body, updatedAt: new Date() },
             { new: true }
@@ -47,20 +47,20 @@ const updateReadOfDay = async (body: any, id: string) => {
     }
 }
 
-/** Get read of day by reads id */
-const getOneReadOfDayByFilter = async (query: any) => {
+/** Get Daily Devotional BY id */
+const getOneDailyDevotionalByFilter = async (query: any) => {
     try {
-        const result: any = await ReadsOfDayModel.findOne(query).lean()
+        const result: any = await DailyDvotionalModel.findOne(query).lean()
         return result
     } catch (e: any) {
         throw new Error(e)
     }
 }
 
-/** Get all read of day for table */
-const getAllReadsOfDay = async (skip: number, limit, search: object, sort) => {
+/** Get all Daily Devotional for table */
+const getAllDailyDevotional = async (skip: number, limit, search: object, sort) => {
     try {
-        const result: any = await ReadsOfDayModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+        const result: any = await DailyDvotionalModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         await result.map(async (item: any) => {
             item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image
 
@@ -68,7 +68,7 @@ const getAllReadsOfDay = async (skip: number, limit, search: object, sort) => {
                 item.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + item.video
             }
         })
-        const count = await ReadsOfDayModel.find(search).countDocuments()
+        const count = await DailyDvotionalModel.find(search).countDocuments()
         await result.map(i => {
             i.createdAt = formattedDate(i.createdAt).replace(/ /g, ' ')
         })
@@ -79,20 +79,20 @@ const getAllReadsOfDay = async (skip: number, limit, search: object, sort) => {
     }
 }
 
-/** Remove reads of day */
-const deleteReadOfDay = async (id: string) => {
+/** Remove  Daily Devotional  */
+const deleteDailyDevotional = async (id: string) => {
     try {
-        await ReadsOfDayModel.findOneAndDelete({ _id: id })
+        await DailyDvotionalModel.findOneAndDelete({ _id: id })
         return true
     } catch (e: any) {
         throw new Error(e)
     }
 }
 
-/** Get all read of day for table */
-const getReadsOfDayList = async () => {
+/** Get all  Daily Devotional for table */
+const getDailyDevotionalList = async () => {
     try {
-        const result: any = await ReadsOfDayModel.find().lean()
+        const result: any = await DailyDvotionalModel.find().lean()
         await result.map(i => {
             i.createdAt = formattedDate(i.createdAt).replace(/ /g, ' ')
         })
@@ -103,10 +103,10 @@ const getReadsOfDayList = async () => {
 }
 
 export default {
-    createReadOfDay,
-    updateReadOfDay,
-    getAllReadsOfDay,
-    getOneReadOfDayByFilter,
-    deleteReadOfDay,
-    getReadsOfDayList,
+    createDailyDevotional,
+    updateDailyDevotional,
+    getOneDailyDevotionalByFilter,
+    getAllDailyDevotional,
+    deleteDailyDevotional,
+    getDailyDevotionalList,
 }

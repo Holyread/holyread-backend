@@ -7,12 +7,12 @@ const NODE_ENV = config.NODE_ENV
 /** Get all daily devotional for app */
 const getAllDailyDevotional = async (skip: number, limit, search: object, sort) => {
     try {
-        const readsOfTheDayList: any = await DailyDvotionalModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+        const dailyDevotionalList: any = await DailyDvotionalModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         const count: any = await DailyDvotionalModel.countDocuments(search).lean().exec()
-        readsOfTheDayList.map(async (item: any) => {
+        dailyDevotionalList.map(async (item: any) => {
             item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image
         })
-        return { readsOfTheDayList, count }
+        return { dailyDevotionalList, count }
     } catch (e: any) {
         throw new Error(e)
     }

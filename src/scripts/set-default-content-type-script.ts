@@ -1,10 +1,10 @@
-import { ReadsOfDayModel } from '../models/index'
+import { DailyDvotionalModel } from '../models/index'
 
 // Initialize readsOfDays  by machine user
 (async () => {
     try {
         /** Find readsOfDays */
-        const readsOfDays = await ReadsOfDayModel
+        const readsOfDays = await DailyDvotionalModel
             .find({})
             .select('_id')
             .lean()
@@ -15,7 +15,7 @@ import { ReadsOfDayModel } from '../models/index'
             return false;
         }
         await Promise.all(readsOfDays.map(async item => {
-            await ReadsOfDayModel.findOneAndUpdate(
+            await DailyDvotionalModel.findOneAndUpdate(
                 { _id: item._id },
                 { contentType: 'Normal', updatedAt: new Date() },
                 { upsert: true }

@@ -4,11 +4,11 @@ import {
   getCuratedsList,
   getLatestBooks,
   getPopularBooks,
-  getReadsOfTheDay,
+  getDailyDevotional,
   getRecentReads,
   getRecommendedBooks,
   getSmallGroups,
-  getFavoriteCategoriesBooks
+  getFavoriteCategoriesBooks,
 } from '../../controllers/customers/dashboard.controller'
 
 const router: Router = express.Router()
@@ -17,7 +17,7 @@ router.get('/categories', getCategories)
 router.get('/curateds', getCuratedsList)
 router.get('/latest-books', getLatestBooks)
 router.get('/popular-books', getPopularBooks)
-router.get('/reads-of-the-day', getReadsOfTheDay)
+router.get('/reads-of-the-day', getDailyDevotional)
 router.get('/recent-reads', getRecentReads)
 router.get('/recommended-books', getRecommendedBooks)
 router.get('/small-groups', getSmallGroups)

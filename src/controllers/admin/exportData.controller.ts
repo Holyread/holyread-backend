@@ -6,7 +6,7 @@ import bookSummaryService from '../../services/admin/book/bookSummary.service'
 import transactionsService from '../../services/admin/users/transactions.service'
 
 import { setColumnWidth, setHeaderBackgroundColor } from '../../lib/utils/utils';
-import readsOfDayService from '../../services/admin/readsOfDay/readsOfDay.service';
+import dailyDevotionalService from '../../services/admin/dailyDevotional/dailyDevotional.service';
 import smallGroupService from '../../services/admin/smallGroup/smallGroup.service';
 import expertCuratedService from '../../services/admin/book/expertCurated.service';
 import fs from 'fs';
@@ -23,7 +23,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
             switch (dataType) {
                 case 'Daily devotional':
                     // Fetch reads of day data
-                    const readsOfDayList = await readsOfDayService.getReadsOfDayList();
+                    const readsOfDayList = await dailyDevotionalService.getDailyDevotionalList();
                     data.push({ dataType, data: readsOfDayList });
                     break;
                 case 'Curated list':

@@ -2,7 +2,7 @@ import mongoose, { Schema } from 'mongoose'
 
 mongoose.set('autoIndex', true);
 
-export interface IReadsOfDay extends mongoose.Document {
+export interface IDailyDvotional extends mongoose.Document {
     title: string,
     subTitle: string,
     description: string,
@@ -12,10 +12,11 @@ export interface IReadsOfDay extends mongoose.Document {
     updatedAt: Date,
     displayAt: Date
     video?: string,
-    contentType?: string
+    contentType?: string,
+    category?: string,
 }
 
-export type createReadsOfDayType = {
+export type createDailyDvotionalType = {
     title: string,
     subTitle: string,
     description: string,
@@ -25,10 +26,11 @@ export type createReadsOfDayType = {
     updatedAt: Date,
     displayAt: Date,
     video?: string,
-    contentType?: string
+    contentType?: string,
+    category?: string,
 }
 
-export type getReadsOfDayType = {
+export type getDailyDvotionalType = {
     _id?: string,
     title?: string,
     subTitle?: string,
@@ -39,10 +41,11 @@ export type getReadsOfDayType = {
     updatedAt: Date,
     displayAt: Date,
     video?: string,
-    contentType?: string
+    contentType?: string,
+    category?: string,
 }
 
-export const ReadsOfDaySchema = new Schema({
+export const DailyDvotionalSchema = new Schema({
     title: { type: String, index: true, default: '' },
     subTitle: { type: String, default: '' },
     description: { type: String, default: '' },
@@ -57,6 +60,7 @@ export const ReadsOfDaySchema = new Schema({
     },
     updatedAt: { type: Date },
     displayAt: { type: Date },
+    category: { type: String },
 }, { strict: 'throw' })
 
-export const ReadsOfDayModel = mongoose.model<IReadsOfDay>('readsOfDay', ReadsOfDaySchema)
+export const DailyDvotionalModel = mongoose.model<IDailyDvotional>('dailyDvotional', DailyDvotionalSchema)

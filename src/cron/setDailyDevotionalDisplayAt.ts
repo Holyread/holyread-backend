@@ -2,7 +2,7 @@ import { CronJob } from 'cron';
 import config from '../../config';
 import { setReadsOfDayDisplayAt } from '../constants/cron.constants'
 import { getDates } from '../lib/utils/utils'
-import { ReadsOfDayModel } from '../models';
+import { DailyDvotionalModel } from '../models';
 
 const start = async () => {
       try {
@@ -10,17 +10,17 @@ const start = async () => {
             /** Find reads of days list have missing displayAt */
             const now = new Date();
             now.setHours(0, 0, 0, 0);
-            const upcomingReadsOfDays = await ReadsOfDayModel.find({ displayAt: { $gte: now } }).select('_id').lean().exec();
+            const upcomingReadsOfDays = await DailyDvotionalModel.find({ displayAt: { $gte: now } }).select('_id').lean().exec();
 
             if (!upcomingReadsOfDays.length) {
-                  await ReadsOfDayModel.updateMany({}, { $unset: { displayAt: 1 } })
+                  await DailyDvotionalModel.updateMany({}, { $unset: { displayAt: 1 } })
             }
 
-            const missingDatesReadsOfDays = await ReadsOfDayModel.find({ displayAt: { $exists: false } }).select('_id').lean().exec();
+            const missingDatesReadsOfDays = await DailyDvotionalModel.find({ displayAt: { $exists: false } }).select('_id').lean().exec();
             if (!missingDatesReadsOfDays?.length) {
                   return;
             }
-            const lastDisplayAtDateRecord = await ReadsOfDayModel.findOne({}).sort({ displayAt: -1 }).select('displayAt').lean();
+            const lastDisplayAtDateRecord = await DailyDvotionalModel.findOne({}).sort({ displayAt: -1 }).select('displayAt').lean();
 
             /** start date as today or last displayAt of record */
             const start: any =
@@ -42,7 +42,7 @@ const start = async () => {
                         await Promise.all(promises);
                         promises = [];
                   }
-                  promises.push(ReadsOfDayModel.findOneAndUpdate({ _id: item._id }, { displayAt: dates[i] }).catch(() => { return undefined; }))
+                  promises.push(DailyDvotionalModel.findOneAndUpdate({ _id: item._id }, { displayAt: dates[i] }).catch(() => { return undefined; }))
             }
             if (promises.length) {
                   await Promise.all(promises)

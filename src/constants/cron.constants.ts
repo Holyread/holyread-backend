@@ -67,7 +67,7 @@ export const contentUpdateNotification = {
       SCHEDULE: {
           Minutes: '0',
           Hours: '10', // 10 AM
-          DayOfMonth: '*/7',
+          DayOfMonth: '*/4',
           Months: '*',
           DayOfWeek: '*',
       },
@@ -78,7 +78,7 @@ export const engagementMotivationNotification = {
       SCHEDULE: {
           Minutes: '0',
           Hours: '8', // 8AM
-          DayOfMonth: '*/7', //Every seven days
+          DayOfMonth: '*', //Every days
           Months: '*',
           DayOfWeek: '*',
       },

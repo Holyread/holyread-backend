@@ -25,7 +25,9 @@ import {
   getChangePasswordCode,
   getShareOptionImageUrl,
   addCategoryToUserLibrary,
-  getUserSelectedCategory
+  getUserSelectedCategory,
+  subscribeDevotionalCategory,
+  getUserSelectedDevotionalCategory
 } from '../../controllers/customers/users.controller'
 
 const router: Router = express.Router()
@@ -62,5 +64,8 @@ router.post('/share-options-image', customerPassport, getShareOptionImageUrl)
 
 router.post('/categories', customerPassport, addCategoryToUserLibrary)
 router.get('/categories', customerPassport, getUserSelectedCategory)
+
+router.put('/devotional-categories', customerPassport, subscribeDevotionalCategory)
+router.get('/devotional-categories', customerPassport, getUserSelectedDevotionalCategory)
 
 export default router

@@ -16,7 +16,7 @@ const getOneDailyDevotional = async (request: Request, response: Response, next:
         if (!data) {
             return next(
                 Boom.notFound(
-                    dailyDevotionalControllerResponse.getRDailyDevotionalFailure
+                    dailyDevotionalControllerResponse.getDailyDevotionalFailure
                 )
             )
         }

@@ -65,6 +65,8 @@ const initializeDeviceAccess = async (req: Request, res: Response, next: NextFun
         smallGroups: [],
         reading: [],
         categories: [],
+        devotionalCategories: [],
+        devotionalViews: [],
       });
 
       const email = body.deviceId + '@holyreads-temp.com';
@@ -223,6 +225,8 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
         smallGroups: [],
         reading: [],
         categories: [],
+        devotionalCategories: [],
+        devotionalViews: [],
       })
 
     const data: any = {
@@ -636,6 +640,8 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         smallGroups: [],
         reading: [],
         categories: [],
+        devotionalCategories: [],
+        devotionalViews: [],
       })
 
     const newBody: any = {

@@ -72,7 +72,7 @@ const getOneDailyDevotional = async (req: Request, res: Response, next: NextFunc
             data.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + data.video
         }
         if (!data) {
-            return next(Boom.notFound(dailyDevotionalControllerResponse.getRDailyDevotionalFailure))
+            return next(Boom.notFound(dailyDevotionalControllerResponse.getDailyDevotionalFailure))
         }
         res.status(200).send({ message: dailyDevotionalControllerResponse.fetchDailyDevotionalSuccess, data })
     } catch (e: any) {
@@ -139,7 +139,7 @@ const updateDailyDevotional = async (req: Request, res: Response, next: NextFunc
         /** Get daily devotional from db */
         const readOfDayDetails: any = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id })
         if (!readOfDayDetails) {
-            return next(Boom.notFound(dailyDevotionalControllerResponse.getRDailyDevotionalFailure))
+            return next(Boom.notFound(dailyDevotionalControllerResponse.getDailyDevotionalFailure))
         }
         if (req.body.image === null) {
             await removeS3File(readOfDayDetails.image, s3Bucket)

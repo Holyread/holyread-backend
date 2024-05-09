@@ -18,6 +18,16 @@ const getAllDailyDevotional = async (skip: number, limit, search: object, sort) 
     }
 }
 
+const getOneDailyDevotional = async (query: any) => {
+    try {
+        const data: any = await DailyDvotionalModel.findOne(query).lean().exec()
+        return data
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 export default {
     getAllDailyDevotional,
+    getOneDailyDevotional,
 }

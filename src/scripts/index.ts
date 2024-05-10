@@ -8,3 +8,4 @@ import './set-last-transaction-id';
 // import './set-book-rating-script'
 // import './remove-duplicate-push-token.script'
 // import './add-categories-in-user-libraries'
+// import './unset-content-type-from-daily-devotional'

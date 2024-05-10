@@ -78,7 +78,6 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
         const dailyDevotionalExcelHeader = [
             { header: 'Title', key: 'title' },
             { header: 'SubTitle', key: 'subTitle' },
-            { header: 'Content Type', key: 'contentType' },
             { header: 'Video', key: 'video' },
             { header: 'Image', key: 'image' },
             { header: 'Status', key: 'status' },
@@ -186,7 +185,6 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                     wsForDailyDevotional.addRow([
                         item.title,
                         item.subTitle,
-                        item.contentType,
                         item.video,
                         item.image,
                         item.status,

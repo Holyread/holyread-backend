@@ -40,7 +40,6 @@ const addDailyDevotional = async (req: Request, res: Response, next: NextFunctio
             body.videoFileSize = s3File.size
         }
         const data = await dailyDevotionalService.createDailyDevotional({
-            contentType: body.contentType,
             title: body.title,
             subTitle: body.subTitle,
             description: body.description,
@@ -98,16 +97,7 @@ const getAllDailyDevotional = async (request: Request, response: Response, next:
             }
         }
 
-        const contentTypeQuery = [
-            'Normal',
-            'Video',
-        ].includes(
-            params.status
-        )
-            ? { 'contentType': params.status }
-            : {}
-
-        const searchFilter = { ...searchQuery, ...contentTypeQuery };
+        const searchFilter = { ...searchQuery };
 
         const readsOfDaySorting = [];
         switch (params.column) {

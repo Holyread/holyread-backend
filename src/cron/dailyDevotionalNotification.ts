@@ -50,16 +50,19 @@ const start = async () => {
                               'stripe.status': 'active',
                         },
                   ],
-            }).select('timeZone pushTokens').lean().exec()
+            }).select('timeZone pushTokens libraries').populate('libraries').lean().exec()
 
+            const usersWithOutSubscribeCategories = users.filter(user =>
+                  user.libraries && user.libraries.devotionalCategories && user.libraries.devotionalCategories.length === 0
+            );
             // Check if there are eligible users
-            if (!users.length) {
+            if (!usersWithOutSubscribeCategories.length) {
                   console.log('JOB(🔴) Daily devotional execution stop due to no users found');
                   return;
             }
 
             // Group users by timezone
-            const result = groupByKey(users, 'timeZone');
+            const result = groupByKey(usersWithOutSubscribeCategories, 'timeZone');
             const setting = await SettingModel.findOne({}).select('dailyDevotionalTime').lean().exec();
 
             // Iterate over each timezone

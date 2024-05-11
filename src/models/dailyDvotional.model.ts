@@ -13,6 +13,8 @@ export interface IDailyDvotional extends mongoose.Document {
     displayAt: Date
     video?: string,
     category?: string,
+    publish : boolean,
+    publishedAt : Date,
 }
 
 export type createDailyDvotionalType = {
@@ -26,6 +28,8 @@ export type createDailyDvotionalType = {
     displayAt: Date,
     video?: string,
     category?: string,
+    publish : boolean,
+    publishedAt : Date,
 }
 
 export type getDailyDvotionalType = {
@@ -40,6 +44,8 @@ export type getDailyDvotionalType = {
     displayAt: Date,
     video?: string,
     category?: string,
+    publish : boolean,
+    publishedAt : Date,
 }
 
 export const DailyDvotionalSchema = new Schema({
@@ -56,7 +62,9 @@ export const DailyDvotionalSchema = new Schema({
     },
     updatedAt: { type: Date },
     displayAt: { type: Date },
+    publishedAt : { type: Date },
     category: { type: String },
+    publish : { type : Boolean, default: false },
 }, { strict: 'throw' })
 
 export const DailyDvotionalModel = mongoose.model<IDailyDvotional>('dailyDvotional', DailyDvotionalSchema)

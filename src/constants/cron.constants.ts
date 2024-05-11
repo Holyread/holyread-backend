@@ -151,3 +151,14 @@ export const publishCuratedList = {
           },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 };
+
+export const dailyDevotionalCategoriesNotification = {
+      SCHEDULE: {
+          Minutes: '0',
+          Hours: '8',
+          DayOfMonth: '*',
+          Months: '*',
+          DayOfWeek: '*',
+      },
+      JOBRESTRICTENV: ['local'], // 'local','development','production'
+}

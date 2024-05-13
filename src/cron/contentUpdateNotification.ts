@@ -75,6 +75,11 @@ const start = async () => {
             });
         });
 
+        if (!usersMatchingCategories.length) {
+            console.log('JOB(🔴) Content update alert execution stop due to no users found');
+            return;
+        }
+
         // Send notifications to matching users
         const notificationsSent = [];
         for (const user of usersMatchingCategories) {

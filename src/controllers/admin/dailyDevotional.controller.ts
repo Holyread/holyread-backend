@@ -86,18 +86,26 @@ const getAllDailyDevotional = async (request: Request, response: Response, next:
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
-        let searchQuery = {}
+        let searchQuery: any = {}
         if (params.search) {
             searchQuery = {
                 $or: [
                     { 'title': await getSearchRegexp(params.search) },
                     { 'category': await getSearchRegexp(params.search) },
-                    { 'status': await getSearchRegexp(params.search) },
                 ],
             }
         }
 
+        if (params.statusFilter) {
+            if (params.statusFilter === 'publish') {
+                searchQuery.publish = true;
+            }
+            else if (params.statusFilter === 'pending') {
+                searchQuery.publish = false;
+            }
+        }
         const searchFilter = { ...searchQuery };
+
 
         const readsOfDaySorting = [];
         switch (params.column) {

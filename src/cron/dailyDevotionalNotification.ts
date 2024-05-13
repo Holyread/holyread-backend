@@ -82,9 +82,9 @@ const start = async () => {
                         }
 
                         if (time[1] === meridian && Number(hours) === Number(dailyDevotionalTime[0]) && Number(minutes) === Number(dailyDevotionalTime[1])) {
-                              const tokenSet = new Set();
+                              const tokenSet = new Set<string>();
                               result[timeZone]?.map(item => {
-                                    item?.pushTokens?.forEach((ti: { token: string }) => tokenSet.add(ti.token));
+                                    item?.pushTokens?.forEach(token=> tokenSet.add(token));
                               });
 
                               // Send notifications to users in the timezone
@@ -100,7 +100,7 @@ const start = async () => {
                                     },
                               };
 
-                              const tokens: any = Array.from(tokenSet);
+                              const tokens: string[] = Array.from(tokenSet);
                               await pushNotification(tokens, notificationPayload.title, notificationPayload.body, JSON.stringify(notificationPayload.data));
 
                               // Log notifications sent
@@ -119,6 +119,10 @@ const start = async () => {
                                     await notificationLog.save();
                               });
                         }
+                        console.log('JOB(✅) Daily devotional executed successfully!');
+                        cronLog.status = 'success';
+                        cronLog.endedAt = new Date();
+                        await cronLog.save();
                   } catch (error: any) {
                         console.log('Users processing error - ', error.message);
                         const notificationLog = new NotificationsModel({
@@ -135,11 +139,6 @@ const start = async () => {
                         await notificationLog.save();
                   }
             });
-
-            console.log('JOB(✅) Daily devotional executed successfully!');
-            cronLog.status = 'success';
-            cronLog.endedAt = new Date();
-            await cronLog.save();
       } catch (error: any) {
             console.log('JOB(🔴) Daily devotional execution Error is - ', error.message);
             const cronLog = new CronLogModel({

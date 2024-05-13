@@ -170,4 +170,12 @@ const getAllUsersForDashboard = async (query: any, select: string) => {
     }
 }
 
-export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser, getAllUsersForDashboard }
+const getAllUsersForExport = async () => {
+    try {
+        const users: any = await UserModel.find({}).select('firstName lastName email status image type isSignedUp device createdAt').lean().exec()
+        return users
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser, getAllUsersForDashboard, getAllUsersForExport }

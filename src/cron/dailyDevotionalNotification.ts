@@ -53,8 +53,11 @@ const start = async () => {
             }).select('timeZone pushTokens libraries').populate('libraries').lean().exec()
 
             const usersWithOutSubscribeCategories = users.filter(user =>
-                  user.libraries && user.libraries.devotionalCategories && user.libraries.devotionalCategories.length === 0
+                  user.libraries &&                                // Check if libraries exist
+                  user.libraries.devotionalCategories &&          // Check if devotionalCategories exist
+                  user.libraries.devotionalCategories.length === 0 // Check if devotionalCategories array is empty
             );
+
             // Check if there are eligible users
             if (!usersWithOutSubscribeCategories.length) {
                   console.log('JOB(🔴) Daily devotional execution stop due to no users found');
@@ -85,9 +88,9 @@ const start = async () => {
                         }
 
                         if (time[1] === meridian && Number(hours) === Number(dailyDevotionalTime[0]) && Number(minutes) === Number(dailyDevotionalTime[1])) {
-                              const tokenSet = new Set();
+                              const tokenSet = new Set<string>();
                               result[timeZone]?.map(item => {
-                                    item?.pushTokens?.forEach((ti: { token: string }) => tokenSet.add(ti.token));
+                                    item?.pushTokens?.forEach(token=> tokenSet.add(token));
                               });
 
                               // Send notifications to users in the timezone
@@ -103,7 +106,7 @@ const start = async () => {
                                     },
                               };
 
-                              const tokens: any = Array.from(tokenSet);
+                              const tokens: string[] = Array.from(tokenSet);
                               await pushNotification(tokens, notificationPayload.title, notificationPayload.body, JSON.stringify(notificationPayload.data));
 
                               // Log notifications sent
@@ -122,6 +125,10 @@ const start = async () => {
                                     await notificationLog.save();
                               });
                         }
+                        console.log('JOB(✅) Daily devotional executed successfully!');
+                        cronLog.status = 'success';
+                        cronLog.endedAt = new Date();
+                        await cronLog.save();
                   } catch (error: any) {
                         console.log('Users processing error - ', error.message);
                         const notificationLog = new NotificationsModel({
@@ -138,11 +145,6 @@ const start = async () => {
                         await notificationLog.save();
                   }
             });
-
-            console.log('JOB(✅) Daily devotional executed successfully!');
-            cronLog.status = 'success';
-            cronLog.endedAt = new Date();
-            await cronLog.save();
       } catch (error: any) {
             console.log('JOB(🔴) Daily devotional execution Error is - ', error.message);
             const cronLog = new CronLogModel({

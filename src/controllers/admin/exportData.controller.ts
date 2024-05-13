@@ -39,9 +39,8 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                     break;
                 case 'Users':
                     // Fetch users data (if available)
-                    const userData = await usersService.getAllUsers(0, 0, {}, { createdAt: -1 });
-                    const userList = userData.users
-                    data.push({ dataType, data: userList });
+                    const userData = await usersService.getAllUsersForExport();
+                    data.push({ dataType, data: userData });
                     // Implement the logic to fetch users data
                     break;
                 case 'Transactions':

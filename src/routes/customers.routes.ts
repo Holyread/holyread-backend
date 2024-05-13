@@ -41,6 +41,6 @@ router.use('/share-image', customerPassport, shareImage)
 router.use('/book-summary', customerPassport, bookSummary)
 router.use('/notifications', customerPassport, notifications)
 
-router.use('/daily-devotional', customerPassport, dailyDevotional)
+router.use('/reads-of-the-day', customerPassport, dailyDevotional)
 
 export default router

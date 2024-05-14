@@ -154,11 +154,22 @@ export const publishCuratedList = {
 
 export const dailyDevotionalCategoriesNotification = {
       SCHEDULE: {
-          Minutes: '0',
-          Hours: '8',
+          Minutes: '*',
+          Hours: '*',
           DayOfMonth: '*',
           Months: '*',
           DayOfWeek: '*',
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 }
+
+export const publishDailyDevotional = {
+      SCHEDULE: {
+          Minutes: '0',
+          Hours: '0', // Midnight (12AM)
+          DayOfMonth: '*',
+          Months: '*',
+          DayOfWeek: '*',
+      },
+      JOBRESTRICTENV: ['local'], // 'local','development','production'
+};

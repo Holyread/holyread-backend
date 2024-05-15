@@ -178,4 +178,5 @@ const getAllUsersForExport = async () => {
         throw new Error(e)
     }
 }
+
 export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser, getAllUsersForDashboard, getAllUsersForExport }

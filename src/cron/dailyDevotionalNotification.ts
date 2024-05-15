@@ -82,9 +82,9 @@ const start = async () => {
                         }
 
                         if (time[1] === meridian && Number(hours) === Number(dailyDevotionalTime[0]) && Number(minutes) === Number(dailyDevotionalTime[1])) {
-                              const tokenSet = new Set<string>();
+                              const tokenSet = new Set();
                               result[timeZone]?.map(item => {
-                                    item?.pushTokens?.forEach(token=> tokenSet.add(token));
+                                    item?.pushTokens?.forEach((ti: { token: string }) => tokenSet.add(ti.token));
                               });
 
                               // Send notifications to users in the timezone
@@ -100,7 +100,7 @@ const start = async () => {
                                     },
                               };
 
-                              const tokens: string[] = Array.from(tokenSet);
+                              const tokens: any = Array.from(tokenSet);
                               await pushNotification(tokens, notificationPayload.title, notificationPayload.body, JSON.stringify(notificationPayload.data));
 
                               // Log notifications sent

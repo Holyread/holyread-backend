@@ -25,6 +25,10 @@ const start = async () => {
             publishedAt: { $gte: new Date(start), $lte: new Date(end) },
         }).select('_id title category').lean().exec();
 
+        if (!publishedDailyDevotional.length) {
+            console.log('JOB(🔴) Daily devotional categories execution stop due to no reads found');
+            return;
+        }
         // Get users eligible for notifications
         const users: any = await UserModel.find({
             status: 'Active',
@@ -125,7 +129,7 @@ const start = async () => {
                                 await notificationLog.save();
                             });
 
-                            console.log('JOB(✅) Daily devotional executed successfully!');
+                            console.log('JOB(✅) Daily devotional categories executed successfully!');
                             cronLog.status = 'success';
                             cronLog.endedAt = new Date();
                             await cronLog.save();
@@ -134,12 +138,12 @@ const start = async () => {
                         }
                     });
                 }
-            } catch (error :any) {
+            } catch (error: any) {
                 console.log('Timezone processing error - ', error.message);
             }
         });
     } catch (error: any) {
-        console.log('JOB(🔴) Daily devotional execution Error is - ', error.message);
+        console.log('JOB(🔴) Daily devotional categories execution Error is - ', error.message);
         const cronLog = new CronLogModel({
             jobName: 'daily_devotional_notifier',
             status: 'failed',
@@ -152,10 +156,10 @@ const start = async () => {
 
 ((cronConfig, config) => {
     if (cronConfig.JOBRESTRICTENV.indexOf(config.NODE_ENV) > -1) {
-        console.log(`JOB(🟡) Daily devotional not initiated due to ${config.NODE_ENV} Environment`);
+        console.log(`JOB(🟡) Daily devotional categories not initiated due to ${config.NODE_ENV} Environment`);
         return;
     }
     const schedule = Object.values(dailyDevotionalCategoriesNotification.SCHEDULE).join(' ');
     new CronJob(schedule, () => { start() }, null, true);
-    console.log('JOB(🟢) Daily devotional initiated successfully!');
+    console.log('JOB(🟢) Daily devotional categories Started successfully!');
 })(dailyDevotionalCategoriesNotification, config);

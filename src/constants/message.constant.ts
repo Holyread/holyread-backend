@@ -63,6 +63,7 @@ export const responseMessage = {
         addCategorySuccess: 'Category added successfully',
         getCategorySuccess: 'User selected categories fetched successfully',
         missingCategoryError: 'Select at least one category as a favorite',
+        getDevotionalCategorySuccess: 'Devotional categories fetched successfully',
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

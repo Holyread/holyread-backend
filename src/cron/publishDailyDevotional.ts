@@ -2,6 +2,7 @@ import { CronJob } from 'cron';
 import config from '../../config';
 import { publishDailyDevotional } from '../constants/cron.constants';
 import { DailyDvotionalModel, CronLogModel } from '../models';
+import { devotionalCategoriesList } from '../constants/app.constant'
 
 const startPublishContentJob = async () => {
     try {
@@ -14,11 +15,10 @@ const startPublishContentJob = async () => {
             startedAt: new Date(),
         });
         await cronLog.save();
-        const categoriesToCheck = ["Women", "Couple", "Parents"];
         let dailyDevotional = [];
 
         /** Get unpublished daily devotional */
-        for (const category of categoriesToCheck) {
+        for (const category of devotionalCategoriesList) {
             const unPublishDevotional = await DailyDvotionalModel.findOne({
                 publish: false,
                 category: category,

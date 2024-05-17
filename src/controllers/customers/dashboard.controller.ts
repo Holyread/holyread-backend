@@ -173,9 +173,12 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
         const libraries = await userService.getUserLibrary({ _id: request.user.libraries })
 
         const bookIds = libraries.reading.map(item => item.bookId);
+        const readingBook = await bookSummaryService.findBooks({ _id: { $in: bookIds } });
 
-        const books = await bookSummaryService.findBooks({ _id: { $in: bookIds } });
+        const categoryIds = libraries.categories || [];
+        const categoriesBooks = await bookSummaryService.findRandomBooks({ $match: { categories: { $in: categoryIds }, publish: true } }, 5);
 
+        const books = [...readingBook, ...categoriesBooks];
         const preferredCategories = [];
         books.forEach(book => {
             book.categories.forEach(categoryId => {
@@ -205,7 +208,7 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
             }, 0);
 
             const numBooksToSelect = Math.ceil(MAX_SUGGESTIONS * (categoryWeight / books.length) * weightFactor);
-            const categoryFilterquery = { $match: { categories: category, publish: true } }
+            const categoryFilterquery = { $match: { categories: category, publish: true, _id: { $nin: bookIds } } }
             const selectedBooks = await bookSummaryService.findRandomBooks(categoryFilterquery, numBooksToSelect)
 
             selectedBooks.forEach(book => {
@@ -278,8 +281,8 @@ const getFavoriteCategoriesBooks = async (request: any, response: Response, next
     try {
         const libraries = await userService.getUserLibrary({ _id: request.user.libraries })
 
-        const categoryIds = libraries.categories.map(item => item);
-        const books = await bookSummaryService.findBooks({ categories: { $in: categoryIds } });
+        const categoryIds = libraries.categories || [];
+        const books = await bookSummaryService.findRandomBooks({ $match: { categories: { $in: categoryIds }, publish: true } }, 5);
         const preferredCategories = [];
         books.forEach(book => {
             book.categories.forEach(categoryId => {

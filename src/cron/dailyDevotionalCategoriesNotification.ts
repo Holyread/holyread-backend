@@ -130,9 +130,6 @@ const start = async () => {
                             });
 
                             console.log('JOB(✅) Daily devotional categories executed successfully!');
-                            cronLog.status = 'success';
-                            cronLog.endedAt = new Date();
-                            await cronLog.save();
                         } catch (error: any) {
                             console.log('Processing error for user - ', item._id, ':', error.message);
                         }
@@ -142,6 +139,9 @@ const start = async () => {
                 console.log('Timezone processing error - ', error.message);
             }
         });
+        cronLog.status = 'success';
+        cronLog.endedAt = new Date();
+        await cronLog.save();
     } catch (error: any) {
         console.log('JOB(🔴) Daily devotional categories execution Error is - ', error.message);
         const cronLog = new CronLogModel({

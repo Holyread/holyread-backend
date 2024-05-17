@@ -115,3 +115,5 @@ export const fireStoreConfig = {
 }
 
 export const trailDays = 10
+
+export const devotionalCategoriesList = ['Couple','Women','Parents']

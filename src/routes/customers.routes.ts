@@ -19,6 +19,7 @@ import bookSummary from './customers/book/bookSummary.route'
 import customerPassport from '../middleware/customers.passport'
 import expertCurated from './customers/book/expertCurated.route'
 import dailyDevotional from './customers/book/dailyDevotional.route'
+import devotionalCategories from './customers/devotionalCategories.route'
 
 const router: Router = express.Router()
 
@@ -42,5 +43,7 @@ router.use('/book-summary', customerPassport, bookSummary)
 router.use('/notifications', customerPassport, notifications)
 
 router.use('/reads-of-the-day', customerPassport, dailyDevotional)
+
+router.use('/devotional-categories', customerPassport, devotionalCategories)
 
 export default router

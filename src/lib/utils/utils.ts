@@ -33,9 +33,9 @@ export const decrypt = (encrypted: string): string => {
     return dec;
 }
 
-export const getToken = (data: { [key: string]: string }) => {
+export const getToken = (data: { [key: string]: string }): string => {
     const token: string = jwt.sign(data, 'secret', { expiresIn: '365d' }); // token valid for 365 days
-    return token
+    return token;
 }
 
 export const verifyToken = (token: string) => {

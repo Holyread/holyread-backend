@@ -9,7 +9,7 @@ import { UserModel, TransactionsModel } from '../models/index'
                         userId: user._id.toString(),
                   });
                   if (transaction?._id) {
-                        user.lastTrnId = transaction._id.toString();
+                        user.lastTrnId = transaction._id as any;
                         user.save()
                   }
             }))

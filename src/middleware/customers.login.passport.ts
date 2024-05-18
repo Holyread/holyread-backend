@@ -31,7 +31,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
         ) {
             const token: string = getToken({
                 email: userDetails.email,
-                id: userDetails._id,
+                id: userDetails._id as string
             })
 
             return next(

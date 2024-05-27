@@ -245,6 +245,8 @@ export const responseMessage = {
     },
     transactionsControllerResponse: {
         getTransactionsSuccess: 'Transactions listed successfully',
+        getTransactionFailure: 'Failed to fetch transaction details',
+        fetchTransactionSuccess: 'Transaction details fetched successfully',
     },
     handoutsControllerResponse: {
         updateHandoutSuccess: 'Handout updated successfully',

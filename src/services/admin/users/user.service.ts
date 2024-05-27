@@ -161,14 +161,23 @@ const deleteUser = async (id: string) => {
 }
 
 /** Get all Users for dashboard */
-const getAllUsersForDashboard = async (query: any, select: string) => {
+const getAllUsersForDashboard = async (query: any) => {
     try {
-        const users: any = await UserModel.find(query).select(select || '').lean().exec()
-        return users
+        const pipeline = [
+            { $match: query },
+            {
+                $group: {
+                    _id: '$device',
+                    count: { $sum: 1 }
+                }
+            }
+        ];
+        const usersAggregation: any = await UserModel.aggregate(pipeline).exec();
+        return usersAggregation;
     } catch (e: any) {
-        throw new Error(e)
+        throw new Error(e);
     }
-}
+};
 
 const getAllUsersForExport = async () => {
     try {
@@ -179,4 +188,13 @@ const getAllUsersForExport = async () => {
     }
 }
 
-export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser, getAllUsersForDashboard, getAllUsersForExport }
+const getUseForCustomNotification = async (query: any, select: string) => {
+    try {
+        const users: any = await UserModel.find(query).select(select || '').lean().exec()
+        return users
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser, getAllUsersForDashboard, getAllUsersForExport, getUseForCustomNotification }

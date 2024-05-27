@@ -80,154 +80,93 @@ const getOneBookSummaryByFilter = async (query: any) => {
 /** Get all book summaries count for dashboard */
 const getBooksCountForDashboard = async () => {
     try {
-        const result = await BookSummaryModel.aggregate([{ '$group': { '_id': '_id', 'chapters': { '$sum': { '$size': '$chapters' } } } }])
-        const count: number = await BookSummaryModel.countDocuments().lean().exec()
-        return { count, summaries: result }
+        const summaries = await BookSummaryModel.aggregate([
+            { $unwind: "$chapters" },
+            { $count: "chaptersCount" }
+        ]);
+
+        const chaptersCount = summaries.length ? summaries[0].chaptersCount : 0;
+        const booksCount = await BookSummaryModel.countDocuments().exec();
+
+        return { chaptersCount, booksCount };
     } catch (e: any) {
-        throw new Error(e)
+        throw new Error(e.message || 'Failed to get book summaries for dashboard');
     }
-}
+};
 
 /** Get all book summaries count for dashboard */
 const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
     try {
-        const query = {};
         const now = new Date();
         now.setHours(0, 0, 0, 0);
+        let startDate: Date;
+
         switch (duration) {
             case 'week':
-                query['_id.updatedAt'] = { $gte: new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000)) }
+                startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
                 break;
-
             case 'month':
-                query['_id.updatedAt'] = { $gte: new Date(now.setMonth(new Date().getMonth() - 1)) }
+                startDate = new Date(now.setMonth(now.getMonth() - 1));
                 break;
-
             default:
-                query['_id.updatedAt'] = { $gte: new Date(now.setMonth(new Date().getMonth() - 12)) }
+                startDate = new Date(now.setFullYear(now.getFullYear() - 1));
                 break;
         }
-        let result = await UserModel.aggregate(
-            [
-                {
-                    '$match': {
-                        'libraries': {
-                            '$exists': true,
-                        },
-                    },
+
+        const result = await UserModel.aggregate([
+            { $unwind: '$libraries' },
+            {
+                $lookup: {
+                    from: 'userlibraries',
+                    localField: 'libraries',
+                    foreignField: '_id',
+                    as: 'libraries',
                 },
-                {
-                    '$lookup': {
-                        'from': 'userlibraries',
-                        'localField': 'libraries',
-                        'foreignField': '_id',
-                        'as': 'libraries',
-                    },
+            },
+            { $unwind: '$libraries' },
+            { $unwind: '$libraries.reading' },
+            { $match: { 'libraries.reading.updatedAt': { $gte: startDate } } },
+            {
+                $group: {
+                    _id: '$libraries.reading.bookId',
+                    readers: { $addToSet: '$email' },
+                    chaptersCompleted: { $sum: { $size: '$libraries.reading.chaptersCompleted' } },
                 },
-                {
-                    '$unwind': {
-                        'path': '$libraries',
-                    },
+            },
+            {
+                $lookup: {
+                    from: 'booksummaries',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'bookDetails',
                 },
-                {
-                    '$match': {
-                        'libraries.reading.bookId': {
-                            '$exists': true,
-                        },
-                    },
+            },
+            { $unwind: '$bookDetails' },
+            {
+                $project: {
+                    _id: 1,
+                    title: '$bookDetails.title',
+                    totalReaders: { $size: '$readers' },
+                    chaptersCompleted: 1,
                 },
-                {
-                    '$project': {
-                        'email': 1.0,
-                        'libraries': 1.0,
-                    },
-                },
-                {
-                    '$unwind': {
-                        'path': '$libraries.reading',
-                    },
-                },
-                {
-                    '$group': {
-                        '_id': {
-                            'book': '$libraries.reading.bookId',
-                            'email': '$email',
-                            updatedAt: '$libraries.reading.updatedAt',
-                            'chapters': {
-                                '$sum': {
-                                    '$size': '$libraries.reading.chaptersCompleted',
-                                },
-                            },
-                        },
-                    },
-                },
-                {
-                    '$match': query,
-                },
-                {
-                    '$group': {
-                        '_id': '$_id.book',
-                        'emails': {
-                            '$push': {
-                                'email': '$_id.email',
-                                'chapters': '$_id.chapters',
-                            },
-                        },
-                    },
-                },
-                {
-                    '$group': {
-                        '_id': '$_id',
-                        'total': {
-                            '$sum': {
-                                '$size': '$emails',
-                            },
-                        },
-                    },
-                },
-                {
-                    '$sort': {
-                        'total': -1.0,
-                    },
-                },
-                {
-                    '$lookup': {
-                        'from': 'booksummaries',
-                        'localField': '_id',
-                        'foreignField': '_id',
-                        'as': '_id',
-                    },
-                },
-                {
-                    $project: {
-                        _id: '$_id._id',
-                        title: '$_id.title',
-                        total: '$total',
-                    },
-                },
-                {
-                    $facet: {
-                        page: [{ $limit: 5 }],
-                        total: [{
-                            $count: 'count',
-                        }],
-                    },
-                },
-            ]
-        )
-        const totalReaders = result[0]?.total[0]?.count
-        result = result[0].page.map(i => {
-            return {
-                _id: i._id[0],
-                title: i.title[0],
-                total: Math.trunc((i.total / totalReaders) * 100) + '%',
-            }
-        })
-        return result
+            },
+            { $sort: { totalReaders: -1 } },
+            { $limit: 5 },
+        ]);
+
+        const totalReaders = result.reduce((sum, book) => sum + book.totalReaders, 0);
+
+        const topReads = result.map(book => ({
+            _id: book._id,
+            title: book.title,
+            total: Math.trunc((book.totalReaders / totalReaders) * 100) + '%',
+        }));
+
+        return topReads;
     } catch (e: any) {
-        throw new Error(e)
+        throw new Error(e.message || 'Failed to get top read books for dashboard');
     }
-}
+};
 
 /** Get all book summaries for table */
 const getAllBookSummaries = async (skip: number, limit, search: object, sort) => {

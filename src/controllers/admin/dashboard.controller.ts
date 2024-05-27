@@ -6,36 +6,56 @@ import { responseMessage } from '../../constants/message.constant'
 import bookSummaryService from '../../services/admin/book/bookSummary.service'
 import transactionsService from '../../services/admin/users/transactions.service'
 
-import { groupByKey } from '../../lib/utils/utils';
+// import { groupByKey } from '../../lib/utils/utils';
 
 const dashboardControllerResponse = responseMessage.dashboardControllerResponse
 
 /** Get Dashboard */
 const getDashboard = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const users = await usersService.getAllUsersForDashboard({
-            device: { $in: ['android', 'ios', 'web']},
-        }, 'device');
-        const usersByGroup = groupByKey(users, 'device')
-        const bookSummary: any = await bookSummaryService.getBooksCountForDashboard()
+        const usersAggregation = await usersService.getAllUsersForDashboard({
+            device: { $in: ['android', 'ios', 'web'] },
+        });
+
+        const usersByGroup = usersAggregation.reduce((acc, { _id, count }) => {
+            acc[_id] = count;
+            return acc;
+        }, { android: 0, ios: 0, web: 0 });
+
+        const totalUsers = usersByGroup.android + usersByGroup.ios + usersByGroup.web;
+
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data: {
                 users: {
-                    count: users.length,
-                    androidCount: usersByGroup.android.length,
-                    iosCount: usersByGroup.ios.length,
-                    webCount: usersByGroup.web.length,
-                },
-                audio: { count: bookSummary.summaries[0].chapters },
-                video: { count: bookSummary.count },
-                book: { count: bookSummary.count },
+                    count: totalUsers,
+                    androidCount: usersByGroup.android,
+                    iosCount: usersByGroup.ios,
+                    webCount: usersByGroup.web,
+                }
             },
-        })
+        });
     } catch (e: any) {
-        next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
-}
+};
+
+const getBooksCountForDashboard = async (request: Request, response: Response, next: NextFunction) => {
+    try {
+        const bookSummary = await bookSummaryService.getBooksCountForDashboard();
+        
+        response.status(200).json({
+            message: dashboardControllerResponse.getDashboardSuccess,
+            data: {
+                audio: { count: bookSummary.chaptersCount },
+                video: { count: bookSummary.booksCount },
+                book: { count: bookSummary.booksCount },
+            },
+        });
+    } catch (e: any) {
+        next(Boom.badData(e.message || 'Failed to fetch book summaries for dashboard'));
+    }
+};
 
 const getTopReadsBooks = async (request: Request, response: Response, next: NextFunction) => {
     try {
@@ -69,4 +89,5 @@ export {
     getDashboard,
     getTopReadsBooks,
     getUserAnaylatics,
+    getBooksCountForDashboard
 }

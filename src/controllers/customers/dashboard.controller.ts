@@ -176,7 +176,7 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
         const readingBook = await bookSummaryService.findBooks({ _id: { $in: bookIds } });
 
         const categoryIds = libraries.categories || [];
-        const categoriesBooks = await bookSummaryService.findRandomBooks({ $match: { categories: { $in: categoryIds }, publish: true } }, 5);
+        const categoriesBooks = await bookSummaryService.findRandomBooks({ $match: { categories: { $ss: categoryIds }, publish: true } }, 5);
 
         const books = [...readingBook, ...categoriesBooks];
         const preferredCategories = [];

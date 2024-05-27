@@ -54,4 +54,19 @@ const getAllTransactions = async (request: Request | any, response: Response, ne
     }
 }
 
-export { getAllTransactions }
+/**  Get one testimonial by id */
+const getOneTransaction = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const id: any = req.params.id
+        /** Get testimonial from db */
+        const data: any = await transactionsService.getTransactionById(id)
+        if (!data) {
+            return next(Boom.notFound(transactionsControllerResponse.getTransactionFailure))
+        }
+        res.status(200).send({ message: transactionsControllerResponse.fetchTransactionSuccess, data })
+    } catch (e: any) {
+        next(Boom.badData(e.message))
+    }
+}
+
+export { getAllTransactions, getOneTransaction }

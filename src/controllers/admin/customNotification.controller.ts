@@ -45,7 +45,7 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
             mobileUserObj.isSignedUp = false
         }
 
-        const mobileUsers = await usersService.getAllUsersForDashboard(mobileUserObj, 'timeZone pushTokens')
+        const mobileUsers = await usersService.getUseForCustomNotification(mobileUserObj, 'timeZone pushTokens')
 
         // push notification
         await Promise.all(mobileUsers?.map(user => {
@@ -89,7 +89,7 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
             webUserObj.isSignedUp = false
         }
 
-        const webUsers: any = await usersService.getAllUsersForDashboard(webUserObj, '');
+        const webUsers: any = await usersService.getUseForCustomNotification(webUserObj, '');
 
         await Promise.all(webUsers?.map(async (user) => {
             try {

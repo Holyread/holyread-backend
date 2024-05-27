@@ -58,6 +58,7 @@ export const awsBucket = {
     readsOfDayDirectory: 'readsOfDay',
     testimonialDirectory: 'testimonial',
     expertCuratedDirectory: 'expertCurated',
+    devotionalCategoryDirectory: 'devotionalCategory',
 }
 
 export const dataTable = {
@@ -116,4 +117,20 @@ export const fireStoreConfig = {
 
 export const trailDays = 10
 
-export const devotionalCategoriesList = ['Couple','Women','Parents']
+export const devotionalCategoriesList = [
+    {
+        name: 'Couple',
+        image: 'https://holyreads-develop.s3.amazonaws.com/devotionalCategory/couple_1716804341166.jpeg',
+        description: 'Lorem ipsum dolor sit amet. Vel quisquam suscipit et cumque neque ut Quis eius. Ut numquam internos qui sunt assumenda et omnis dolore cum similique doloremque ut velit sint.'
+    },
+    {
+        name: 'Women',
+        image: 'https://holyreads-develop.s3.amazonaws.com/devotionalCategory/women_1716804246623.jpeg',
+        description: 'Lorem ipsum dolor sit amet. Vel quisquam suscipit et cumque neque ut Quis eius. Ut numquam internos qui sunt assumenda et omnis dolore cum similique doloremque ut velit sint.'
+    },
+    {
+        name: 'Parents',
+        image: 'https://holyreads-develop.s3.amazonaws.com/devotionalCategory/family_1716804710519.jpeg',
+        description: 'Lorem ipsum dolor sit amet. Vel quisquam suscipit et cumque neque ut Quis eius. Ut numquam internos qui sunt assumenda et omnis dolore cum similique doloremque ut velit sint.'
+    }
+];

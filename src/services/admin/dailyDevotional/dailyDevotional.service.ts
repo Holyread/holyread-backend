@@ -20,6 +20,10 @@ const createDailyDevotional = async (body: any) => {
         if (result.video) {
             result.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + result.video
         }
+
+        if (result.audio) {
+            result.audio = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/audio/' + result.audio
+        }
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -40,6 +44,10 @@ const updateDailyDevotional = async (body: any, id: string) => {
 
         if (data && data.video) {
             data.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + data.video
+        }
+
+        if (data && data.audio) {
+            data.audio = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/audio/' + data.audio
         }
         return data
     } catch (e: any) {
@@ -66,6 +74,9 @@ const getAllDailyDevotional = async (skip: number, limit, search: object, sort) 
 
             if (item.video) {
                 item.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + item.video
+            }
+            if (item.audio) {
+                item.audio = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/audio/' + item.audio
             }
         })
         const count = await DailyDvotionalModel.find(search).countDocuments()

@@ -33,6 +33,13 @@ const addDailyDevotional = async (req: Request, res: Response, next: NextFunctio
             body.image = s3File.name
         }
 
+        if (body.audio) {
+            const s3File: any = await uploadFileToS3(body.audio, body.title || 'read_of_day',
+                { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' }
+            ); body.audio = s3File.name
+            body.audioFileSize = s3File.size
+        }
+
         if (body.video) {
             const s3File: any =
                 await uploadFileToS3(body.video, body.title || 'read_of_day' + '-video', { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
@@ -45,8 +52,11 @@ const addDailyDevotional = async (req: Request, res: Response, next: NextFunctio
             description: body.description,
             video: body.video,
             image: body.image,
+            audio: body.audio,
             category: body.category,
             status: body.status || 'Active',
+            audioFileSize: body.audioFileSize,
+            videoFileSize: body.videoFileSize,
         })
         res.status(200).send({
             message: dailyDevotionalControllerResponse.createDailyDevotionalSuccess,
@@ -69,6 +79,10 @@ const getOneDailyDevotional = async (req: Request, res: Response, next: NextFunc
 
         if (data && data.video) {
             data.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + data.video
+        }
+
+        if (data && data.audio) {
+            data.audio = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/audio/' + data.audio
         }
         if (!data) {
             return next(Boom.notFound(dailyDevotionalControllerResponse.getDailyDevotionalFailure))
@@ -150,6 +164,39 @@ const updateDailyDevotional = async (req: Request, res: Response, next: NextFunc
         if (req.body.image && req.body.image.startsWith('http')) {
             req.body.image = readOfDayDetails.image
         }
+
+        if (req.body.video === null) {
+            await removeS3File(readOfDayDetails.video, s3Bucket)
+        }
+        if (req.body.video && req.body.video.includes('base64')) {
+            await removeS3File(readOfDayDetails.video, s3Bucket)
+            const s3File: any =
+                await uploadFileToS3(req.body.video, req.body.title || 'read_of_day' + '-video', { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
+            req.body.video = s3File.name
+            req.body.videoFileSize = s3File.size
+        }
+
+        if (req.body.video && req.body.video.startsWith('http')) {
+            req.body.video = readOfDayDetails.video
+        }
+
+        if (req.body.audio === null) {
+            await removeS3File(readOfDayDetails.audio, s3Bucket)
+        }
+
+        if (req.body.audio && req.body.audio.includes('base64')) {
+            await removeS3File(readOfDayDetails.audio, s3Bucket)
+            const s3File: any = await uploadFileToS3(
+                req.body.audio,
+                req.body.name,
+                { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' }
+            );
+            req.body.audio = s3File.name
+            req.body.audioFileSize = s3File.size
+        }
+        if (req.body.audio && req.body.audio.startsWith('http')) {
+            req.body.audio = readOfDayDetails.audio
+        }
         await dailyDevotionalService.updateDailyDevotional(req.body, id)
         return res.status(200).send({ message: dailyDevotionalControllerResponse.updateDailyDevotionalSuccess })
     } catch (e: any) {
@@ -164,6 +211,14 @@ const deleteDailyDevotional = async (req: Request, res: Response, next: NextFunc
         const readOfDayDetails: any = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id })
         if (readOfDayDetails && readOfDayDetails.image) {
             await removeS3File(readOfDayDetails.image, s3Bucket)
+        }
+
+        if (readOfDayDetails && readOfDayDetails.video) {
+            await removeS3File(readOfDayDetails.video, s3Bucket)
+        }
+
+        if (readOfDayDetails && readOfDayDetails.audio) {
+            await removeS3File(readOfDayDetails.audio, s3Bucket)
         }
         await dailyDevotionalService.deleteDailyDevotional(id)
         return res.status(200).send({ message: dailyDevotionalControllerResponse.deleteDailyDevotionalSuccess })

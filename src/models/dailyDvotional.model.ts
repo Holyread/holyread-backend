@@ -12,9 +12,12 @@ export interface IDailyDvotional extends mongoose.Document {
     updatedAt: Date,
     displayAt: Date
     video?: string,
+    audio?: string,
     category?: string,
     publish : boolean,
     publishedAt : Date,
+    videoFileSize?: number,
+    audioFileSize?: number,
 }
 
 export type createDailyDvotionalType = {
@@ -27,10 +30,14 @@ export type createDailyDvotionalType = {
     updatedAt: Date,
     displayAt: Date,
     video?: string,
+    audio?: string,
     category?: string,
     publish : boolean,
     publishedAt : Date,
+    videoFileSize?: number,
+    audioFileSize?: number,
 }
+
 
 export type getDailyDvotionalType = {
     _id?: string,
@@ -43,9 +50,12 @@ export type getDailyDvotionalType = {
     updatedAt: Date,
     displayAt: Date,
     video?: string,
+    audio?: string,
     category?: string,
     publish : boolean,
     publishedAt : Date,
+    videoFileSize?: number,
+    audioFileSize?: number,
 }
 
 export const DailyDvotionalSchema = new Schema({
@@ -54,6 +64,7 @@ export const DailyDvotionalSchema = new Schema({
     description: { type: String, default: '' },
     image: { type: String },
     video: { type: String },
+    audio: { type: String },
     status: { type: String },
     createdAt: {
         type: Date, default: () => {
@@ -64,6 +75,8 @@ export const DailyDvotionalSchema = new Schema({
     displayAt: { type: Date },
     publishedAt : { type: Date },
     category: { type: String },
+    audioFileSize: { type: Number },
+    videoFileSize: { type: Number },
     publish : { type : Boolean, default: false },
 }, { strict: 'throw' })
 

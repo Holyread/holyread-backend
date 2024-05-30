@@ -24,7 +24,8 @@ const start = async () => {
 
             /** Get daily devotional */
             const dailyDevotional = await DailyDvotionalModel.findOne({
-                  displayAt: { $gte: new Date(start), $lte: new Date(end) },
+                  publishedAt: { $gte: new Date(start), $lte: new Date(end) },
+                  category: { $exists: false },
             }).select('title description image').lean().exec();
 
             // Check if daily devotional exists

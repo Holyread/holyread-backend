@@ -81,7 +81,6 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
             { header: 'Image', key: 'image' },
             { header: 'Status', key: 'status' },
             { header: 'Created At', key: 'createdAt' },
-            { header: 'Display At', key: 'displayAt' },
         ];
 
         /* set header */
@@ -188,7 +187,6 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                         item.image,
                         item.status,
                         item.createdAt,
-                        item.displayAt, // Add displayAt column
                     ]);
                 } else if (dataType === 'Curated list') {
                     wsCuratedList.addRow([

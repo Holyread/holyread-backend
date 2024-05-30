@@ -11,7 +11,7 @@ import autherService from '../../services/customers/book/author.service'
 import smallGroupService from '../../services/customers/smallGroup/smallGroup.service'
 import { responseMessage } from '../../constants/message.constant'
 import { awsBucket, dataLimit } from '../../constants/app.constant'
-import { sortArrayObject } from '../../lib/utils/utils'
+import { sortArrayObject, calculateDateInThePast } from '../../lib/utils/utils'
 import config from '../../../config'
 import userService from '../../services/customers/users/user.service';
 import recommendedBookService from '../../services/customers/book/recommendedBook.service';
@@ -132,40 +132,73 @@ const getCuratedsList = async (request: Request, response: Response, next: NextF
 const getDailyDevotional = async (request: Request | any, response: Response, next: NextFunction) => {
     try {
         let data: any;
-        const params: any = request.query
-        const skip: any = params.skip
-        const limit: any = params.limit
-        const userObj: any = Object.assign({}, request.user);
+        const params: any = request.query;
+        const skip: number = Number(params.skip) || 0;
+        const limit: number = Number(params.limit);
+        const userObj: any = { ...request.user };
         const query: any = { _id: userObj.libraries };
 
-        const subscriptionStatus = await subscriptionService.getUserSubscriptionStatus(request.user)
-        if (subscriptionStatus === 'freemium') {
-            /** Set today start and end */
-            const start = new Date();
-            start.setDate(new Date().getDate() - 1);
+        let start = new Date();
+        let end = new Date();
+        let filter: any = {};
+
+        if (params.date === 'latest') {
+            // Set start and end to today's date
             start.setHours(0, 0, 0, 0);
-            const end = new Date();
             end.setHours(23, 59, 59, 999);
-            data = await dailyDevotionalService.getAllDailyDevotional(Number(skip), Number(limit), { displayAt: { $gte: new Date(start), $lte: new Date(end) } }, [['displayAt', 'desc']])
+            filter = { publishedAt: { $gte: start, $lte: end }, publish: true };
+        } else if (params.date === 'yesterday') {
+            const yesterday = calculateDateInThePast(1);
+            yesterday.setHours(0, 0, 0, 0);
+            const nextDay = new Date(yesterday);
+            nextDay.setDate(yesterday.getDate() + 1);
+            nextDay.setHours(0, 0, 0, 0);
+            filter = { publishedAt: { $gte: yesterday, $lt: nextDay }, publish: true };
+        } else if (params.date === 'past') {
+            const twoDaysAgo = calculateDateInThePast(1);
+            twoDaysAgo.setHours(0, 0, 0, 0);
+            filter = { publishedAt: { $lte: twoDaysAgo }, publish: true };
+        }
+
+        const subscriptionStatus = await subscriptionService.getUserSubscriptionStatus(request.user);
+
+        if (subscriptionStatus === 'freemium') {
+            filter.category = { $exists: false };
+            data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]);
         } else {
             userObj.libraries = await userService.getUserLibrary(query);
             if (!userObj?.libraries?.devotionalCategories?.length) {
-                data = await dailyDevotionalService.getAllDailyDevotional(Number(skip), Number(limit), {}, [['displayAt', 'desc']])
-            }
-            else {
+                filter.category = { $exists: false };
+                data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]);
+            } else {
                 const categories = userObj?.libraries?.devotionalCategories;
-                data = await dailyDevotionalService.getAllDailyDevotional(Number(skip), Number(limit), { category: categories }, [['displayAt', 'desc']])
+                filter.category = { $exists: false };
+                const generalDevotionalData: any = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]) || [];
+
+                filter.category = { $in: categories };
+                const categoryDevotionalData: any = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]) || [];
+                const count = generalDevotionalData.count + categoryDevotionalData.count;
+                data = [...generalDevotionalData.dailyDevotionalList, ...categoryDevotionalData.dailyDevotionalList];
+
+                // Sort combined list by 'publishedAt' in descending order
+                data.sort((a: any, b: any) => new Date(b.publishedAt.toString()).getTime() - new Date(a.publishedAt.toString()).getTime());
+                // Apply skip and limit
+                if (params.skip && params.limit) {
+                    data.slice(skip, skip + limit);
+                }
+                data = { count, dailyDevotionalList: data };
+
             }
         }
 
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data,
-        })
+        });
     } catch (e: any) {
-        next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
-}
+};
 
 /** Get recommended books for dashboard */
 const getRecommendedBooks = async (request: any, response: Response, next: NextFunction) => {
@@ -176,7 +209,10 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
         const readingBook = await bookSummaryService.findBooks({ _id: { $in: bookIds } });
 
         const categoryIds = libraries.categories || [];
-        const categoriesBooks = await bookSummaryService.findRandomBooks({ $match: { categories: { $ss: categoryIds }, publish: true } }, 5);
+        let categoriesBooks = [];
+        if (categoryIds.length > 0) {
+            categoriesBooks = await bookSummaryService.findRandomBooks({ $match: { categories: { $in: categoryIds }, publish: true } }, 5);
+        }
 
         const books = [...readingBook, ...categoriesBooks];
         const preferredCategories = [];

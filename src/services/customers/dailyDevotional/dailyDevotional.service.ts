@@ -12,7 +12,7 @@ const getAllDailyDevotional = async (skip: number, limit, search: object, sort) 
         dailyDevotionalList.map(async (item: any) => {
             item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image
         })
-        return { dailyDevotionalList, count }
+        return { count, dailyDevotionalList }
     } catch (e: any) {
         throw new Error(e)
     }

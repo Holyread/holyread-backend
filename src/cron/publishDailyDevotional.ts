@@ -17,13 +17,21 @@ const startPublishContentJob = async () => {
         await cronLog.save();
         let dailyDevotional = [];
 
-        /** Get unpublished daily devotional */
+        /** Get unpublished general daily devotional */
+        const unPublishGeneralDevotional = await DailyDvotionalModel.find({ publish: false }).select('_id').lean().exec();
+
+        if (unPublishGeneralDevotional.length) {
+            await DailyDvotionalModel.findOneAndUpdate({ _id: unPublishGeneralDevotional[0]?._id }, { publish: true, publishedAt: new Date() });
+        }
+
+        /** Get unpublished categories daily devotional */
         for (const category of devotionalCategoriesList) {
             const unPublishDevotional = await DailyDvotionalModel.findOne({
                 publish: false,
-                category: category,
+                category: category.name,
             })
-                .select("_id title category")
+                .sort({ createdAt: 1 })
+                .select("_id title category createdAt")
                 .lean()
                 .exec();
 
@@ -31,7 +39,7 @@ const startPublishContentJob = async () => {
                 dailyDevotional.push(unPublishDevotional);
             }
         }
-        // Publish the daily devotional
+        // Publish the  categories daily devotional
         if (dailyDevotional.length) {
             await Promise.all(
                 dailyDevotional.map(async (item) => {

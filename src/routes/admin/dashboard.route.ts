@@ -1,5 +1,6 @@
 import express, { Router } from 'express'
 import {
+  getBooksCountForDashboard,
   getDashboard,
   getTopReadsBooks,
   getUserAnaylatics,
@@ -10,5 +11,6 @@ const router: Router = express.Router()
 router.get('/', getDashboard)
 router.get('/top-reads', getTopReadsBooks)
 router.get('/analytics', getUserAnaylatics)
+router.get('/books', getBooksCountForDashboard)
 
 export default router

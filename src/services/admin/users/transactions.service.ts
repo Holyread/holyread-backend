@@ -15,14 +15,8 @@ const getAllTransactions = async (
                         'total',
                         'userId',
                         'status',
-                        'reason',
-                        'device',
                         'amount',
-                        'account',
-                        'customer',
                         'createdAt',
-                        'paymentLink',
-                        'latestInvoice',
                         'paymentMethod',
                   ])
                   .populate({
@@ -30,12 +24,7 @@ const getAllTransactions = async (
                         select: [
                               'email',
                               'inAppSubscription',
-                              'subscription',
-                        ],
-                        populate: {
-                              path: 'subscription',
-                              select: 'duration title saves price',
-                        },
+                        ]
                   })
                   .lean()
                   .exec();
@@ -65,6 +54,78 @@ const getAllTransactions = async (
                         search.to &&
                         new Date(i.createdAt).getTime() > search.to
                   ) { return undefined }
+                  const data = {
+                        _id: i._id,
+                        email: i.userId?.email,
+                        date: formattedDate(i?.createdAt)?.replace(/ /g, ' '),
+                        createdAt: i?.createdAt,
+                        status: i?.status,
+                        payment: i?.device === 'app' ? ['fa fa-mobile', i?.userId?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)'] : ['fa-cc-' + i?.paymentMethod?.brand?.toLowerCase(), i?.paymentMethod?.brand || ''],
+                        total: i?.amount?.total || i.total,
+                  }
+                  /** Replace negetive total to zero */
+                  data.total = Number(data.total) < 0 ? 0.00 : Number(data.total)
+                  /** Match search criteria with some fileds */
+                  if (
+                        search.keyword &&
+                        !data?.status?.toLowerCase()?.includes(search.keyword) &&
+                        !data?.email?.toLowerCase()?.includes(search.keyword) &&
+                        Math.trunc(data?.total) !== search.keyword
+                  ) { return undefined }
+                  transactions.add(data)
+            })
+            transactions = [...transactions].filter(i => i)
+            /** sort by column */
+            transactions = sortArrayObject(
+                  transactions,
+                  sort[0][0] === 'date' ? 'createdAt' : sort[0][0],
+                  (sort[0][1]).toLowerCase()
+            )
+            const count = transactions.length;
+            transactions = transactions.slice(skip, skip + limit)
+            return { count, transactions: [...transactions] }
+      } catch (e: any) {
+            throw new Error(e)
+      }
+}
+
+const getTransactionById = async (_id: string) => {
+      try {
+            const result: any = await TransactionsModel
+                  .find({ _id: _id })
+                  .select([
+                        'total',
+                        'userId',
+                        'status',
+                        'reason',
+                        'device',
+                        'amount',
+                        'account',
+                        'customer',
+                        'createdAt',
+                        'paymentLink',
+                        'latestInvoice',
+                        'paymentMethod',
+                  ])
+                  .populate({
+                        path: 'userId',
+                        select: [
+                              'email',
+                              'inAppSubscription',
+                              'subscription',
+                        ],
+                        populate: {
+                              path: 'subscription',
+                              select: 'duration title saves price',
+                        },
+                  })
+                  .lean()
+                  .exec();
+
+            let transactions: any = new Set()
+            result.map((i, index) => {
+                  if (!i?.userId?.email) return;
+
                   const shipping = i?.customer?.shipping?.address
                   const data = {
                         _id: i._id,
@@ -92,25 +153,11 @@ const getAllTransactions = async (
                   /** Replace negetive total to zero */
                   data.total = Number(data.total) < 0 ? 0.00 : Number(data.total)
                   data.subTotal = data.subTotal < 0 ? 0.00 : data.subTotal
-                  /** Match search criteria with some fileds */
-                  if (
-                        search.keyword &&
-                        !data?.status?.toLowerCase()?.includes(search.keyword) &&
-                        !data?.email?.toLowerCase()?.includes(search.keyword) &&
-                        Math.trunc(data?.total) !== search.keyword
-                  ) { return undefined }
+
                   transactions.add(data)
             })
             transactions = [...transactions].filter(i => i)
-            /** sort by column */
-            transactions = sortArrayObject(
-                  transactions,
-                  sort[0][0] === 'date' ? 'createdAt' : sort[0][0],
-                  (sort[0][1]).toLowerCase()
-            )
-            const count = transactions.length;
-            transactions = transactions.slice(skip, skip + limit)
-            return { count, transactions: [...transactions] }
+            return { transactions: [...transactions] }
       } catch (e: any) {
             throw new Error(e)
       }
@@ -236,4 +283,5 @@ export default {
       deleteTransaction,
       getAllTransactions,
       getTransactionsList,
+      getTransactionById
 }

@@ -25,6 +25,8 @@ export interface IBookSummary extends mongoose.Document {
     status?: 'Active' | 'Deactive',
     publish?: boolean,
     totalStar?: number,
+    publishedAt: Date,
+    updatedAt : Date
 }
 
 export type createBookSummaryType = {
@@ -50,6 +52,8 @@ export type createBookSummaryType = {
     status?: 'Active' | 'Deactive',
     publish?: boolean,
     totalStar?: number,
+    publishedAt: Date,
+    updatedAt : Date
 }
 
 export type getBookSummaryType = {
@@ -76,6 +80,8 @@ export type getBookSummaryType = {
     status?: 'Active' | 'Deactive',
     publish?: boolean,
     totalStar?: number,
+    publishedAt: Date,
+    updatedAt : Date
 }
 
 export const BookSummarySchema = new Schema({
@@ -108,7 +114,7 @@ export const BookSummarySchema = new Schema({
     }],
     views: { type: Number, default: 0 },
     publish: { type: Boolean, default: false },
-    totalStar: { type : Number},
+    totalStar: { type: Number },
     createdAt: {
         type: Date, default: () => {
             return new Date()

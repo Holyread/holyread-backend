@@ -2,7 +2,7 @@ import { CronJob } from 'cron';
 import config from '../../config';
 import { publishDailyDevotional } from '../constants/cron.constants';
 import { DailyDvotionalModel, CronLogModel } from '../models';
-import { devotionalCategoriesList } from '../constants/app.constant'
+import { devotionalCategoriesList } from '../lib/utils/utils';
 
 const startPublishContentJob = async () => {
     try {

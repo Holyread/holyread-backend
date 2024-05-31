@@ -4,7 +4,7 @@ import Boom from '@hapi/boom';
 import { responseMessage } from '../../constants/message.constant'
 
 const { authControllerResponse } = responseMessage
-import { devotionalCategoriesList } from '../../constants/app.constant'
+import { devotionalCategoriesList } from '../../lib/utils/utils.js'
 
 /** Get all devotional categories */
 const getAllDevotionalCategories = async (request: Request, response: Response, next: NextFunction) => {

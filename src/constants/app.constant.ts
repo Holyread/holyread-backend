@@ -116,26 +116,3 @@ export const fireStoreConfig = {
 }
 
 export const trailDays = 10
-
-export const devotionalCategoriesList = [
-    {
-        name: 'On Faith',
-        image: 'https://holyreads-develop.s3.amazonaws.com/devotionalCategory/On_Faith_1716900902758.jpeg',
-        description: 'Faith Series offers 15 daily devotionals that explore the foundational role of faith in the Christian life. Each day, delve into how faith originates, supports spiritual growth, and provides comfort, helping believers trust in God’s perfect timing and love.'
-    },
-    {
-        name: 'For Pastors',
-        image: 'https://holyreads-develop.s3.amazonaws.com/devotionalCategory/For_Pastors_1716901314646.jpeg',
-        description: 'Pastoral Leadership Series provides 15 daily devotionals designed to support and enrich church leaders. Daily topics cover essential aspects like humility, leadership, and community engagement, offering guidance for effective ministry.'
-    },
-    {
-        name: 'For Couples',
-        image: 'https://holyreads-develop.s3.amazonaws.com/devotionalCategory/For_Couples_1716901379652.jpeg',
-        description: 'Couples Series features 15 daily devotionals focused on strengthening relationships through Christian teachings. Topics address the essentials of marriage like forgiveness, unity, and love, helping couples navigate their partnership with grace and faith each day.'
-    },
-    {
-        name: 'For Mothers',
-        image: 'https://holyreads-develop.s3.amazonaws.com/devotionalCategory/For_Mothers_1716901171818.jpeg',
-        description: 'Mothers Series delivers 15 daily devotionals tailored to the unique challenges and joys of motherhood. It covers topics such as the importance of sacrificial love, patience, and spiritual guidance, supporting mothers in their vital role with daily wisdom and encouragement.'
-    }
-];

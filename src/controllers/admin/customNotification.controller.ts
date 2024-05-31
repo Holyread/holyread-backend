@@ -1,8 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
-import notificationsService from '../../services/customers/notifications/notifications.service';
-import { io } from '../../app';
-import { fetchNotifications } from '../customers/notification.controller';
 import { calculateDateInThePast, getSearchRegexp, pushNotification } from '../../lib/utils/utils'
 import customNotificationService from '../../services/admin/customNotification.service';
 import usersService from '../../services/admin/users/user.service'
@@ -56,60 +53,6 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
             )
             users.push(user._id);
         }))
-
-        const webUserObj = {
-            ...commonUserObj,
-            device: 'web',
-        }
-
-        if (userFilter?.toLowerCase()?.includes('cancelled plan')) {
-            webUserObj.$or = [
-                ...(webUserObj.$or || []),
-                { 'stripe.status': 'canceled' }]
-        }
-
-        if (userFilter?.toLowerCase()?.includes('freemium')) {
-            webUserObj.$or = [
-                ...(webUserObj.$or || []),
-                {
-                    'stripe.status': {
-                        $in: [
-                            'trialing',
-                            'incomplete',
-                            'past_due',
-                            'unpaid',
-                            'incomplete_expired',
-                        ],
-                    },
-                },
-            ]
-        }
-
-        if (userFilter?.toLowerCase()?.includes('presignupusers')) {
-            webUserObj.isSignedUp = false
-        }
-
-        const webUsers: any = await usersService.getUseForCustomNotification(webUserObj, '');
-
-        await Promise.all(webUsers?.map(async (user) => {
-            try {
-                await notificationsService.createNotification({
-                    userId: user._id,
-                    type: 'customNotification',
-                    notification: {
-                        title: `${title}`,
-                        description: `${description}`,
-                    },
-                });
-                // send notification
-                fetchNotifications(io.sockets, { _id: user._id })
-
-                // If notification creation is successful
-                users.push(user._id);
-            } catch (e) {
-                console.error('Error creating notification:', e);
-            }
-        }));
 
         await customNotificationService.createNotification({
             userIds: users,

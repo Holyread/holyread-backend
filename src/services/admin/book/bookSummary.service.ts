@@ -2,6 +2,7 @@ import { BookSummaryModel, BookAuthorModel, HighLightsModel, BookCategoryModel, 
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
+import { formattedDate } from '../../../lib/utils/utils'
 
 const NODE_ENV = config.NODE_ENV
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -193,6 +194,10 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
             .sort(sort)
             .lean()
             .exec();
+
+        await result.map(i => {
+                i.publishedAt = formattedDate(i.publishedAt).replace(/ /g, ' ');
+        });
         const count: number = await BookSummaryModel.find(search).countDocuments().lean().exec()
         return { count, summaries: result }
     } catch (e: any) {

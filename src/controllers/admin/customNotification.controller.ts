@@ -9,6 +9,8 @@ import { dataTable } from '../../constants/app.constant';
 const adminControllerResponse = responseMessage.adminControllerResponse
 const { notificationsControllerResponse } = responseMessage
 
+const BATCH_SIZE = 200;  
+
 const sendCustomNotificationToAllUsers = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         const { description, title, userFilter } = req.body
@@ -45,14 +47,12 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
         const mobileUsers = await usersService.getUseForCustomNotification(mobileUserObj, 'timeZone pushTokens')
 
         // push notification
-        await Promise.all(mobileUsers?.map(user => {
-            pushNotification(
-                user?.pushTokens?.map((ti: { token: string }) => ti.token) || [],
-                ` ${title}`,
-                `${description}`
-            )
-            users.push(user._id);
-        }))
+        for (let i = 0; i < mobileUsers.length; i += BATCH_SIZE) {
+            const batchUsers = mobileUsers.slice(i, i + BATCH_SIZE);
+            const tokens = batchUsers.flatMap(user => user.pushTokens.map(ti => ti.token));
+            await pushNotification(tokens, title, description);
+            users.push(...batchUsers.map(user => user._id));
+        }
 
         await customNotificationService.createNotification({
             userIds: users,

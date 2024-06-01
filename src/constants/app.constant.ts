@@ -115,3 +115,5 @@ export const fireStoreConfig = {
 }
 
 export const trailDays = 10
+
+export const BATCH_SIZE = 200;

@@ -11,6 +11,12 @@ const getAllDailyDevotional = async (skip: number, limit, search: object, sort) 
         const count: any = await DailyDvotionalModel.countDocuments(search).lean().exec()
         dailyDevotionalList.map(async (item: any) => {
             item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image
+            if (item.video) {
+                item.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + item.video
+            }
+            if (item.audio) {
+                item.audio = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/audio/' + item.audio
+            }
         })
         return { count, dailyDevotionalList }
     } catch (e: any) {

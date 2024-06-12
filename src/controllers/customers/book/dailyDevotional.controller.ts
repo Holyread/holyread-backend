@@ -24,6 +24,13 @@ const getOneDailyDevotional = async (request: Request, response: Response, next:
         if (data.image) {
             data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + data.image
         }
+        if (data && data.video) {
+            data.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + data.video
+        }
+
+        if (data && data.audio) {
+            data.audio = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/audio/' + data.audio
+        }
         response.status(200).json({ message: dailyDevotionalControllerResponse.fetchDailyDevotionalSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))

@@ -429,17 +429,17 @@ export const devotionalCategoriesList = [
         description: 'Faith Series offers 15 daily devotionals that explore the foundational role of faith in the Christian life. Each day, delve into how faith originates, supports spiritual growth, and provides comfort, helping believers trust in God’s perfect timing and love.'
     },
     {
-        name: 'For Pastors',
+        name: 'Pastors',
         image: `${url}/For_Pastors_1716901314646.jpeg`,
         description: 'Pastoral Leadership Series provides 15 daily devotionals designed to support and enrich church leaders. Daily topics cover essential aspects like humility, leadership, and community engagement, offering guidance for effective ministry.'
     },
     {
-        name: 'For Couples',
+        name: 'Couples',
         image: `${url}/For_Couples_1716901379652.jpeg`,
         description: 'Couples Series features 15 daily devotionals focused on strengthening relationships through Christian teachings. Topics address the essentials of marriage like forgiveness, unity, and love, helping couples navigate their partnership with grace and faith each day.'
     },
     {
-        name: 'For Mothers',
+        name: 'Mothers',
         image: `${url}/For_Mothers_1717130056595.jpeg`,
         description: 'Mothers Series delivers 15 daily devotionals tailored to the unique challenges and joys of motherhood. It covers topics such as the importance of sacrificial love, patience, and spiritual guidance, supporting mothers in their vital role with daily wisdom and encouragement.'
     }

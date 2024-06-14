@@ -6,6 +6,8 @@ import bodyParser from 'body-parser'
 import compression from 'compression'
 import cookieParser from 'cookie-parser'
 import firebaseAdmin from 'firebase-admin';
+import morgan from 'morgan';
+import fs from 'fs'
 
 import express, { Request, Response } from 'express'
 
@@ -39,6 +41,24 @@ import subscriptionService
 
 const io = require('socket.io')();
 const app = express()
+
+morgan.token('body', (req) => JSON.stringify(req.body));
+
+// Create a write stream (in append mode)
+const logStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
+
+// Use morgan middleware to log requests and responses
+app.use(morgan(':date[iso] :method :url :status :response-time ms - :res[content-length] :body', { stream: logStream }));
+
+app.get('/logs', (req: Request, res: Response) => {
+  fs.readFile(path.join(__dirname, 'access.log'), 'utf8', (err, data) => {
+    if (err) {
+      res.status(500).send('Unable to read log file');
+    } else {
+      res.send(`<pre>${data}</pre>`);
+    }
+  });
+});
 
 app.use(compression())
 

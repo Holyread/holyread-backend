@@ -15,7 +15,6 @@ import { sortArrayObject, calculateDateInThePast } from '../../lib/utils/utils'
 import config from '../../../config'
 import userService from '../../services/customers/users/user.service';
 import recommendedBookService from '../../services/customers/book/recommendedBook.service';
-import subscriptionService from '../../services/customers/subscriptions/subscriptions.service';
 
 const NODE_ENV = config.NODE_ENV
 const dashboardControllerResponse = responseMessage.dashboardControllerResponse
@@ -131,66 +130,66 @@ const getCuratedsList = async (request: Request, response: Response, next: NextF
 /** Get daily devotional for Dashboard */
 const getDailyDevotional = async (request: Request | any, response: Response, next: NextFunction) => {
     try {
-        let data: any;
         const params: any = request.query;
         const skip: number = Number(params.skip) || 0;
         const limit: number = Number(params.limit);
         const userObj: any = { ...request.user };
         const query: any = { _id: userObj.libraries };
+        let data: any;
 
+        // Initialize date range
         let start = new Date();
         let end = new Date();
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+
         let filter: any = {};
 
-        if (params.date === 'latest') {
-            // Set start and end to today's date
-            start.setHours(0, 0, 0, 0);
-            end.setHours(23, 59, 59, 999);
+        // Determine date filter
+        if (params.timeFrame === 'latest') {
             filter = { publishedAt: { $gte: start, $lte: end }, publish: true };
-        } else if (params.date === 'yesterday') {
+        } else if (params.timeFrame === 'yesterday') {
             const yesterday = calculateDateInThePast(1);
             yesterday.setHours(0, 0, 0, 0);
             const nextDay = new Date(yesterday);
             nextDay.setDate(yesterday.getDate() + 1);
             nextDay.setHours(0, 0, 0, 0);
             filter = { publishedAt: { $gte: yesterday, $lt: nextDay }, publish: true };
-        } else if (params.date === 'past') {
-            const twoDaysAgo = calculateDateInThePast(1);
-            twoDaysAgo.setHours(0, 0, 0, 0);
-            filter = { publishedAt: { $lte: twoDaysAgo }, publish: true };
+        } else if (params.timeFrame === 'all') {
+            filter = { publish: true };
         }
 
-        const subscriptionStatus = await subscriptionService.getUserSubscriptionStatus(request.user);
+        // Retrieve user libraries
+        userObj.libraries = await userService.getUserLibrary(query);
 
-        if (subscriptionStatus === 'freemium') {
+        if (!userObj?.libraries?.devotionalCategories?.length) {
+            // If no specific categories, get all devotionals without category filter
             filter.category = { $exists: false };
             data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]);
         } else {
-            userObj.libraries = await userService.getUserLibrary(query);
-            if (!userObj?.libraries?.devotionalCategories?.length) {
-                filter.category = { $exists: false };
-                data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]);
+            // Get devotionals from general and user-specific categories
+            const categories = userObj.libraries.devotionalCategories;
+            filter.category = { $exists: false };
+            const generalDevotionalData: any = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]) || [];
+
+            filter.category = { $in: categories };
+            const categoryDevotionalData: any = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]) || [];
+
+            // Combine and sort data
+            const combinedData = [...generalDevotionalData.dailyDevotionalList, ...categoryDevotionalData.dailyDevotionalList];
+            combinedData.sort((a: any, b: any) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+            // Apply skip and limit
+            if (limit) {
+                data = combinedData.slice(skip, skip + limit);
             } else {
-                const categories = userObj?.libraries?.devotionalCategories;
-                filter.category = { $exists: false };
-                const generalDevotionalData: any = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]) || [];
-
-                filter.category = { $in: categories };
-                const categoryDevotionalData: any = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]) || [];
-                const count = generalDevotionalData.count + categoryDevotionalData.count;
-                data = [...generalDevotionalData.dailyDevotionalList, ...categoryDevotionalData.dailyDevotionalList];
-
-                // Sort combined list by 'publishedAt' in descending order
-                data.sort((a: any, b: any) => new Date(b.publishedAt.toString()).getTime() - new Date(a.publishedAt.toString()).getTime());
-                // Apply skip and limit
-                if (params.skip && params.limit) {
-                    data.slice(skip, skip + limit);
-                }
-                data = { count, dailyDevotionalList: data };
-
+                data = combinedData.slice(skip);
             }
+
+            data = { count: generalDevotionalData.count + categoryDevotionalData.count, dailyDevotionalList: data };
         }
 
+        // Send response
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data,

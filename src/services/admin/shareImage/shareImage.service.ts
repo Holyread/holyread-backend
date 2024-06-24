@@ -1,21 +1,16 @@
 import { ShareImageModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
-import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
+import { getImageUrl } from '../../../lib/utils/utils'
 
-const NODE_ENV = config.NODE_ENV
 const shareImageControllerResponse = responseMessage.shareImageControllerResponse
-
 /** Add share image */
 const createShareImage = async (body: any) => {
     try {
         const result = await ShareImageModel.create(body)
-        if (!result) {
-            throw new Error(shareImageControllerResponse.createShareImageFailure)
-        }
-        if (result.image) {
-            result.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.shareImageDirectory + '/' + result.image
-        }
+
+        if (!result) throw new Error(shareImageControllerResponse.createShareImageFailure)
+        if (result.image) result.image = getImageUrl(result.image, awsBucket.shareImageDirectory);
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -30,9 +25,7 @@ const updateShareImage = async (body: any, id: string) => {
             { ...body, updatedAt: new Date() },
             { new: true }
         )
-        if (data && data.image) {
-            data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.shareImageDirectory + '/' + data.image
-        }
+        if (data && data.image) data.image = getImageUrl(data.image, awsBucket.shareImageDirectory);
         return data
     } catch (e: any) {
         throw new Error(e)
@@ -55,12 +48,9 @@ const getAllShareImage = async (skip: number, limit, search: object, sort) => {
         const result = await ShareImageModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         const count = await ShareImageModel.find(search).countDocuments()
         await Promise.all(result.map(async (item: any) => {
-            if (!item) {
-                return
-            }
-            if (item.image) {
-                item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.shareImageDirectory + '/' + item.image
-            }
+            if (!item) return
+            if (item.image) item.image = getImageUrl(item.image, awsBucket.shareImageDirectory);
+            
         }))
         return { count, shareImages: result }
     } catch (e: any) {

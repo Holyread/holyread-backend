@@ -5,37 +5,36 @@ const createFaq = async (body: any) => {
       try {
             body.status = 'Active'
             const result: any = await FaqModel.create(body)
-            result.status === 'Active' ? result.status = true : result.status = false
+            result.status = result.status === 'Active';
             return result
       } catch (e: any) {
             throw new Error(e)
       }
 }
 
-/** Modify Faq */
 const updateFaq = async (body: any, id: string) => {
       try {
-            if (body.status === true) body.status = 'Active'
-            if (body.status === false) body.status = 'Deactive'
+            body.status = body.status ? 'Active' : 'Deactive';
+
             const result: any = await FaqModel.findOneAndUpdate(
                   { _id: id },
                   { ...body, updatedAt: new Date() },
                   { new: true }
-            ).lean()
-            result.status === 'Active' ? result.status = true : result.status = false
-            return result
+            ).lean();
+
+            result.status = result.status === 'Active';
+            return result;
       } catch (e: any) {
-            throw new Error(e)
+            throw new Error(e.message);
       }
 }
+
 
 /** Get one Faq by filter */
 const getOneFaqByFilter = async (query: any) => {
       try {
             const result: any = await FaqModel.findOne(query).lean()
-            if (result) {
-                  result.status === 'Active' ? result.status = true : result.status = false
-            }
+            if (result) result.status = result.status === 'Active';
             return result
       } catch (e: any) {
             throw new Error(e)
@@ -47,7 +46,7 @@ const getAllFaqs = async (skip: number, limit, search: object, sort) => {
       try {
             const faqsList: any = await FaqModel.find(search).skip(skip).limit(limit).sort(sort).lean()
             faqsList.forEach(item => {
-                  item.status === 'Active' ? item.status = true : item.status = false
+                  item.status = item.status === 'Active';
             })
             const count = await FaqModel.find(search).countDocuments()
             return { count, faqs: faqsList }

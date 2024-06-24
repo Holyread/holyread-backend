@@ -444,3 +444,8 @@ export const devotionalCategoriesList = [
         description: 'Mothers Series delivers 15 daily devotionals tailored to the unique challenges and joys of motherhood. It covers topics such as the importance of sacrificial love, patience, and spiritual guidance, supporting mothers in their vital role with daily wisdom and encouragement.'
     }
 ];
+
+export const getImageUrl = (imageName, directory) => {
+    return `${awsBucket[NODE_ENV].s3BaseURL}/${directory}/${imageName}`;
+};
+

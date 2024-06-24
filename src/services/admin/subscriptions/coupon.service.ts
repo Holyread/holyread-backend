@@ -35,7 +35,6 @@ const createCoupon = async (
 /** Get one Coupon by filter */
 const getOneCouponByFilter = async (query: any) => {
       try {
-
             const result: any = await CouponsModel.findOne(query).lean();
             return result
       } catch (e: any) {

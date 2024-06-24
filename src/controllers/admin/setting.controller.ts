@@ -11,9 +11,7 @@ const getSetting = async (req: Request, res: Response, next: NextFunction) => {
     try {
         /** Get setting from db */
         const cmsObj: any = await settingService.getSetting()
-        if (!cmsObj) {
-            return next(Boom.notFound(settingControllerResponse.getSettingFailure))
-        }
+        if (!cmsObj) return next(Boom.notFound(settingControllerResponse.getSettingFailure))
         res.status(200).send({
             message: settingControllerResponse.fetchSettingSuccess,
             data: cmsObj,

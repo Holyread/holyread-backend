@@ -13,9 +13,8 @@ const addEmailTemplate = async (req: Request, res: Response, next: NextFunction)
     try {
         const body = req.body
         const emailTemplateObj: any = await emailTemplateService.getOneEmailTemplateByFilter({ title: body.title })
-        if (emailTemplateObj) {
-            return next(Boom.conflict(emailTemplateControllerResponse.createEmailTemplateFailure))
-        }
+        if (emailTemplateObj) return next(Boom.conflict(emailTemplateControllerResponse.createEmailTemplateFailure))
+
         const data = await emailTemplateService.createEmailTemplate(body)
         res.status(200).send({
             message: emailTemplateControllerResponse.createEmailTemplateSuccess,
@@ -32,9 +31,8 @@ const getOneEmailTemplate = async (req: Request, res: Response, next: NextFuncti
         const id: any = req.params.id
         /** Get emailTemplate from db */
         const emailTemplateObj: any = await emailTemplateService.getOneEmailTemplateByFilter({ _id: id })
-        if (!emailTemplateObj) {
-            return next(Boom.notFound(emailTemplateControllerResponse.getEmailTemplateFailure))
-        }
+        if (!emailTemplateObj) return next(Boom.notFound(emailTemplateControllerResponse.getEmailTemplateFailure))
+
         res.status(200).send({
             message: emailTemplateControllerResponse.fetchEmailTemplateSuccess,
             data: emailTemplateObj,
@@ -52,6 +50,7 @@ const getAllEmailTemplates = async (request: Request, response: Response, next: 
         const limit: any = params.limit ? params.limit : dataTable.limit
 
         let searchFilter = {}
+
         if (params.search) {
             searchFilter = {
                 $or: [
@@ -61,21 +60,12 @@ const getAllEmailTemplates = async (request: Request, response: Response, next: 
                 ],
             }
         }
-        const emailTemplateSorting = [];
-        switch (params.column) {
-            case 'title':
-                emailTemplateSorting.push(['title', params.order || 'asc']);
-                break;
-            case 'subject':
-                emailTemplateSorting.push(['subject', params.order || 'asc']);
-                break;
-            case 'createdAt':
-                emailTemplateSorting.push(['createdAt', params.order || 'asc']);
-                break;
-            default:
-                emailTemplateSorting.push(['title', 'desc']);
-                break;
-        }
+
+        const sortingColumn = params.column as string;
+        const sortingOrder = params.order || 'asc';
+        const emailTemplateSorting = ['title', 'subject', 'createdAt'].includes(sortingColumn)
+            ? [[sortingColumn, sortingOrder]]
+            : [['title', 'desc']];
 
         const getAllEmailTemplatesList = await emailTemplateService.getAllEmailTemplates(Number(skip), Number(limit), searchFilter, emailTemplateSorting)
         response.status(200).json({ message: emailTemplateControllerResponse.fetchAllEmailTemplatesSuccess, data: getAllEmailTemplatesList })
@@ -90,9 +80,7 @@ const updateEmailTemplate = async (req: Request, res: Response, next: NextFuncti
         const id: any = req.params.id
         /** Get email template from db */
         const emailTemplateObj: any = await emailTemplateService.getOneEmailTemplateByFilter({ _id: id })
-        if (!emailTemplateObj) {
-            return next(Boom.notFound(emailTemplateControllerResponse.getEmailTemplateFailure))
-        }
+        if (!emailTemplateObj) return next(Boom.notFound(emailTemplateControllerResponse.getEmailTemplateFailure))
         const data = await emailTemplateService.updateEmailTemplate(req.body, id)
         return res.status(200).send({ message: emailTemplateControllerResponse.updateEmailTemplateSuccess, data })
     } catch (e: any) {

@@ -81,31 +81,15 @@ const getUserNotifications = async (req: Request, res: Response, next: NextFunct
                 ],
             }
         }
-        const notificationSorting = [];
-        switch (params.column) {
-            case 'title':
-                notificationSorting.push(['title', params.order || 'asc']);
-                break;
-            case 'description':
-                notificationSorting.push(['subject', params.order || 'asc']);
-                break;
-            case 'totalUsers':
-                notificationSorting.push(['totalUsers', params.order || 'asc']);
-                break;
-            case 'createdAt':
-                notificationSorting.push(['createdAt', params.order || 'asc']);
-                break;
-            default:
-                notificationSorting.push(['createdAt', 'desc']);
-                break;
-        }
+        const sortColumn: any = params.column || 'createdAt';
+        const sortOrder = params.order || 'desc';
+        const notificationSorting = { [sortColumn]: sortOrder };
 
         /** Get setting from db */
         const notifications: any = await customNotificationService.getUserNotifications(Number(skip), Number(limit), searchFilter, notificationSorting)
 
-        if (!notifications) {
-            return next(Boom.notFound(notificationsControllerResponse.getNotificationFailure))
-        }
+        if (!notifications) return next(Boom.notFound(notificationsControllerResponse.getNotificationFailure))
+        
         res.status(200).send({
             message: notificationsControllerResponse.fetchNotificationSuccess,
             data: notifications,

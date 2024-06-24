@@ -14,9 +14,7 @@ const addAuthor = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
         const existingAuthor = await authorService.getOneAuthorByFilter({ name: body.name })
-        if (existingAuthor) {
-            return next(Boom.notFound(authorControllerResponse.createAuthorFailure))
-        }
+        if (existingAuthor) return next(Boom.notFound(authorControllerResponse.createAuthorFailure))
         const data = await authorService.createAuthor(body)
         res.status(200).send({
             message: authorControllerResponse.createAuthorSuccess,
@@ -33,9 +31,7 @@ const getOneAuthor = async (req: Request, res: Response, next: NextFunction) => 
         const id: any = req.params.id
         /** Get author from db */
         const authorObj: any = await authorService.getOneAuthorByFilter({ _id: id })
-        if (!authorObj) {
-            return next(Boom.notFound(authorControllerResponse.getAuthorFailure))
-        }
+        if (!authorObj) return next(Boom.notFound(authorControllerResponse.getAuthorFailure))
         res.status(200).send({
             message: authorControllerResponse.fetchAuthorSuccess,
             data: authorObj,
@@ -61,19 +57,12 @@ const getAllAuthors = async (request: Request, response: Response, next: NextFun
                 ],
             }
         }
-        const authorListSorting = [];
-        switch (params.column) {
-            case 'title':
-                authorListSorting.push(['name', params.order || 'asc']);
-                break;
-            case 'createdAt':
-                authorListSorting.push(['createdAt', params.order || 'asc']);
-                break;
-            default:
-                authorListSorting.push(['name', 'desc']);
-                break;
-        }
 
+        const sortingColumn = params.column as string;
+        const sortingOrder = params.order || 'asc';
+        const authorListSorting = ['name', 'createdAt'].includes(sortingColumn)
+            ? [[sortingColumn, sortingOrder]]
+            : [['name', 'desc']];
         const getAuthorsList = await authorService.getAllAuthors(Number(skip), Number(limit), searchFilter, authorListSorting)
         response.status(200).json({ message: authorControllerResponse.fetchAuthorsSuccess, data: getAuthorsList })
     } catch (e: any) {
@@ -97,9 +86,7 @@ const updateAuthor = async (req: Request, res: Response, next: NextFunction) => 
         const id: any = req.params.id
         /** Get subscription from db */
         const authorObj: any = await authorService.getOneAuthorByFilter({ _id: id })
-        if (!authorObj) {
-            return next(Boom.notFound(authorControllerResponse.getAuthorFailure))
-        }
+        if (!authorObj) return next(Boom.notFound(authorControllerResponse.getAuthorFailure))
         const data = await authorService.updateAuthor(req.body, id)
         res.status(200).send({ message: authorControllerResponse.updateAuthorSuccess, data })
     } catch (e: any) {
@@ -112,11 +99,8 @@ const deleteAuthor = async (req: Request, res: Response, next: NextFunction) => 
     try {
         const id: any = req.params.id
         const bookSummaryDetails = await bookSummaryService.getOneBookSummaryByFilter({ author: id })
-        if (bookSummaryDetails) {
-            return next(Boom.locked(authorControllerResponse.authorHaveBooksError))
-        }
+        if (bookSummaryDetails) return next(Boom.locked(authorControllerResponse.authorHaveBooksError))
         await authorService.deleteAuthor(id)
-
         res.status(200).send({ message: authorControllerResponse.deleteAuthorSuccess })
     } catch (e: any) {
         return next(Boom.badData(e.message))

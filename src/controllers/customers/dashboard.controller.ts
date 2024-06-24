@@ -162,9 +162,11 @@ const getDailyDevotional = async (request: Request | any, response: Response, ne
         // Retrieve user libraries
         userObj.libraries = await userService.getUserLibrary(query);
 
-        if (!userObj?.libraries?.devotionalCategories?.length) {
+        if (!userObj?.libraries?.devotionalCategories?.length && params.timeFrame !== 'all') {
             // If no specific categories, get all devotionals without category filter
             filter.category = { $exists: false };
+            data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]);
+        } else if (params.timeFrame === 'all') {
             data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]);
         } else {
             // Get devotionals from general and user-specific categories

@@ -17,9 +17,8 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const params: { email: string, password: string } = req.body
     const user = await usersService.getOneUserByFilter({ email: params.email, password: encrypt(params.password) })
-    if (!user) {
-      return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
-    }
+    if (!user) return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
+
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.login })
     const subject = emailTemplateDetails.subject || 'Verification Code'
@@ -28,9 +27,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { username: user.email.split('@')[0], otp: verificationCode }
       const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
-      if (htmlData) {
-        html = htmlData
-      }
+      if (htmlData) html = htmlData
     }
     const result = await sentEmail({
       from: originEmails.marketing,
@@ -39,9 +36,8 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
       html,
     });
 
-    if (!result) {
-      return next(Boom.badData(adminControllerResponse.sentEmailFailure))
-    }
+    if (!result) return next(Boom.badData(adminControllerResponse.sentEmailFailure))
+
     const updatedUserDetails: any = await usersService.updateUser({ _id: user._id }, { verificationCode })
     if (!updatedUserDetails || updatedUserDetails.verificationCode !== String(verificationCode)) {
       return next(Boom.badData(adminControllerResponse.updateCodeFailure))
@@ -59,9 +55,8 @@ const resendSignInOtp = async (req: Request, res: Response, next: NextFunction) 
   try {
     const params: { email: string } = req.body
     const user = await usersService.getOneUserByFilter({ email: params.email })
-    if (!user) {
-      return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
-    }
+    if (!user) return next(Boom.badData(authControllerResponse.userNotAuthorizationError))
+
     const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.admin.login })
     const subject = emailTemplateDetails.subject || 'Verification Code'
     let html = `<p>Your verification code is: <b>${user.verificationCode}</b></p>`
@@ -79,9 +74,8 @@ const resendSignInOtp = async (req: Request, res: Response, next: NextFunction) 
       subject,
       html,
     });
-    if (!result) {
-      return next(Boom.badData(adminControllerResponse.sentEmailFailure))
-    }
+    if (!result) return next(Boom.badData(adminControllerResponse.sentEmailFailure))
+
     res.status(200).send({
       message: adminControllerResponse.sendVerificationEmailSuccess,
     })
@@ -94,11 +88,8 @@ const resendSignInOtp = async (req: Request, res: Response, next: NextFunction) 
 const verifySignInOtp = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const params: { code: string } = req.body
-    const user = await usersService.getOneUserByFilter({ verificationCode: params.code, type: {$in: ['Admin', 'SubAdmin']} })
-
-    if (!user) {
-      return next(Boom.badData(authControllerResponse.invalidOtpError))
-    }
+    const user = await usersService.getOneUserByFilter({ verificationCode: params.code, type: { $in: ['Admin', 'SubAdmin'] } })
+    if (!user) return next(Boom.badData(authControllerResponse.invalidOtpError))
     const token: string = getToken({ email: user.email, id: user._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
@@ -126,9 +117,8 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
     if (emailTemplateDetails && emailTemplateDetails.content) {
       const contentData = { otp: verificationCode }
       const htmlData = await compileHtml(emailTemplateDetails.content, contentData)
-      if (htmlData) {
-        html = htmlData
-      }
+      if (htmlData) html = htmlData
+
     }
     const result = await sentEmail({
       from: originEmails.marketing,
@@ -158,11 +148,9 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
     }
     /** Get user from db */
 
-    const userObj: any = await usersService.getOneUserByFilter({ verificationCode: code, type: {$in: ['Admin', 'SubAdmin']} })
-
-    if (!userObj) {
-      return next(Boom.notFound(adminControllerResponse.updateCodeFailure))
-    }
+    const userObj: any = await usersService.getOneUserByFilter({ verificationCode: code, type: { $in: ['Admin', 'SubAdmin'] } })
+    if (!userObj) return next(Boom.notFound(adminControllerResponse.updateCodeFailure))
+    
     await usersService.updateUser({ _id: userObj._id }, { password: newPassword, $unset: { verificationCode: 1 } })
     res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
   } catch (e: any) {

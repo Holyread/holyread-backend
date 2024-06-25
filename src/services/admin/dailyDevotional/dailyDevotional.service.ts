@@ -1,29 +1,20 @@
 import { DailyDvotionalModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
-import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
-import { formattedDate } from '../../../lib/utils/utils'
+import { formattedDate, getImageUrl } from '../../../lib/utils/utils'
 
-const NODE_ENV = config.NODE_ENV
 const dailyDevotionalControllerResponse = responseMessage.dailyDevotionalControllerResponse
 
-/** Add Daily Devotional*/
+/** Add Daily Devotional */
 const createDailyDevotional = async (body: any) => {
     try {
         const result = await DailyDvotionalModel.create(body)
-        if (!result) {
-            throw new Error(dailyDevotionalControllerResponse.createDailyDevotionalFailure)
-        }
-        if (result.image) {
-            result.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + result.image
-        }
-        if (result.video) {
-            result.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + result.video
-        }
 
-        if (result.audio) {
-            result.audio = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/audio/' + result.audio
-        }
+        if (!result) throw new Error(dailyDevotionalControllerResponse.createDailyDevotionalFailure)
+        if (result.image) result.image = getImageUrl(result.image, awsBucket.readsOfDayDirectory);
+        if (result.video) result.video = getImageUrl(result.video, `${awsBucket.readsOfDayDirectory}/video`);
+        if (result.audio) result.audio = getImageUrl(result.audio, `${awsBucket.readsOfDayDirectory}/audio`);
+
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -38,16 +29,11 @@ const updateDailyDevotional = async (body: any, id: string) => {
             { ...body, updatedAt: new Date() },
             { new: true }
         )
-        if (data && data.image) {
-            data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + data.image
-        }
+        if (data) {
+            if (data.image) data.image = getImageUrl(data.image, awsBucket.readsOfDayDirectory);
+            if (data.video) data.video = getImageUrl(data.video, `${awsBucket.readsOfDayDirectory}/video`);
+            if (data.audio) data.audio = getImageUrl(data.audio, `${awsBucket.readsOfDayDirectory}/audio`);
 
-        if (data && data.video) {
-            data.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + data.video
-        }
-
-        if (data && data.audio) {
-            data.audio = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/audio/' + data.audio
         }
         return data
     } catch (e: any) {
@@ -58,32 +44,24 @@ const updateDailyDevotional = async (body: any, id: string) => {
 /** Get Daily Devotional BY id */
 const getOneDailyDevotionalByFilter = async (query: any) => {
     try {
-        const result: any = await DailyDvotionalModel.findOne(query).lean()
-        return result
+        const data: any = await DailyDvotionalModel.findOne(query).lean()
+        return data
     } catch (e: any) {
         throw new Error(e)
     }
 }
 
 /** Get all Daily Devotional for table */
-const getAllDailyDevotional = async (skip: number, limit, search: object, sort) => {
+const getAllDailyDevotional = async (skip: number, limit: number, search: object, sort: any) => {
     try {
         const result: any = await DailyDvotionalModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        await result.map(async (item: any) => {
-            item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image
-
-            if (item.video) {
-                item.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + item.video
-            }
-            if (item.audio) {
-                item.audio = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/audio/' + item.audio
-            }
-        })
-        const count = await DailyDvotionalModel.find(search).countDocuments()
-        await result.map(i => {
-            i.createdAt = formattedDate(i.createdAt).replace(/ /g, ' ')
-        })
-
+        await Promise.all(result.map(async (item: any) => {
+            item.createdAt = formattedDate(item.createdAt).replace(/ /g, ' ')
+            item.image = getImageUrl(item.image, awsBucket.readsOfDayDirectory);
+            if (item.video) item.video = getImageUrl(item.video, `${awsBucket.readsOfDayDirectory}/video`);
+            if (item.audio) item.audio = getImageUrl(item.audio, `${awsBucket.readsOfDayDirectory}/audio`);
+        }))
+        const count = await DailyDvotionalModel.countDocuments(search)
         return { count, reads: result }
     } catch (e: any) {
         throw new Error(e)
@@ -104,9 +82,9 @@ const deleteDailyDevotional = async (id: string) => {
 const getDailyDevotionalList = async () => {
     try {
         const result: any = await DailyDvotionalModel.find().lean()
-        await result.map(i => {
+        await Promise.all(result.map(async (i: any) => {
             i.createdAt = formattedDate(i.createdAt).replace(/ /g, ' ')
-        })
+        }))
         return result
     } catch (e: any) {
         throw new Error(e)

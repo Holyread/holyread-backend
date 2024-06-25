@@ -14,24 +14,12 @@ const getAllTransactions = async (request: Request | any, response: Response, ne
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : 10
 
-        const trnSorting = [];
-        switch (params.column) {
-            case 'status':
-                trnSorting.push(['status', params.order || 'asc']);
-                break;
-            case 'email':
-                trnSorting.push(['email', params.order || 'asc']);
-                break;
-            case 'total':
-                trnSorting.push(['total', params.order || 'asc']);
-                break;
-            case 'date':
-                trnSorting.push(['date', params.order || 'asc']);
-                break;
-            default:
-                trnSorting.push(['date', 'desc']);
-                break;
-        }
+        const sortingColumn = params.column as string;
+        const sortingOrder = params.order || 'asc';
+        const trnSorting = ['status', 'email', 'total', 'date'].includes(sortingColumn)
+            ? [[sortingColumn, sortingOrder]]
+            : [['date', 'desc']];
+
         if (params.from) {
             params.from = new Date(params.from).setHours(0, 0, 0, 0)
         }

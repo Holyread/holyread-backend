@@ -48,6 +48,7 @@ const getAllFaqs = async (request: Request, response: Response, next: NextFuncti
         const limit: any = params.limit ? params.limit : dataTable.limit
 
         let searchFilter = {}
+
         if (params.search) {
             searchFilter = {
                 $or: [
@@ -57,24 +58,12 @@ const getAllFaqs = async (request: Request, response: Response, next: NextFuncti
                 ],
             }
         }
-        const faqsSorting = [];
-        switch (params.column) {
-            case 'question':
-                faqsSorting.push(['question', params.order || 'asc']);
-                break;
-            case 'answer':
-                faqsSorting.push(['answer', params.order || 'asc']);
-                break;
-            case 'status':
-                faqsSorting.push(['status', params.order || 'asc']);
-                break;
-            case 'createdAt':
-                faqsSorting.push(['createdAt', params.order || 'asc']);
-                break;
-            default:
-                faqsSorting.push(['createdAt', 'desc']);
-                break;
-        }
+
+        const sortingColumn = params.column as string;
+        const sortingOrder = params.order || 'asc';
+        const faqsSorting = ['question', 'answer', 'status', 'createdAt'].includes(sortingColumn)
+            ? [[sortingColumn, sortingOrder]]
+            : [['createdAt', 'desc']];
 
         const getFaqsList = await faqService.getAllFaqs(Number(skip), Number(limit), searchFilter, faqsSorting)
         response.status(200).json({ message: FaqControllerResponse.fetchAllFaqSuccess, data: getFaqsList })

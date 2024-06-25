@@ -20,9 +20,7 @@ const s3Bucket = {
 const getAdmin = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         const data: any = Object.assign({}, req.user)
-        if (data.image) {
-            data.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + data.image
-        }
+        if (data.image) data.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + data.image        
         delete data.verificationCode
         delete data.password
         delete data.library
@@ -37,17 +35,14 @@ const getAdmin = async (req: Request | any, res: Response, next: NextFunction) =
 const updateAdmin = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         const data: any = req.user
-        if (req.body.image === null) {
-            await removeS3File(data.image, s3Bucket)
-        }
+        if (req.body.image === null) await removeS3File(data.image, s3Bucket)
         if (req.body.image && req.body.image.includes('base64')) {
             await removeS3File(data.image, s3Bucket)
             const s3File: any = await uploadFileToS3(req.body.image, data.firstName || data.email.substring(0, data.email.lastIndexOf('@')), s3Bucket)
             req.body.image = s3File.name
         }
-        if (req.body.image && req.body.image.startsWith('http')) {
-            req.body.image = data.image
-        }
+        if (req.body.image && req.body.image.startsWith('http')) req.body.image = data.image
+
         await usersService.updateUser({ _id: data._id }, req.body)
         return res.status(200).send({ message: adminControllerResponse.updateAdminSuccess })
     } catch (e: any) {
@@ -59,9 +54,7 @@ const updateAdmin = async (req: Request | any, res: Response, next: NextFunction
 const changePassword = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         const { password, newPassword }: { password: string, newPassword: string } = req.body
-        if (req.user?.password !== encrypt(password)) {
-            return next(Boom.notFound(authControllerResponse.userInvalidPasswordError))
-        }
+        if (req.user?.password !== encrypt(password)) return next(Boom.notFound(authControllerResponse.userInvalidPasswordError))
         await usersService.updateUser({ _id: req.user._id }, { password: newPassword })
         res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
     } catch (e: any) {

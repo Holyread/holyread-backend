@@ -1,325 +1,284 @@
-import { NextFunction, Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express';
 import Boom from '@hapi/boom';
 
-import bookCategoryService from '../../../services/admin/book/bookCategory.service'
-import bookSummaryService from '../../../services/admin/book/bookSummary.service'
-import recommendedBookService from '../../../services/admin/book/recommendedBook.service'
-import { responseMessage } from '../../../constants/message.constant'
-import { removeS3File, uploadFileToS3, getSearchRegexp, randomNumberInRange } from '../../../lib/utils/utils'
-import { awsBucket, dataTable } from '../../../constants/app.constant'
-import config from '../../../../config'
+import bookCategoryService from '../../../services/admin/book/bookCategory.service';
+import bookSummaryService from '../../../services/admin/book/bookSummary.service';
+import recommendedBookService from '../../../services/admin/book/recommendedBook.service';
+import { responseMessage } from '../../../constants/message.constant';
+import { removeS3File, uploadFileToS3, getSearchRegexp, randomNumberInRange } from '../../../lib/utils/utils';
+import { awsBucket, dataTable } from '../../../constants/app.constant';
+import config from '../../../../config';
 import userService from '../../../services/admin/users/user.service';
 import ratingService from '../../../services/customers/book/rating.service';
 
-const bookCategoryControllerResponse = responseMessage.bookCategoryControllerResponse
-const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
+const {
+    bookCategoryControllerResponse,
+    bookSummaryControllerResponse,
+} = responseMessage;
 
-const NODE_ENV = config.NODE_ENV
+const NODE_ENV = config.NODE_ENV;
 const s3Bucket = {
     region: awsBucket.region,
     bucketName: awsBucket[NODE_ENV].bucketName,
     documentDirectory: `${awsBucket.bookDirectory}`,
-}
+};
 
-/** Add book summary */
+const uploadS3Files = async (body: any) => {
+    if (body.coverImage) {
+        const s3File: any = await uploadFileToS3(body.coverImage, body.title, {
+            ...s3Bucket,
+            documentDirectory: `${s3Bucket.documentDirectory}/coverImage`,
+        });
+        body.coverImage = s3File.name;
+    }
+
+    if (body.bookReadFile) {
+        const s3File: any = await uploadFileToS3(body.bookReadFile, `${body.title}-reads`, {
+            ...s3Bucket,
+            documentDirectory: `${s3Bucket.documentDirectory}/reads`,
+        });
+        body.bookReadFile = s3File.name;
+    }
+
+    if (body.chapters && body.chapters.length) {
+        await Promise.all(
+            body.chapters.map(async (chapter) => {
+                if (chapter.audioFile) {
+                    const s3File: any = await uploadFileToS3(chapter.audioFile, chapter.name, {
+                        ...s3Bucket,
+                        documentDirectory: `${s3Bucket.documentDirectory}/audio`,
+                    });
+                    chapter.audioFile = s3File.name;
+                    chapter.size = s3File.size;
+                }
+            })
+        );
+    }
+
+    if (body.videoFile) {
+        const s3File: any = await uploadFileToS3(body.videoFile, `${body.title}-video`, {
+            ...s3Bucket,
+            documentDirectory: `${s3Bucket.documentDirectory}/video`,
+        });
+        body.videoFile = s3File.name;
+        body.videoFileSize = s3File.size;
+    }
+
+    body.views = randomNumberInRange(5, 15);
+};
+
 const addSummary = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const body = req.body
-        /** Get book summary from db */
-        const summaryDetails: any = await bookSummaryService.getOneBookSummaryByFilter({ title: req.body.title })
-        if (summaryDetails) {
-            return next(Boom.badData(bookSummaryControllerResponse.createBookSummaryFailure))
+        const body = req.body;
+
+        const summaryExists = await bookSummaryService.getOneBookSummaryByFilter({ title: body.title });
+        if (summaryExists) return next(Boom.badData(bookSummaryControllerResponse.createBookSummaryFailure));
+
+        if (body.categories?.length) {
+            const categoryExists = await bookCategoryService.getOneBookCategoryByFilter({ _id: { $in: body.categories } });
+            if (!categoryExists) return next(Boom.badData(bookCategoryControllerResponse.getBookCategoryFailure));
         }
-        if (req.body.categories && req.body.categories.length) {
-            const categoryDetails: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: { $in: req.body.categories } })
-            if (!categoryDetails) {
-                return next(Boom.badData(bookCategoryControllerResponse.getBookCategoryFailure))
-            }
-        }
-        if (body.coverImage) {
-            const s3File: any = await uploadFileToS3(
-                body.coverImage,
-                body.title,
-                { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage' }
-            );
-            body.coverImage = s3File.name
-        }
-        if (body.bookReadFile) {
-            const s3File: any = await uploadFileToS3(
-                body.bookReadFile,
-                body.title + '-reads',
-                { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/reads' }
-            );
-            body.bookReadFile = s3File.name
-        }
-        if (body.chapters && body.chapters.length) {
-            await Promise.all(body.chapters.map(async oneChapter => {
-                if (oneChapter.audioFile) {
-                    const s3File: any = await uploadFileToS3(
-                        oneChapter.audioFile,
-                        oneChapter.name,
-                        { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' }
-                    ); oneChapter.audioFile = s3File.name
-                    oneChapter.size = s3File.size
-                }
-            }));
-        }
-        if (body.videoFile) {
-            const s3File: any = await uploadFileToS3(body.videoFile, body.title + '-video', { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
-            body.videoFile = s3File.name
-            body.videoFileSize = s3File.size
-        }
-        body.views = randomNumberInRange(5, 15);
-        const data = await bookSummaryService.createBookSummary(body)
+
+        await uploadS3Files(body);
+
+        const data = await bookSummaryService.createBookSummary(body);
         res.status(200).send({
             message: bookSummaryControllerResponse.createBookSummarySuccess,
             data,
-        })
-        const user = await userService.getOneUserByFilter({ email: 'bot@holyreads.com' })
+        });
+
+        const user = await userService.getOneUserByFilter({ email: 'bot@holyreads.com' });
         if (user) {
             await ratingService.updateRating({
-                bookId: data._id as string,
+                bookId: data._id,
                 star: Number(`${randomNumberInRange(3, 5)}.${randomNumberInRange(1, 5)}`),
                 description: '',
                 userId: user._id,
             });
         }
     } catch (e: any) {
-        next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
 }
 
-/**  Get one book summary by id */
 const getOneSummary = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.params.id
-        /** Get summary from db */
-        const data: any = await bookSummaryService.getOneBookSummaryByFilter({ _id: id })
-        if (!data) {
-            return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
-        }
-        if (data.coverImage) {
-            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
-        }
-        if (data.bookReadFile) {
-            data.bookReadFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/reads/' + data.bookReadFile
-        }
-        if (data.videoFile) {
-            data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile
-        }
-        if (data.chapters && data.chapters.length) {
-            data.chapters.forEach(async oneChapter => {
-                if (oneChapter.audioFile) {
-                    oneChapter.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + oneChapter.audioFile
+        const { id } = req.params;
+        const data = await bookSummaryService.getOneBookSummaryByFilter({ _id: id });
+
+        if (!data) return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure));
+
+        const s3BaseUrl = awsBucket[NODE_ENV].s3BaseURL;
+        const s3DocumentDir = s3Bucket.documentDirectory;
+
+        if (data.coverImage) data.coverImage = `${s3BaseUrl}/${s3DocumentDir}/coverImage/${data.coverImage}`;
+        if (data.bookReadFile) data.bookReadFile = `${s3BaseUrl}/${s3DocumentDir}/reads/${data.bookReadFile}`;
+        if (data.videoFile) data.videoFile = `${s3BaseUrl}/${s3DocumentDir}/video/${data.videoFile}`;
+
+
+        if (data.chapters?.length) {
+            data.chapters.forEach((chapter) => {
+                if (chapter.audioFile) {
+                    chapter.audioFile = `${s3BaseUrl}/${s3DocumentDir}/audio/${chapter.audioFile}`;
                 }
             });
         }
+
         if (data.categories) {
-            const categoryObj = await bookCategoryService.getAllBookCategory(0, 0, { _id: { $in: data.categories } }, [['createdAt', 'desc']])
-            data.categories = categoryObj.categories
+            const categoryObj = await bookCategoryService.getAllBookCategory(0, 0, { _id: { $in: data.categories } }, [['createdAt', 'desc']]);
+            data.categories = categoryObj.categories;
         }
-        res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummarySuccess, data })
+
+        res.status(200).send({
+            message: bookSummaryControllerResponse.fetchBookSummarySuccess,
+            data,
+        });
     } catch (e: any) {
-        next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
-}
+};
 
-/** Get all book summary by filter */
-const getAllSummaries = async (request: Request, response: Response, next: NextFunction) => {
+const getAllSummaries = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const params = request.query
-        const skip: any = params.skip ? params.skip : dataTable.skip
-        const limit: any = params.limit ? params.limit : dataTable.limit
+        const { skip = dataTable.skip, limit = dataTable.limit, search, status, bookStatusFilter, column, order } = req.query;
 
-        let searchFilter: any = {}
-        if (params.search) {
-            searchFilter = {
-                $or: [
-                    { 'title': await getSearchRegexp(params.search) },
-                    { 'status': await getSearchRegexp(params.search) },
-                ],
-            }
+        const searchFilter: any = {};
+        if (search) {
+            searchFilter.$or = [
+                { title: await getSearchRegexp(search) },
+                { status: await getSearchRegexp(search) },
+            ];
         }
-        if (params.status && params.status === 'MostPopular') {
+
+        if (status && status === 'MostPopular') {
             searchFilter.popular = true;
         }
-        if (params.bookStatusFilter) {
-            if (params.bookStatusFilter === 'publish') {
+        if (bookStatusFilter) {
+            if (bookStatusFilter === 'publish') {
                 searchFilter.publish = true;
             }
-            else if (params.bookStatusFilter === 'pending') {
+            else if (bookStatusFilter === 'pending') {
                 searchFilter.publish = false;
             }
         }
+
         let summarySorting = [];
-        switch (params.column) {
-            case 'title':
-                summarySorting.push(['title', params.order || 'asc']);
-                break;
-            case 'status':
-                summarySorting.push(['status', params.order || 'asc']);
-                break;
-            case 'author':
-                summarySorting.push(['author', params.order || 'asc']);
-                break;
-            case 'createdAt':
-                summarySorting.push(['createdAt', params.order || 'asc']);
-                break;
-            default:
-                summarySorting.push(['createdAt', 'desc'])
-                break;
-        }
-        if (params.status && params.status === 'NewlyAdded') {
+        const sortingColumn = column as string;
+        const sortingOrder = order || 'asc';
+        summarySorting = ['title', 'status', 'author', 'createdAt'].includes(sortingColumn)
+            ? [[sortingColumn, sortingOrder]]
+            : [['createdAt', 'desc']];
+        if (status && status === 'NewlyAdded') {
             summarySorting = [['createdAt', 'desc']];
         }
-        const data: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), searchFilter, summarySorting)
-        data.summaries.forEach((element: any) => {
-            if (element && element.author && element.author.name) {
-                element.author = element.author.name
-            }
-            if (element.coverImage) {
-                element.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + element.coverImage
-            }
+
+        const data = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), searchFilter, summarySorting);
+        res.status(200).json({
+            message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
+            data,
         });
-        response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
     } catch (e: any) {
-        next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
-}
+};
 
-/** Get all book summaries options list */
-const getAllSummariesOptionsList = async (request: Request, response: Response, next: NextFunction) => {
+const getAllSummariesOptionsList = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const params = request.query
-        const query = params.category ? { categories: { $in: [params.category] } } : {}
-        const data = await bookSummaryService.getAllBookSummariesOptionsList(query)
-        response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummariesSuccess, data })
+        const { category } = req.query;
+        const query = category ? { categories: { $in: [category] } } : {};
+        const data = await bookSummaryService.getAllBookSummariesOptionsList(query);
+        res.status(200).json({
+            message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
+            data,
+        });
     } catch (e: any) {
-        next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
-}
+};
 
-/** Update book summary */
 const updateSummary = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.params.id
-        /** Get book summary from db */
-        const summaryDetails: any = await bookSummaryService.getOneBookSummaryByFilter({ _id: id })
-        if (!summaryDetails) {
-            return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
-        }
-        if (req.body.coverImage === null) {
-            await removeS3File(summaryDetails.coverImage, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage' })
-        }
-        if (req.body.coverImage && req.body.coverImage.includes('base64')) {
-            await removeS3File(summaryDetails.coverImage, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage' })
-            const s3File: any = await uploadFileToS3(
-                req.body.coverImage,
-                summaryDetails.title,
-                { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage' }
-            );
-            req.body.coverImage = s3File.name
-        }
-        if (req.body.coverImage && req.body.coverImage.startsWith('http')) {
-            req.body.coverImage = summaryDetails.coverImage
-        }
-        if (req.body.bookReadFile === null) {
-            await removeS3File(summaryDetails.bookReadFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/reads' })
-        }
-        if (req.body.bookReadFile && req.body.bookReadFile.includes('base64')) {
-            await removeS3File(summaryDetails.bookReadFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/reads' })
-            const s3File: any = await uploadFileToS3(
-                req.body.bookReadFile,
-                summaryDetails.title + '-reads',
-                { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/reads' }
-            );
-            req.body.bookReadFile = s3File.name
-        }
-        if (req.body.bookReadFile && req.body.bookReadFile.startsWith('http')) {
-            req.body.bookReadFile = summaryDetails.bookReadFile
-        }
-        if (req.body.chapters && req.body.chapters.length) {
-            await Promise.all(req.body.chapters.map(async oneChapter => {
-                const chapterdetails = summaryDetails.chapters.find(item => String(item._id) === String(oneChapter._id))
-                if (oneChapter.audioFile === null && chapterdetails && chapterdetails.audioFile) {
-                    await removeS3File(chapterdetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' })
-                    oneChapter.size = 0
-                }
-                if (oneChapter.audioFile && oneChapter.audioFile.startsWith('http')) {
-                    oneChapter.audioFile = chapterdetails && chapterdetails.audioFile ? chapterdetails.audioFile : ''
-                    oneChapter.size = chapterdetails.size || 0
-                    return
-                }
-                if (oneChapter.audioFile && oneChapter.audioFile.includes('base64')) {
-                    if (chapterdetails && chapterdetails.audioFile) {
-                        await removeS3File(chapterdetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' })
-                    }
-                    const s3File: any = await uploadFileToS3(
-                        oneChapter.audioFile,
-                        oneChapter.name,
-                        { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' }
-                    );
-                    oneChapter.audioFile = s3File.name
-                    oneChapter.size = s3File.size
-                }
-            }));
-        }
-        if (req.body.videoFile === null) {
-            await removeS3File(summaryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
-        }
-        if (req.body.videoFile && req.body.videoFile.startsWith('http')) {
-            req.body.videoFile = summaryDetails.videoFile
-        }
-        if (req.body.videoFile && req.body.videoFile.includes('base64')) {
-            if (summaryDetails.videoFile) {
-                await removeS3File(summaryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
-            }
-            const s3File: any = await uploadFileToS3(req.body.videoFile, summaryDetails.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
-            req.body.videoFile = s3File.name
-            req.body.videoFileSize = s3File.size
-        }
-        await bookSummaryService.updateBookSummary(req.body, id)
-        return res.status(200).send({ message: bookCategoryControllerResponse.updateBookCategorySuccess })
-    } catch (e: any) {
-        return next(Boom.badData(e.message))
-    }
-}
+        const { id } = req.params;
+        const summaryDetails = await bookSummaryService.getOneBookSummaryByFilter({ _id: id });
+        if (!summaryDetails) return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure));
 
-/** Remove book summary */
+        const updateFile = async (file: string, type: string, oldFile: string) => {
+            if (file === null) {
+                await removeS3File(oldFile, { ...s3Bucket, documentDirectory: `${s3Bucket.documentDirectory}/${type}` });
+            } else if (file.includes('base64')) {
+                await removeS3File(oldFile, { ...s3Bucket, documentDirectory: `${s3Bucket.documentDirectory}/${type}` });
+                const s3File: any = await uploadFileToS3(file, summaryDetails.title, {
+                    ...s3Bucket,
+                    documentDirectory: `${s3Bucket.documentDirectory}/${type}`,
+                });
+                return s3File.name;
+            } else if (file.startsWith('http')) {
+                return oldFile;
+            }
+        };
+
+        req.body.coverImage = await updateFile(req.body.coverImage, 'coverImage', summaryDetails.coverImage);
+        req.body.bookReadFile = await updateFile(req.body.bookReadFile, 'reads', summaryDetails.bookReadFile);
+        req.body.videoFile = await updateFile(req.body.videoFile, 'video', summaryDetails.videoFile);
+
+        if (req.body.chapters?.length) {
+            await Promise.all(
+                req.body.chapters.map(async (chapter) => {
+                    const oldChapter = summaryDetails.chapters.find((ch) => String(ch._id) === String(chapter._id));
+                    chapter.audioFile = await updateFile(chapter.audioFile, 'audio', oldChapter?.audioFile);
+                    chapter.size = chapter.audioFile ? oldChapter?.size || 0 : 0;
+                })
+            );
+        }
+
+        await bookSummaryService.updateBookSummary(req.body, id);
+        res.status(200).send({
+            message: bookCategoryControllerResponse.updateBookCategorySuccess,
+        });
+    } catch (e: any) {
+        next(Boom.badData(e.message));
+    }
+};
+
 const deleteSummary = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.params.id
-        const bookSummaryDetails: any = await bookSummaryService.getOneBookSummaryByFilter({ _id: id })
-        if (bookSummaryDetails) {
-            const bookRecommendedBookDetails = await recommendedBookService.getOneRecommendedBookByFilter({ book: id })
-            if (bookRecommendedBookDetails) {
-                return next(Boom.notFound(bookSummaryControllerResponse.recommendedBookError))
-            }
-            if (bookSummaryDetails.coverImage) {
-                await removeS3File(bookSummaryDetails.coverImage, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/coverImage' })
-            }
-            if (bookSummaryDetails.bookReadFile) {
-                await removeS3File(bookSummaryDetails.bookReadFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/reads' })
-            }
-            if (bookSummaryDetails.audioFile) {
-                await removeS3File(bookSummaryDetails.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' })
-            }
-            if (bookSummaryDetails.chapters && bookSummaryDetails.chapters.length) {
-                await Promise.all(bookSummaryDetails.chapters.map(async oneChapter => {
-                    if (oneChapter.audioFile) {
-                        await removeS3File(oneChapter.audioFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' })
-                    }
-                }));
-            }
-            if (bookSummaryDetails.videoFile) {
-                await removeS3File(bookSummaryDetails.videoFile, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
-            }
-        }
-        await bookSummaryService.deleteBookSummary(id)
-        return res.status(200).send({ message: bookCategoryControllerResponse.deleteBookCategorySuccess })
-    } catch (e: any) {
-        return next(Boom.badData(e.message))
-    }
-}
+        const { id } = req.params;
+        const summaryDetails = await bookSummaryService.getOneBookSummaryByFilter({ _id: id });
 
-export { addSummary, getOneSummary, getAllSummaries, getAllSummariesOptionsList, updateSummary, deleteSummary }
+        if (!summaryDetails) return res.status(404).send({ message: 'Book summary not found' });
+
+        const recommendedBook = await recommendedBookService.getOneRecommendedBookByFilter({ book: id });
+        if (recommendedBook) return next(Boom.notFound(bookSummaryControllerResponse.recommendedBookError));
+
+        const s3Paths = [
+            { file: summaryDetails.coverImage, path: 'coverImage' },
+            { file: summaryDetails.bookReadFile, path: 'reads' },
+            { file: summaryDetails.videoFile, path: 'video' },
+        ];
+
+        if (summaryDetails.chapters?.length) {
+            summaryDetails.chapters.forEach((chapter) => {
+                if (chapter.audioFile) {
+                    s3Paths.push({ file: chapter.audioFile, path: 'audio' });
+                }
+            });
+        }
+
+        await Promise.all(
+            s3Paths.map(async ({ file, path }) => {
+                if (file) {
+                    await removeS3File(file, { ...s3Bucket, documentDirectory: `${s3Bucket.documentDirectory}/${path}` });
+                }
+            })
+        );
+
+        await bookSummaryService.deleteBookSummary(id);
+        res.status(200).send({
+            message: bookCategoryControllerResponse.deleteBookCategorySuccess,
+        });
+    } catch (e: any) {
+        next(Boom.badData(e.message));
+    }
+};
+
+export { addSummary, getOneSummary, getAllSummaries, getAllSummariesOptionsList, updateSummary, deleteSummary };

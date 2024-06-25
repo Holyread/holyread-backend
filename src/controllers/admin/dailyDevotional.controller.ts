@@ -1,106 +1,87 @@
-import { NextFunction, Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express';
 import Boom from '@hapi/boom';
 
-import dailyDevotionalService from '../../services/admin/dailyDevotional/dailyDevotional.service'
-import { responseMessage } from '../../constants/message.constant'
-import { removeS3File, uploadFileToS3, getSearchRegexp } from '../../lib/utils/utils'
-import { awsBucket, dataTable } from '../../constants/app.constant'
-import config from '../../../config'
+import dailyDevotionalService from '../../services/admin/dailyDevotional/dailyDevotional.service';
+import { responseMessage } from '../../constants/message.constant';
+import { removeS3File, uploadFileToS3, getSearchRegexp, getImageUrl } from '../../lib/utils/utils';
+import { awsBucket, dataTable } from '../../constants/app.constant';
+import config from '../../../config';
 
-const dailyDevotionalControllerResponse = responseMessage.dailyDevotionalControllerResponse
+const dailyDevotionalControllerResponse = responseMessage.dailyDevotionalControllerResponse;
 
-const NODE_ENV = config.NODE_ENV
+const NODE_ENV = config.NODE_ENV;
 const s3Bucket = {
     region: awsBucket.region,
     bucketName: awsBucket[NODE_ENV].bucketName,
     documentDirectory: `${awsBucket.readsOfDayDirectory}`,
-}
+};
+
+const handleFileUpload = async (file: string, title: string, type: string, existingFile: string = '') => {
+    if (file && file.includes('base64')) {
+        if (existingFile) await removeS3File(existingFile, s3Bucket);
+        const directory = type === 'video' ? '/video' : type === 'audio' ? '/audio' : '';
+        const s3File : any = await uploadFileToS3(file, title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + directory });
+        return { name: s3File.name, size: s3File.size };
+    }
+    return { name: existingFile };
+};
 
 /** Add Daily Devotional */
 const addDailyDevotional = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const body = req.body
-        /** Get daily devotional from db */
+        const body = req.body;
+        /** Check if title exists */
         if (body.title) {
-            const dailyDevotional: any = await dailyDevotionalService.getOneDailyDevotionalByFilter({ title: req.body.title })
-            if (dailyDevotional) {
-                return next(Boom.badData(dailyDevotionalControllerResponse.createDailyDevotionalFailure))
-            }
+            const existingDevotional = await dailyDevotionalService.getOneDailyDevotionalByFilter({ title: body.title });
+            if (existingDevotional) return next(Boom.badData(dailyDevotionalControllerResponse.createDailyDevotionalFailure));
         }
 
-        if (body.image) {
-            const s3File: any = await uploadFileToS3(body.image, body.title || 'read_of_day', s3Bucket)
-            body.image = s3File.name
-        }
+        const imageFile = await handleFileUpload(body.image, body.title || 'read_of_day', 'image');
+        const audioFile = await handleFileUpload(body.audio, body.title || 'read_of_day', 'audio');
+        const videoFile = await handleFileUpload(body.video, body.title || 'read_of_day' + '-video', 'video');
 
-        if (body.audio) {
-            const s3File: any = await uploadFileToS3(body.audio, body.title || 'read_of_day',
-                { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' }
-            ); body.audio = s3File.name
-            body.audioFileSize = s3File.size
-        }
-
-        if (body.video) {
-            const s3File: any =
-                await uploadFileToS3(body.video, body.title || 'read_of_day' + '-video', { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
-            body.video = s3File.name
-            body.videoFileSize = s3File.size
-        }
-        const data = await dailyDevotionalService.createDailyDevotional({
-            title: body.title,
-            subTitle: body.subTitle,
-            description: body.description,
-            video: body.video,
-            image: body.image,
-            audio: body.audio,
-            category: body.category,
+        const newDevotional = {
+            ...body,
+            image: imageFile.name,
+            audio: audioFile.name,
+            video: videoFile.name,
+            audioFileSize: audioFile.size,
+            videoFileSize: videoFile.size,
             status: body.status || 'Active',
-            audioFileSize: body.audioFileSize,
-            videoFileSize: body.videoFileSize,
-        })
-        res.status(200).send({
-            message: dailyDevotionalControllerResponse.createDailyDevotionalSuccess,
-            data,
-        })
-    } catch (e: any) {
-        next(Boom.badData(e.message))
-    }
-}
+        };
 
-/**  Get one daily devotional by id */
+        const data = await dailyDevotionalService.createDailyDevotional(newDevotional);
+        res.status(200).send({ message: dailyDevotionalControllerResponse.createDailyDevotionalSuccess, data });
+    } catch (e: any) {
+        next(Boom.badData(e.message));
+    }
+};
+
+/** Get one daily devotional by id */
 const getOneDailyDevotional = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.params.id
-        /** Get daily devotional from db */
-        const data: any = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id })
-        if (data && data.image) {
-            data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + data.image
+        const id = req.params.id;
+        const data = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id });
+        if (!data) return next(Boom.notFound(dailyDevotionalControllerResponse.getDailyDevotionalFailure));
+        if (data) {
+            if (data.image) data.image = getImageUrl(data.image, awsBucket.readsOfDayDirectory);
+            if (data.video) data.video = getImageUrl(data.video, `${awsBucket.readsOfDayDirectory}/video`);
+            if (data.audio) data.audio = getImageUrl(data.audio, `${awsBucket.readsOfDayDirectory}/audio`);
         }
-
-        if (data && data.video) {
-            data.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + data.video
-        }
-
-        if (data && data.audio) {
-            data.audio = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/audio/' + data.audio
-        }
-        if (!data) {
-            return next(Boom.notFound(dailyDevotionalControllerResponse.getDailyDevotionalFailure))
-        }
-        res.status(200).send({ message: dailyDevotionalControllerResponse.fetchDailyDevotionalSuccess, data })
+        res.status(200).send({ message: dailyDevotionalControllerResponse.fetchDailyDevotionalSuccess, data });
     } catch (e: any) {
-        next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
-}
+};
 
-/** Get all daily devotional by filter */
-const getAllDailyDevotional = async (request: Request, response: Response, next: NextFunction) => {
+/** Get all daily devotionals by filter */
+const getAllDailyDevotional = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const params: any = request.query
-        const skip: any = params.skip ? params.skip : dataTable.skip
-        const limit: any = params.limit ? params.limit : dataTable.limit
+        const params = req.query;
+        const skip = Number(params.skip) || dataTable.skip;
+        const limit = Number(params.limit) || dataTable.limit;
 
-        let searchQuery: any = {}
+        let searchQuery: any = {};
         if (params.search) {
             searchQuery = {
                 $or: [
@@ -111,121 +92,68 @@ const getAllDailyDevotional = async (request: Request, response: Response, next:
         }
 
         if (params.statusFilter) {
-            if (params.statusFilter === 'publish') {
-                searchQuery.publish = true;
-            }
-            else if (params.statusFilter === 'pending') {
-                searchQuery.publish = false;
-            }
-        }
-        const searchFilter = { ...searchQuery };
-
-
-        const readsOfDaySorting = [];
-        switch (params.column) {
-            case 'title':
-                readsOfDaySorting.push(['title', params.order || 'asc']);
-                break;
-            case 'category':
-                readsOfDaySorting.push(['category', params.order || 'asc']);
-                break;
-            case 'category':
-                readsOfDaySorting.push(['createdAt', params.order || 'asc']);
-                break;
-            default:
-                readsOfDaySorting.push(['createdAt', 'desc']);
-                break;
+            searchQuery.publish = params.statusFilter === 'publish';
         }
 
-        const data = await dailyDevotionalService.getAllDailyDevotional(Number(skip), Number(limit), searchFilter, readsOfDaySorting)
-        response.status(200).json({ message: dailyDevotionalControllerResponse.fetchDailyDevotionalsSuccess, data })
+        const sortingColumn = params.column as string;
+        const sortingOrder = params.order || 'asc';
+        const readsOfDaySorting = ['title', 'category', 'createdAt'].includes(sortingColumn)
+            ? [[sortingColumn, sortingOrder]]
+            : [['createdAt', 'desc']];
+
+        const data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, searchQuery, readsOfDaySorting);
+        res.status(200).json({ message: dailyDevotionalControllerResponse.fetchDailyDevotionalsSuccess, data });
     } catch (e: any) {
-        next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
-}
+};
 
 /** Update daily devotional */
 const updateDailyDevotional = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.params.id
-        /** Get daily devotional from db */
-        const readOfDayDetails: any = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id })
-        if (!readOfDayDetails) {
-            return next(Boom.notFound(dailyDevotionalControllerResponse.getDailyDevotionalFailure))
-        }
-        if (req.body.image === null) {
-            await removeS3File(readOfDayDetails.image, s3Bucket)
-        }
-        if (req.body.image && req.body.image.includes('base64')) {
-            await removeS3File(readOfDayDetails.image, s3Bucket)
-            const s3File: any = await uploadFileToS3(req.body.image, readOfDayDetails.title || 'read_of_day', s3Bucket)
-            req.body.image = s3File.name
-        }
-        if (req.body.image && req.body.image.startsWith('http')) {
-            req.body.image = readOfDayDetails.image
-        }
+        const id = req.params.id;
+        const existingDevotional = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id });
 
-        if (req.body.video === null) {
-            await removeS3File(readOfDayDetails.video, s3Bucket)
-        }
-        if (req.body.video && req.body.video.includes('base64')) {
-            await removeS3File(readOfDayDetails.video, s3Bucket)
-            const s3File: any =
-                await uploadFileToS3(req.body.video, req.body.title || 'read_of_day' + '-video', { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
-            req.body.video = s3File.name
-            req.body.videoFileSize = s3File.size
-        }
+        if (!existingDevotional) return next(Boom.notFound(dailyDevotionalControllerResponse.getDailyDevotionalFailure));
 
-        if (req.body.video && req.body.video.startsWith('http')) {
-            req.body.video = readOfDayDetails.video
-        }
+        const imageFile = await handleFileUpload(req.body.image, existingDevotional.title || 'read_of_day', 'image', existingDevotional.image);
+        const audioFile = await handleFileUpload(req.body.audio, existingDevotional.title || 'read_of_day', 'audio', existingDevotional.audio);
+        const videoFile = await handleFileUpload(req.body.video, existingDevotional.title || 'read_of_day' + '-video', 'video', existingDevotional.video);
 
-        if (req.body.audio === null) {
-            await removeS3File(readOfDayDetails.audio, s3Bucket)
-        }
+        const updatedDevotional = {
+            ...req.body,
+            image: imageFile.name,
+            audio: audioFile.name,
+            video: videoFile.name,
+            audioFileSize: audioFile.size,
+            videoFileSize: videoFile.size,
+        };
 
-        if (req.body.audio && req.body.audio.includes('base64')) {
-            await removeS3File(readOfDayDetails.audio, s3Bucket)
-            const s3File: any = await uploadFileToS3(
-                req.body.audio,
-                req.body.name,
-                { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/audio' }
-            );
-            req.body.audio = s3File.name
-            req.body.audioFileSize = s3File.size
-        }
-        if (req.body.audio && req.body.audio.startsWith('http')) {
-            req.body.audio = readOfDayDetails.audio
-        }
-        await dailyDevotionalService.updateDailyDevotional(req.body, id)
-        return res.status(200).send({ message: dailyDevotionalControllerResponse.updateDailyDevotionalSuccess })
+        await dailyDevotionalService.updateDailyDevotional(updatedDevotional, id);
+        res.status(200).send({ message: dailyDevotionalControllerResponse.updateDailyDevotionalSuccess });
     } catch (e: any) {
-        return next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
-}
+};
 
 /** Remove daily devotional */
 const deleteDailyDevotional = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.params.id
-        const readOfDayDetails: any = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id })
-        if (readOfDayDetails && readOfDayDetails.image) {
-            await removeS3File(readOfDayDetails.image, s3Bucket)
+        const id = req.params.id;
+        const devotional = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id });
+
+        if (devotional) {
+            if (devotional.image) await removeS3File(devotional.image, s3Bucket);
+            if (devotional.video) await removeS3File(devotional.video, s3Bucket);
+            if (devotional.audio) await removeS3File(devotional.audio, s3Bucket);
         }
 
-        if (readOfDayDetails && readOfDayDetails.video) {
-            await removeS3File(readOfDayDetails.video, s3Bucket)
-        }
-
-        if (readOfDayDetails && readOfDayDetails.audio) {
-            await removeS3File(readOfDayDetails.audio, s3Bucket)
-        }
-        await dailyDevotionalService.deleteDailyDevotional(id)
-        return res.status(200).send({ message: dailyDevotionalControllerResponse.deleteDailyDevotionalSuccess })
+        await dailyDevotionalService.deleteDailyDevotional(id);
+        res.status(200).send({ message: dailyDevotionalControllerResponse.deleteDailyDevotionalSuccess });
     } catch (e: any) {
-        return next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
-}
+};
 
 export {
     addDailyDevotional,
@@ -233,4 +161,4 @@ export {
     updateDailyDevotional,
     deleteDailyDevotional,
     getOneDailyDevotional,
-}
+};

@@ -1,21 +1,16 @@
 import { SmallGroupModel } from '../../../models/index'
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket } from '../../../constants/app.constant'
-import config from '../../../../config'
+import { getImageUrl } from '../../../lib/utils/utils'
 
 const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
-const NODE_ENV = config.NODE_ENV
 
 /** Add small group */
 const createSmallGroup = async (body: any) => {
     try {
         const result = await SmallGroupModel.create(body)
-        if (!result) {
-            throw new Error(smallGroupControllerResponse.createSmallGroupFailure)
-        }
-        if (result.coverImage) {
-            result.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + result.coverImage
-        }
+        if (!result) throw new Error(smallGroupControllerResponse.createSmallGroupFailure)
+        if (result.coverImage) result.coverImage = getImageUrl(result.coverImage, awsBucket.smallGroupDirectory);
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -30,9 +25,7 @@ const updateSmallGroup = async (body: any, id: string) => {
             { ...body, updatedAt: new Date() },
             { new: true }
         )
-        if (data && data.coverImage) {
-            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + data.coverImage
-        }
+        if (data && data.coverImage) data.coverImage = getImageUrl(data.coverImage, awsBucket.smallGroupDirectory);
         return data
     } catch (e: any) {
         throw new Error(e)
@@ -57,7 +50,7 @@ const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
         if (result.length) {
             await Promise.all(result.map(item => {
                 if (item && item.coverImage) {
-                    item.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + item.coverImage
+                    item.coverImage = item.coverImage = getImageUrl(item.coverImage, awsBucket.smallGroupDirectory);
                 }
             }))
         }

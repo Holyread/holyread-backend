@@ -61,16 +61,10 @@ const getOneCoupon = async (req: Request, res: Response, next: NextFunction) => 
 
         /** Get coupon from db */
         const data: any = await coupoonsService.getOneCouponByFilter({ _id: id });
-
-        if (!data) {
-            return next(Boom.notFound(couponsControllerResponse.getCouponFailure))
-        }
+        if (!data) return next(Boom.notFound(couponsControllerResponse.getCouponFailure))
 
         const couponDetails = await stripeSubscriptionService.getOneCoupon(data.code);
-        if (!couponDetails) {
-            return next(Boom.notFound(couponsControllerResponse.getCouponFailure))
-        }
-
+        if (!couponDetails) return next(Boom.notFound(couponsControllerResponse.getCouponFailure))
         data.valid = couponDetails.valid
 
         res.status(200).send({
@@ -110,30 +104,11 @@ const getAllCoupons = async (request: Request, response: Response, next: NextFun
             ]
         }
 
-        const couponsSorting = [];
-        switch (params.column) {
-            case 'code':
-                couponsSorting.push(['code', params.order || 'asc']);
-                break;
-            case 'discount':
-                couponsSorting.push(['discount', params.order || 'asc']);
-                break;
-            case 'duration':
-                couponsSorting.push(['duration', params.order || 'asc']);
-                break;
-            case 'maxRedemptions':
-                couponsSorting.push(['maxRedemptions', params.order || 'asc']);
-                break;
-            case 'expireDate':
-                couponsSorting.push(['expireDate', params.order || 'asc']);
-                break;
-            case 'createdAt':
-                couponsSorting.push(['createdAt', params.order || 'asc']);
-                break;
-            default:
-                couponsSorting.push(['createdAt', 'desc']);
-                break;
-        }
+        const sortingColumn = params.column as string;
+        const sortingOrder = params.order || 'asc';
+        const couponsSorting = ['code', 'discount', 'maxRedemptions', 'duration', 'expireDate', 'createdAt'].includes(sortingColumn)
+            ? [[sortingColumn, sortingOrder]]
+            : [['createdAt', 'desc']];
 
         const data
             = await coupoonsService
@@ -162,10 +137,8 @@ const deleteCoupon = async (req: Request, res: Response, next: NextFunction) => 
         const id: any = req.params.id
         /** Get coupon from db */
         const data: any = await coupoonsService.getOneCouponByFilter({ _id: id });
+        if (!data) return next(Boom.notFound(couponsControllerResponse.getCouponFailure))
 
-        if (!data) {
-            return next(Boom.notFound(couponsControllerResponse.getCouponFailure))
-        }
         await Promise.all([
             coupoonsService.deleteCoupon(id),
             stripeSubscriptionService.deleteCoupon(data.code),

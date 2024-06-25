@@ -1,21 +1,16 @@
 import { BookCategoryModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
-import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
+import { getImageUrl } from '../../../lib/utils/utils'
 
-const NODE_ENV = config.NODE_ENV
 const bookCategoryControllerResponse = responseMessage.bookCategoryControllerResponse
 
 /** Add Book Category */
 const createBookCategory = async (body: any) => {
     try {
         const result = await BookCategoryModel.create(body)
-        if (!result) {
-            throw new Error(bookCategoryControllerResponse.createBookCategoryFailure)
-        }
-        if (result.image) {
-            result.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/category/' + result.image
-        }
+        if (!result) throw new Error(bookCategoryControllerResponse.createBookCategoryFailure)
+        if (result.image) result.image = getImageUrl(result.image, `${awsBucket.bookDirectory}/category`);
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -30,9 +25,7 @@ const updateBookCategory = async (body: any, id: string) => {
             { ...body, updatedAt: new Date() },
             { new: true }
         )
-        if (data && data.image) {
-            data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/category/' + data.image
-        }
+        if (data && data.image) data.image = getImageUrl(data.image, `${awsBucket.bookDirectory}/category`);
         return data
     } catch (e: any) {
         throw new Error(e)
@@ -55,12 +48,8 @@ const getAllBookCategory = async (skip: number, limit, search: object, sort) => 
         const result = await BookCategoryModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         const count = await BookCategoryModel.find(search).countDocuments()
         await Promise.all(result.map(async (item: any) => {
-            if (!item) {
-                return
-            }
-            if (item.image) {
-                item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/category/' + item.image
-            }
+            if (!item) return
+            if (item.image) item.image = getImageUrl(item.image, `${awsBucket.bookDirectory}/category`);
         }))
         return { count, categories: result }
     } catch (e: any) {

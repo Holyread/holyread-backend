@@ -1,32 +1,24 @@
 import { BookSummaryModel, BookAuthorModel, HighLightsModel, BookCategoryModel, UserModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
-import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
-import { formattedDate } from '../../../lib/utils/utils'
+import { formattedDate, getImageUrl } from '../../../lib/utils/utils'
 
-const NODE_ENV = config.NODE_ENV
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
 
 /** Add book summary */
 const createBookSummary = async (body: any) => {
     try {
         const result = await BookSummaryModel.create(body)
-        if (!result) {
-            throw new Error(bookSummaryControllerResponse.createBookSummaryFailure)
-        }
-        if (result.coverImage) {
-            result.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + result.coverImage
-        }
-        if (result.bookReadFile) {
-            result.bookReadFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/reads/' + result.bookReadFile
-        }
-        if (result.videoFile) {
-            result.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + result.videoFile
-        }
+
+        if (!result) throw new Error(bookSummaryControllerResponse.createBookSummaryFailure)
+        if (result.coverImage) result.coverImage = getImageUrl(result.coverImage, `${awsBucket.bookDirectory}/coverImage`);
+        if (result.bookReadFile) result.bookReadFile = getImageUrl(result.bookReadFile, `${awsBucket.bookDirectory}/reads`);
+        if (result.videoFile) result.videoFile = getImageUrl(result.videoFile, `${awsBucket.bookDirectory}/video`);
+
         if (result.chapters && result.chapters.length) {
             result.chapters.forEach(async (oneChapter: any) => {
                 if (oneChapter.audioFile) {
-                    oneChapter.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + oneChapter.audioFile
+                    oneChapter.audioFile = getImageUrl(oneChapter.audioFile, `${awsBucket.bookDirectory}/audio`);
                 }
             });
         }
@@ -45,19 +37,14 @@ const updateBookSummary = async (body: any, id: string) => {
             { new: true }
         )
         if (data) {
-            if (data.coverImage) {
-                data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
-            }
-            if (data.bookReadFile) {
-                data.bookReadFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/reads/' + data.bookReadFile
-            }
-            if (data.videoFile) {
-                data.videoFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/video/' + data.videoFile
-            }
+            if (data.coverImage) data.coverImage = getImageUrl(data.coverImage, `${awsBucket.bookDirectory}/coverImage`);
+            if (data.bookReadFile) data.bookReadFile = getImageUrl(data.bookReadFile, `${awsBucket.bookDirectory}/reads`);
+            if (data.videoFile) data.videoFile = getImageUrl(data.videoFile, `${awsBucket.bookDirectory}/video`);
+
             if (data.chapters && data.chapters.length) {
                 data.chapters.forEach(async oneChapter => {
                     if (oneChapter.audioFile) {
-                        oneChapter.audioFile = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/audio/' + oneChapter.audioFile
+                        oneChapter.audioFile = getImageUrl(oneChapter.audioFile, `${awsBucket.bookDirectory}/audio`);
                     }
                 });
             }
@@ -85,10 +72,8 @@ const getBooksCountForDashboard = async () => {
             { $unwind: "$chapters" },
             { $count: "chaptersCount" }
         ]);
-
         const chaptersCount = summaries.length ? summaries[0].chaptersCount : 0;
         const booksCount = await BookSummaryModel.countDocuments().exec();
-
         return { chaptersCount, booksCount };
     } catch (e: any) {
         throw new Error(e.message || 'Failed to get book summaries for dashboard');
@@ -153,7 +138,7 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
             },
             { $sort: { totalReaders: -1 } },
             { $limit: 5 },
-        ]);
+        ]).allowDiskUse(true); // Allow disk use for large datasets
 
         const totalReaders = result.reduce((sum, book) => sum + book.totalReaders, 0);
 
@@ -168,6 +153,7 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
         throw new Error(e.message || 'Failed to get top read books for dashboard');
     }
 };
+
 
 /** Get all book summaries for table */
 const getAllBookSummaries = async (skip: number, limit, search: object, sort) => {
@@ -196,7 +182,9 @@ const getAllBookSummaries = async (skip: number, limit, search: object, sort) =>
             .exec();
 
         await result.map(i => {
-                i.publishedAt = formattedDate(i.publishedAt).replace(/ /g, ' ');
+            if (i.publishedAt) i.publishedAt = formattedDate(i.publishedAt).replace(/ /g, ' ');
+            i.author = i.author.name
+            i.coverImage = getImageUrl(i.coverImage, `${awsBucket.bookDirectory}/coverImage`);
         });
         const count: number = await BookSummaryModel.find(search).countDocuments().lean().exec()
         return { count, summaries: result }
@@ -211,9 +199,7 @@ const getAllBookSummariesOptionsList = async (query) => {
         const result = await BookSummaryModel.find(query).select('title coverImage').lean().exec()
         if (result && result.length) {
             result.forEach(element => {
-                if (element && element.coverImage) {
-                    element.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + element.coverImage
-                }
+                if (element && element.coverImage) element.coverImage = getImageUrl(element.coverImage, `${awsBucket.bookDirectory}/coverImage`);
             })
         }
         return result

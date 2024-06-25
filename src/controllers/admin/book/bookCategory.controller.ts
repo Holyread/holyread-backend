@@ -3,7 +3,7 @@ import Boom from '@hapi/boom';
 
 import bookCategoryService from '../../../services/admin/book/bookCategory.service'
 import { responseMessage } from '../../../constants/message.constant'
-import { removeS3File, uploadFileToS3, getSearchRegexp } from '../../../lib/utils/utils'
+import { removeS3File, uploadFileToS3, getSearchRegexp, getImageUrl } from '../../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../../constants/app.constant'
 import config from '../../../../config'
 
@@ -22,9 +22,8 @@ const addCategory = async (req: Request, res: Response, next: NextFunction) => {
         const body = req.body
         /** Get category from db */
         const category: any = await bookCategoryService.getOneBookCategoryByFilter({ title: req.body.title })
-        if (category) {
-            return next(Boom.badData(bookCategoryControllerResponse.createBookCategoryFailure))
-        }
+        if (category) return next(Boom.badData(bookCategoryControllerResponse.createBookCategoryFailure))
+
         if (body.image) {
             const s3File: any = await uploadFileToS3(body.image, body.title, s3Bucket)
             body.image = s3File.name
@@ -49,12 +48,8 @@ const getOneCategory = async (req: Request, res: Response, next: NextFunction) =
         const id: any = req.params.id
         /** Get category from db */
         const data: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
-        if (data && data.image) {
-            data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/category/' + data.image
-        }
-        if (!data) {
-            return next(Boom.notFound(bookCategoryControllerResponse.getBookCategoryFailure))
-        }
+        if (!data) return next(Boom.notFound(bookCategoryControllerResponse.getBookCategoryFailure))
+        if (data && data.image) data.image = getImageUrl(data.image, `${awsBucket.bookDirectory}/category`);
         res.status(200).send({ message: bookCategoryControllerResponse.fetchBookCategorySuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -78,19 +73,11 @@ const getAllCategory = async (request: Request, response: Response, next: NextFu
             }
         }
 
-        const categorySorting = [];
-        switch (params.column) {
-            case 'title':
-                categorySorting.push(['title', params.order || 'asc']);
-                break;
-            case 'createdAt':
-                categorySorting.push(['createdAt', params.order || 'asc']);
-                break;
-            default:
-                categorySorting.push(['title', 'desc']);
-                break;
-        }
-
+        const sortingColumn = params.column as string;
+        const sortingOrder = params.order || 'asc';
+        const categorySorting = ['title', 'createdAt'].includes(sortingColumn)
+            ? [[sortingColumn, sortingOrder]]
+            : [['title', 'desc']];
         const data = await bookCategoryService.getAllBookCategory(Number(skip), Number(limit), searchFilter, categorySorting)
         response.status(200).json({ message: bookCategoryControllerResponse.fetchBookCategoriesSuccess, data })
     } catch (e: any) {
@@ -114,20 +101,16 @@ const updateCateogry = async (req: Request, res: Response, next: NextFunction) =
         const id: any = req.params.id
         /** Get book category from db */
         const categoryDetails: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
-        if (!categoryDetails) {
-            return next(Boom.notFound(bookCategoryControllerResponse.getBookCategoryFailure))
-        }
-        if (req.body.image === null) {
-            await removeS3File(categoryDetails.image, s3Bucket)
-        }
+
+        if (!categoryDetails) return next(Boom.notFound(bookCategoryControllerResponse.getBookCategoryFailure))
+        if (req.body.image === null) await removeS3File(categoryDetails.image, s3Bucket)
         if (req.body.image && req.body.image.includes('base64')) {
             await removeS3File(categoryDetails.image, s3Bucket)
             const s3File: any = await uploadFileToS3(req.body.image, categoryDetails.title, s3Bucket)
             req.body.image = s3File.name
         }
-        if (req.body.image && req.body.image.startsWith('http')) {
-            req.body.image = categoryDetails.image
-        }
+        if (req.body.image && req.body.image.startsWith('http')) req.body.image = categoryDetails.image
+
         await bookCategoryService.updateBookCategory(req.body, id)
         return res.status(200).send({ message: bookCategoryControllerResponse.updateBookCategorySuccess })
     } catch (e: any) {
@@ -140,9 +123,7 @@ const deleteCategory = async (req: Request, res: Response, next: NextFunction) =
     try {
         const id: any = req.params.id
         const bookCategoryDetails: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
-        if (bookCategoryDetails && bookCategoryDetails.image) {
-            await removeS3File(bookCategoryDetails.image, s3Bucket)
-        }
+        if (bookCategoryDetails && bookCategoryDetails.image) await removeS3File(bookCategoryDetails.image, s3Bucket)
         await bookCategoryService.deleteBookCategory(id)
         return res.status(200).send({ message: bookCategoryControllerResponse.deleteBookCategorySuccess })
     } catch (e: any) {

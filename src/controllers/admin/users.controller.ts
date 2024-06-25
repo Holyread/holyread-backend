@@ -170,7 +170,13 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
         } : {};
 
         // Handle plan filter query
-        const planQuery = params.planFilter && ['Yearly', 'Monthly', 'Half Year'].includes(params.planFilter)
+        const planQuery = [
+            'Yearly',
+            'Monthly',
+            'Half Year',
+        ].includes(
+            params.planFilter
+        )
             ? { 'subscription.title': params.planFilter }
             : {};
 
@@ -232,7 +238,7 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     },
                 ];
             }
-            if (statusFilterLower.includes('cancelled plan')) {
+            if (statusFilterLower.includes('cancelledplan')) {
                 searchFilter.$or = [
                     ...(searchFilter.$or || []),
                     {

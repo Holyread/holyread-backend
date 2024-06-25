@@ -126,7 +126,6 @@ const start = async () => {
                                     await notificationLog.save();
                               });
                         }
-                        console.log('JOB(✅) Daily devotional executed successfully!');
                   } catch (error: any) {
                         console.log('Users processing error - ', error.message);
                         const notificationLog = new NotificationsModel({
@@ -143,6 +142,7 @@ const start = async () => {
                         await notificationLog.save();
                   }
             });
+            console.log('JOB(✅) Daily devotional executed successfully!');
             cronLog.status = 'success';
             cronLog.endedAt = new Date();
             await cronLog.save();

@@ -41,10 +41,16 @@ export const getToken = (data: { [key: string]: string }): string => {
     return token;
 }
 
-export const verifyToken = (token: string) => {
-    const decoded = jwt.verify(token, 'secret');
-    return decoded
-}
+export const verifyToken = (token: string): any => {
+    try {
+        return jwt.verify(token, 'secret');
+    } catch (error) {
+        if (error instanceof jwt.JsonWebTokenError) {
+            throw new Error('Invalid token');
+        }
+        throw error;
+    }
+};
 
 export const isBase64 = async (v: any, opts: any) => {
     try {

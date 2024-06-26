@@ -33,7 +33,15 @@ const updateUser = async (
                   }
             );
       } catch (error: any) {
-            throw new Error(error)
+            if (error.response) {
+                  // Enhanced error handling for API responses
+                  console.error('Mailchimp response data:', error.response.data);
+                  throw new Error(`Mailchimp error: ${error.response.data.detail}`);
+            } else {
+                  // Handle other types of errors (network issues, etc.)
+                  console.error('An error occurred:', error.message);
+                  throw new Error(`An unexpected error occurred: ${error.message}`);
+            }
       }
 };
 

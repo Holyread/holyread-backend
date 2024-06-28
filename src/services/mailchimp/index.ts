@@ -28,7 +28,7 @@ const updateUser = async (
             };
 
             await axios.put(
-                  `https://us14.api.mailchimp.com/3.0/lists/${listId}/members/${subscriberHash}`,
+                  `https://us20.api.mailchimp.com/3.0/lists/${listId}/members/${subscriberHash}`,
                   data,
                   {
                         headers: {

@@ -73,10 +73,18 @@ const deleteSmallGroup = async (id: string) => {
 /** Get all small group for table */
 const getSmallGroupsList = async () => {
     try {
-        const result = await SmallGroupModel.find().populate('books', 'title').lean()
-        return result
+        const result: any[] = await SmallGroupModel.find().populate('books', 'title').lean();
+
+        if (result.length) {
+            await Promise.all(result.map((item: any) => {
+                if (item && typeof item.publish === 'boolean') {
+                    item.publish = item.publish ? 'Publish' : 'Pending';
+                }
+            }));
+        }
+        return result;
     } catch (e: any) {
-        throw new Error(e)
+        throw new Error(e);
     }
 }
 

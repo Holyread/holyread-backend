@@ -71,6 +71,13 @@ const deleteExpertCurated = async (id: string) => {
 const getExpertCuratedList = async () => {
     try {
         const result = await ExpertCuratedModel.find().lean()
+        if (result.length) {
+            await Promise.all(result.map((item: any) => {
+                if (item && typeof item.publish === 'boolean') {
+                    item.publish = item.publish ? 'Publish' : 'Pending';
+                }
+            }));
+        }
         return result
     } catch (e: any) {
         throw new Error(e)

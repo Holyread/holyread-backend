@@ -10,6 +10,7 @@ import dailyDevotionalService from '../../services/admin/dailyDevotional/dailyDe
 import smallGroupService from '../../services/admin/smallGroup/smallGroup.service';
 import expertCuratedService from '../../services/admin/book/expertCurated.service';
 import fs from 'fs';
+import path from 'path';
 
 const exportData = async (request: Request, response: Response, next: NextFunction) => {
     try {
@@ -99,19 +100,19 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
         /* set header */
         const smallGroupExcelHeader = [
             { header: 'Title', key: 'title' },
+            { header: 'Publish', key: 'publish' },
+            { header: 'Status', key: 'status' },
             { header: 'Description', key: 'description' },
             { header: 'Conclusion', key: 'conclusion' },
             { header: 'Introduction', key: 'introduction' },
-            { header: 'Publish', key: 'publish' },
             { header: 'Image', key: 'coverImage' },
-            { header: 'Status', key: 'status' },
             { header: 'IceBreaker', key: 'iceBreaker' },
             { header: 'Created At', key: 'createdAt' },
             { header: 'Updated At', key: 'updatedAt' },
         ];
 
         /* set header */
-        const mostPopularBooksExcelHeader = [
+        const mostPopularBooksExcelHeader = [                         
             { header: 'Title', key: 'title' },
             { header: 'Description', key: 'description' },
             { header: 'Conclusion', key: 'overview' },
@@ -203,12 +204,12 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                 } else if (dataType === 'Small group') {
                     wsSmallGroup.addRow([
                         item.title,
+                        item.publish,
+                        item.status,
                         item.description,
                         item.conclusion,
                         item.introduction,
-                        item.publish,
                         item.coverImage,
-                        item.status,
                         item.iceBreaker,
                         item.createdAt,
                         item.updatedAt, // Add displayAt column
@@ -309,6 +310,58 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
     }
 }
 
+const exportUsersData = async (request: Request, response: Response, next: NextFunction) => {
+    try {
+        const fileName = `export_data_${Date.now()}.xlsx`;
+        const filePath = path.join(__dirname, fileName);
+        const workbook = new excel.stream.xlsx.WorkbookWriter({ stream: fs.createWriteStream(filePath) });
+
+        const wsUsers = workbook.addWorksheet('Users');
+        wsUsers.columns = [
+            { header: 'First Name', key: 'firstName' },
+            { header: 'Last Name', key: 'lastName' },
+            { header: 'Email', key: 'email' },
+            { header: 'Signup date', key: 'createdAt' },
+            { header: 'Subscription', key: 'subscription' },
+            { header: 'Subscription Status', key: 'subscriptionStatus' },
+            { header: 'Payment Mode', key: 'paymentmethod' },
+            { header: 'Total', key: 'total' },
+            { header: 'Coupon', key: 'coupon' },
+            { header: 'Device', key: 'device' },
+            { header: 'Status', key: 'status' },
+        ];
+
+        const userData = await usersService.getAllExportUsers();
+
+        userData.forEach(item => {
+            wsUsers.addRow({
+                firstName: item.firstName,
+                lastName: item.lastName,
+                email: item.email,
+                createdAt: item.createdAt,
+                subscription: item.subscription,
+                subscriptionStatus: item.subscriptionStatus,
+                paymentmethod: item.paymentmethod,
+                total: item.total,
+                coupon: item.coupon,
+                device: item.device,
+                status: item.status,
+            });
+        });
+        const usersExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1','H1', 'I1', 'J1', 'K1'];
+        await setHeaderBackgroundColor(usersExcelHeaderCells, wsUsers);
+        await setColumnWidth(wsUsers);
+        await workbook.commit();
+        response.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+        response.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        fs.createReadStream(filePath).pipe(response).on('finish', () => fs.unlinkSync(filePath));
+    } catch (e: any) {
+        next(Boom.badData(e.message));
+    }
+};
+
+
 export {
-    exportData
+    exportData,
+    exportUsersData
 }

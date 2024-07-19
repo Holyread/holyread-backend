@@ -90,7 +90,7 @@ const addSummary = async (req: Request, res: Response, next: NextFunction) => {
         const user = await userService.getOneUserByFilter({ email: 'bot@holyreads.com' });
         if (user) {
             await ratingService.updateRating({
-                bookId: data._id,
+                bookId: data._id as string,
                 star: Number(`${randomNumberInRange(3, 5)}.${randomNumberInRange(1, 5)}`),
                 description: '',
                 userId: user._id,

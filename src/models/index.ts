@@ -34,6 +34,7 @@ import { RecommendedBookModel } from './recommendedBooks.model'
 import { InAppNotificationModel } from './inAppNotification.model'
 import { CustomNotificationsModel } from './customNotification.model'
 import { CronLogModel } from './cronLog.model'
+import { InvalidTokenModel } from './invalidTokens.model'
 
 const NODE_ENV = config.NODE_ENV
 
@@ -79,5 +80,6 @@ export {
   RecommendedBookModel,
   InAppNotificationModel,
   CustomNotificationsModel,
-  CronLogModel
+  CronLogModel,
+  InvalidTokenModel
 }

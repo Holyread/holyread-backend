@@ -1,7 +1,6 @@
-import crypto from 'crypto'
-import axios from 'axios'
-
-import config from '../../../config'
+import crypto from 'crypto';
+import axios from 'axios';
+import config from '../../../config';
 
 const updateUser = async (
       email: string,
@@ -20,7 +19,7 @@ const updateUser = async (
             }
 
             const subscriberHash = crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
-            const listId = '3ca29e1117';
+            const listId = '3d87bef92c';
             const auth = Buffer.from(`anystring:${config.MAILCHIMP_API_KEY}`).toString('base64');
             const data = {
                   email_address: email,
@@ -43,20 +42,23 @@ const updateUser = async (
       } catch (error: any) {
             console.error(`Failed to update user ${email}:`, error.message);
 
-            // Enhance error message with more context if necessary
             if (error.response) {
                   console.error('Mailchimp response data:', error.response.data);
-                  throw new Error(`Mailchimp error: ${error.response.data.detail}`);
+
+                  // Handle specific Mailchimp errors
+                  if (error.response.data.detail.includes('looks fake or invalid')) {
+                        console.warn('Invalid email address provided, skipping Mailchimp update');
+                  } else {
+                        console.error(`Mailchimp error: ${error.response.data.detail}`);
+                  }
             } else if (error.request) {
                   console.error('No response received from Mailchimp:', error.request);
-                  throw new Error('No response received from Mailchimp');
             } else {
                   console.error('Error setting up the Mailchimp request:', error.message);
-                  throw new Error('Error setting up the Mailchimp request');
             }
       }
 };
 
 export default {
       updateUser,
-}
+};

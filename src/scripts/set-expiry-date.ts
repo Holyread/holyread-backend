@@ -16,6 +16,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
             const webUsers = await UserModel.find({
                   device: 'web',
                   stripe: { $exists: true },
+                  'stripe.status': 'active',
             }).lean().exec();
 
             const subscriptions = await SubscriptionsModel
@@ -198,31 +199,27 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
                   } catch ({ message }: any) { console.log(message) }
             }))
 
-            await Promise.all(webUsers.map(async (item: any) => {
+            for (const item of webUsers) {
                   try {
-                        if (!item?.stripe?.subscriptionId) { return; }
+                        if (!item?.stripe?.subscriptionId) {
+                              continue;
+                        }
 
-                        const stripeSubscription
-                              = await stripeSubscriptionServices
-                                    .retrieveSubscription(
-                                          item.stripe.subscriptionId
-                                    )
+                        const stripeSubscription = await stripeSubscriptionServices.retrieveSubscription(item.stripe.subscriptionId);
 
-                        stripeSubscription?.current_period_end
-                              &&
+                        if (stripeSubscription?.current_period_end) {
                               await UserModel.updateOne(
                                     { _id: item._id },
                                     {
-                                          'stripe.expiredAt': new Date(
-                                                stripeSubscription
-                                                      .current_period_end
-                                                *
-                                                1000
-                                          ),
+                                          'stripe.expiredAt': new Date(stripeSubscription.current_period_end * 1000),
                                     }
-                              )
-                  } catch ({ message }: any) { console.log(message) }
-            }))
+                              );
+                        }
+                  } catch (error: any) {
+                        console.log(error.message);
+                  }
+            }
+
 
             console.log('expiry date added successfully');
 

@@ -6,11 +6,15 @@ import bookSummaryService from '../../services/admin/book/bookSummary.service'
 import transactionsService from '../../services/admin/users/transactions.service'
 
 import { setColumnWidth, setHeaderBackgroundColor } from '../../lib/utils/utils';
-import readsOfDayService from '../../services/admin/readsOfDay/readsOfDay.service';
+import dailyDevotionalService from '../../services/admin/dailyDevotional/dailyDevotional.service';
 import smallGroupService from '../../services/admin/smallGroup/smallGroup.service';
 import expertCuratedService from '../../services/admin/book/expertCurated.service';
 import fs from 'fs';
 import path from 'path';
+import { responseMessage } from '../../constants/message.constant';
+
+const authControllerResponse = responseMessage.authControllerResponse
+
 
 const exportData = async (request: Request, response: Response, next: NextFunction) => {
     try {
@@ -24,7 +28,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
             switch (dataType) {
                 case 'Daily devotional':
                     // Fetch reads of day data
-                    const readsOfDayList = await readsOfDayService.getReadsOfDayList();
+                    const readsOfDayList = await dailyDevotionalService.getDailyDevotionalList();
                     data.push({ dataType, data: readsOfDayList });
                     break;
                 case 'Curated list':
@@ -78,12 +82,10 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
         const dailyDevotionalExcelHeader = [
             { header: 'Title', key: 'title' },
             { header: 'SubTitle', key: 'subTitle' },
-            { header: 'Content Type', key: 'contentType' },
             { header: 'Video', key: 'video' },
             { header: 'Image', key: 'image' },
             { header: 'Status', key: 'status' },
             { header: 'Created At', key: 'createdAt' },
-            { header: 'Display At', key: 'displayAt' },
         ];
 
         /* set header */
@@ -186,12 +188,10 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                     wsForDailyDevotional.addRow([
                         item.title,
                         item.subTitle,
-                        item.contentType,
                         item.video,
                         item.image,
                         item.status,
                         item.createdAt,
-                        item.displayAt, // Add displayAt column
                     ]);
                 } else if (dataType === 'Curated list') {
                     wsCuratedList.addRow([
@@ -335,7 +335,31 @@ const exportUsersData = async (request: Request, response: Response, next: NextF
             { header: 'Status', key: 'status' },
         ];
 
-        const userData = await usersService.getAllExportUsers();
+        const params : any = request.body;
+        let searchFilter: any = {};
+
+        if (params.from && params.to) {
+            const fromDate = new Date(params.from);
+            const toDate = new Date(params.to);
+            if (fromDate <= toDate) {
+                searchFilter.createdAt = {
+                    $gte: fromDate,
+                    $lte: new Date(toDate.setDate(toDate.getDate() + 1)),
+                };
+            } else {
+                return next(Boom.badData(authControllerResponse.invalidDateError));
+            }
+        } else if (params.from) {
+            searchFilter.createdAt = {
+                $gte: new Date(params.from),
+            };
+        } else if (params.to) {
+            searchFilter.createdAt = {
+                $lte: new Date(new Date(params.to).setDate(new Date(params.to).getDate() + 1)),
+            };
+        }
+
+        const userData = await usersService.getAllExportUsers(searchFilter);
 
         userData.forEach(item => {
             wsUsers.addRow({
@@ -363,7 +387,6 @@ const exportUsersData = async (request: Request, response: Response, next: NextF
         next(Boom.badData(e.message));
     }
 };
-
 
 export {
     exportData,

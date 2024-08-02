@@ -13,9 +13,8 @@ const addCms = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
         const cmsObj: any = await cmsService.getOneCmsByFilter({ title: body.title })
-        if (cmsObj) {
-            return next(Boom.conflict(cmsControllerResponse.createCmsFailure))
-        }
+        if (cmsObj) return next(Boom.conflict(cmsControllerResponse.createCmsFailure))
+
         const data = await cmsService.createCms(body)
         res.status(200).send({
             message: cmsControllerResponse.createCmsSuccess,
@@ -32,9 +31,7 @@ const getOneCms = async (req: Request, res: Response, next: NextFunction) => {
         const id: any = req.params.id
         /** Get cms from db */
         const cmsObj: any = await cmsService.getOneCmsByFilter({ _id: id })
-        if (!cmsObj) {
-            return next(Boom.notFound(cmsControllerResponse.getCmsFailure))
-        }
+        if (!cmsObj) return next(Boom.notFound(cmsControllerResponse.getCmsFailure))
         res.status(200).send({
             message: cmsControllerResponse.fetchCmsSuccess,
             data: cmsObj,
@@ -52,6 +49,7 @@ const getAllCms = async (request: Request, response: Response, next: NextFunctio
         const limit: any = params.limit ? params.limit : dataTable.limit
 
         let searchFilter = {}
+
         if (params.search) {
             searchFilter = {
                 $or: [
@@ -63,27 +61,12 @@ const getAllCms = async (request: Request, response: Response, next: NextFunctio
                 ],
             }
         }
-        const cmsSorting = [];
-        switch (params.column) {
-            case 'title':
-                cmsSorting.push(['title', params.order || 'asc']);
-                break;
-            case 'metaTitle':
-                cmsSorting.push(['metaTitle', params.order || 'asc']);
-                break;
-            case 'metaKeyword':
-                cmsSorting.push(['metaKeyword', params.order || 'asc']);
-                break;
-            case 'metaDescription':
-                cmsSorting.push(['metaDescription', params.order || 'asc']);
-                break;
-            case 'createdAt':
-                cmsSorting.push(['createdAt', params.order || 'asc']);
-                break;
-            default:
-                cmsSorting.push(['title', 'desc']);
-                break;
-        }
+
+        const sortingColumn = params.column as string;
+        const sortingOrder = params.order || 'asc';
+        const cmsSorting = ['title', 'metaTitle', 'metaKeyword', 'metaDescription', 'createdAt'].includes(sortingColumn)
+            ? [[sortingColumn, sortingOrder]]
+            : [['title', 'desc']];
 
         const getAllCmsList = await cmsService.getAllCms(Number(skip), Number(limit), searchFilter, cmsSorting)
         response.status(200).json({ message: cmsControllerResponse.fetchAllCmsSuccess, data: getAllCmsList })
@@ -98,9 +81,8 @@ const updateCms = async (req: Request, res: Response, next: NextFunction) => {
         const id: any = req.params.id
         /** Get cms from db */
         const cmsObj: any = await cmsService.getOneCmsByFilter({ _id: id })
-        if (!cmsObj) {
-            return next(Boom.notFound(cmsControllerResponse.getCmsFailure))
-        }
+        if (!cmsObj) return next(Boom.notFound(cmsControllerResponse.getCmsFailure))
+
         const data = await cmsService.updateCms(req.body, id)
         return res.status(200).send({ message: cmsControllerResponse.updateCmsSuccess, data })
     } catch (e: any) {

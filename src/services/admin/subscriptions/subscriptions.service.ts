@@ -5,7 +5,7 @@ const createSubscription = async (body: any) => {
       try {
             body.status = 'Active'
             const result: any = await SubscriptionsModel.create(body)
-            result.status === 'Active' ? result.status = true : result.status = false
+            result.status = result.status === 'Active';
             return result.toJSON()
       } catch (e: any) {
             throw new Error(e)
@@ -22,7 +22,7 @@ const updateSubscription = async (body: any, id: string) => {
                   { ...body, updatedAt: new Date() },
                   { new: true }
             ).lean()
-            updatedSubscription.status === 'Active' ? updatedSubscription.status = true : updatedSubscription.status = false
+            updatedSubscription.status = updatedSubscription.status === 'Active';
             return updatedSubscription
       } catch (e: any) {
             throw new Error(e)
@@ -34,7 +34,7 @@ const getOneSubscriptionByFilter = async (query: any) => {
       try {
             const result: any = await SubscriptionsModel.findOne(query).lean()
             if (result) {
-                  result.status === 'Active' ? result.status = true : result.status = false
+                  result.status = result.status === 'Active';
             }
             return result
       } catch (e: any) {
@@ -47,7 +47,7 @@ const getAllSubscriptions = async (skip: number, limit, search: object, sort) =>
       try {
             const subscriptionsList: any = await SubscriptionsModel.find(search).select('-stripePlanId').skip(skip).limit(limit).sort(sort).lean()
             subscriptionsList.forEach(item => {
-                  item.status === 'Active' ? item.status = true : item.status = false
+                  item.status = item.status === 'Active';
             })
             const count = await SubscriptionsModel.find(search).countDocuments()
             return { count, subscriptions: subscriptionsList }

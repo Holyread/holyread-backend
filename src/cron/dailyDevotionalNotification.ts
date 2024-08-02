@@ -1,7 +1,7 @@
 import { CronJob } from 'cron';
 import config from '../../config';
 import { dailyDevotionalNotification } from '../constants/cron.constants';
-import { ReadsOfDayModel, SettingModel, UserModel, CronLogModel, NotificationsModel } from '../models';
+import { DailyDvotionalModel, SettingModel, UserModel, CronLogModel, NotificationsModel } from '../models';
 import { groupByKey, pushNotification } from '../lib/utils/utils';
 import { awsBucket } from '../constants/app.constant';
 
@@ -22,13 +22,14 @@ const start = async () => {
             const end = new Date();
             end.setHours(23, 59, 59, 999);
 
-            /** Get Read of days */
-            const readOfDay = await ReadsOfDayModel.findOne({
-                  displayAt: { $gte: new Date(start), $lte: new Date(end) },
+            /** Get daily devotional */
+            const dailyDevotional = await DailyDvotionalModel.findOne({
+                  publishedAt: { $gte: new Date(start), $lte: new Date(end) },
+                  category: { $exists: false },
             }).select('title description image').lean().exec();
 
-            // Check if read of the day exists
-            if (!readOfDay) {
+            // Check if daily devotional exists
+            if (!dailyDevotional) {
                   console.log('JOB(🔴) Daily devotional execution stop due to no reads found');
                   return;
             }
@@ -50,16 +51,22 @@ const start = async () => {
                               'stripe.status': 'active',
                         },
                   ],
-            }).select('timeZone pushTokens').lean().exec()
+            }).select('timeZone pushTokens libraries').populate('libraries').lean().exec()
+
+            const usersWithOutSubscribeCategories = users.filter(user =>
+                  user.libraries &&                                // Check if libraries exist
+                  user.libraries.devotionalCategories &&          // Check if devotionalCategories exist
+                  user.libraries.devotionalCategories.length === 0 // Check if devotionalCategories array is empty
+            );
 
             // Check if there are eligible users
-            if (!users.length) {
+            if (!usersWithOutSubscribeCategories.length) {
                   console.log('JOB(🔴) Daily devotional execution stop due to no users found');
                   return;
             }
 
             // Group users by timezone
-            const result = groupByKey(users, 'timeZone');
+            const result = groupByKey(usersWithOutSubscribeCategories, 'timeZone');
             const setting = await SettingModel.findOne({}).select('dailyDevotionalTime').lean().exec();
 
             // Iterate over each timezone
@@ -90,12 +97,12 @@ const start = async () => {
                               // Send notifications to users in the timezone
                               const notificationPayload = {
                                     title: '🔔 Start your day with inspiration!',
-                                    body: `📙 Today's Devotional: ${readOfDay.title}. Dive in now for a dose of spiritual nourishment 🔖`,
+                                    body: `📙 Today's Devotional: ${dailyDevotional.title}. Dive in now for a dose of spiritual nourishment 🔖`,
                                     data: {
                                           dailyDevotional: {
-                                                _id: readOfDay._id,
-                                                description: readOfDay.description,
-                                                image: awsBucket[config.NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + readOfDay.image,
+                                                _id: dailyDevotional._id,
+                                                description: dailyDevotional.description,
+                                                image: awsBucket[config.NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + dailyDevotional.image,
                                           },
                                     },
                               };
@@ -126,7 +133,7 @@ const start = async () => {
                               type: 'user',
                               notification: {
                                     title: '🔔 Start your day with inspiration!',
-                                    description: `📙 Today's Devotional: ${readOfDay.title}. Dive in now for a dose of spiritual nourishment 🔖`,
+                                    description: `📙 Today's Devotional: ${dailyDevotional.title}. Dive in now for a dose of spiritual nourishment 🔖`,
                                     success: true,
                                     errorMessage: `Users processing error -', ${error.message}`,
                               },

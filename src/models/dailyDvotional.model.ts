@@ -2,54 +2,74 @@ import mongoose, { Schema } from 'mongoose'
 
 mongoose.set('autoIndex', true);
 
-export interface IReadsOfDay extends mongoose.Document {
+export interface IDailyDvotional extends mongoose.Document {
     title: string,
     subTitle: string,
     description: string,
+    videoTitle: string,
     image: string,
     status?: 'Active' | 'Deactive',
     createdAt: Date,
     updatedAt: Date,
     displayAt: Date
     video?: string,
-    contentType?: string
+    audio?: string,
+    category?: string,
+    publish : boolean,
+    publishedAt : Date,
+    videoFileSize?: number,
+    audioFileSize?: number,
 }
 
-export type createReadsOfDayType = {
+export type createDailyDvotionalType = {
     title: string,
     subTitle: string,
     description: string,
+    videoTitle: string,
     image: string,
     status?: 'Active' | 'Deactive',
     createdAt: Date,
     updatedAt: Date,
     displayAt: Date,
     video?: string,
-    contentType?: string
+    audio?: string,
+    category?: string,
+    publish : boolean,
+    publishedAt : Date,
+    videoFileSize?: number,
+    audioFileSize?: number,
 }
 
-export type getReadsOfDayType = {
+
+export type getDailyDvotionalType = {
     _id?: string,
     title?: string,
     subTitle?: string,
     description?: string,
+    videoTitle: string,
     image?: string,
     status?: 'Active' | 'Deactive',
     createdAt: Date,
     updatedAt: Date,
     displayAt: Date,
     video?: string,
-    contentType?: string
+    audio?: string,
+    category?: string,
+    publish : boolean,
+    publishedAt : Date,
+    videoFileSize?: number,
+    audioFileSize?: number,
 }
 
-export const ReadsOfDaySchema = new Schema({
+export const DailyDvotionalSchema = new Schema({
     title: { type: String, index: true, default: '' },
     subTitle: { type: String, default: '' },
     description: { type: String, default: '' },
+    videoTitle: { type: String, default: '' },
     image: { type: String },
     video: { type: String },
+    audio: { type: String },
     status: { type: String },
-    contentType: { type: String },
     createdAt: {
         type: Date, default: () => {
             return new Date()
@@ -57,6 +77,11 @@ export const ReadsOfDaySchema = new Schema({
     },
     updatedAt: { type: Date },
     displayAt: { type: Date },
+    publishedAt : { type: Date },
+    category: { type: String },
+    audioFileSize: { type: Number },
+    videoFileSize: { type: Number },
+    publish : { type : Boolean, default: false },
 }, { strict: 'throw' })
 
-export const ReadsOfDayModel = mongoose.model<IReadsOfDay>('readsOfDay', ReadsOfDaySchema)
+export const DailyDvotionalModel = mongoose.model<IDailyDvotional>('dailyDvotional', DailyDvotionalSchema)

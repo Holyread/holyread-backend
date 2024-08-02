@@ -199,7 +199,7 @@ const getUseForCustomNotification = async (query: any, select: string) => {
 
 const PAGE_SIZE = 1000;
 
-const getAllExportUsers = async () => {
+const getAllExportUsers = async (search: object) => {
     try {
         let results: any[] = [];
         let page = 0;
@@ -243,6 +243,9 @@ const getAllExportUsers = async () => {
                         from: 'transactions',
                         localField: 'lastTrnId',
                     },
+                },
+                {
+                    $match: search,
                 },
                 {
                     $project: {

@@ -65,6 +65,8 @@ const initializeDeviceAccess = async (req: Request, res: Response, next: NextFun
         smallGroups: [],
         reading: [],
         categories: [],
+        devotionalCategories: [],
+        devotionalViews: [],
       });
 
       const email = body.deviceId + '@holyreads-temp.com';
@@ -135,6 +137,41 @@ const appSignUpUser = async (
 
   const verificationCode = Math.floor(1000 + Math.random() * 9000);
 
+  const title = 'Welcome to Holy Reads 🎉';
+  const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
+  /** Get welcome email template */
+  const emailTemplateDetails =
+    await emailTemplateService.getOneEmailTemplateByFilter({
+      title: emailTemplatesTitles.customer.welcomeToHolyreads,
+    });
+  const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads';
+  let html = `<p>Dear ${body.email.split('@')[0]
+    },</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]
+    }/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`;
+
+  if (emailTemplateDetails && emailTemplateDetails.content) {
+    const contentData = { loginURL: `${origins[NODE_ENV]}/account/login` };
+    const htmlData = await compileHtml(
+      emailTemplateDetails.content,
+      contentData
+    );
+    if (htmlData) {
+      html = htmlData;
+    }
+  }
+
+  /** sent email for account verification */
+  const result = await sentEmail({
+    from: originEmails.marketing,
+    to: body.email,
+    subject,
+    html,
+  });
+
+  if (!result) {
+    return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure))
+  }
+
   if (body.image) {
     const s3File: any = await uploadFileToS3(
       body.image,
@@ -144,7 +181,7 @@ const appSignUpUser = async (
     body.image = s3File.name;
   }
 
-  const userData = {
+  const userObj = {
     image: body.image || '',
     email: body.email,
     password: body.password,
@@ -155,7 +192,15 @@ const appSignUpUser = async (
     isSignedUp: true,
   };
 
-  await usersService.updateUser({ _id: user._id }, userData);
+  const userData = await usersService.updateUser({ _id: user._id }, userObj);
+
+  /** Push notification */
+      /** Push notification */
+      if (userData && userData.pushTokens && userData.pushTokens.length && userData?.notification?.push) {
+        const tokens = userData.pushTokens.map(i => i.token)
+        /** sent wellcome notification in app */
+        pushNotification(tokens, title, description)
+      }
   return res.status(200).send({ message: authControllerResponse.signUpSuccess });
 };
 
@@ -223,6 +268,8 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
         smallGroups: [],
         reading: [],
         categories: [],
+        devotionalCategories: [],
+        devotionalViews: [],
       })
 
     const data: any = {
@@ -636,6 +683,8 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         smallGroups: [],
         reading: [],
         categories: [],
+        devotionalCategories: [],
+        devotionalViews: [],
       })
 
     const newBody: any = {

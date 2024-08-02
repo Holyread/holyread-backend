@@ -1,5 +1,4 @@
 import './dailyDevotionalNotification';
-import './setReadsOfDayDisplayAt';
 import './renewalReminderNotification';
 import './publishContent';
 import './syncProfit';
@@ -11,3 +10,5 @@ import './highlightAndQuoteFeatureNotification'
 import './kindleSetUpNotification'
 import './schedulePersonalizedNotification'
 import './publishSmallGroup'
+import './dailyDevotionalCategoriesNotification'
+import './publishDailyDevotional'

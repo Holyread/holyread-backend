@@ -3,7 +3,7 @@ import Boom from '@hapi/boom';
 
 import expertCuratedService from '../../../services/admin/book/expertCurated.service'
 import { responseMessage } from '../../../constants/message.constant'
-import { removeS3File, uploadFileToS3, getSearchRegexp } from '../../../lib/utils/utils'
+import { removeS3File, uploadFileToS3, getSearchRegexp, getImageUrl } from '../../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../../constants/app.constant'
 import config from '../../../../config'
 
@@ -19,12 +19,10 @@ const s3Bucket = {
 /** Add expert curated */
 const addExpertCurated = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const body = req.body
+        const { body } = req
         /** Get expert Curated from db */
         const expertCuratedDetails: any = await expertCuratedService.getOneExpertCuratedByFilter({ title: req.body.title })
-        if (expertCuratedDetails) {
-            return next(Boom.badData(expertCuratedControllerResponse.createExpertCuratedFailure))
-        }
+        if (expertCuratedDetails) return next(Boom.badData(expertCuratedControllerResponse.createExpertCuratedFailure))
         if (body.image) {
             const s3File: any = await uploadFileToS3(body.image, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
             body.image = s3File.name
@@ -46,13 +44,8 @@ const getOneExpertCurated = async (req: Request, res: Response, next: NextFuncti
         const id: any = req.params.id
         /** Get expert Curated from db */
         const data: any = await expertCuratedService.getOneExpertCuratedByFilter({ _id: id })
-        if (!data) {
-            return next(Boom.notFound(expertCuratedControllerResponse.getExpertCuratedFailure))
-        }
-        if (data.image) {
-            data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/' + data.image
-        }
-
+        if (!data) return next(Boom.notFound(expertCuratedControllerResponse.getExpertCuratedFailure))
+        if (data.image) data.image = getImageUrl(data.image, `${awsBucket.bookDirectory}/expertCurated`);
         res.status(200).send({ message: expertCuratedControllerResponse.fetchExpertCuratedSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -85,22 +78,12 @@ const getAllExpertCurated = async (request: Request, response: Response, next: N
                 searchFilter.publish = false;
             }
         }
-        const expertCuratedSorting = [];
-        switch (params.column) {
-            case 'title':
-                expertCuratedSorting.push(['title', params.order || 'asc']);
-                break;
-            case 'status':
-                expertCuratedSorting.push(['status', params.order || 'asc']);
-                break;
-            case 'createdAt':
-                expertCuratedSorting.push(['createdAt', params.order || 'asc']);
-                break;
-            default:
-                expertCuratedSorting.push(['title', 'desc']);
-                break;
-        }
 
+        const sortingColumn = params.column as string;
+        const sortingOrder = params.order || 'asc';
+        const expertCuratedSorting = ['title', 'status', 'createdAt'].includes(sortingColumn)
+            ? [[sortingColumn, sortingOrder]]
+            : [['title', 'desc']];
         const data = await expertCuratedService.getAllExpertCurated(Number(skip), Number(limit), searchFilter, expertCuratedSorting)
         response.status(200).json({ message: expertCuratedControllerResponse.fetchAllExpertCuratedSuccess, data })
     } catch (e: any) {

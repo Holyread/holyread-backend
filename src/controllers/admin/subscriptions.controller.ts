@@ -15,9 +15,8 @@ const addSubscription = async (req: Request, res: Response, next: NextFunction) 
     try {
         const body = req.body
         const subscriptionObj: any = await subscriptionsService.getOneSubscriptionByFilter({ title: body.title, price: body.price })
-        if (subscriptionObj) {
-            return next(Boom.conflict(subscriptionsControllerResponse.createSubscriptionFailure))
-        }
+        if (subscriptionObj) return next(Boom.conflict(subscriptionsControllerResponse.createSubscriptionFailure))
+
         let intervalCount = 1
         let duration = body.duration
         if (body.duration === 'Half Year') {
@@ -26,9 +25,8 @@ const addSubscription = async (req: Request, res: Response, next: NextFunction) 
             body.intervalCount = 6
         }
         const createPlan = await stripeService.createPlan(body.title, Number(body.price), duration, intervalCount)
-        if (!createPlan || !createPlan.id) {
-            return next(Boom.badData(subscriptionsControllerResponse.planCreateError))
-        }
+        if (!createPlan || !createPlan.id) return next(Boom.badData(subscriptionsControllerResponse.planCreateError))
+
         const data = await subscriptionsService.createSubscription({ ...body, stripePlanId: createPlan.id })
         delete data.stripePlanId
         res.status(200).send({
@@ -46,9 +44,7 @@ const getOneSubscription = async (req: Request, res: Response, next: NextFunctio
         const id: any = req.params.id
         /** Get subscription from db */
         const subscriptionObj: any = await subscriptionsService.getOneSubscriptionByFilter({ _id: id })
-        if (!subscriptionObj) {
-            return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
-        }
+        if (!subscriptionObj) return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
         delete subscriptionObj.stripePlanId
         res.status(200).send({
             message: subscriptionsControllerResponse.fetchSubscriptionSuccess,
@@ -78,27 +74,12 @@ const getAllSubscriptions = async (request: Request, response: Response, next: N
                 ],
             }
         }
-        const subscriptionsSorting = [];
-        switch (params.column) {
-            case 'title':
-                subscriptionsSorting.push(['title', params.order || 'asc']);
-                break;
-            case 'price':
-                subscriptionsSorting.push(['price', params.order || 'asc']);
-                break;
-            case 'duration':
-                subscriptionsSorting.push(['duration', params.order || 'asc']);
-                break;
-            case 'status':
-                subscriptionsSorting.push(['status', params.order || 'asc']);
-                break;
-            case 'createdAt':
-                subscriptionsSorting.push(['createdAt', params.order || 'asc']);
-                break;
-            default:
-                subscriptionsSorting.push(['title', 'desc']);
-                break;
-        }
+
+        const sortingColumn = params.column as string;
+        const sortingOrder = params.order || 'asc';
+        const subscriptionsSorting = ['title', 'price', 'duration', 'status', 'createdAt'].includes(sortingColumn)
+            ? [[sortingColumn, sortingOrder]]
+            : [['title', 'desc']];
 
         const getSubscriptionsList = await subscriptionsService.getAllSubscriptions(Number(skip), Number(limit), searchFilter, subscriptionsSorting)
         response.status(200).json({ message: subscriptionsControllerResponse.fetchSubscriptionsSuccess, data: getSubscriptionsList })
@@ -112,7 +93,6 @@ const getAllSubscriptionsOptionsList = async (request: Request, response: Respon
     try {
         const getSubscriptionsList = await subscriptionsService.getAllSubscriptionsName()
         response.status(200).json({ message: subscriptionsControllerResponse.fetchSubscriptionsSuccess, data: getSubscriptionsList })
-
     } catch (e: any) {
         next(Boom.badData(e.message))
     }
@@ -124,14 +104,12 @@ const updateSubscription = async (req: Request, res: Response, next: NextFunctio
         const id: any = req.params.id
         /** Get subscription from db */
         const subscriptionObj: any = await subscriptionsService.getOneSubscriptionByFilter({ _id: id })
-        if (!subscriptionObj) {
-            return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
-        }
+        if (!subscriptionObj) return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))
+
         if (req.body.price && req.body.price !== subscriptionObj.price) {
             const planDetails = await stripeService.retrievePlan(subscriptionObj.stripePlanId)
-            if (!planDetails) {
-                return next(Boom.notFound(subscriptionsControllerResponse.planFetchError))
-            }
+            if (!planDetails) return next(Boom.notFound(subscriptionsControllerResponse.planFetchError))
+
             req.body.intervalCount = subscriptionObj.intervalCount
             let duration = req.body.duration || subscriptionObj.duration
             if (duration === 'Half Year') {
@@ -155,14 +133,10 @@ const deleteSubcription = async (req: Request, res: Response, next: NextFunction
     try {
         const id: any = req.params.id
         const subscriptionUser = await usersService.getOneUserByFilter({ subscription: id })
-        if (subscriptionUser) {
-            return next(Boom.locked(subscriptionsControllerResponse.subscriptionIsInUsedError))
-        }
+        if (subscriptionUser) return next(Boom.locked(subscriptionsControllerResponse.subscriptionIsInUsedError))
         const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: id })
         const deletePlan = await stripeService.deletePlanById(subscriptionDetails.stripePlanId)
-        if (!deletePlan) {
-            return next(Boom.locked(subscriptionsControllerResponse.planDeleteError))
-        }
+        if (!deletePlan) return next(Boom.locked(subscriptionsControllerResponse.planDeleteError))
         await subscriptionsService.deleteSubscription(id)
         return res.status(200).send({ message: subscriptionsControllerResponse.deleteSubscriptionSuccess })
     } catch (e: any) {

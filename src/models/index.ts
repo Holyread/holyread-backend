@@ -14,7 +14,7 @@ import { HandoutsModel } from './handouts.model'
 
 import { BookAuthorModel } from './bookAuthor.model'
 import { ShareImageModel } from './shareImage.model'
-import { ReadsOfDayModel } from './readsOfDay.model'
+import { DailyDvotionalModel } from './dailyDvotional.model'
 import { SmallGroupModel } from './smallGroup.model'
 import { HighLightsModel } from './highLights.model'
 
@@ -64,7 +64,7 @@ export {
   CouponsModel,
   HandoutsModel,
   ShareImageModel,
-  ReadsOfDayModel,
+  DailyDvotionalModel,
   SmallGroupModel,
   HighLightsModel,
   BookAuthorModel,

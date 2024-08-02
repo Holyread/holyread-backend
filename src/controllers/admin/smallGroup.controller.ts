@@ -1,10 +1,10 @@
-import { NextFunction, Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express';
 import Boom from '@hapi/boom';
 
 import smallGroupService from '../../services/admin/smallGroup/smallGroup.service'
 import bookSummaryService from '../../services/admin/book/bookSummary.service'
 import { responseMessage } from '../../constants/message.constant'
-import { getSearchRegexp, removeS3File, uploadFileToS3 } from '../../lib/utils/utils'
+import { getImageUrl, getSearchRegexp, removeS3File, uploadFileToS3 } from '../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../constants/app.constant'
 import config from '../../../config'
 
@@ -19,22 +19,25 @@ const s3Bucket = {
 /** Add small group */
 const addSmallGroup = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const body = req.body
-        const existingSmallGroup: any = await smallGroupService.getOneSmallGroupByFilter({ title: body.title })
+        const { body } = req;
+        const existingSmallGroup = await smallGroupService.getOneSmallGroupByFilter({ title: body.title });
         if (existingSmallGroup) {
-            return next(Boom.notFound(smallGroupControllerResponse.createSmallGroupFailure))
+            return next(Boom.notFound(smallGroupControllerResponse.createSmallGroupFailure));
         }
+
         if (body.books.length) {
             body.books = await Promise.all(body.books.filter(async (oneBook) => {
-                const bookDetails = await bookSummaryService.getOneBookSummaryByFilter({ _id: oneBook })
-                return bookDetails ? true : false
-            }))
+                const bookDetails = await bookSummaryService.getOneBookSummaryByFilter({ _id: oneBook });
+                return !!bookDetails;
+            }));
         }
+
         if (body.coverImage) {
-            const s3File: any = await uploadFileToS3(body.coverImage, body.title, s3Bucket)
-            body.coverImage = s3File.name
+            const s3File: any = await uploadFileToS3(body.coverImage, body.title, s3Bucket);
+            body.coverImage = s3File.name;
         }
-        const data = await smallGroupService.createSmallGroup(body)
+
+        const data = await smallGroupService.createSmallGroup(body);
         res.status(200).send({
             message: smallGroupControllerResponse.createSmallGroupSuccess,
             data,
@@ -42,131 +45,106 @@ const addSmallGroup = async (req: Request, res: Response, next: NextFunction) =>
     } catch (e: any) {
         next(Boom.badData(e.message))
     }
-}
+};
 
 /**  Get one small group by id */
 const getOneSmallGroup = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.params.id
-        /** Get small group from db */
-        const data: any = await smallGroupService.getOneSmallGroupByFilter({ _id: id })
+        const { id } = req.params;
+        const data = await smallGroupService.getOneSmallGroupByFilter({ _id: id });
         if (!data) {
-            return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure))
+            return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure));
         }
         if (data.books.length) {
-            data.books.forEach(element => {
-                if (element && element.coverImage) {
-                    element.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + element.coverImage
-                }
+            data.books.forEach((element) => {
+                if (element?.coverImage) element.coverImage = getImageUrl(data.coverImage, `${awsBucket.bookDirectory}/coverImage`);
             });
         }
-        if (data.coverImage) {
-            data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.smallGroupDirectory + '/' + data.coverImage
-        }
-        res.status(200).send({ message: smallGroupControllerResponse.fetchSmallGroupSuccess, data })
+        if (data.coverImage) data.coverImage = getImageUrl(data.coverImage, awsBucket.smallGroupDirectory);
+
+        
+        res.status(200).send({ message: smallGroupControllerResponse.fetchSmallGroupSuccess, data });
     } catch (e: any) {
-        next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
-}
+};
 
 /** Get all small groups by filter */
-const getAllSmallGroups = async (request: Request, response: Response, next: NextFunction) => {
+const getAllSmallGroups = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const params = request.query
-        const skip: any = params.skip ? params.skip : dataTable.skip
-        const limit: any = params.limit ? params.limit : dataTable.limit
+        const { query } = req;
+        const skip = Number(query.skip) || dataTable.skip;
+        const limit = Number(query.limit) || dataTable.limit;
 
-        let searchFilter: any = {}
-        if (params.search) {
-            const search = await getSearchRegexp(params.search)
+        let searchFilter: any = {};
+        if (query.search) {
+            const search = await getSearchRegexp(query.search as string);
             searchFilter = {
-                $or: [
-                    { 'title': search },
-                ],
-            }
-            if (Number(search)) {
-                searchFilter['$or'].push({ 'fontSize': Number(search) })
+                $or: [{ title: search }],
+            };
+            if (!isNaN(Number(search))) {
+                searchFilter.$or.push({ fontSize: Number(search) });
             }
         }
 
-        if (params.bookStatusFilter) {
-            if (params.bookStatusFilter === 'publish') {
+
+        if (query.bookStatusFilter) {
+            if (query.bookStatusFilter === 'publish') {
                 searchFilter.publish = true;
             }
-            else if (params.bookStatusFilter === 'pending') {
+            else if (query.bookStatusFilter === 'pending') {
                 searchFilter.publish = false;
             }
         }
+        const sortingColumn = query.column as string;
+        const sortingOrder = query.order || 'asc';
+        const sortingOptions = ['title', 'iceBreaker', 'description', 'introduction', 'createdAt'].includes(sortingColumn)
+            ? [[sortingColumn, sortingOrder]]
+            : [['title', 'desc']];
 
-        const smallGroupsSorting = [];
-        switch (params.column) {
-            case 'title':
-                smallGroupsSorting.push(['title', params.order || 'asc']);
-                break;
-            case 'iceBreaker':
-                smallGroupsSorting.push(['iceBreaker', params.order || 'asc']);
-                break;
-            case 'description':
-                smallGroupsSorting.push(['description', params.order || 'asc']);
-                break;
-            case 'introduction':
-                smallGroupsSorting.push(['introduction', params.order || 'asc']);
-                break;
-            case 'createdAt':
-                smallGroupsSorting.push(['createdAt', params.order || 'asc']);
-                break;
-            default:
-                smallGroupsSorting.push(['title', 'desc']);
-                break;
-        }
-
-        const data = await smallGroupService.getAllSmallGroups(Number(skip), Number(limit), searchFilter, smallGroupsSorting)
-        response.status(200).json({ message: smallGroupControllerResponse.fetchSmallGroupSuccess, data })
+        const data = await smallGroupService.getAllSmallGroups(skip, limit, searchFilter, sortingOptions);
+        res.status(200).json({ message: smallGroupControllerResponse.fetchSmallGroupSuccess, data });
     } catch (e: any) {
-        next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
-}
+};
 
 /** Update small group */
 const updateSmallGroup = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.params.id
-        /** Get small group from db */
-        const smallGroupDetails: any = await smallGroupService.getOneSmallGroupByFilter({ _id: id })
-        if (!smallGroupDetails) {
-            return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure))
+        const { id } = req.params;
+        const { body } = req;
+        const smallGroupDetails = await smallGroupService.getOneSmallGroupByFilter({ _id: id });
+
+        if (!smallGroupDetails) return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure));
+        if (body.coverImage === null) await removeS3File(smallGroupDetails.coverImage, s3Bucket);
+        
+        if (body.coverImage?.includes('base64')) {
+            await removeS3File(smallGroupDetails.coverImage, s3Bucket);
+            const s3File: any = await uploadFileToS3(body.coverImage, smallGroupDetails.title, s3Bucket);
+            body.coverImage = s3File.name;
+        } else if (body.coverImage?.startsWith('http')) {
+            body.coverImage = smallGroupDetails.coverImage;
         }
-        if (req.body.coverImage === null) {
-            await removeS3File(smallGroupDetails.coverImage, s3Bucket)
-        }
-        if (req.body.coverImage && req.body.coverImage.includes('base64')) {
-            await removeS3File(smallGroupDetails.coverImage, s3Bucket)
-            const s3File: any = await uploadFileToS3(req.body.coverImage, smallGroupDetails.title, s3Bucket)
-            req.body.coverImage = s3File.name
-        }
-        if (req.body.coverImage && req.body.coverImage.startsWith('http')) {
-            req.body.coverImage = smallGroupDetails.coverImage
-        }
-        await smallGroupService.updateSmallGroup(req.body, id)
-        return res.status(200).send({ message: smallGroupControllerResponse.updateSmallGroupSuccess })
+
+        await smallGroupService.updateSmallGroup(body, id);
+        res.status(200).send({ message: smallGroupControllerResponse.updateSmallGroupSuccess });
     } catch (e: any) {
-        return next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
-}
+};
 
 /** Remove small group */
 const deleteSmallGroup = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.params.id
-        const smallGroupDetails = await smallGroupService.getOneSmallGroupByFilter({ _id: id })
-        if (smallGroupDetails && smallGroupDetails.coverImage) {
-            await removeS3File(smallGroupDetails.coverImage, s3Bucket)
-        }
-        await smallGroupService.deleteSmallGroup(id)
-        return res.status(200).send({ message: smallGroupControllerResponse.deleteSmallGroupSuccess })
+        const { id } = req.params;
+        const smallGroupDetails = await smallGroupService.getOneSmallGroupByFilter({ _id: id });
+        if (smallGroupDetails?.coverImage) await removeS3File(smallGroupDetails.coverImage, s3Bucket);
+        await smallGroupService.deleteSmallGroup(id);
+        res.status(200).send({ message: smallGroupControllerResponse.deleteSmallGroupSuccess });
     } catch (e: any) {
-        return next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
-}
+};
 
-export { addSmallGroup, getOneSmallGroup, getAllSmallGroups, updateSmallGroup, deleteSmallGroup }
+export { addSmallGroup, getOneSmallGroup, getAllSmallGroups, updateSmallGroup, deleteSmallGroup };

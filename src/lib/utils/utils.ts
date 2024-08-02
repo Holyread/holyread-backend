@@ -12,12 +12,15 @@ import config from '../../../config'
 import firebaseAdmin from 'firebase-admin';
 
 import { Worksheet } from 'exceljs';
+import { awsBucket } from '../../constants/app.constant';
 
 const algorithm = 'aes-256-cbc';
 const iv = '3ad77bb40d7a3660';
 const inputEncoding = 'utf8';
 const outputEncoding = 'base64';
 const key = '2b7e151628aed2a6abf7158809cf4f3c';
+
+const NODE_ENV = config.NODE_ENV
 
 export const encrypt = (text: string): string => {
     const cipher = crypto.createCipheriv(algorithm, key, iv);
@@ -422,3 +425,33 @@ export const calculateAverageRating = async (ratings) => {
     const averageRating = ratings.length > 0 ? totalStars / ratings.length : 0;
     return parseFloat(averageRating.toFixed(1));
 }
+
+const url = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.devotionalCategoryDirectory;
+
+export const devotionalCategoriesList = [
+    {
+        name: 'On Faith',
+        image: `${url}/On_Faith_1721740597799.png`,
+        description: 'Faith Series offers 15 daily devotionals that explore the foundational role of faith in the Christian life. Each day, delve into how faith originates, supports spiritual growth, and provides comfort, helping believers trust in God’s perfect timing and love.'
+    },
+    {
+        name: 'Pastors',
+        image: `${url}/For_Pastors_1721740668091.png`,
+        description: 'Pastoral Leadership Series provides 15 daily devotionals designed to support and enrich church leaders. Daily topics cover essential aspects like humility, leadership, and community engagement, offering guidance for effective ministry.'
+    },
+    {
+        name: 'Couples',
+        image: `${url}/For_Couples_1721740733055.png`,
+        description: 'Couples Series features 15 daily devotionals focused on strengthening relationships through Christian teachings. Topics address the essentials of marriage like forgiveness, unity, and love, helping couples navigate their partnership with grace and faith each day.'
+    },
+    {
+        name: 'Mothers',
+        image: `${url}/For_Mothers_1721740786863.png`,
+        description: 'Mothers Series delivers 15 daily devotionals tailored to the unique challenges and joys of motherhood. It covers topics such as the importance of sacrificial love, patience, and spiritual guidance, supporting mothers in their vital role with daily wisdom and encouragement.'
+    }
+];
+
+export const getImageUrl = (imageName, directory) => {
+    return `${awsBucket[NODE_ENV].s3BaseURL}/${directory}/${imageName}`;
+};
+

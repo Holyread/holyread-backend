@@ -1,21 +1,17 @@
 import { TestimonialModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
-import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
+import { getImageUrl } from '../../../lib/utils/utils'
 
-const NODE_ENV = config.NODE_ENV
-const testimonialControllerResponse = responseMessage.testimonialControllerResponse
+const { testimonialControllerResponse } = responseMessage
 
 /** Add testimonial */
 const createTestimonial = async (body: any) => {
     try {
         const result = await TestimonialModel.create(body)
-        if (!result) {
-            throw new Error(testimonialControllerResponse.createTestimonialFailure)
-        }
-        if (result.image) {
-            result.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.testimonialDirectory + '/' + result.image
-        }
+        if (!result) throw new Error(testimonialControllerResponse.createTestimonialFailure)
+        if (result.image) result.image = getImageUrl(result.image, `${awsBucket.testimonialDirectory}`);
+
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -30,9 +26,7 @@ const updateTestimonial = async (body: any, id: string) => {
             { ...body, updatedAt: new Date() },
             { new: true }
         )
-        if (data && data.image) {
-            data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.testimonialDirectory + '/' + data.image
-        }
+        if (data && data.image) data.image = getImageUrl(data.image, `${awsBucket.testimonialDirectory}`);
         return data
     } catch (e: any) {
         throw new Error(e)
@@ -55,12 +49,8 @@ const getAllTestimonials = async (skip: number, limit, search: object, sort) => 
         const result = await TestimonialModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         const count = await TestimonialModel.find(search).countDocuments()
         await Promise.all(result.map(async (item: any) => {
-            if (!item) {
-                return
-            }
-            if (item.image) {
-                item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.testimonialDirectory + '/' + item.image
-            }
+            if (!item) return
+            if (item.image) item.image = getImageUrl(item.image, `${awsBucket.testimonialDirectory}`);
         }))
         return { count, testimonials: result }
     } catch (e: any) {

@@ -58,58 +58,63 @@ const start = async () => {
         for (const user of usersRemindUnfinishedBook) {
             const randomBook = getRandomBookFromReading(user);
 
-            const unreadBook = await BookSummaryModel.findOne({ _id: randomBook.bookId }).select([
-                '_id',
-                'description',
-                'overview',
-                'bookFor',
-                'categories',
-                'coverImageBackground',
-                'title',
-                'author',
-                'views',
-                'coverImage',
-                'totalStar',
-                'status',
-            ]).populate('author').lean().exec();
+            if (randomBook) {
+                const unreadBook = await BookSummaryModel.findOne({ _id: randomBook?.bookId }).select([
+                    '_id',
+                    'description',
+                    'overview',
+                    'bookFor',
+                    'categories',
+                    'coverImageBackground',
+                    'title',
+                    'author',
+                    'views',
+                    'coverImage',
+                    'totalStar',
+                    'status',
+                ]).populate('author').lean().exec();
 
-            /** Get book rating */
-            const bookRating = await RatingModel.findOne({ bookId: unreadBook._id }).select('star').lean().exec();
-            bookDetails = { ...unreadBook, bookRating };
+                /** Get book rating */
+                const bookRating = await RatingModel.findOne({ bookId: unreadBook._id }).select('star').lean().exec();
+                bookDetails = { ...unreadBook, bookRating };
 
-            const tokens = user.pushTokens.map(token => token.token);
-            const notificationPayload = {
-                title: '🔔 You left something unfinished!',
-                body: `📙 lets read ${bookDetails.title}.`,
-                data: {
-                    publishContents: {
-                        _id: bookDetails?._id,
-                        description: bookDetails.description,
-                        overview: bookDetails.overview,
-                        bookFor: bookDetails.bookFor,
-                        categories: bookDetails.categories,
-                        coverImageBackground: bookDetails.coverImageBackground,
-                        title: bookDetails.title,
-                        author: bookDetails.author,
-                        views: bookDetails.views,
-                        coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${bookDetails.coverImage}`,
-                        totalStar: bookDetails.bookRating.star,
-                        status: bookDetails.status,
+                const tokens = user.pushTokens.map(token => token.token);
+                const notificationPayload = {
+                    title: '🔔 You left something unfinished!',
+                    body: `📙 lets read ${bookDetails.title}.`,
+                    data: {
+                        publishContents: {
+                            _id: bookDetails?._id,
+                            description: bookDetails.description,
+                            overview: bookDetails.overview,
+                            bookFor: bookDetails.bookFor,
+                            categories: bookDetails.categories,
+                            coverImageBackground: bookDetails.coverImageBackground,
+                            title: bookDetails.title,
+                            author: bookDetails.author,
+                            views: bookDetails.views,
+                            coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${bookDetails.coverImage}`,
+                            totalStar: bookDetails.bookRating.star,
+                            status: bookDetails.status,
+                        },
                     },
-                },
-            };
-            try {
-                await pushNotification(tokens, notificationPayload.title, notificationPayload.body, JSON.stringify(notificationPayload.data));
-                notificationsSent.push({
-                    userId: user._id,
-                    success: true,
-                });
-            } catch (error: any) {
-                notificationsSent.push({
-                    userId: user._id,
-                    success: false,
-                    errorMessage: error.message,
-                });
+                };
+                try {
+                    await pushNotification(tokens, notificationPayload.title, notificationPayload.body, JSON.stringify(notificationPayload.data));
+                    notificationsSent.push({
+                        userId: user._id,
+                        success: true,
+                    });
+                } catch (error: any) {
+                    notificationsSent.push({
+                        userId: user._id,
+                        success: false,
+                        errorMessage: error.message,
+                    });
+                }
+            }
+            else {
+                console.log('JOB(🔴) not found incomplete book from reading list');
             }
         }
         // Log Success

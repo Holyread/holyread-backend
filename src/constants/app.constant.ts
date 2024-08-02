@@ -58,6 +58,7 @@ export const awsBucket = {
     readsOfDayDirectory: 'readsOfDay',
     testimonialDirectory: 'testimonial',
     expertCuratedDirectory: 'expertCurated',
+    devotionalCategoryDirectory: 'devotionalCategory',
 }
 
 export const dataTable = {

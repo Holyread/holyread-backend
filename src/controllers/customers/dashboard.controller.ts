@@ -5,17 +5,16 @@ import Boom from '@hapi/boom';
 import bookSummaryService from '../../services/customers/book/bookSummary.service'
 import bookCategoryService from '../../services/customers/book/bookCategory.service'
 import expertCuratedService from '../../services/customers/book/expertCurated.service'
-import readsOfDayService from '../../services/customers/readsOfDay/readsOfDay.service'
+import dailyDevotionalService from '../../services/customers/dailyDevotional/dailyDevotional.service'
 import ratingService from '../../services/customers/book/rating.service'
 import autherService from '../../services/customers/book/author.service'
 import smallGroupService from '../../services/customers/smallGroup/smallGroup.service'
 import { responseMessage } from '../../constants/message.constant'
 import { awsBucket, dataLimit } from '../../constants/app.constant'
-import { sortArrayObject } from '../../lib/utils/utils'
+import { sortArrayObject, calculateDateInThePast } from '../../lib/utils/utils'
 import config from '../../../config'
 import userService from '../../services/customers/users/user.service';
 import recommendedBookService from '../../services/customers/book/recommendedBook.service';
-import subscriptionService from '../../services/customers/subscriptions/subscriptions.service';
 
 const NODE_ENV = config.NODE_ENV
 const dashboardControllerResponse = responseMessage.dashboardControllerResponse
@@ -128,35 +127,79 @@ const getCuratedsList = async (request: Request, response: Response, next: NextF
     }
 }
 
-/** Get reads of the day for Dashboard */
-const getReadsOfTheDay = async (request: Request | any, response: Response, next: NextFunction) => {
+/** Get daily devotional for Dashboard */
+const getDailyDevotional = async (request: Request | any, response: Response, next: NextFunction) => {
     try {
+        const params: any = request.query;
+        const skip: number = Number(params.skip) || 0;
+        const limit: number = Number(params.limit);
+        const userObj: any = { ...request.user };
+        const query: any = { _id: userObj.libraries };
         let data: any;
-        const params: any = request.query
-        const skip: any = params.skip
-        const limit: any = params.limit
 
-        const subscriptionStatus = await subscriptionService.getUserSubscriptionStatus(request.user)
-        if (subscriptionStatus === 'freemium') {
-            /** Set today start and end */
-            const start = new Date();
-            start.setDate(new Date().getDate() - 1);
-            start.setHours(0, 0, 0, 0);
-            const end = new Date();
-            end.setHours(23, 59, 59, 999);
-            data = await readsOfDayService.getAllReadsOfDays(Number(skip), Number(limit), { displayAt: { $gte: new Date(start), $lte: new Date(end) } }, [['displayAt', 'desc']])
-        } else {
-            data = await readsOfDayService.getAllReadsOfDays(Number(skip), Number(limit), {}, [['displayAt', 'desc']])
+        // Initialize date range
+        let start = new Date();
+        let end = new Date();
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+
+        let filter: any = {};
+
+        // Determine date filter
+        if (params.timeFrame === 'latest') {
+            filter = { publishedAt: { $gte: start, $lte: end }, publish: true };
+        } else if (params.timeFrame === 'yesterday') {
+            const yesterday = calculateDateInThePast(1);
+            yesterday.setHours(0, 0, 0, 0);
+            const nextDay = new Date(yesterday);
+            nextDay.setDate(yesterday.getDate() + 1);
+            nextDay.setHours(0, 0, 0, 0);
+            filter = { publishedAt: { $gte: yesterday, $lt: nextDay }, publish: true };
+        } else if (params.timeFrame === 'all') {
+            filter = { publish: true };
         }
 
+        // Retrieve user libraries
+        userObj.libraries = await userService.getUserLibrary(query);
+
+        if (!userObj?.libraries?.devotionalCategories?.length && params.timeFrame !== 'all') {
+            // If no specific categories, get all devotionals without category filter
+            filter.category = { $exists: false };
+            data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]);
+        } else if (params.timeFrame === 'all') {
+            data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]);
+        } else {
+            // Get devotionals from general and user-specific categories
+            const categories = userObj.libraries.devotionalCategories;
+            filter.category = { $exists: false };
+            const generalDevotionalData: any = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]) || [];
+
+            filter.category = { $in: categories };
+            const categoryDevotionalData: any = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]) || [];
+
+            // Combine and sort data
+            const combinedData = [...generalDevotionalData.dailyDevotionalList, ...categoryDevotionalData.dailyDevotionalList];
+            combinedData.sort((a: any, b: any) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+            // Apply skip and limit
+            if (limit) {
+                data = combinedData.slice(skip, skip + limit);
+            } else {
+                data = combinedData.slice(skip);
+            }
+
+            data = { count: generalDevotionalData.count + categoryDevotionalData.count, dailyDevotionalList: data };
+        }
+
+        // Send response
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data,
-        })
+        });
     } catch (e: any) {
-        next(Boom.badData(e.message))
+        next(Boom.badData(e.message));
     }
-}
+};
 
 /** Get recommended books for dashboard */
 const getRecommendedBooks = async (request: any, response: Response, next: NextFunction) => {
@@ -164,9 +207,15 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
         const libraries = await userService.getUserLibrary({ _id: request.user.libraries })
 
         const bookIds = libraries.reading.map(item => item.bookId);
+        const readingBook = await bookSummaryService.findBooks({ _id: { $in: bookIds } });
 
-        const books = await bookSummaryService.findBooks({ _id: { $in: bookIds } });
+        const categoryIds = libraries.categories || [];
+        let categoriesBooks = [];
+        if (categoryIds.length > 0) {
+            categoriesBooks = await bookSummaryService.findRandomBooks({ $match: { categories: { $in: categoryIds }, publish: true } }, 5);
+        }
 
+        const books = [...readingBook, ...categoriesBooks];
         const preferredCategories = [];
         books.forEach(book => {
             book.categories.forEach(categoryId => {
@@ -196,7 +245,7 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
             }, 0);
 
             const numBooksToSelect = Math.ceil(MAX_SUGGESTIONS * (categoryWeight / books.length) * weightFactor);
-            const categoryFilterquery = { $match: { categories: category, publish: true } }
+            const categoryFilterquery = { $match: { categories: category, publish: true, _id: { $nin: bookIds } } }
             const selectedBooks = await bookSummaryService.findRandomBooks(categoryFilterquery, numBooksToSelect)
 
             selectedBooks.forEach(book => {
@@ -269,8 +318,8 @@ const getFavoriteCategoriesBooks = async (request: any, response: Response, next
     try {
         const libraries = await userService.getUserLibrary({ _id: request.user.libraries })
 
-        const categoryIds = libraries.categories.map(item => item);
-        const books = await bookSummaryService.findBooks({ categories: { $in: categoryIds } });
+        const categoryIds = libraries.categories || [];
+        const books = await bookSummaryService.findRandomBooks({ $match: { categories: { $in: categoryIds }, publish: true } }, 5);
         const preferredCategories = [];
         books.forEach(book => {
             book.categories.forEach(categoryId => {
@@ -408,7 +457,7 @@ export {
     getCuratedsList,
     getLatestBooks,
     getPopularBooks,
-    getReadsOfTheDay,
+    getDailyDevotional,
     getRecentReads,
     getRecommendedBooks,
     getSmallGroups,

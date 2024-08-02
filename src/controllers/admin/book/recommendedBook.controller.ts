@@ -15,13 +15,11 @@ const addRecommendedBook = async (req: Request, res: Response, next: NextFunctio
     try {
         const body = req.body
         const bookDetails = await bookSummaryService.getOneBookSummaryByFilter({ _id: body.book })
-        if (!bookDetails) {
-            return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
-        }
+        if (!bookDetails) return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
+
         const existingRecommendedBook = await recommendedBookService.getOneRecommendedBookByFilter({ book: body.book })
-        if (existingRecommendedBook) {
-            return next(Boom.notFound(recommendedBookControllerResponse.createRecommendedBookFailure))
-        }
+        if (existingRecommendedBook) return next(Boom.notFound(recommendedBookControllerResponse.createRecommendedBookFailure))
+
         const data = await recommendedBookService.createRecommendedBook({ book: body.book })
         res.status(200).send({
             message: recommendedBookControllerResponse.createRecommendedBookSuccess,
@@ -38,9 +36,8 @@ const getOneRecommendedBook = async (req: Request, res: Response, next: NextFunc
         const id: any = req.params.id
         /** Get author from db */
         const data: any = await recommendedBookService.getOneRecommendedBookByFilter({ _id: id })
-        if (!data) {
-            return next(Boom.notFound(recommendedBookControllerResponse.getRecommendedBookFailure))
-        }
+        if (!data) return next(Boom.notFound(recommendedBookControllerResponse.getRecommendedBookFailure))
+
         res.status(200).send({
             message: recommendedBookControllerResponse.fetchRecommendedBookSuccess,
             data,
@@ -77,9 +74,10 @@ const getAllRecommendedBooks = async (request: Request, response: Response, next
         const data = await recommendedBookService.getAllRecommendedBooks(Number(skip), Number(limit), searchFilter, listSorting)
         data.recommendedBooks.forEach((element: any) => {
             if (element && element.book) {
-                  element.book = element.book.title
+                element.book = element.book.title
             }
-      });
+        });
+
         response.status(200).json({ message: recommendedBookControllerResponse.fetchRecommendedBooksSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))

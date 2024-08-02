@@ -518,7 +518,7 @@ const updateBookSummary = async (body: any, query: object) => {
 /** Get books summary */
 const findBooks = async (query: any) => {
     try {
-        const data: any = await BookSummaryModel.find(query).lean().exec()
+        const data: any = await BookSummaryModel.find(query).select('categories _id').lean().exec()
         return data
     } catch (e: any) {
         throw new Error(e)
@@ -530,6 +530,7 @@ const findRandomBooks = async (query: any, count: any) => {
     try {
         const data: any = await BookSummaryModel.aggregate([
             query,
+            { $project: { categories: 1, _id: 1 } },
             { $sample: { size: count } },
         ])
         return data

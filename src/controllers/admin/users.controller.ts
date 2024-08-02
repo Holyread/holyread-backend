@@ -154,26 +154,22 @@ const getOneUser = async (req: Request | any, res: Response, next: NextFunction)
 /** Get all Users */
 const getAllUsers = async (request: Request | any, response: Response, next: NextFunction) => {
     try {
-        const params = request.query
-        const skip: any = params.skip ? params.skip : dataTable.skip
-        const limit: any = params.limit
+        const params = request.query;
+        const skip = params.skip || dataTable.skip;
+        const limit = params.limit;
 
-        let searchFilter: any = {}
+        let searchFilter: any = {};
 
+        // Handle search query
         const searchQuery = params.search ? {
-            $or: [
-                { 'email': await getSearchRegexp(params.search) },
-                { 'firstName': await getSearchRegexp(params.search) },
-                { 'lastName': await getSearchRegexp(params.search) },
-                { 'status': await getSearchRegexp(params.search) },
-                { 'stripe.coupon': await getSearchRegexp(params.search) },
-                { 'inAppSubscription.coupon': await getSearchRegexp(params.search) },
-                { 'device': await getSearchRegexp(params.search) },
-                { 'transaction.total': await getSearchRegexp(params.search) },
-            ],
+            $or: await Promise.all(
+                ['email', 'firstName', 'lastName', 'stripe.coupon', 'inAppSubscription.coupon', 'device', 'transaction.total']
+                    .map(async field => ({ [field]: await getSearchRegexp(params.search) }))
+            ),
             type: 'User',
-        } : {}
+        } : {};
 
+        // Handle plan filter query
         const planQuery = [
             'Yearly',
             'Monthly',
@@ -182,270 +178,227 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             params.planFilter
         )
             ? { 'subscription.title': params.planFilter }
-            : {}
+            : {};
 
-        /** Feat search query for payment mode */
-        let paymentModeQuery = {};
-        if (params?.paymentModeFilter === 'ios') {
-            paymentModeQuery = {
-                'inAppSubscription.purchaseToken': { $exists: false },
-                'transaction.device': 'app',
+        // Handle payment mode filter query
+        let paymentModeQuery: any = {};
+        if (params.paymentModeFilter) {
+            switch (params.paymentModeFilter) {
+                case 'ios':
+                    paymentModeQuery = {
+                        'inAppSubscription.purchaseToken': { $exists: false },
+                        'transaction.device': 'app',
+                    };
+                    break;
+                case 'android':
+                    paymentModeQuery = {
+                        'inAppSubscription.purchaseToken': { $exists: true },
+                        'transaction.device': 'app',
+                    };
+                    break;
+                case 'web':
+                    paymentModeQuery = {
+                        'transaction.device': 'web',
+                    };
+                    break;
+                default:
+                    break;
             }
         }
-        if (params?.paymentModeFilter === 'android') {
-            paymentModeQuery = {
-                'inAppSubscription.purchaseToken': { $exists: true },
-                'transaction.device': 'app',
-            }
-        }
-        if (params?.paymentModeFilter === 'web') {
-            paymentModeQuery = { 'transaction.device': 'web' }
-        }
 
+        // Combine all filters based on statusFilter
         if (!params?.statusFilter) {
             searchFilter = {
                 ...searchQuery,
                 ...planQuery,
                 ...paymentModeQuery,
+            };
+        } else {
+            const statusFilterLower = params.statusFilter.toLowerCase();
+            if (statusFilterLower.includes('freemium')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'stripe.status': {
+                            $in: [
+                                'trialing',
+                                'incomplete',
+                                'past_due',
+                                'unpaid',
+                                'incomplete_expired',
+                            ],
+                        },
+                    },
+                    {
+                        stripe: { $exists: false },
+                        inAppSubscription: { $exists: false },
+                        ...planQuery,
+                        ...searchQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
+            }
+            if (statusFilterLower.includes('cancelledplan')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'stripe.status': 'canceled',
+                        ...planQuery,
+                        ...searchQuery,
+                        ...paymentModeQuery,
+                    },
+                    {
+                        'inAppSubscriptionStatus': 'Canceled',
+                        ...planQuery,
+                        ...searchQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
+            }
+            if (statusFilterLower.includes('presignupusers')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'isSignedUp': false,
+                        ...planQuery,
+                        ...searchQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
+            }
+            if (statusFilterLower.includes('paiduser')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'inAppSubscription': { $exists: true },
+                        'inAppSubscriptionStatus': 'Active',
+                        device: { $in: ['ios', 'android'] },
+                        'stripe.coupon': { $eq: undefined },
+                        ...planQuery,
+                        ...searchQuery,
+                        ...paymentModeQuery,
+                    },
+                    {
+                        'stripe.status': 'active',
+                        'stripe.coupon': { $eq: undefined },
+                        ...planQuery,
+                        ...searchQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
+            }
+            if (statusFilterLower.includes('couponactivated')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'inAppSubscription': { $exists: true },
+                        'inAppSubscriptionStatus': 'Active',
+                        device: { $in: ['ios', 'android'] },
+                        'stripe.status': 'active',
+                        'stripe.coupon': { $exists: true, $ne: undefined },
+                        ...planQuery,
+                        ...searchQuery,
+                        ...paymentModeQuery,
+                    },
+                    {
+                        'stripe.status': 'active',
+                        'stripe.coupon': { $exists: true, $ne: undefined },
+                        ...planQuery,
+                        ...searchQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
             }
         }
 
+        // Handle date range filter
         if (params.from && params.to) {
-            if (Date.parse(params.to) >= Date.parse(params.from))
+            const fromDate = new Date(params.from);
+            const toDate = new Date(params.to);
+            if (fromDate <= toDate) {
                 searchFilter.createdAt = {
-                    $gte: new Date(params.from),
-                    $lte: new Date(new Date(params.to).setDate(new Date(params.to).getDate() + 1)),
-                }
-            else {
-                return next(Boom.badData(authControllerResponse.invalidDateError))
+                    $gte: fromDate,
+                    $lte: new Date(toDate.setDate(toDate.getDate() + 1)),
+                };
+            } else {
+                return next(Boom.badData(authControllerResponse.invalidDateError));
             }
-        }
-        if (params.from && !params.to) {
+        } else if (params.from) {
             searchFilter.createdAt = {
                 $gte: new Date(params.from),
-            }
-        }
-        if (!params.from && params.to) {
+            };
+        } else if (params.to) {
             searchFilter.createdAt = {
                 $lte: new Date(new Date(params.to).setDate(new Date(params.to).getDate() + 1)),
-            }
+            };
         }
 
-        searchFilter.type = 'User'
+        searchFilter.type = 'User';
 
-        if (
-            params?.statusFilter?.toLowerCase()?.includes('freemium')
-        ) {
-            searchFilter.$or = [
-                ...(searchFilter.$or || []),
-                {
-                    'stripe.status': {
-                        $in: [
-                            'trialing',
-                            'incomplete',
-                            'past_due',
-                            'unpaid',
-                            'incomplete_expired',
-                        ],
-                    },
-                },
-                {
-                    stripe: { $exists: false },
-                    inAppSubscription: { $exists: false },
-                    ...planQuery,
-                    ...searchQuery,
-                    ...paymentModeQuery,
-                },
-            ]
-        }
+        // Handle sorting
+        const usersSorting: any = {};
+        params.order = params.order && params.order.toLowerCase() === 'asc' ? 1 : -1;
+        const data = ['firstName', 'lastName', 'email', 'createdAt'];
+        const targetColumn = data.includes(params.column) ? params.column : 'createdAt';
+        usersSorting[targetColumn] = params.order;
 
-        if (
-            params?.statusFilter?.toLowerCase()?.includes('cancelled plan')
-        ) {
-            searchFilter.$or = [
-                ...(searchFilter.$or || []),
-                {
-                    'stripe.status': 'canceled',
-                    ...planQuery,
-                    ...searchQuery,
-                    ...paymentModeQuery,
-                },
-                {
-                    'inAppSubscriptionStatus': 'Canceled',
-                    ...planQuery,
-                    ...searchQuery,
-                    ...paymentModeQuery,
-                },
-            ]
-        }
-        if (
-            params?.statusFilter?.toLowerCase()?.includes('presignupusers')
-        ) {
-            searchFilter.$or = [
-                ...(searchFilter.$or || []),
-                {
-                    'isSignedUp': false,
-                    ...planQuery,
-                    ...searchQuery,
-                    ...paymentModeQuery,
-                },
-            ]
-        }
-
-        // if (
-        //     params?.statusFilter?.toLowerCase()?.includes('trial plan')
-        // ) {
-        //     searchFilter['$or'] = [
-        //         ...(searchFilter['$or'] || []),
-        //         {
-        //             'stripe.status': { $in: ['freemium', 'incomplete'] },
-        //             ...planQuery,
-        //             ...searchQuery,
-        //             ...paymentModeQuery
-        //         },
-        //         {
-        //             stripe: { $exists: false },
-        //             inAppSubscription: { $exists: false },
-        //             ...planQuery,
-        //             ...searchQuery,
-        //             ...paymentModeQuery
-        //         },
-        //     ]
-        // }
-
-        if (
-            params?.statusFilter?.toLowerCase()?.includes('paid user')
-        ) {
-            searchFilter.$or = [
-                ...(searchFilter.$or || []),
-                {
-                    'inAppSubscription': { $exists: true },
-                    'inAppSubscriptionStatus': 'Active',
-                    device: { $in: ['ios', 'android'] },
-                    'stripe.coupon': { $eq: undefined },
-                    ...planQuery,
-                    ...searchQuery,
-                    ...paymentModeQuery,
-                },
-                {
-                    'stripe.status': 'active',
-                    'stripe.coupon': { $eq: undefined },
-                    ...planQuery,
-                    ...searchQuery,
-                    ...paymentModeQuery,
-                },
-            ]
-        }
-
-        if (
-            params?.statusFilter?.toLowerCase()?.includes('coupon activated')
-        ) {
-            searchFilter['$or'] = [
-                ...(searchFilter['$or'] || []),
-                {
-                    'inAppSubscription': { $exists: true },
-                    'inAppSubscriptionStatus': 'Active',
-                    device: { $in: ['ios', 'android'] },
-                    'stripe.status': 'active',
-                    'stripe.coupon': { $exists: true, $ne: undefined },
-                    ...planQuery,
-                    ...searchQuery,
-                    ...paymentModeQuery,
-                },
-                {
-                    'stripe.status': 'active',
-                    'stripe.coupon': { $exists: true, $ne: undefined },
-                    ...planQuery,
-                    ...searchQuery,
-                    ...paymentModeQuery,
-                },
-            ]
-        }
-
-        const usersSorting = {};
-
-        params.order = params.order && params?.order?.toLowerCase() === 'asc' ? 1 : -1
-        switch (params.column) {
-            case 'firstName':
-                usersSorting['firstName'] = params.order;
-                break;
-            case 'lastName':
-                usersSorting['lastName'] = params.order;
-                break;
-            case 'email':
-                usersSorting['email'] = params.order;
-                break;
-            case 'createdAt':
-                usersSorting['createdAt'] = params.order;
-                break;
-            default:
-                usersSorting['createdAt'] = -1;
-                break;
-        }
-
+        // Fetch users and apply transformations
         const { count, users } = await usersService.getAllUsers(
             Number(skip),
             Number(limit),
             searchFilter,
             usersSorting
         );
-        await Promise.all(users.map(async (i: any) => {
-            i.createdAt = i?.createdAt && formattedDate(i?.createdAt)?.replace(/ /g, ' ')
-            i.coupon = i?.stripe?.coupon || i?.inAppSubscription?.coupon || '';
-            i.transaction = i.transaction[0];
-            i.total = i.transaction?.amount?.total;
-            i.subscription = i.subscription[0]?.title;
-            if (i.transaction) {
-                i.paymentmethod = params.flag !== 'csv'
-                    ? i.transaction?.device === 'web' ? ['fa-cc-' + i.transaction?.paymentMethod?.brand?.toLowerCase(), (i.transaction?.paymentMethod?.brand || '')] : ['fa fa-mobile', i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)']
-                    : i.transaction?.device === 'web' ? i.transaction?.paymentMethod?.brand : i?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)';
+
+        await Promise.all(users.map(async (user: any) => {
+            user.createdAt = user?.createdAt && formattedDate(user?.createdAt)?.replace(/ /g, ' ');
+            user.coupon = user?.stripe?.coupon || user?.inAppSubscription?.coupon || '';
+            user.transaction = user.transaction[0];
+            user.total = user.transaction?.amount?.total;
+            user.subscription = user.subscription[0]?.title;
+
+            // Determine payment method
+            if (user.transaction) {
+                user.paymentmethod = params.flag !== 'csv'
+                    ? user.transaction?.device === 'web' ? ['fa-cc-' + user.transaction?.paymentMethod?.brand?.toLowerCase(), (user.transaction?.paymentMethod?.brand || '')] : ['fa fa-mobile', user?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)']
+                    : user.transaction?.device === 'web' ? user.transaction?.paymentMethod?.brand : user?.inAppSubscription?.purchaseToken ? 'In-App (Android)' : 'In-App (IOS)';
             }
-            if (!i.stripe && !i.inAppSubscription) {
-                i.subscriptionStatus = 'Freemium'
-            }
-            if (
-                !i.subscriptionStatus &&
-                i.inAppSubscriptionStatus &&
-                ['android', 'ios'].includes(i.device)
-            ) {
-                i.subscriptionStatus = i.inAppSubscriptionStatus === 'Active' ? (i.stripe?.coupon ? 'Coupon' : 'Activated') : 'Cancelled'
-            }
-            if (!i.subscriptionStatus && i?.stripe?.subscriptionId) {
-                if (!i.stripe?.status) {
-                    i.subscriptionStatus = 'Freemium'
-                } else if (['trialing', 'incomplete'].includes(i.stripe?.status)) {
-                    i.subscriptionStatus = 'Freemium'
-                } else if (i.stripe?.status === 'active') {
-                    i.subscriptionStatus = 'Activated'
-                } else if (i.stripe?.status === 'canceled') {
-                    i.subscriptionStatus = 'Cancelled'
-                } else if (
-                    [
-                        'past_due',
-                        'unpaid',
-                        'incomplete_expired',
-                    ].includes(i.stripe?.status)
-                ) {
-                    i.subscriptionStatus = 'Freemium'
+
+            // Determine subscription status
+            if (!user.subscriptionStatus) {
+                if (!user.stripe && !user.inAppSubscription) {
+                    user.subscriptionStatus = 'Freemium';
+                } else if (user.inAppSubscriptionStatus && ['android', 'ios'].includes(user.device)) {
+                    user.subscriptionStatus = user.inAppSubscriptionStatus === 'Active' ? (user.stripe?.coupon ? 'Coupon' : 'Activated') : 'Cancelled';
+                } else if (user?.stripe?.subscriptionId) {
+                    if (!user.stripe?.status || ['trialing', 'incomplete'].includes(user.stripe?.status)) {
+                        user.subscriptionStatus = 'Freemium';
+                    } else if (user.stripe?.status === 'active') {
+                        user.subscriptionStatus = user.stripe?.coupon ? 'Coupon' : 'Activated';
+                    } else if (user.stripe?.status === 'canceled' || ['past_due', 'unpaid', 'incomplete_expired'].includes(user.stripe?.status)) {
+                        user.subscriptionStatus = 'Cancelled';
+                    } else {
+                        user.subscriptionStatus = 'Freemium';
+                    }
                 } else {
-                    i.subscriptionStatus = 'Freemium'
+                    user.subscriptionStatus = 'Freemium';
                 }
             }
-            if (!i.subscriptionStatus) {
-                i.subscriptionStatus = 'Freemium'
+
+            // Special case for 'Coupon' subscription status
+            if (user.stripe?.status === 'active' && user.stripe?.coupon) {
+                user.subscriptionStatus = 'Coupon';
             }
-            if (i.stripe?.status === 'active' && i.stripe?.coupon) {
-                i.subscriptionStatus = 'Coupon'
-            }
-        }))
+        }));
+
         response.status(200).json({
             message: authControllerResponse.getUsersSuccess,
             data: { count, users },
-        })
-    } catch (e: any) {
-        next(Boom.badData(e.message))
+        });
+    } catch (error: any) {
+        next(Boom.badData(error.message));
     }
-}
+};
 
 /** Update user */
 const updateUser = async (req: Request | any, res: Response, next: NextFunction) => {

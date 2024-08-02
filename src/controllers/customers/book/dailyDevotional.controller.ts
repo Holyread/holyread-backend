@@ -6,7 +6,7 @@ import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { responseMessage } from '../../../constants/message.constant'
 const NODE_ENV = config.NODE_ENV
-const readsOfDayControllerResponse = responseMessage.readsOfDayControllerResponse
+const dailyDevotionalControllerResponse = responseMessage.dailyDevotionalControllerResponse
 
 /** Get all author options list */
 const getOneDailyDevotional = async (request: Request, response: Response, next: NextFunction) => {
@@ -16,7 +16,7 @@ const getOneDailyDevotional = async (request: Request, response: Response, next:
         if (!data) {
             return next(
                 Boom.notFound(
-                    readsOfDayControllerResponse.getReadOfDayFailure
+                    dailyDevotionalControllerResponse.getDailyDevotionalFailure
                 )
             )
         }
@@ -24,7 +24,14 @@ const getOneDailyDevotional = async (request: Request, response: Response, next:
         if (data.image) {
             data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + data.image
         }
-        response.status(200).json({ message: readsOfDayControllerResponse.fetchReadOfDaySuccess, data })
+        if (data && data.video) {
+            data.video = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/video/' + data.video
+        }
+
+        if (data && data.audio) {
+            data.audio = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/audio/' + data.audio
+        }
+        response.status(200).json({ message: dailyDevotionalControllerResponse.fetchDailyDevotionalSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
     }

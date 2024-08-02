@@ -1,20 +1,15 @@
 import { awsBucket } from '../../../constants/app.constant'
-import config from '../../../../config'
 import { ExpertCuratedModel } from '../../../models/index'
 import { responseMessage } from '../../../constants/message.constant'
+import { getImageUrl } from '../../../lib/utils/utils'
 
-const NODE_ENV = config.NODE_ENV
 const expertCuratedControllerResponse = responseMessage.expertCuratedControllerResponse
 
 const createExpertCurated = async (body: any) => {
     try {
         const result = await ExpertCuratedModel.create(body)
-        if (!result) {
-            throw new Error(expertCuratedControllerResponse.createExpertCuratedFailure)
-        }
-        if (result.image) {
-            result.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/' + result.image
-        }
+        if (!result) {throw new Error(expertCuratedControllerResponse.createExpertCuratedFailure)}
+        if (result.image) result.image = getImageUrl(result.image, `${awsBucket.bookDirectory}/expertCurated`);
         return result
     } catch (e: any) {
         throw new Error(e)
@@ -29,9 +24,7 @@ const updateExpertCurated = async (body: any, id: string) => {
             { ...body, updatedAt: new Date() },
             { new: true }
         )
-        if (data && data.image) {
-            data.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/' + data.image
-        }
+        if (data && data.image) data.image = getImageUrl(data.image, `${awsBucket.bookDirectory}/expertCurated`);
         return data
     } catch (e: any) {
         throw new Error(e)
@@ -55,9 +48,7 @@ const getAllExpertCurated = async (skip: number, limit, search: object, sort) =>
         const count: number = await ExpertCuratedModel.find(search).countDocuments()
         if (result.length) {
             await Promise.all(result.map(item => {
-                if (item && item.image) {
-                    item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/' + item.image
-                }
+                if (item && item.image) item.image = getImageUrl(item.image, `${awsBucket.bookDirectory}/expertCurated`);
             }))
         }
         return { count, data: result }

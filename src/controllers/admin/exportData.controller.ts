@@ -85,6 +85,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
             { header: 'Video', key: 'video' },
             { header: 'Image', key: 'image' },
             { header: 'Status', key: 'status' },
+            { header: 'Publish', key: 'publish' },
             { header: 'Created At', key: 'createdAt' },
         ];
 
@@ -191,6 +192,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                         item.video,
                         item.image,
                         item.status,
+                        item.publish,
                         item.createdAt,
                     ]);
                 } else if (dataType === 'Curated list') {
@@ -280,7 +282,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
             });
         });
 
-        const dailyDevotionalExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1'];
+        const dailyDevotionalExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1'];
         const curatedExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1'];
         const smallGroupExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1'];
         const mostPopularExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1', 'L1', 'M1'];
@@ -374,9 +376,11 @@ const exportUsersData = async (request: Request, response: Response, next: NextF
                 coupon: item.coupon,
                 device: item.device,
                 status: item.status,
-            }).commit();
+            })
         });
-
+        const usersExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1','H1', 'I1', 'J1', 'K1'];
+        await setHeaderBackgroundColor(usersExcelHeaderCells, wsUsers);
+        await setColumnWidth(wsUsers);
         await workbook.commit();
         response.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
         response.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

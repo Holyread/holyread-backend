@@ -78,96 +78,61 @@ export const isBase64 = async (v: any, opts: any) => {
     }
 }
 
-const uploadPart = (s3: any, params) => {
-    return new Promise((resolve, reject) => {
-        s3.uploadPart(params, (err, data) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(data);
-            }
-        });
-    });
-};
-
 export const uploadFileToS3 = async (
     base64Document: string,
     documentName: string,
     aWSBucket: { region: string, bucketName: string, documentDirectory: string }
 ) => {
     try {
-        const s3 = new aws.S3({
-            secretAccessKey: config.AWS_SECRET,
-            accessKeyId: config.AWS_ACCESSKEY,
-            region: aWSBucket.region,
-        });
+        return new Promise(async (resolve, reject) => {
+            const s3 = new aws.S3({
+                secretAccessKey: config.AWS_SECRET,
+                accessKeyId: config.AWS_ACCESSKEY,
+                region: aWSBucket.region,
+            })
 
-        let docContentType: any = await isBase64(base64Document, { allowMime: true });
-        if (!docContentType) {
-            throw new Error('File must be in base64 format');
-        }
+            let docContentType: any = await isBase64(base64Document, { allowMime: true })
+            if (!docContentType) { return reject(new Error('File must be in base64 format')) }
+            const base64 = base64Document.indexOf(';base64,')
 
-        const base64Index = base64Document.indexOf(';base64,');
-        let docExtension = '';
-        let pattern: any = /^data:image\/\w+;base64,/;
+            let docExtension = ''
+            let pattern: any = /^data:image\/\w+;base64,/
+            if (base64Document.indexOf('data:video/') > -1) {
+                docExtension = base64Document.substring('data:video/'.length, base64Document.indexOf(';base64'))
+                pattern = /^data:video\/\w+;base64,/
+            } else if (base64Document.indexOf('data:audio/') > -1) {
+                docExtension = base64Document.substring('data:audio/'.length, base64Document.indexOf(';base64'))
+                pattern = /^data:audio\/\w+;base64,/
+            } else if (base64Document.indexOf('data:application/epub+zip') > -1) {
+                docExtension = base64Document.substring('data:application/'.length, base64Document.indexOf('+zip;base64'));
+                pattern = 'data:application/epub+zip;base64,'
 
-        if (base64Document.indexOf('data:video/') > -1) {
-            docExtension = base64Document.substring('data:video/'.length, base64Document.indexOf(';base64'));
-            pattern = /^data:video\/\w+;base64,/;
-        } else if (base64Document.indexOf('data:audio/') > -1) {
-            docExtension = base64Document.substring('data:audio/'.length, base64Document.indexOf(';base64'));
-            pattern = /^data:audio\/\w+;base64,/;
-        } else if (base64Document.indexOf('data:application/epub+zip') > -1) {
-            docExtension = base64Document.substring('data:application/'.length, base64Document.indexOf('+zip;base64'));
-            pattern = 'data:application/epub+zip;base64,';
-        } else if (base64Document.indexOf('data:application/') > -1) {
-            docExtension = base64Document.substring('data:application/'.length, base64Document.indexOf(';base64'));
-            pattern = /^data:application\/\w+;base64,/;
-        } else if (base64Document.indexOf('data:image/') > -1) {
-            docExtension = base64Document.substring('data:image/'.length, base64Document.indexOf(';base64'));
-        } else {
-            throw new Error('File type not supported');
-        }
+            } else if (base64Document.indexOf('data:application/') > -1) {
+                docExtension = base64Document.substring('data:application/'.length, base64Document.indexOf(';base64'))
+                pattern = /^data:application\/\w+;base64,/
+            } else if (base64Document.indexOf('data:image/') > -1) {
+                docExtension = base64Document.substring('data:image/'.length, base64Document.indexOf(';base64'))
+            } else {
+                return reject(new Error('File type not supported'))
+            }
 
-        docContentType = base64Document.substring('data:'.length, base64Index);
-
-        const buffer = Buffer.from(base64Document.replace(pattern, ''), 'base64');
-        const regex = /[^A-Z0-9]+/ig;
-        const name = documentName.replace(regex, '_') + '_' + new Date().getTime() + '.' + docExtension;
-        const uploadId = await s3.createMultipartUpload({
-            Bucket: aWSBucket.bucketName,
-            Key: `${aWSBucket.documentDirectory}/${name}`,
-            ContentType: docContentType,
-        }).promise().then(data => data.UploadId);
-
-        const partSize = 5 * 1024 * 1024; // 5MB
-        const parts = [];
-        for (let i = 0; i < buffer.length; i += partSize) {
-            const end = Math.min(i + partSize, buffer.length);
-            const partBuffer = buffer.slice(i, end);
-            const partParams = {
-                Body: partBuffer,
-                Bucket: aWSBucket.bucketName,
-                Key: `${aWSBucket.documentDirectory}/${name}`,
-                PartNumber: parts.length + 1,
-                UploadId: uploadId,
-            };
-            const part: any = await uploadPart(s3, partParams);
-            parts.push({
-                ETag: part.ETag,
-                PartNumber: parts.length + 1,
-            });
-        }
-
-        await s3.completeMultipartUpload({
-            Bucket: aWSBucket.bucketName,
-            Key: `${aWSBucket.documentDirectory}/${name}`,
-            UploadId: uploadId,
-            MultipartUpload: { Parts: parts },
-        }).promise();
-
-        return { name, size: buffer.length };
-
+            docContentType = base64Document.substring('data:'.length, base64)
+            const buffer = Buffer.from(base64Document.replace(pattern, ''), 'base64')
+            const regex = /[^A-Z0-9]+/ig
+            const name: string = documentName.replace(regex, '_') + '_' + new Date().getTime() + '.' + docExtension
+            const option = {
+                Key: name,
+                Body: buffer,
+                ContentEncoding: 'base64',
+                ContentType: docContentType,
+                Bucket: `${aWSBucket.bucketName}/${aWSBucket.documentDirectory}`,
+            }
+            s3.putObject(option, (s3err, result: any) => {
+                if (s3err) reject('Error while uploading file')
+                const size = Buffer.byteLength(buffer)
+                resolve({ name, size })
+            })
+        })
     } catch (e: any) {
         throw new Error(e.message)
     }

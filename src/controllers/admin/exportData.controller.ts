@@ -374,11 +374,9 @@ const exportUsersData = async (request: Request, response: Response, next: NextF
                 coupon: item.coupon,
                 device: item.device,
                 status: item.status,
-            });
+            }).commit();
         });
-        const usersExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1','H1', 'I1', 'J1', 'K1'];
-        await setHeaderBackgroundColor(usersExcelHeaderCells, wsUsers);
-        await setColumnWidth(wsUsers);
+
         await workbook.commit();
         response.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
         response.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

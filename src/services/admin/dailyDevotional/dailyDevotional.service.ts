@@ -85,6 +85,13 @@ const getDailyDevotionalList = async () => {
         await Promise.all(result.map(async (i: any) => {
             i.createdAt = formattedDate(i.createdAt).replace(/ /g, ' ')
         }))
+        if (result.length) {
+            await Promise.all(result.map((item: any) => {
+                if (item && typeof item.publish === 'boolean') {
+                    item.publish = item.publish ? 'Publish' : 'Pending';
+                }
+            }));
+        }
         return result
     } catch (e: any) {
         throw new Error(e)

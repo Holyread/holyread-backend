@@ -57,100 +57,102 @@ const getAllUsers = async (
     skip: number,
     limit: number,
     search: object,
-    sort:  Record<string, any>
+    sort: Record<string, any>
 ) => {
     try {
         const page: any = [
             { $skip: skip },
-        ]
+        ];
         if (limit) {
-            page.push({ $limit: limit })
+            page.push({ $limit: limit });
         }
-        const result: any
-            = await UserModel
-                .aggregate([
-                    {
-                        $project: {
-                            type: 1.0,
-                            email: 1.0,
-                            stripe: 1.0,
-                            status: 1.0,
-                            device: 1.0,
-                            lastName: 1.0,
-                            lastTrnId: 1.0,
-                            firstName: 1.0,
-                            createdAt: 1.0,
-                            subscription: 1.0,
-                            isSignedUp: 1.0,
-                            timeZone: 1.0,
-                            country: 1.0,
-                            image: {
-                                $concat: [
-                                    awsBucket[NODE_ENV].s3BaseURL + '/users/',
-                                    '$image',
-                                ],
-                            },
-                            inAppSubscriptionStatus: 1.0,
-                            'inAppSubscription.createdAt': 1.0,
-                            'inAppSubscription.expiredAt': 1.0,
-                            'inAppSubscription.coupon': 1.0,
-                            'inAppSubscription.purchaseToken': 1.0,
+        const result: any = await UserModel.aggregate([
+            {
+                $project: {
+                    type: 1.0,
+                    email: 1.0,
+                    stripe: 1.0,
+                    status: 1.0,
+                    device: 1.0,
+                    lastName: 1.0,
+                    lastTrnId: 1.0,
+                    firstName: 1.0,
+                    createdAt: 1.0,
+                    subscription: 1.0,
+                    isSignedUp: 1.0,
+                    timeZone: 1.0,
+                    country: 1.0,
+                    image: {
+                        $concat: [
+                            awsBucket[NODE_ENV].s3BaseURL + '/users/',
+                            '$image',
+                        ],
+                    },
+                    inAppSubscriptionStatus: 1.0,
+                    'inAppSubscription.createdAt': 1.0,
+                    'inAppSubscription.expiredAt': 1.0,
+                    'inAppSubscription.coupon': 1.0,
+                    'inAppSubscription.purchaseToken': 1.0,
+                },
+            },
+            {
+                $lookup: {
+                    as: 'subscription',
+                    foreignField: '_id',
+                    from: 'subscriptions',
+                    localField: 'subscription',
+                },
+            },
+            {
+                $lookup: {
+                    as: 'transaction',
+                    foreignField: '_id',
+                    from: 'transactions',
+                    localField: 'lastTrnId',
+                },
+            },
+            {
+                $match: search,
+            },
+            {
+                $project: {
+                    'lastTrnId': 0,
+                    'subscription.__v': 0,
+                    'subscription.saves': 0,
+                    'subscription.status': 0,
+                    'subscription.duration': 0,
+                    'subscription.createdAt': 0,
+                    'subscription.updatedAt': 0,
+                    'subscription.description': 0,
+                    'subscription.stripePlanId': 0,
+                    'subscription.intervalCount': 0,
+                },
+            },
+            {
+                $sort: sort,
+            },
+            {
+                $facet: {
+                    page,
+                    total: [
+                        {
+                            $count: 'count',
                         },
-                    },
-                    {
-                        $lookup: {
-                            as: 'subscription',
-                            foreignField: '_id',
-                            from: 'subscriptions',
-                            localField: 'subscription',
-                        },
-                    },
-                    {
-                        $lookup: {
-                            as: 'transaction',
-                            foreignField: '_id',
-                            from: 'transactions',
-                            localField: 'lastTrnId',
-                        },
-                    },
-                    {
-                        $match: search,
-                    },
-                    {
-                        $project: {
-                            'lastTrnId': 0,
-                            'subscription.__v': 0,
-                            'subscription.saves': 0,
-                            'subscription.status': 0,
-                            'subscription.duration': 0,
-                            'subscription.createdAt': 0,
-                            'subscription.updatedAt': 0,
-                            'subscription.description': 0,
-                            'subscription.stripePlanId': 0,
-                            'subscription.intervalCount': 0,
-                        },
-                    },
-                    {
-                        $sort: sort,
-                    },
-                    {
-                        $facet: {
-                            page,
-                            total: [
-                                {
-                                    $count: 'count',
-                                },
-                            ],
-                        },
-                    },
-                ]);
+                    ],
+                },
+            },
+        ], {
+            allowDiskUse: true // Enable external sorting
+        }).exec();
+
         const users = result[0]?.page;
 
-        return { count: result[0]?.total[0]?.count || 0, users }
+        return { count: result[0]?.total[0]?.count || 0, users };
     } catch (e: any) {
-        throw new Error(e)
+        throw new Error(e);
     }
-}
+};
+
 
 /** Remove User */
 const deleteUser = async (id: string) => {

@@ -12,3 +12,4 @@ import './set-last-transaction-id';
 // import './update-daily-devotional'
 // import './unset-displayat-from-daily-devotional'
 // import './remove-invalid-fcm-token'
+import './set-country.script'

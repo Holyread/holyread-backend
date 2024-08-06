@@ -64,6 +64,8 @@ export const responseMessage = {
         getCategorySuccess: 'User selected categories fetched successfully',
         missingCategoryError: 'Select at least one category as a favorite',
         getDevotionalCategorySuccess: 'Devotional categories fetched successfully',
+        getTimeZoneSuccess: 'Time zones fetched successfully',
+        getCountriesSuccess: 'Countries fetched successfully',
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

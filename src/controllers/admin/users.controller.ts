@@ -180,6 +180,14 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             ? { 'subscription.title': params.planFilter }
             : {};
 
+        const countryQuery = params.countryFilter
+            ? { 'country': params.countryFilter }
+            : {};
+
+        const timeZoneQuery = params.timeZoneFilter
+            ? { 'timeZone': params.timeZoneFilter }
+            : {};
+
         // Handle payment mode filter query
         let paymentModeQuery: any = {};
         if (params.paymentModeFilter) {
@@ -211,6 +219,8 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             searchFilter = {
                 ...searchQuery,
                 ...planQuery,
+                ...countryQuery,
+                ...timeZoneQuery,
                 ...paymentModeQuery,
             };
         } else {
@@ -233,6 +243,8 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                         stripe: { $exists: false },
                         inAppSubscription: { $exists: false },
                         ...planQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
                         ...searchQuery,
                         ...paymentModeQuery,
                     },
@@ -245,12 +257,16 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                         'stripe.status': 'canceled',
                         ...planQuery,
                         ...searchQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
                         ...paymentModeQuery,
                     },
                     {
                         'inAppSubscriptionStatus': 'Canceled',
                         ...planQuery,
                         ...searchQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
                         ...paymentModeQuery,
                     },
                 ];
@@ -262,6 +278,8 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                         'isSignedUp': false,
                         ...planQuery,
                         ...searchQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
                         ...paymentModeQuery,
                     },
                 ];
@@ -276,6 +294,8 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                         'stripe.coupon': { $eq: undefined },
                         ...planQuery,
                         ...searchQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
                         ...paymentModeQuery,
                     },
                     {
@@ -283,6 +303,8 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                         'stripe.coupon': { $eq: undefined },
                         ...planQuery,
                         ...searchQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
                         ...paymentModeQuery,
                     },
                 ];
@@ -298,6 +320,8 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                         'stripe.coupon': { $exists: true, $ne: undefined },
                         ...planQuery,
                         ...searchQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
                         ...paymentModeQuery,
                     },
                     {
@@ -305,6 +329,8 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                         'stripe.coupon': { $exists: true, $ne: undefined },
                         ...planQuery,
                         ...searchQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
                         ...paymentModeQuery,
                     },
                 ];
@@ -486,10 +512,30 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
     }
 }
 
+const getCountries = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const response: any = await usersService.getCountries()
+        return res.status(200).send({ message: authControllerResponse.getCountriesSuccess, data: response })
+    } catch (e: any) {
+        return next(Boom.badData(e.message))
+    }
+}
+
+const getTimeZones = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const response: any = await usersService.getTimeZones()
+        return res.status(200).send({ message: authControllerResponse.getTimeZoneSuccess, data: response })
+    } catch (e: any) {
+        return next(Boom.badData(e.message))
+    }
+}
+
 export {
     addUser,
     getOneUser,
     updateUser,
     deleteUser,
     getAllUsers,
+    getCountries,
+    getTimeZones
 }

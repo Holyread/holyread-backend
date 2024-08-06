@@ -82,6 +82,8 @@ const getAllUsers = async (
                             createdAt: 1.0,
                             subscription: 1.0,
                             isSignedUp: 1.0,
+                            timeZone: 1.0,
+                            country: 1.0,
                             image: {
                                 $concat: [
                                     awsBucket[NODE_ENV].s3BaseURL + '/users/',
@@ -326,5 +328,35 @@ const getAllExportUsers = async (search: object) => {
     }
 };
 
+const getCountries = async () => {
+    try {
+        const users: any = await UserModel.find({country: {$exists: true}}).select('country _id').lean().exec();
+        const countries = [...new Set(users.map(user => user.country))]
+        return countries
+    } catch (e: any) {
+        throw new Error(e)
+    }
+};
 
-export default { createUser, updateUser, getOneUserByFilter, getAllUsers, deleteUser, getAllUsersForDashboard, getAllUsersForExport, getUseForCustomNotification, getAllExportUsers }
+const getTimeZones = async () => {
+    try {
+        const users: any = await UserModel.find({timeZone: {$exists: true}}).select('timeZone _id').lean().exec();
+        const timeZones = [...new Set(users.map(user => user.timeZone))]
+        return timeZones
+    } catch (e: any) {
+        throw new Error(e)
+    }
+};
+export default {
+    createUser,
+    updateUser,
+    getOneUserByFilter,
+    getAllUsers,
+    deleteUser,
+    getAllUsersForDashboard,
+    getAllUsersForExport,
+    getUseForCustomNotification,
+    getAllExportUsers,
+    getCountries,
+    getTimeZones
+};

@@ -353,6 +353,8 @@ const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
       status: 'Active',
       device: user.referralUserId && req.query.device ? req.query.device : user.device,
     }
+
+    await usersService.updateUser(user._id, body)
     res.status(200).send({ message: authControllerResponse.verifySuccess })
   } catch (e: any) {
     next(Boom.badData(e.message))

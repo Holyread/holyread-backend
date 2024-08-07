@@ -185,7 +185,7 @@ const getAllUsersForDashboard = async (query: any) => {
 
 const getAllUsersForExport = async () => {
     try {
-        const users: any = await UserModel.find({}).select('firstName lastName email status image type isSignedUp device createdAt').lean().exec()
+        const users: any = await UserModel.find({}).select('firstName lastName email status image type isSignedUp device country timeZone createdAt').lean().exec()
         return users
     } catch (e: any) {
         throw new Error(e)
@@ -203,14 +203,17 @@ const getUseForCustomNotification = async (query: any, select: string) => {
 
 const PAGE_SIZE = 1000;
 
-const getAllExportUsers = async (search: object) => {
+const getAllExportUsers = async (search) => {
     try {
-        let results: any[] = [];
+        let results = [];
         let page = 0;
         let hasMoreData = true;
 
         while (hasMoreData) {
             const userChunk = await UserModel.aggregate([
+                {
+                    $match: search,
+                },
                 { $skip: page * PAGE_SIZE },
                 { $limit: PAGE_SIZE },
                 {
@@ -226,6 +229,8 @@ const getAllExportUsers = async (search: object) => {
                         subscription: 1,
                         isSignedUp: 1,
                         inAppSubscriptionStatus: 1,
+                        country: 1,
+                        timeZone: 1,
                         'inAppSubscription.createdAt': 1,
                         'inAppSubscription.expiredAt': 1,
                         'inAppSubscription.coupon': 1,
@@ -247,9 +252,6 @@ const getAllExportUsers = async (search: object) => {
                         from: 'transactions',
                         localField: 'lastTrnId',
                     },
-                },
-                {
-                    $match: search,
                 },
                 {
                     $project: {
@@ -282,10 +284,10 @@ const getAllExportUsers = async (search: object) => {
             i.subscription = i.subscription[0]?.title;
 
             if (i.transaction) {
-                i.paymentmethod = i.transaction?.device === 'web' 
-                    ? i.transaction?.paymentMethod?.brand 
-                    : i?.inAppSubscription?.purchaseToken 
-                        ? 'In-App (Android)' 
+                i.paymentmethod = i.transaction?.device === 'web'
+                    ? i.transaction?.paymentMethod?.brand
+                    : i?.inAppSubscription?.purchaseToken
+                        ? 'In-App (Android)'
                         : 'In-App (iOS)';
             }
 
@@ -294,8 +296,8 @@ const getAllExportUsers = async (search: object) => {
             }
 
             if (!i.subscriptionStatus && i.inAppSubscriptionStatus && ['android', 'ios'].includes(i.device)) {
-                i.subscriptionStatus = i.inAppSubscriptionStatus === 'Active' 
-                    ? (i.stripe?.coupon ? 'Coupon' : 'Activated') 
+                i.subscriptionStatus = i.inAppSubscriptionStatus === 'Active'
+                    ? (i.stripe?.coupon ? 'Coupon' : 'Activated')
                     : 'Cancelled';
             }
 
@@ -332,7 +334,7 @@ const getAllExportUsers = async (search: object) => {
 
 const getCountries = async () => {
     try {
-        const users: any = await UserModel.find({country: {$exists: true}}).select('country _id').lean().exec();
+        const users: any = await UserModel.find({ country: { $exists: true } }).select('country _id').lean().exec();
         const countries = [...new Set(users.map(user => user.country))]
         return countries
     } catch (e: any) {
@@ -342,7 +344,7 @@ const getCountries = async () => {
 
 const getTimeZones = async () => {
     try {
-        const users: any = await UserModel.find({timeZone: {$exists: true}}).select('timeZone _id').lean().exec();
+        const users: any = await UserModel.find({ timeZone: { $exists: true } }).select('timeZone _id').lean().exec();
         const timeZones = [...new Set(users.map(user => user.timeZone))]
         return timeZones
     } catch (e: any) {

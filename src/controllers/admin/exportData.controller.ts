@@ -60,7 +60,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                     break;
                 case 'Most popular':
                     // Fetch most popular data
-                    const bookList = await bookSummaryService.getAllBookSummaries(0, 0, { popular: true }, { createdAt: -1 } );
+                    const bookList = await bookSummaryService.getAllBookSummaries(0, 0, { popular: true }, { createdAt: -1 });
                     const mostPopularList = bookList.summaries
                     data.push({ dataType, data: mostPopularList });
                     break;
@@ -117,7 +117,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
         ];
 
         /* set header */
-        const mostPopularBooksExcelHeader = [                         
+        const mostPopularBooksExcelHeader = [
             { header: 'Title', key: 'title' },
             { header: 'Description', key: 'description' },
             { header: 'Conclusion', key: 'overview' },
@@ -172,6 +172,8 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
             { header: 'Type', key: 'type' },
             { header: 'IsSignedUp', key: 'isSignedUp' },
             { header: 'Device', key: 'device' },
+            { header : 'Country', key: 'country' },
+            { header : 'TimeZone', key: 'timeZone' },
             { header: 'CreatedAt', key: 'createdAt' },
         ];
         wsForDailyDevotional.columns = dailyDevotionalExcelHeader;
@@ -276,6 +278,8 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                         item.type,
                         item.isSignedUp,
                         item.device,
+                        item.country,
+                        item.timeZone,
                         item.createdAt,
                     ]);
                 }
@@ -288,7 +292,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
         const mostPopularExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1', 'L1', 'M1'];
         const booksExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1', 'L1', 'M1'];
         const transactionsExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1'];
-        const usersExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1'];
+        const usersExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1'];
 
         await setHeaderBackgroundColor(dailyDevotionalExcelHeaderCells, wsForDailyDevotional);
         await setHeaderBackgroundColor(curatedExcelHeaderCells, wsCuratedList);
@@ -335,11 +339,199 @@ const exportUsersData = async (request: Request, response: Response, next: NextF
             { header: 'Coupon', key: 'coupon' },
             { header: 'Device', key: 'device' },
             { header: 'Status', key: 'status' },
+            { header: 'Country', key: 'country' },
+            { header: 'Time Zone', key: 'timeZone' },
         ];
 
-        const params : any = request.body;
+        const params: any = request.body;
         let searchFilter: any = {};
 
+        // Handle plan filter query
+        const planQuery = [
+            'Yearly',
+            'Monthly',
+            'Half Year',
+        ].includes(
+            params.planFilter
+        )
+            ? { 'subscription.title': params.planFilter }
+            : {};
+
+        const countryQuery = params.countryFilter
+            ? { 'country': params.countryFilter }
+            : {};
+
+        const timeZoneQuery = params.timeZoneFilter
+            ? { 'timeZone': params.timeZoneFilter }
+            : {};
+
+        // Handle payment mode filter query
+        let paymentModeQuery: any = {};
+        if (params.paymentModeFilter) {
+            switch (params.paymentModeFilter) {
+                case 'ios':
+                    paymentModeQuery = {
+                        'inAppSubscription.purchaseToken': { $exists: false },
+                        'transaction.device': 'app',
+                    };
+                    break;
+                case 'android':
+                    paymentModeQuery = {
+                        'inAppSubscription.purchaseToken': { $exists: true },
+                        'transaction.device': 'app',
+                    };
+                    break;
+                case 'web':
+                    paymentModeQuery = {
+                        'transaction.device': 'web',
+                    };
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // Combine all filters based on statusFilter
+        if (!params?.statusFilter) {
+            searchFilter = {
+                ...planQuery,
+                ...countryQuery,
+                ...timeZoneQuery,
+                ...paymentModeQuery,
+            };
+        } else {
+            const statusFilterLower = params.statusFilter.toLowerCase();
+            if (statusFilterLower.includes('freemium')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'stripe.status': {
+                            $in: [
+                                'trialing',
+                                'incomplete',
+                                'past_due',
+                                'unpaid',
+                                'incomplete_expired',
+                            ],
+                        },
+                    },
+                    {
+                        stripe: { $exists: false },
+                        inAppSubscription: { $exists: false },
+                        ...planQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
+            }
+            if (statusFilterLower.includes('cancelledplan')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'stripe.status': 'canceled',
+                        ...planQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
+                        ...paymentModeQuery,
+                    },
+                    {
+                        'inAppSubscriptionStatus': 'Canceled',
+                        ...planQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
+            }
+            if (statusFilterLower.includes('presignupusers')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'isSignedUp': false,
+                        ...planQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
+            }
+            if (statusFilterLower.includes('paiduser')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'inAppSubscription': { $exists: true },
+                        'inAppSubscriptionStatus': 'Active',
+                        device: { $in: ['ios', 'android'] },
+                        'stripe.coupon': { $eq: undefined },
+                        ...planQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
+                        ...paymentModeQuery,
+                    },
+                    {
+                        'stripe.status': 'active',
+                        'stripe.coupon': { $eq: undefined },
+                        ...planQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
+            }
+            if (statusFilterLower.includes('couponactivated')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'inAppSubscription': { $exists: true },
+                        'inAppSubscriptionStatus': 'Active',
+                        device: { $in: ['ios', 'android'] },
+                        'stripe.status': 'active',
+                        'stripe.coupon': { $exists: true, $ne: undefined },
+                        ...planQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
+                        ...paymentModeQuery,
+                    },
+                    {
+                        'stripe.status': 'active',
+                        'stripe.coupon': { $exists: true, $ne: undefined },
+                        ...planQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
+            }
+            if (statusFilterLower.includes('registeredusers')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'stripe.status': {
+                            $in: [
+                                'trialing',
+                                'incomplete',
+                                'past_due',
+                                'unpaid',
+                                'incomplete_expired',
+                            ],
+                        },
+                        isSignedUp: true,
+                    },
+                    {
+                        stripe: { $exists: false },
+                        inAppSubscription: { $exists: false },
+                        isSignedUp: true,
+                        ...planQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
+            }
+        }
+
+        // Handle date range filter
         if (params.from && params.to) {
             const fromDate = new Date(params.from);
             const toDate = new Date(params.to);
@@ -361,6 +553,8 @@ const exportUsersData = async (request: Request, response: Response, next: NextF
             };
         }
 
+        searchFilter.type = 'User';
+
         const userData = await usersService.getAllExportUsers(searchFilter);
 
         userData.forEach(item => {
@@ -376,9 +570,11 @@ const exportUsersData = async (request: Request, response: Response, next: NextF
                 coupon: item.coupon,
                 device: item.device,
                 status: item.status,
+                country: item.country,
+                timeZone: item.timeZone
             })
         });
-        const usersExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1','H1', 'I1', 'J1', 'K1'];
+        const usersExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1', 'L1', 'M1'];
         await setHeaderBackgroundColor(usersExcelHeaderCells, wsUsers);
         await setColumnWidth(wsUsers);
         await workbook.commit();

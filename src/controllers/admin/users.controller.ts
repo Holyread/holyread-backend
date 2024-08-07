@@ -335,6 +335,33 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     },
                 ];
             }
+            if (statusFilterLower.includes('registeredusers')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'stripe.status': {
+                            $in: [
+                                'trialing',
+                                'incomplete',
+                                'past_due',
+                                'unpaid',
+                                'incomplete_expired',
+                            ],
+                        },
+                        isSignedUp: true,
+                    },
+                    {
+                        stripe: { $exists: false },
+                        inAppSubscription: { $exists: false },
+                        isSignedUp: true,
+                        ...planQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
+                        ...searchQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
+            }
         }
 
         // Handle date range filter

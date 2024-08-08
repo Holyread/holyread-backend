@@ -77,7 +77,8 @@ export interface IUser extends mongoose.Document {
     lastTrnId?: Types.ObjectId,
     deviceId?: string,
     isSignedUp: boolean,
-    country?: string
+    country?: string,
+    tokenCheck: boolean
 }
 
 export type createUserType = {
@@ -156,7 +157,8 @@ export type createUserType = {
     lastTrnId?: Types.ObjectId,
     deviceId?: string,
     isSignedUp: boolean,
-    country?: string
+    country?: string,
+    tokenCheck: boolean
 }
 
 export type getUserType = {
@@ -236,6 +238,7 @@ export type getUserType = {
     deviceId?: string,
     isSignedUp: boolean,
     country: string,
+    tokenCheck: boolean
 }
 
 export const UserSchema = new Schema({
@@ -319,6 +322,7 @@ export const UserSchema = new Schema({
     deviceId: { type: String },
     isSignedUp: { type: Boolean },
     country: { type: String },
+    tokenCheck : { type: Boolean, default: false }
 }, { strict: 'throw' })
 
 UserSchema.index({

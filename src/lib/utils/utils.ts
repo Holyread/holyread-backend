@@ -253,26 +253,39 @@ export const compileHtml = async (source: string, data: any) => {
 export const randomNumberInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
 
 export const pushNotification = async (tokens: string[], title: string, description: string, args = '') => {
-    firebaseAdmin.messaging().sendToDevice(
-        tokens, {
-        notification: {
-            title,
-            body: description,
-        },
-        data: {
-            info: args,
-        },
-    }).then(response => {
+    try {
+        const response = await firebaseAdmin.messaging().sendToDevice(tokens, {
+            notification: {
+                title,
+                body: description,
+            },
+            data: {
+                info: args,
+            },
+        });
+
         response.results.forEach((result, index) => {
             const error = result.error;
             if (error) {
-                console.error('Failure sending notification to', error);
+                console.error('Failure sending notification to token:', tokens[index], error);
+                // Handle specific error cases if needed
+                if (
+                    error.code === 'messaging/invalid-recipient' ||
+                    error.code === 'messaging/registration-token-not-registered' ||
+                    error.code === 'messaging/invalid-registration-token' ||
+                    error.code === 'messaging/unknown-error'
+                ) {
+                    // Perform any necessary cleanup or logging for invalid tokens
+                    console.log(`Invalid token: ${tokens[index]}`);
+                }
             } else {
-                console.log('Sucessfully sent Notification to', result);
+                console.log('Successfully sent notification to token:', tokens[index]);
             }
         });
-    })
-}
+    } catch (error) {
+        console.error('Error sending notifications:', error);
+    }
+};
 
 /** Sort an array object */
 export const sortArrayObject = (list: [object], key: string, order: 'asc' | 'desc') => {

@@ -4,61 +4,76 @@ import { InvalidTokenModel } from "../models/index";
 
 const BATCH_SIZE = 100; // Adjust batch size as needed
 
-export const pushNotification = async (
-    userId, tokens, title, description, args = ""
-) => {
-    const validTokens = tokens.filter(token => token && typeof token === 'string' && token.trim().length > 0);
-
-    if (validTokens.length === 0) {
-        console.error(`No valid tokens found for user ${userId}`);
-        await UserModel.updateOne(
-            { _id: userId },
-            { $set: { pushTokens: [] } }
-        );
-        return;
-    }
-
-    const response = await firebaseAdmin.messaging().sendToDevice(validTokens, {
-        notification: {
-            title,
-            body: description,
-        },
-        data: {
-            info: args,
-        },
-    });
-
-    const invalidTokens = [];
-
-    response.results.forEach((result, index) => {
-        const error = result.error;
-        if (error) {
-            console.error("Failure sending notification to", validTokens[index], error);
-            if (
-                error.code === "messaging/invalid-recipient" ||
-                error.code === "messaging/registration-token-not-registered" ||
-                error.code === "messaging/invalid-registration-token" ||
-                error.code === "messaging/unknown-error"
-            ) {
-                invalidTokens.push(validTokens[index]);
-            }
-        } else {
-            console.log("Successfully sent notification to", validTokens[index]);
+const pushNotification = async (userId, tokens, title, description, args = "") => {
+    try {
+        const validTokens = tokens.filter(token => token && typeof token === 'string' && token.trim().length > 0);
+        if (validTokens.length === 0) {
+            console.error(`No valid tokens found for user ${userId}`);
+            await UserModel.updateOne(
+                { _id: userId },
+                { $set: { pushTokens: [] } }
+            );
+            return;
         }
-    });
 
-    if (invalidTokens.length) {
-        console.log("Invalid tokens found for user", invalidTokens.length);
+        const response = await firebaseAdmin.messaging().sendToDevice(validTokens, {
+            notification: {
+                title,
+                body: description,
+            },
+            data: {
+                info: args,
+            },
+        });
+
+        const invalidTokens = [];
+        response.results.forEach((result, index) => {
+            const error = result.error;
+            if (error) {
+                console.error("Failure sending notification to", validTokens[index], error);
+                if (
+                    error.code === "messaging/invalid-recipient" ||
+                    error.code === "messaging/registration-token-not-registered" ||
+                    error.code === "messaging/invalid-registration-token" ||
+                    error.code === "messaging/unknown-error"
+                ) {
+                    invalidTokens.push(validTokens[index]);
+                }
+            } else {
+                console.log("Successfully sent notification to", validTokens[index]);
+            }
+        });
+
+        if (invalidTokens.length) {
+            console.log("Invalid tokens found for user", invalidTokens.length);
+            await UserModel.updateOne(
+                { _id: userId },
+                { $pull: { pushTokens: { $in: invalidTokens } } } // Corrected $pull operation
+            );
+
+            try {
+                await InvalidTokenModel.insertMany(
+                    invalidTokens.map(token => ({
+                        userId,
+                        token
+                    }))
+                );
+            } catch (insertError) {
+                console.error("Error inserting invalid tokens:", insertError);
+            }
+
+            console.log(`Invalid tokens removed for user ${userId}:`, invalidTokens);
+        }
+
+        // Update tokenCheck field to true after processing tokens
         await UserModel.updateOne(
             { _id: userId },
-            { $pull: { pushTokens: { token: { $in: invalidTokens } } } }
+            { $set: { tokenCheck: true } }
         );
 
-        await InvalidTokenModel.insertMany({
-            userId,
-            invalidTokens
-        });
-        console.log(`Invalid tokens removed for user ${userId}:`, invalidTokens);
+    } catch (error) {
+        console.error("Error in pushNotification function:", error);
+        // Log the error or handle it in a way that doesn't crash the server
     }
 };
 
@@ -70,6 +85,7 @@ const processUsersInBatches = async () => {
     while (true) {
         const appUsers = await UserModel.find({
             "pushTokens.0": { $exists: true },
+            tokenCheck: false,
         })
             .select("_id pushTokens")
             .lean()
@@ -83,8 +99,8 @@ const processUsersInBatches = async () => {
         }
 
         const notificationPayload = {
-            title: "🔔 A newer version of the app is available!",
-            body: "📙 Please go to the store and update the app.",
+            title: "A newer version of the app is available!",
+            body: "Please go to the store and update the app.",
         };
 
         for (const user of appUsers) {
@@ -107,7 +123,18 @@ const processUsersInBatches = async () => {
 (async () => {
     try {
         await processUsersInBatches();
-    } catch (error: any) {
-        console.log("Error:", error.message);
+    } catch (error) {
+        console.error("Error in processUsersInBatches function:", error);
     }
 })();
+
+// Ensure unhandled promise rejections and uncaught exceptions are caught and logged
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    // Optionally, you can exit the process if necessary, but make sure to clean up resources
+    // process.exit(1);
+});

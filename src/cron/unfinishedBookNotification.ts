@@ -81,7 +81,7 @@ const start = async () => {
                 const tokens = user.pushTokens.map(token => token.token);
                 const notificationPayload = {
                     title: '🔔 You left something unfinished!',
-                    body: `📙 lets read ${bookDetails.title}.`,
+                    body: `📙 let's read ${bookDetails.title}.`,
                     data: {
                         publishContents: {
                             _id: bookDetails?._id,

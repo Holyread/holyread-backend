@@ -35,6 +35,7 @@ import { InAppNotificationModel } from './inAppNotification.model'
 import { CustomNotificationsModel } from './customNotification.model'
 import { CronLogModel } from './cronLog.model'
 import { InvalidTokenModel } from './invalidTokens.model'
+import { UninstallLogModel } from './uninstallLog.model'
 
 const NODE_ENV = config.NODE_ENV
 
@@ -81,5 +82,6 @@ export {
   InAppNotificationModel,
   CustomNotificationsModel,
   CronLogModel,
-  InvalidTokenModel
+  InvalidTokenModel,
+  UninstallLogModel
 }

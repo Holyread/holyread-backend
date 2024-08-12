@@ -362,6 +362,19 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     },
                 ];
             }
+            if (statusFilterLower.includes('appuninstalledusers')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'isAppUninstalled': true,
+                        ...planQuery,
+                        ...searchQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
+            }
         }
 
         // Handle date range filter

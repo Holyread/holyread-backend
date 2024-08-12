@@ -82,6 +82,7 @@ const getAllUsers = async (
                     isSignedUp: 1.0,
                     timeZone: 1.0,
                     country: 1.0,
+                    isAppUninstalled : 1.0,
                     image: {
                         $concat: [
                             awsBucket[NODE_ENV].s3BaseURL + '/users/',
@@ -231,6 +232,7 @@ const getAllExportUsers = async (search) => {
                         inAppSubscriptionStatus: 1,
                         country: 1,
                         timeZone: 1,
+                        isAppUninstalled : 1.0,
                         'inAppSubscription.createdAt': 1,
                         'inAppSubscription.expiredAt': 1,
                         'inAppSubscription.coupon': 1,

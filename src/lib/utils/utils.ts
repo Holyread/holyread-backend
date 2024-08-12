@@ -254,19 +254,22 @@ export const randomNumberInRange = (min: number, max: number) => Math.floor(Math
 
 export const pushNotification = async (tokens: string[], title: string, description: string, args = '') => {
     try {
-        const response = await firebaseAdmin.messaging().sendToDevice(tokens, {
+        const message = {
+            tokens: tokens, // Array of device tokens
             notification: {
-                title,
+                title: title,
                 body: description,
             },
             data: {
                 info: args,
             },
-        });
+        };
 
-        response.results.forEach((result, index) => {
-            const error = result.error;
-            if (error) {
+        const response = await firebaseAdmin.messaging().sendMulticast(message);
+
+        response.responses.forEach((resp, index) => {
+            if (!resp.success) {
+                const error = resp.error;
                 console.error('Failure sending notification to token:', tokens[index], error);
                 // Handle specific error cases if needed
                 if (

@@ -11,5 +11,5 @@ import './set-last-transaction-id';
 // import './unset-content-type-from-daily-devotional'
 // import './update-daily-devotional'
 // import './unset-displayat-from-daily-devotional'
-import './remove-invalid-fcm-token'
+// import './remove-invalid-fcm-token'
 import './set-country.script'

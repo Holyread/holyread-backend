@@ -33,8 +33,6 @@ const pushNotification = async (userId, tokens, title, description, args = "") =
                 console.error("Failure sending notification to", validTokens[index], error);
                 if (
                     error.code === "messaging/invalid-recipient" ||
-                    error.code === "messaging/registration-token-not-registered" ||
-                    error.code === "messaging/invalid-registration-token" ||
                     error.code === "messaging/unknown-error"
                 ) {
                     invalidTokens.push(validTokens[index]);
@@ -52,12 +50,10 @@ const pushNotification = async (userId, tokens, title, description, args = "") =
             );
 
             try {
-                await InvalidTokenModel.insertMany(
-                    invalidTokens.map(token => ({
-                        userId,
-                        token
-                    }))
-                );
+                await InvalidTokenModel.insertMany({
+                    userId,
+                    invalidTokens
+                });
             } catch (insertError) {
                 console.error("Error inserting invalid tokens:", insertError);
             }

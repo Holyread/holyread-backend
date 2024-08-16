@@ -101,7 +101,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                 isPlanExpired = !['active', 'trialing'].includes(s?.status?.toLowerCase())
             } catch (e: any) {
                 next(Boom.badData(e.message))
-             }
+            }
         }
         /*if (
             !req.user.inAppSubscription &&
@@ -145,7 +145,22 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                 }
             })
 
-            if (!isExist && todayViews.length >= 1) {
+            const categoryIds = req.user.libraries.categories.map(id => id.toString()) || [];
+
+            const matchingCategories = categoryIds.filter(categoryId =>
+                data.categories.map(id => id.toString()).includes(categoryId)
+            );
+
+            const freeSummary = await userService.getUserLibrary({ _id: req.user.libraries, freeSummary: req.params.id })
+            if (req.user.hasUsedFreeSummary && !req.user.isSignedUp && !freeSummary) {
+                return next(Boom.forbidden(bookSummaryControllerResponse.preSignedUpUserSummaryLimitError))
+            }
+
+            if (matchingCategories.length === 0 && req.user.hasUsedFreeSummary && !freeSummary) {
+                return next(Boom.forbidden(bookSummaryControllerResponse.noMatchCategories))
+            }
+
+            if (!isExist && todayViews.length >= 2 && !freeSummary) {
                 return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError))
             }
         }

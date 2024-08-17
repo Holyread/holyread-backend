@@ -111,14 +111,16 @@ const appSignUpUser = async (
   const existingUser: any = await usersService.getOneUserByFilter({
     email: body.email,
   });
-  if (existingUser)
-    return next(Boom.conflict(authControllerResponse.userAlreadyExistError));
+  if (existingUser) return next(Boom.conflict(authControllerResponse.userAlreadyExistError));
+
+  if(!body.deviceId) return next(Boom.conflict(authControllerResponse.deviceIdNotExistError));
+
   const user = await usersService.getOneUserByFilter({
     deviceId: body.deviceId,
   });
 
   if (!user) {
-    return res.status(404).send({ message: authControllerResponse.noUserFound });
+    return next(Boom.conflict(authControllerResponse.noUserFound));
   }
 
   const subscriptionDetails =
@@ -505,95 +507,93 @@ const handleExistingAppUser = async (
   };
 
   const subscriptionDetails =
-      await subscriptionsService.getOneSubscriptionByFilter({
-        _id: body.subscription,
-      });
-    if (body.subscription && body.inAppSubscription) {
-      if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
-        return next(
-          Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure)
-        );
-      }
-      newBody.inAppSubscription = {
-        ...body.inAppSubscription,
-        createdAt: new Date(),
-      };
-      newBody.inAppSubscriptionStatus = 'Active';
-      newBody.subscription = subscriptionDetails._id;
+    await subscriptionsService.getOneSubscriptionByFilter({
+      _id: body.subscription,
+    });
+  if (body.subscription && body.inAppSubscription) {
+    if (!subscriptionDetails || !subscriptionDetails.stripePlanId) {
+      return next(
+        Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure)
+      );
     }
-    /** Create new user using social login */
-    const data: any = await usersService.updateUser({ _id: existingUser._id }, newBody);
-    mailchimpService.updateUser(data.email, 'subscribed');
-    const token: string = getToken({
-      email: data.email,
-      oauthClientId: body.id,
-      id: data._id,
-    });
-    const title = 'Welcome to Holy Reads 🎉';
-    const description =
-      'Summarizing the best of Christian publishing for your busy schedule 📚';
-    await notificationsService.createNotification({
-      userId: data._id,
-      type: 'user',
-      notification: { title, description },
-    });
+    newBody.inAppSubscription = {
+      ...body.inAppSubscription,
+      createdAt: new Date(),
+    };
+    newBody.inAppSubscriptionStatus = 'Active';
+    newBody.subscription = subscriptionDetails._id;
+  }
+  /** Create new user using social login */
+  const data: any = await usersService.updateUser({ _id: existingUser._id }, newBody);
+  mailchimpService.updateUser(data.email, 'subscribed');
+  const token: string = getToken({
+    email: data.email,
+    oauthClientId: body.id,
+    id: data._id,
+  });
+  const title = 'Welcome to Holy Reads 🎉';
+  const description =
+    'Summarizing the best of Christian publishing for your busy schedule 📚';
+  await notificationsService.createNotification({
+    userId: data._id,
+    type: 'user',
+    notification: { title, description },
+  });
 
-    /** Get welcome email template */
-    const emailTemplateDetails =
-      await emailTemplateService.getOneEmailTemplateByFilter({
-        title: emailTemplatesTitles.customer.welcomeToHolyreads,
-      });
-    const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads';
-    let html = `<p>Dear ${
-      body.email.split('@')[0]
-    },</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${
-      origins[NODE_ENV]
+  /** Get welcome email template */
+  const emailTemplateDetails =
+    await emailTemplateService.getOneEmailTemplateByFilter({
+      title: emailTemplatesTitles.customer.welcomeToHolyreads,
+    });
+  const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads';
+  let html = `<p>Dear ${body.email.split('@')[0]
+    },</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]
     }/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`;
 
-    if (emailTemplateDetails && emailTemplateDetails.content) {
-      const contentData = { loginURL: `${origins[NODE_ENV]}/account/login` };
-      const htmlData = await compileHtml(
-        emailTemplateDetails.content,
-        contentData
-      );
-      if (htmlData) {
-        html = htmlData;
-      }
+  if (emailTemplateDetails && emailTemplateDetails.content) {
+    const contentData = { loginURL: `${origins[NODE_ENV]}/account/login` };
+    const htmlData = await compileHtml(
+      emailTemplateDetails.content,
+      contentData
+    );
+    if (htmlData) {
+      html = htmlData;
     }
+  }
 
-    /** sent welcome email */
-    const result = await sentEmail({
-      from: originEmails.marketing,
-      to: body.email,
-      subject,
-      html,
-    });
+  /** sent welcome email */
+  const result = await sentEmail({
+    from: originEmails.marketing,
+    to: body.email,
+    subject,
+    html,
+  });
 
-    if (!result) {
-      return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure));
-    }
-    res.status(200).json({
-      message: authControllerResponse.loginSuccess,
-      data: {
-        _id: data._id,
-        email: data.email || '',
-        token,
-        type: newBody.type,
-        userName: body?.email?.split('@')[0] || '',
-      },
-    });
+  if (!result) {
+    return next(Boom.badData(authControllerResponse.sentVerifyEmailFailure));
+  }
+  res.status(200).json({
+    message: authControllerResponse.loginSuccess,
+    data: {
+      _id: data._id,
+      email: data.email || '',
+      token,
+      type: newBody.type,
+      userName: body?.email?.split('@')[0] || '',
+    },
+  });
 
-    /** Push notification */
-    if (
-      data &&
-      data.pushTokens &&
-      data.pushTokens.length &&
-      data?.notification?.push
-    ) {
-      const tokens = data.pushTokens.map((i) => i.token);
-      /** sent wellcome notification in app */
-      pushNotification(tokens, title, description);
-    }
+  /** Push notification */
+  if (
+    data &&
+    data.pushTokens &&
+    data.pushTokens.length &&
+    data?.notification?.push
+  ) {
+    const tokens = data.pushTokens.map((i) => i.token);
+    /** sent wellcome notification in app */
+    pushNotification(tokens, title, description);
+  }
 };
 
 /** App oAuth signup */
@@ -666,7 +666,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     }
     if (body.deviceId) {
       return await handleExistingAppUser(req, res, next)
-     }
+    }
     let base64: any;
     if (body.photoUrl) {
       base64 = await imageUrlToBase64(body.photoUrl);

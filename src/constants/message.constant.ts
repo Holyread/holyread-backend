@@ -66,6 +66,7 @@ export const responseMessage = {
         getDevotionalCategorySuccess: 'Devotional categories fetched successfully',
         getTimeZoneSuccess: 'Time zones fetched successfully',
         getCountriesSuccess: 'Countries fetched successfully',
+        deviceIdNotExistError: 'You need to add your deviceId.',
     },
     adminControllerResponse: {
         addUserSuccess: 'User added successfully',

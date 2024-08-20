@@ -184,3 +184,14 @@ export const checkUninstalledUser = {
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 };
+
+export const scheduleFreemiumUserRandomSummaryNotification = {
+      SCHEDULE: {
+          Minutes: '0',
+          Hours: '7',// At 7 AM
+          DayOfMonth: '*',
+          Months: '*',
+          DayOfWeek: '*'
+      },
+      JOBRESTRICTENV: ['local'],
+};

@@ -72,6 +72,7 @@ import notificationsService
 
 import mailchimpService from '../../services/mailchimp'
 import dailyDevotionalService from '../../services/customers/dailyDevotional/dailyDevotional.service';
+import subscriptionsService from '../../services/customers/subscriptions/subscriptions.service';
 
 const NODE_ENV = config.NODE_ENV
 
@@ -1207,6 +1208,8 @@ const updateUserLibrary = async (
                   )
             }
 
+            const userSubscriptionStatus = await subscriptionsService.getUserSubscriptionStatus(userObj)
+
             const query: any = { _id: userObj.libraries }
             userObj.libraries = await usersService.getUserLibrary(query)
 
@@ -1332,6 +1335,36 @@ const updateUserLibrary = async (
                                     bookSummaryControllerResponse.getBookSummaryFailure
                               )
                         )
+                  }
+
+                  // Check if the user's subscription is 'freemium', they haven't used their free summary, 
+                  // they have categories in their library, and they are signed up.
+                  if (
+                        userSubscriptionStatus === "freemium" &&
+                        !userObj.hasUsedFreeSummary &&
+                        userObj.libraries.categories.length > 0 &&
+                        userObj.isSignedUp
+                  ) {
+                        const libraries = await userService.getUserLibrary({
+                              _id: userObj.libraries,
+                        });
+
+                        const categoryIds = libraries.categories;
+                        const matchingCategories = categoryIds.filter(categoryId =>
+                              bookSummary.categories.includes(categoryId)
+                        );
+
+                        // If no matching categories are found, mark that the user has used their free summary.
+                        if (matchingCategories.length === 0) {
+                              await usersService.updateUser({ _id: userObj._id }, { hasUsedFreeSummary: true });
+                              const bodyData = {
+                                    freeSummary: req.body.bookId
+                              }
+                              await usersService.updateUserLibrary(query, bodyData);
+                        }
+                  } else if (!userObj.hasUsedFreeSummary && !userObj.isSignedUp && userSubscriptionStatus === "freemium" ) {
+                        await usersService.updateUser({ _id: userObj._id }, { hasUsedFreeSummary: true });
+                        await usersService.updateUserLibrary(query, { freeSummary: req.body.bookId });
                   }
                   const viewObj = userObj
                         .libraries

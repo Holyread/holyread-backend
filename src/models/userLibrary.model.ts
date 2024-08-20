@@ -15,6 +15,7 @@ export interface IUserLibrary extends mongoose.Document {
     }],
     devotionalCategories: [string],
     devotionalViews: [Types.ObjectId],
+    freeSummary : Types.ObjectId,
 }
 
 export type createUserLibraryType = {
@@ -32,6 +33,7 @@ export type createUserLibraryType = {
     }],
     devotionalCategories: [string],
     devotionalViews: [Types.ObjectId],
+    freeSummary : Types.ObjectId,
 }
 
 export type getUserLibraryType = {
@@ -50,6 +52,7 @@ export type getUserLibraryType = {
     }],
     devotionalCategories: [string]
     devotionalViews: [Types.ObjectId],
+    freeSummary : Types.ObjectId,
 }
 
 export const UserLibrarySchema = new Schema({
@@ -68,6 +71,7 @@ export const UserLibrarySchema = new Schema({
     categories: [{ type: Schema.Types.ObjectId }],
     devotionalCategories: [{ type: String }],
     devotionalViews: [{ type: Schema.Types.ObjectId }],
+    freeSummary : { type: Schema.Types.ObjectId },
 }, { strict: 'throw' })
 
 export const UserLibraryModel =

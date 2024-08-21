@@ -192,9 +192,17 @@ const appSignUpUser = async (
     medium: body.medium,
     campaign: body.campaign,
     isSignedUp: true,
+    deviceId: user.deviceId,
+    type: 'User',
   };
 
-  const userData = await usersService.updateUser({ _id: user._id }, userObj);
+  let userData;
+  if (!user.isSignedUp) {
+    userData = await usersService.updateUser({ _id: user._id }, userObj);
+  }
+  else {
+    userData = await usersService.createUser(userObj);
+  }
 
   /** Push notification */
       /** Push notification */
@@ -470,9 +478,6 @@ const handleExistingAppUser = async (
   const existingUser = await usersService.getOneUserByFilter({
     deviceId: body.deviceId,
   });
-  if (!existingUser) {
-    return res.status(404).send({ message: authControllerResponse.noUserFound });
-  }
 
   let base64: any;
 
@@ -664,7 +669,17 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         },
       })
     }
+    let userObj;
     if (body.deviceId) {
+      userObj = await usersService.getOneUserByFilter({
+        deviceId: body.deviceId,
+      });
+      if (!userObj) {
+        return res.status(404).send({ message: authControllerResponse.noUserFound });
+      }
+    }
+
+    if (body.deviceId && !userObj.isSignedUp) {
       return await handleExistingAppUser(req, res, next)
     }
     let base64: any;
@@ -707,6 +722,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       campaign: body.campaign,
       libraries: libraries?._id,
       isSignedUp: true,
+      deviceId: body.deviceId || '',
     }
 
     const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscription })

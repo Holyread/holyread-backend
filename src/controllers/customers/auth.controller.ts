@@ -189,13 +189,13 @@ const appSignUpUser = async (
     medium: body.medium,
     campaign: body.campaign,
     isSignedUp: true,
-    deviceId: user.deviceId,
+    deviceId: body.deviceId,
     type: 'User',
     status: 'Active',
   };
 
   let userData;
-  if (!user.isSignedUp) {
+  if (user && !user.isSignedUp) {
     userData = await usersService.updateUser({ _id: user._id }, userObj);
   }
   else {

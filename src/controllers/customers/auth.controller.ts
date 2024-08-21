@@ -106,7 +106,8 @@ const appSignUpUser = async (
   res: Response,
   next: NextFunction
 ) => {
-  const body = req.body;
+  try {
+    const body = req.body;
 
   const existingUser: any = await usersService.getOneUserByFilter({
     email: body.email,
@@ -118,10 +119,6 @@ const appSignUpUser = async (
   const user = await usersService.getOneUserByFilter({
     deviceId: body.deviceId,
   });
-
-  if (!user) {
-    return next(Boom.conflict(authControllerResponse.noUserFound));
-  }
 
   const subscriptionDetails =
     body.subscription &&
@@ -213,7 +210,12 @@ const appSignUpUser = async (
         pushNotification(tokens, title, description)
       }
   return res.status(200).send({ message: authControllerResponse.signUpSuccess });
-};
+} catch (error: any) {
+  // Handle any unexpected errors
+  console.error('Error in appSignUpUser:', error);
+  return next(Boom.internal(error.message));
+}
+}
 
 /** Add User */
 const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -675,12 +677,9 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       userObj = await usersService.getOneUserByFilter({
         deviceId: body.deviceId,
       });
-      if (!userObj) {
-        return res.status(404).send({ message: authControllerResponse.noUserFound });
-      }
     }
 
-    if (body.deviceId && !userObj.isSignedUp) {
+    if (userObj && body.deviceId && !userObj.isSignedUp) {
       return await handleExistingAppUser(req, res, next)
     }
     let base64: any;

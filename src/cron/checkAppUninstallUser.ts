@@ -28,7 +28,11 @@ const startCheckUninstalledUsersJob = async () => {
         }
 
         const tokensWithUserIds = users.flatMap(user =>
-            user.pushTokens.map(pt => ({ token: pt.token, userId: user._id, deviceId: pt.deviceId }))
+            user.pushTokens.map(pt => ({ 
+                token: pt.token, 
+                userId: user._id.toString(), // Ensure userId is a string
+                deviceId: pt.deviceId 
+            }))
         );
 
         // Function to send notifications in batches of 500
@@ -64,10 +68,10 @@ const startCheckUninstalledUsersJob = async () => {
                         );
 
                         // Log the uninstall or store it for analytics with userId and deviceId
-                        await UninstallLogModel.create({ userId, deviceId, token, date: new Date() });
+                        await UninstallLogModel.create({ userId: userId as string, deviceId, token, date: new Date() });
                     }
                 } else {
-                    activeTokens.add(userId); // Track users with at least one active token
+                    activeTokens.add(userId as string); // Ensure userId is treated as a string
                 }
             });
 

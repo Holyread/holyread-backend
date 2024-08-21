@@ -194,6 +194,7 @@ const appSignUpUser = async (
     isSignedUp: true,
     deviceId: user.deviceId,
     type: 'User',
+    status: 'Active',
   };
 
   let userData;

@@ -178,6 +178,10 @@ const getUserAccount = async (
                               smallGroups: [],
                               reading: [],
                               categories: [],
+                              devotionalCategories: [],
+                              devotionalViews: [],
+                              freeSummary: null,
+                              freeNotificationBooks: [],
                         })
 
                   userObj.libraries = libraries?._id

@@ -67,6 +67,8 @@ const initializeDeviceAccess = async (req: Request, res: Response, next: NextFun
         categories: [],
         devotionalCategories: [],
         devotionalViews: [],
+        freeSummary: null,
+        freeNotificationBooks: [],
       });
 
       const email = body.deviceId + '@holyreads-temp.com';
@@ -180,7 +182,7 @@ const appSignUpUser = async (
     body.image = s3File.name;
   }
 
-  const userObj = {
+  const userObj: any = {
     image: body.image || '',
     email: body.email,
     password: body.password,
@@ -194,13 +196,29 @@ const appSignUpUser = async (
     status: 'Active',
   };
 
-  let userData;
-  if (user && !user.isSignedUp) {
-    userData = await usersService.updateUser({ _id: user._id }, userObj);
-  }
-  else {
-    userData = await usersService.createUser(userObj);
-  }
+    let userData;
+    if (user && !user.isSignedUp) {
+      userData = await usersService.updateUser({ _id: user._id }, userObj);
+    }
+    else {
+      const libraries = await userService
+        .createUserLibrary({
+          saved: [],
+          completed: [],
+          view: [],
+          smallGroups: [],
+          reading: [],
+          categories: [],
+          devotionalCategories: [],
+          devotionalViews: [],
+          freeSummary: null,
+          freeNotificationBooks: [],
+        })
+
+        userObj.libraries = libraries._id;
+
+      userData = await usersService.createUser(userObj);
+    }
 
   /** Push notification */
       /** Push notification */
@@ -283,6 +301,8 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
         categories: [],
         devotionalCategories: [],
         devotionalViews: [],
+        freeSummary: null,
+        freeNotificationBooks: [],
       })
 
     const data: any = {
@@ -702,6 +722,8 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         categories: [],
         devotionalCategories: [],
         devotionalViews: [],
+        freeSummary: null,
+        freeNotificationBooks: [],
       })
 
     const newBody: any = {

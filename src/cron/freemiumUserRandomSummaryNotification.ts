@@ -2,9 +2,10 @@ import { CronJob } from 'cron';
 import config from '../../config';
 import { scheduleFreemiumUserRandomSummaryNotification } from '../constants/cron.constants'
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
-import { pushNotification } from '../lib/utils/utils'
+import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
 import { awsBucket } from '../constants/app.constant';
 import subscriptionsService from '../services/customers/subscriptions/subscriptions.service';
+import userService from '../services/customers/users/user.service';
 
 const start = async () => {
     try {
@@ -20,12 +21,15 @@ const start = async () => {
         });
         await cronLog.save();
 
+        const yesterday = calculateDateInThePast(1);
+
         // Find active users with a defined timeZone and at least one push token
         const users: any = await UserModel.find({
             status: 'Active',
-            timeZone: { $exists: true },
             'pushTokens.0': { '$exists': true },
             'notification.push': true,
+            'createdAt': { $lte: yesterday },
+            isSignedUp: true
         }).select('libraries timeZone pushTokens').populate('libraries').lean().exec();
 
         const freemiumUsers: any[] = [];
@@ -53,7 +57,14 @@ const start = async () => {
         for (const user of userFavoriteCategories) {
             const randomBookCategory = getRandomBookFromFavoriteCategories(user);
 
-            const unreadBook = await BookSummaryModel.findOne({ categories: { $in: [randomBookCategory] } }).select([
+            const unreadBook = await BookSummaryModel.findOne({
+                categories: { $in: [randomBookCategory] },
+                _id: {
+                    $nin: [
+                        ...user.libraries.freeNotificationBooks.map(b => b.bookId)
+                    ]
+                },
+            }).select([
                 '_id',
                 'description',
                 'overview',
@@ -67,6 +78,14 @@ const start = async () => {
                 'totalStar',
                 'status',
             ]).populate('author').lean().exec();
+
+            if (!unreadBook) {
+                await userService.updateUserLibrary(
+                    { _id: user.libraries._id },
+                    { freeNotificationBooks : [] }
+                ); 
+                continue;
+            }
 
             /** Get book rating */
             const bookRating = await RatingModel.findOne({ bookId: unreadBook._id }).select('star').lean().exec();
@@ -94,11 +113,20 @@ const start = async () => {
                 },
             };
             try {
-                await pushNotification(tokens, notificationPayload.title, notificationPayload.body, JSON.stringify(notificationPayload.data));
+                await pushNotification(
+                    tokens,
+                    notificationPayload.title,
+                    notificationPayload.body,
+                    JSON.stringify(notificationPayload.data)
+                );
                 notificationsSent.push({
                     userId: user._id,
                     success: true,
                 });
+                await userService.updateUserLibrary(
+                    { _id: user.libraries._id },
+                    { $push: { freeNotificationBooks: { bookId: bookDetails._id, createdAt: new Date() } } }
+                );
             } catch (error: any) {
                 notificationsSent.push({
                     userId: user._id,

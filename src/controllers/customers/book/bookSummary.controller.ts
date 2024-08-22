@@ -136,12 +136,21 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
 
             /** Filter current days new view books */
             const todayViews = []; let isExist = false;
+            const todayFreeNotificationBook = []; let isFreeNotificationBookExist = false
             req.user.libraries = await userService.getUserLibrary({ _id: req.user.libraries })
             req?.user?.libraries?.view.map(i => {
                 const createdAt = new Date(i.createdAt).getTime();
                 if (createdAt >= start.getTime()) todayViews.push(i)
                 if (String(i.bookId) === String(data._id)) {
                     isExist = true
+                }
+            })
+
+            req?.user?.libraries?.freeNotificationBooks.map(i => {
+                const createdAt = new Date(i.createdAt).getTime();
+                if (createdAt >= start.getTime()) todayFreeNotificationBook.push(i)
+                if (String(i.bookId) === String(data._id)) {
+                    isFreeNotificationBookExist = true
                 }
             })
 
@@ -160,7 +169,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                 return next(Boom.forbidden(bookSummaryControllerResponse.noMatchCategories))
             }
 
-            if (!isExist && todayViews.length >= 2 && !freeSummary) {
+            if (!isExist && todayViews.length >= 1 && !isFreeNotificationBookExist && !freeSummary) {
                 return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError))
             }
         }

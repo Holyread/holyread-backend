@@ -15,7 +15,11 @@ export interface IUserLibrary extends mongoose.Document {
     }],
     devotionalCategories: [string],
     devotionalViews: [Types.ObjectId],
-    freeSummary : Types.ObjectId,
+    freeSummary: Types.ObjectId,
+    freeNotificationBooks: [{
+        bookId: Types.ObjectId,
+        createdAt: Date
+    }],
 }
 
 export type createUserLibraryType = {
@@ -33,7 +37,11 @@ export type createUserLibraryType = {
     }],
     devotionalCategories: [string],
     devotionalViews: [Types.ObjectId],
-    freeSummary : Types.ObjectId,
+    freeSummary: Types.ObjectId,
+    freeNotificationBooks: [{
+        bookId: Types.ObjectId,
+        createdAt: Date
+    }],
 }
 
 export type getUserLibraryType = {
@@ -52,7 +60,11 @@ export type getUserLibraryType = {
     }],
     devotionalCategories: [string]
     devotionalViews: [Types.ObjectId],
-    freeSummary : Types.ObjectId,
+    freeSummary: Types.ObjectId,
+    freeNotificationBooks: [{
+        bookId: Types.ObjectId,
+        createdAt: Date
+    }],
 }
 
 export const UserLibrarySchema = new Schema({
@@ -71,7 +83,11 @@ export const UserLibrarySchema = new Schema({
     categories: [{ type: Schema.Types.ObjectId }],
     devotionalCategories: [{ type: String }],
     devotionalViews: [{ type: Schema.Types.ObjectId }],
-    freeSummary : { type: Schema.Types.ObjectId },
+    freeSummary: { type: Schema.Types.ObjectId },
+    freeNotificationBooks: [{
+        bookId: { type: Schema.Types.ObjectId },
+        createdAt: { type: Date },
+    }],
 }, { strict: 'throw' })
 
 export const UserLibraryModel =

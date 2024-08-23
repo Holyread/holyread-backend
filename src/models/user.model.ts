@@ -331,6 +331,7 @@ export const UserSchema = new Schema({
     tokenCheck: { type: Boolean, default: false },
     isAppUninstalled: { type: Boolean, default: false },
     hasUsedFreeSummary: { type: Boolean, default: false },
+
 }, { strict: 'throw' })
 
 UserSchema.index({

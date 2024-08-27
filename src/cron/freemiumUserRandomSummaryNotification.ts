@@ -26,6 +26,7 @@ const start = async () => {
         // Find active users with a defined timeZone and at least one push token
         const users: any = await UserModel.find({
             status: 'Active',
+            timeZone: { $exists: true },
             'pushTokens.0': { '$exists': true },
             'notification.push': true,
             'createdAt': { $lte: yesterday },
@@ -93,8 +94,8 @@ const start = async () => {
 
             const tokens = user.pushTokens.map(token => token.token);
             const notificationPayload = {
-                title: '🔔 Summary for free 😊',
-                body: `📙 Just for you, one free access to the ${bookDetails.title} summary.`,
+                title: '🔔 Free Summary For YOU! 😊',
+                body: `📙 Enjoy your free daily summary ${bookDetails.title}.`,
                 data: {
                     publishContents: {
                         _id: bookDetails?._id,

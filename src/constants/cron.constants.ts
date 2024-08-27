@@ -187,8 +187,8 @@ export const checkUninstalledUser = {
 
 export const scheduleFreemiumUserRandomSummaryNotification = {
       SCHEDULE: {
-          Minutes: '0',
-          Hours: '7',// At 7 AM
+          Minutes: '30',
+          Hours: '5',// At 5:30 AM
           DayOfMonth: '*',
           Months: '*',
           DayOfWeek: '*'

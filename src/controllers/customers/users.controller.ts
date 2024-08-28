@@ -1365,10 +1365,16 @@ const updateUserLibrary = async (
                                     freeSummary: req.body.bookId
                               }
                               await usersService.updateUserLibrary(query, bodyData);
+                              userObj.libraries.freeSummary = userObj.libraries.freeSummary || req.body.bookId;
                         }
-                  } else if (!userObj.hasUsedFreeSummary && !userObj.isSignedUp && userSubscriptionStatus === "freemium" ) {
+                  }
+                  if (!userObj.hasUsedFreeSummary && !userObj.isSignedUp && userSubscriptionStatus === "freemium") {
                         await usersService.updateUser({ _id: userObj._id }, { hasUsedFreeSummary: true });
-                        await usersService.updateUserLibrary(query, { freeSummary: req.body.bookId });
+                        const bodyData = {
+                              freeSummary: req.body.bookId
+                        }
+                        await usersService.updateUserLibrary(query, bodyData);
+                        userObj.libraries.freeSummary = userObj.libraries.freeSummary || req.body.bookId;
                   }
                   const viewObj = userObj
                         .libraries

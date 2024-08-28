@@ -23,7 +23,7 @@ import notificationsService from '../services/customers/notifications/notificati
         }
 
         await Promise.all(app_users.map(async user => {
-            await usersService.deleteUser(user._id),
+            await usersService.deleteUser({ _id: user._id }),
                 await ratingService.deleteRatings({ userId: user._id }),
                 await highLightsService.deleteHighLights({ userId: user._id }),
                 await transactionsService.deleteTransaction({ userId: user._id }),

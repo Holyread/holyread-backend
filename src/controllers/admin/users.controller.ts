@@ -530,7 +530,7 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
     try {
         const id: any = req.params.userId
         const userObj: any = await usersService.getOneUserByFilter({ _id: id })
-        await usersService.deleteUser(id)
+        await usersService.deleteUser({ _id: id })
         mailchimpService.updateUser(userObj.email, 'unsubscribed')
         res.status(200).send({ message: authControllerResponse.deleteUserSuccess })
 
@@ -546,7 +546,7 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
             highLightsService.deleteHighLights({ userId: userObj._id }),
             transactionsService.deleteTransaction({ userId: userObj._id }),
             notificationsService.deleteNotifications({ userId: userObj._id }),
-            usersService.deleteUserLibrary( {_id: userObj.libraries} )
+            usersService.deleteUserLibrary({ _id: userObj.libraries })
         ])
     } catch (e: any) {
         return next(Boom.badData(e.message))

@@ -156,9 +156,9 @@ const getAllUsers = async (
 
 
 /** Remove User */
-const deleteUser = async (id: string) => {
+const deleteUser = async (query: object) => {
     try {
-        await UserModel.findOneAndDelete({ _id: id })
+        await UserModel.findOneAndDelete(query)
         return true
     } catch (e: any) {
         throw new Error(e)

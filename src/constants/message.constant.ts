@@ -129,6 +129,8 @@ export const responseMessage = {
         sendBookToKindleSuccess: 'The summary was successfully sent to your Kindle.',
         sendBookToKindleEmailFailure: 'The summary was not sent to your Kindle email.',
         getBookRatingsSuccess: 'Book ratings fetched successfully',
+        noMatchCategories : 'Access Denied: You can only read summaries from books in the Random Summary',
+        preSignedUpUserSummaryLimitError : 'Access Denied: Please sign up to read more summaries',
     },
     dashboardControllerResponse: {
         getDashboardSuccess: 'Dashboard details fetched successfully',

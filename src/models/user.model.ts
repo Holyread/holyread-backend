@@ -78,7 +78,9 @@ export interface IUser extends mongoose.Document {
     deviceId?: string,
     isSignedUp: boolean,
     country?: string,
-    tokenCheck: boolean
+    tokenCheck: boolean,
+    isAppUninstalled: boolean,
+    hasUsedFreeSummary: boolean,
 }
 
 export type createUserType = {
@@ -158,7 +160,9 @@ export type createUserType = {
     deviceId?: string,
     isSignedUp: boolean,
     country?: string,
-    tokenCheck: boolean
+    tokenCheck: boolean,
+    isAppUninstalled: boolean,
+    hasUsedFreeSummary: boolean,
 }
 
 export type getUserType = {
@@ -238,7 +242,9 @@ export type getUserType = {
     deviceId?: string,
     isSignedUp: boolean,
     country: string,
-    tokenCheck: boolean
+    tokenCheck: boolean,
+    isAppUninstalled: boolean,
+    hasUsedFreeSummary: boolean,
 }
 
 export const UserSchema = new Schema({
@@ -322,7 +328,10 @@ export const UserSchema = new Schema({
     deviceId: { type: String },
     isSignedUp: { type: Boolean },
     country: { type: String },
-    tokenCheck : { type: Boolean, default: false }
+    tokenCheck: { type: Boolean, default: false },
+    isAppUninstalled: { type: Boolean, default: false },
+    hasUsedFreeSummary: { type: Boolean, default: false },
+
 }, { strict: 'throw' })
 
 UserSchema.index({

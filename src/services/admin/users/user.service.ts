@@ -3,7 +3,7 @@ import { encrypt, formattedDate } from '../../../lib/utils/utils'
 import { awsBucket } from '../../../constants/app.constant'
 import { responseMessage } from '../../../constants/message.constant'
 // import { UserModel, SubscriptionsModel } from '../../../models/index'
-import { UserModel } from '../../../models/index'
+import { UserLibraryModel, UserModel } from '../../../models/index'
 // import stripeSubscriptionService from '../../stripe/subscription'
 const NODE_ENV = config.NODE_ENV
 const authControllerResponse = responseMessage.authControllerResponse
@@ -82,6 +82,7 @@ const getAllUsers = async (
                     isSignedUp: 1.0,
                     timeZone: 1.0,
                     country: 1.0,
+                    isAppUninstalled : 1.0,
                     image: {
                         $concat: [
                             awsBucket[NODE_ENV].s3BaseURL + '/users/',
@@ -231,6 +232,7 @@ const getAllExportUsers = async (search) => {
                         inAppSubscriptionStatus: 1,
                         country: 1,
                         timeZone: 1,
+                        isAppUninstalled : 1.0,
                         'inAppSubscription.createdAt': 1,
                         'inAppSubscription.expiredAt': 1,
                         'inAppSubscription.coupon': 1,
@@ -351,6 +353,17 @@ const getTimeZones = async () => {
         throw new Error(e)
     }
 };
+
+/** Remove UserLibrary */
+const deleteUserLibrary = async (query: object) => {
+    try {
+        await UserLibraryModel.findOneAndDelete(query)
+        return true
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 export default {
     createUser,
     updateUser,
@@ -362,5 +375,6 @@ export default {
     getUseForCustomNotification,
     getAllExportUsers,
     getCountries,
-    getTimeZones
+    getTimeZones,
+    deleteUserLibrary
 };

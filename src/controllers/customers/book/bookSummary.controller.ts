@@ -101,7 +101,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                 isPlanExpired = !['active', 'trialing'].includes(s?.status?.toLowerCase())
             } catch (e: any) {
                 next(Boom.badData(e.message))
-             }
+            }
         }
         /*if (
             !req.user.inAppSubscription &&
@@ -136,6 +136,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
 
             /** Filter current days new view books */
             const todayViews = []; let isExist = false;
+            const todayFreeNotificationBook = []; let isFreeNotificationBookExist = false
             req.user.libraries = await userService.getUserLibrary({ _id: req.user.libraries })
             req?.user?.libraries?.view.map(i => {
                 const createdAt = new Date(i.createdAt).getTime();
@@ -145,7 +146,42 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                 }
             })
 
-            if (!isExist && todayViews.length >= 1) {
+            /** Filter current days notification book view */
+            req?.user?.libraries?.freeNotificationBooks.map(i => {
+                const createdAt = new Date(i.createdAt).getTime();
+                if (createdAt >= start.getTime()) todayFreeNotificationBook.push(i)
+                if (String(i.bookId) === String(data._id)) {
+                    isFreeNotificationBookExist = true
+                }
+            })
+
+            const categoryIds = req.user.libraries.categories.map(id => id.toString()) || [];
+
+            // Filter categories to find any matches between user library categories and data categories
+            const matchingCategories = categoryIds.filter(categoryId =>
+                data.categories.map(id => id.toString()).includes(categoryId)
+            );
+
+            // Fetch the user's library based on the library ID and the freeSummary ID from request parameters
+            const freeSummary = await userService.getUserLibrary({ _id: req.user.libraries, freeSummary: req.params.id })
+
+            // Check if the user has already used the free summary, is not signed up, and the free summary doesn't exist
+            if (req.user.hasUsedFreeSummary && !req.user.isSignedUp && !freeSummary) {
+                return next(Boom.forbidden(bookSummaryControllerResponse.preSignedUpUserSummaryLimitError))
+            }
+
+            // If no matching categories are found, the user has used the free summary, and the free summary doesn't exist
+            if (matchingCategories.length === 0 && req.user.hasUsedFreeSummary && !freeSummary) {
+                return next(Boom.forbidden(bookSummaryControllerResponse.noMatchCategories))
+            }
+
+            // If the free summary does not exist, today's views are 2 or more, the user has no free notification books, and the free summary doesn't exist
+            if (!isExist && todayViews.length >= 2 && req?.user?.libraries?.freeNotificationBooks.length === 0 && !freeSummary) {
+                return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError))
+            }
+
+            // If the free summary does not exist, today's views are 1 or more, the free notification book does not exist, and the free summary doesn't exist
+            if (!isExist && todayViews.length >= 1 && !isFreeNotificationBookExist && !freeSummary) {
                 return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError))
             }
         }

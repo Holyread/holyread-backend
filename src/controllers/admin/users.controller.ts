@@ -362,6 +362,19 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
                     },
                 ];
             }
+            if (statusFilterLower.includes('appuninstalledusers')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'isAppUninstalled': true,
+                        ...planQuery,
+                        ...searchQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
+            }
         }
 
         // Handle date range filter
@@ -533,6 +546,7 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
             highLightsService.deleteHighLights({ userId: userObj._id }),
             transactionsService.deleteTransaction({ userId: userObj._id }),
             notificationsService.deleteNotifications({ userId: userObj._id }),
+            usersService.deleteUserLibrary( {_id: userObj.libraries} )
         ])
     } catch (e: any) {
         return next(Boom.badData(e.message))

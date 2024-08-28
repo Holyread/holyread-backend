@@ -67,6 +67,8 @@ const initializeDeviceAccess = async (req: Request, res: Response, next: NextFun
         categories: [],
         devotionalCategories: [],
         devotionalViews: [],
+        freeSummary: null,
+        freeNotificationBooks: [],
       });
 
       const email = body.deviceId + '@holyreads-temp.com';
@@ -106,7 +108,8 @@ const appSignUpUser = async (
   res: Response,
   next: NextFunction
 ) => {
-  const body = req.body;
+  try {
+    const body = req.body;
 
   const existingUser: any = await usersService.getOneUserByFilter({
     email: body.email,
@@ -118,10 +121,6 @@ const appSignUpUser = async (
   const user = await usersService.getOneUserByFilter({
     deviceId: body.deviceId,
   });
-
-  if (!user) {
-    return next(Boom.conflict(authControllerResponse.noUserFound));
-  }
 
   const subscriptionDetails =
     body.subscription &&
@@ -183,7 +182,7 @@ const appSignUpUser = async (
     body.image = s3File.name;
   }
 
-  const userObj = {
+  const userObj: any = {
     image: body.image || '',
     email: body.email,
     password: body.password,
@@ -192,9 +191,34 @@ const appSignUpUser = async (
     medium: body.medium,
     campaign: body.campaign,
     isSignedUp: true,
+    deviceId: body.deviceId,
+    type: 'User',
+    status: 'Active',
   };
 
-  const userData = await usersService.updateUser({ _id: user._id }, userObj);
+    let userData;
+    if (user && !user.isSignedUp) {
+      userData = await usersService.updateUser({ _id: user._id }, userObj);
+    }
+    else {
+      const libraries = await userService
+        .createUserLibrary({
+          saved: [],
+          completed: [],
+          view: [],
+          smallGroups: [],
+          reading: [],
+          categories: [],
+          devotionalCategories: [],
+          devotionalViews: [],
+          freeSummary: null,
+          freeNotificationBooks: [],
+        })
+
+        userObj.libraries = libraries._id;
+
+      userData = await usersService.createUser(userObj);
+    }
 
   /** Push notification */
       /** Push notification */
@@ -204,7 +228,12 @@ const appSignUpUser = async (
         pushNotification(tokens, title, description)
       }
   return res.status(200).send({ message: authControllerResponse.signUpSuccess });
-};
+} catch (error: any) {
+  // Handle any unexpected errors
+  console.error('Error in appSignUpUser:', error);
+  return next(Boom.internal(error.message));
+}
+}
 
 /** Add User */
 const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -272,6 +301,8 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
         categories: [],
         devotionalCategories: [],
         devotionalViews: [],
+        freeSummary: null,
+        freeNotificationBooks: [],
       })
 
     const data: any = {
@@ -470,9 +501,6 @@ const handleExistingAppUser = async (
   const existingUser = await usersService.getOneUserByFilter({
     deviceId: body.deviceId,
   });
-  if (!existingUser) {
-    return res.status(404).send({ message: authControllerResponse.noUserFound });
-  }
 
   let base64: any;
 
@@ -664,7 +692,14 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         },
       })
     }
+    let userObj;
     if (body.deviceId) {
+      userObj = await usersService.getOneUserByFilter({
+        deviceId: body.deviceId,
+      });
+    }
+
+    if (userObj && body.deviceId && !userObj.isSignedUp) {
       return await handleExistingAppUser(req, res, next)
     }
     let base64: any;
@@ -687,6 +722,8 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
         categories: [],
         devotionalCategories: [],
         devotionalViews: [],
+        freeSummary: null,
+        freeNotificationBooks: [],
       })
 
     const newBody: any = {
@@ -707,6 +744,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       campaign: body.campaign,
       libraries: libraries?._id,
       isSignedUp: true,
+      deviceId: body.deviceId || '',
     }
 
     const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscription })

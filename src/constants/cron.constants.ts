@@ -173,3 +173,25 @@ export const publishDailyDevotional = {
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 };
+
+export const checkUninstalledUser = {
+      SCHEDULE: {
+          Minutes: '0',// At 0 minutes past the hour
+          Hours: '2',// At 2 AM
+          DayOfMonth: '*',// Every day
+          Months: '*',// Every month
+          DayOfWeek: '*'// Every day of the week
+      },
+      JOBRESTRICTENV: ['local'], // 'local','development','production'
+};
+
+export const scheduleFreemiumUserRandomSummaryNotification = {
+      SCHEDULE: {
+          Minutes: '30',
+          Hours: '5',// At 5:30 AM
+          DayOfMonth: '*',
+          Months: '*',
+          DayOfWeek: '*'
+      },
+      JOBRESTRICTENV: ['local'],
+};

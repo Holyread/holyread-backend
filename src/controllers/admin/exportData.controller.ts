@@ -341,6 +341,7 @@ const exportUsersData = async (request: Request, response: Response, next: NextF
             { header: 'Status', key: 'status' },
             { header: 'Country', key: 'country' },
             { header: 'Time Zone', key: 'timeZone' },
+            { header: 'App Uninstalled Status', key: 'isAppUninstalled' },
         ];
 
         const params: any = request.body;
@@ -529,6 +530,18 @@ const exportUsersData = async (request: Request, response: Response, next: NextF
                     },
                 ];
             }
+            if (statusFilterLower.includes('appuninstalledusers')) {
+                searchFilter.$or = [
+                    ...(searchFilter.$or || []),
+                    {
+                        'isAppUninstalled': true,
+                        ...planQuery,
+                        ...countryQuery,
+                        ...timeZoneQuery,
+                        ...paymentModeQuery,
+                    },
+                ];
+            }
         }
 
         // Handle date range filter
@@ -571,10 +584,11 @@ const exportUsersData = async (request: Request, response: Response, next: NextF
                 device: item.device,
                 status: item.status,
                 country: item.country,
-                timeZone: item.timeZone
+                timeZone: item.timeZone,
+                isAppUninstalled : item.isAppUninstalled,
             })
         });
-        const usersExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1', 'L1', 'M1'];
+        const usersExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1', 'L1', 'M1', 'N1'];
         await setHeaderBackgroundColor(usersExcelHeaderCells, wsUsers);
         await setColumnWidth(wsUsers);
         await workbook.commit();

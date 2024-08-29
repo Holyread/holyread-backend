@@ -10,6 +10,7 @@ export interface IUserLibrary extends mongoose.Document {
     smallGroups?: [Types.ObjectId]
     reading?: [{
         bookId: Types.ObjectId,
+        createdAt: Date,
         updatedAt: Date,
         chaptersCompleted: [string],
     }],
@@ -32,6 +33,7 @@ export type createUserLibraryType = {
     smallGroups?: [Types.ObjectId]
     reading?: [{
         bookId: Types.ObjectId,
+        createdAt: Date,
         updatedAt: Date,
         chaptersCompleted: [string],
     }],
@@ -55,6 +57,7 @@ export type getUserLibraryType = {
     smallGroups?: [Types.ObjectId]
     reading?: [{
         bookId: Types.ObjectId,
+        createdAt: Date,
         updatedAt: Date,
         chaptersCompleted: [string],
     }],
@@ -78,6 +81,11 @@ export const UserLibrarySchema = new Schema({
     reading: [{
         bookId: { type: Schema.Types.ObjectId, ref: 'bookSummary', index: true },
         chaptersCompleted: [{ type: String }],
+        createdAt: {
+            type: Date, default: () => {
+                return new Date()
+            },
+        },
         updatedAt: { type: Date },
     }],
     categories: [{ type: Schema.Types.ObjectId }],

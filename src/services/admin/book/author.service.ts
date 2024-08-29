@@ -1,5 +1,3 @@
-import { FilterQuery } from 'mongoose'
-import { IBookAuthor } from '../../../models/bookAuthor.model'
 import { BookAuthorModel, BookSummaryModel } from '../../../models/index'
 
 /** Create Author */
@@ -37,7 +35,7 @@ const getOneAuthorByFilter = async (query: any) => {
 }
 
 /** Get all authors for table */
-const getAllAuthors = async (skip: number, limit, search: FilterQuery<IBookAuthor>, sort) => {
+const getAllAuthors = async (skip: number, limit, search: object, sort) => {
       try {
             const authorsList: any = await BookAuthorModel.find(search).select('name about').skip(skip).limit(limit).sort(sort).lean()
             const count = await BookAuthorModel.find(search).countDocuments();

@@ -14,4 +14,3 @@ import './set-last-transaction-id';
 // import './remove-invalid-fcm-token'
 import './set-country.script'
 // import './remove-non-signup-users'
-// import './set-created-date-in-reading'

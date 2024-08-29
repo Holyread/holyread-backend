@@ -2,6 +2,8 @@ import { SmallGroupModel } from '../../../models/index'
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket } from '../../../constants/app.constant'
 import { getImageUrl } from '../../../lib/utils/utils'
+import { ISmallGroup } from '../../../models/smallGroup.model'
+import { FilterQuery } from 'mongoose'
 
 const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
 
@@ -43,7 +45,7 @@ const getOneSmallGroupByFilter = async (query: any) => {
 }
 
 /** Get all small group for table */
-const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
+const getAllSmallGroups = async (skip: number, limit, search: FilterQuery<ISmallGroup>, sort) => {
     try {
         const result = await SmallGroupModel.find(search).populate('books', 'title').skip(skip).limit(limit).sort(sort).lean()
         const count = await SmallGroupModel.find(search).countDocuments()

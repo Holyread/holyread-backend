@@ -1,8 +1,10 @@
+import { FilterQuery } from 'mongoose';
 import { formattedDate } from '../../lib/utils/utils';
 import { CustomNotificationsModel } from '../../models/index'
+import { ICustomNotifications } from '../../models/customNotification.model';
 
 /** Get notifications */
-const getUserNotifications = async (skip: number, limit, search: object, sort) => {
+const getUserNotifications = async (skip: number, limit, search: FilterQuery<ICustomNotifications>, sort) => {
     try {
         const notifications = await CustomNotificationsModel.find(search).select('-userIds').skip(skip).limit(limit).sort(sort).lean()
 

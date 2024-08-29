@@ -7,6 +7,8 @@ import { responseMessage } from '../../constants/message.constant'
 import { getImageUrl, getSearchRegexp, removeS3File, uploadFileToS3 } from '../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../constants/app.constant'
 import config from '../../../config'
+import { ISmallGroup } from '../../models/smallGroup.model';
+import { FilterQuery } from 'mongoose';
 
 const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
 const NODE_ENV = config.NODE_ENV
@@ -76,7 +78,7 @@ const getAllSmallGroups = async (req: Request, res: Response, next: NextFunction
         const skip = Number(query.skip) || dataTable.skip;
         const limit = Number(query.limit) || dataTable.limit;
 
-        let searchFilter: any = {};
+        let searchFilter: FilterQuery<ISmallGroup> = {};
         if (query.search) {
             const search = await getSearchRegexp(query.search as string);
             searchFilter = {

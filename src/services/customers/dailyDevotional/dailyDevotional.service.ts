@@ -1,11 +1,13 @@
 import { DailyDvotionalModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
+import { IDailyDvotional } from '../../../models/dailyDvotional.model'
+import { FilterQuery } from 'mongoose'
 
 const NODE_ENV = config.NODE_ENV
 
 /** Get all daily devotional for app */
-const getAllDailyDevotional = async (skip: number, limit, search: object, sort) => {
+const getAllDailyDevotional = async (skip: number, limit, search: FilterQuery<IDailyDvotional>, sort) => {
     try {
         const dailyDevotionalList: any = await DailyDvotionalModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         const count: any = await DailyDvotionalModel.countDocuments(search).lean().exec()

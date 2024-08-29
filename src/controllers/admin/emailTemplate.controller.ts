@@ -5,6 +5,8 @@ import emailTemplateService from '../../services/admin/emailTemplate/emailTempla
 import { responseMessage } from '../../constants/message.constant'
 import { getSearchRegexp } from '../../lib/utils/utils'
 import { dataTable } from '../../constants/app.constant'
+import { IEmailTemplate } from '../../models/emailTemplate.model';
+import { FilterQuery } from 'mongoose';
 
 const emailTemplateControllerResponse = responseMessage.emailTemplateControllerResponse
 
@@ -49,7 +51,7 @@ const getAllEmailTemplates = async (request: Request, response: Response, next: 
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
-        let searchFilter = {}
+        let searchFilter: FilterQuery<IEmailTemplate> = {}
 
         if (params.search) {
             searchFilter = {

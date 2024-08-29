@@ -6,6 +6,8 @@ import { responseMessage } from '../../../constants/message.constant'
 import { removeS3File, uploadFileToS3, getSearchRegexp, getImageUrl } from '../../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../../constants/app.constant'
 import config from '../../../../config'
+import { IBookCategory } from '../../../models/bookCategory.model';
+import { FilterQuery } from 'mongoose';
 
 const bookCategoryControllerResponse = responseMessage.bookCategoryControllerResponse
 
@@ -63,7 +65,7 @@ const getAllCategory = async (request: Request, response: Response, next: NextFu
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
-        let searchFilter = {}
+        let searchFilter: FilterQuery<IBookCategory> = {}
         if (params.search) {
             searchFilter = {
                 $or: [

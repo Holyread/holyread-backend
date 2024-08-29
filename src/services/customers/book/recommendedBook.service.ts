@@ -1,7 +1,9 @@
+import { FilterQuery } from 'mongoose'
 import { RecommendedBookModel, BookSummaryModel, BookAuthorModel } from '../../../models/index'
+import { IRecommendedBook } from '../../../models/recommendedBooks.model'
 
 /** Get all recommended books for app */
-const getAllRecommendedBooks = async (skip: number, limit, search: object, sort) => {
+const getAllRecommendedBooks = async (skip: number, limit, search: FilterQuery<IRecommendedBook>, sort) => {
       try {
             let recommendedBooks: any = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).lean().exec()
             let count: any = await RecommendedBookModel.countDocuments(search).lean().exec()

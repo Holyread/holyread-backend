@@ -1,5 +1,7 @@
 import { CouponsModel } from '../../../models/index';
 import { formattedDate } from '../../../lib/utils/utils';
+import { ICoupons } from '../../../models/coupons.model';
+import { FilterQuery } from 'mongoose';
 
 /** Create Coupon */
 const createCoupon = async (
@@ -43,7 +45,7 @@ const getOneCouponByFilter = async (query: any) => {
 }
 
 /** Get all Subscriptions for table */
-const getAllCoupons = async (skip: number, limit, search: object, sort) => {
+const getAllCoupons = async (skip: number, limit, search: FilterQuery<ICoupons>, sort) => {
       try {
             const coupons: any
                   = await CouponsModel

@@ -5,6 +5,8 @@ import cmsService from '../../services/admin/cms/cms.service'
 import { responseMessage } from '../../constants/message.constant'
 import { getSearchRegexp } from '../../lib/utils/utils'
 import { dataTable } from '../../constants/app.constant'
+import { FilterQuery } from 'mongoose';
+import { ICms } from '../../models/cms.model';
 
 const cmsControllerResponse = responseMessage.cmsControllerResponse
 
@@ -48,7 +50,7 @@ const getAllCms = async (request: Request, response: Response, next: NextFunctio
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
-        let searchFilter = {}
+        let searchFilter: FilterQuery<ICms> = {}
 
         if (params.search) {
             searchFilter = {

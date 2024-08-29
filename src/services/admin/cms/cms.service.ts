@@ -1,3 +1,5 @@
+import { FilterQuery } from 'mongoose'
+import { ICms } from '../../../models/cms.model'
 import { CmsModel } from '../../../models/index'
 
 /** Create Cms */
@@ -35,7 +37,7 @@ const getOneCmsByFilter = async (query: any) => {
 }
 
 /** Get all Cms for table */
-const getAllCms = async (skip: number, limit, search: object, sort) => {
+const getAllCms = async (skip: number, limit, search: FilterQuery<ICms>, sort) => {
       try {
             const CmssList: any = await CmsModel.find(search).skip(skip).limit(limit).sort(sort).lean()
             const count = await CmsModel.find(search).countDocuments()

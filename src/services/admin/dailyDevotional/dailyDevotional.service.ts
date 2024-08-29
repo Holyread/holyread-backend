@@ -2,6 +2,8 @@ import { DailyDvotionalModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import { responseMessage } from '../../../constants/message.constant'
 import { formattedDate, getImageUrl } from '../../../lib/utils/utils'
+import { IDailyDvotional } from '../../../models/dailyDvotional.model'
+import { FilterQuery } from 'mongoose'
 
 const dailyDevotionalControllerResponse = responseMessage.dailyDevotionalControllerResponse
 
@@ -52,7 +54,7 @@ const getOneDailyDevotionalByFilter = async (query: any) => {
 }
 
 /** Get all Daily Devotional for table */
-const getAllDailyDevotional = async (skip: number, limit: number, search: object, sort: any) => {
+const getAllDailyDevotional = async (skip: number, limit: number, search: FilterQuery<IDailyDvotional>, sort: any) => {
     try {
         const result: any = await DailyDvotionalModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         await Promise.all(result.map(async (item: any) => {

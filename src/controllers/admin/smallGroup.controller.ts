@@ -84,9 +84,6 @@ const getAllSmallGroups = async (req: Request, res: Response, next: NextFunction
             searchFilter = {
                 $or: [{ title: search }],
             };
-            if (!isNaN(Number(search))) {
-                searchFilter.$or.push({ fontSize: Number(search) });
-            }
         }
 
 

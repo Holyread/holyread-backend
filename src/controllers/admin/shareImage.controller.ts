@@ -72,7 +72,7 @@ const getAllShareImages = async (request: Request, response: Response, next: Nex
                 ],
             }
             if (Number(search)) {
-                searchFilter['$or'].push({ 'fontSizr': Number(search) })
+                searchFilter['$or'].push({ 'fontSize': Number(search) })
             }
         }
 

@@ -26,7 +26,7 @@ const createUser = async (body: any) => {
 }
 
 /** Modify User */
-const updateUser = async (query: object, body: any) => {
+const updateUser = async (query: FilterQuery<IUser>, body: any) => {
     try {
         if (body.password) {
             body.password = encrypt(body.password)
@@ -59,7 +59,7 @@ const getOneUserByFilter = async (query: any, select = []) => {
 const getAllUsers = async (
     skip: number,
     limit: number,
-    search: object,
+    search: any,
     sort: Record<string, any>
 ) => {
     try {

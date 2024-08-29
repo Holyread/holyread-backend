@@ -35,7 +35,9 @@ export interface ITransactions extends mongoose.Document {
     stripeSubscriptionId?: string,
     paymentIntentId?: string,
     event?: string,
-    planId?: string
+    planId?: string,
+    createdAt ?: Date,
+    updatedAt ?: Date
 }
 
 export type createTransationsType = {
@@ -72,6 +74,8 @@ export type createTransationsType = {
     event?: string,
     planId?: string,
     paymentIntentId?: string,
+    createdAt ?: Date,
+    updatedAt ?: Date
 }
 
 export type getTransactionsType = {
@@ -108,6 +112,8 @@ export type getTransactionsType = {
     event?: string,
     planId?: string,
     paymentIntentId?: string,
+    createdAt ?: Date,
+    updatedAt ?: Date
 }
 
 export const TransactionsSchema = new Schema({
@@ -149,6 +155,8 @@ export const TransactionsSchema = new Schema({
     event: { type: String },
     planId: { type: String },
     paymentIntentId: { type: String },
+    createdAt: { type: Date },
+    updatedAt: { type: Date },
 }, { strict: 'throw', timestamps: true })
 
 TransactionsSchema.index({ createdAt: -1 });

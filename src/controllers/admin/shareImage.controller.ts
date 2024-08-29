@@ -6,6 +6,8 @@ import { responseMessage } from '../../constants/message.constant'
 import { removeS3File, uploadFileToS3, getSearchRegexp, getImageUrl } from '../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../constants/app.constant'
 import config from '../../../config'
+import { IShareImage } from '../../models/shareImage.model';
+import { FilterQuery } from 'mongoose';
 
 const shareImageControllerResponse = responseMessage.shareImageControllerResponse
 
@@ -61,7 +63,7 @@ const getAllShareImages = async (request: Request, response: Response, next: Nex
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
-        let searchFilter = {}
+        let searchFilter: FilterQuery<IShareImage> = {}
         if (params.search) {
             const search = await getSearchRegexp(params.search)
             searchFilter = {

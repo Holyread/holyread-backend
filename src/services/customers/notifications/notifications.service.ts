@@ -1,7 +1,9 @@
+import { FilterQuery } from 'mongoose'
 import { NotificationsModel } from '../../../models/index'
+import { INotifications } from '../../../models/notifications.model'
 
 /** Get notifications */
-const getUserNotifications = async (query: object) => {
+const getUserNotifications = async (query: FilterQuery<INotifications>) => {
     try {
         const notificationDetails = await NotificationsModel.find(query).sort([['createdAt', 'desc']]).lean().exec()
         return notificationDetails
@@ -11,7 +13,7 @@ const getUserNotifications = async (query: object) => {
 }
 
 /** Delete notifications */
-const deleteNotifications = async (query: object) => {
+const deleteNotifications = async (query: FilterQuery<INotifications>) => {
     try {
         await NotificationsModel.deleteMany(query, { new: true })
         return true

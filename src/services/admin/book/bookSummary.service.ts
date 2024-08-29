@@ -2,6 +2,8 @@ import { BookSummaryModel, BookAuthorModel, HighLightsModel, BookCategoryModel, 
 import { awsBucket } from '../../../constants/app.constant'
 import { responseMessage } from '../../../constants/message.constant'
 import { formattedDate, getImageUrl } from '../../../lib/utils/utils'
+import { IBookSummary } from '../../../models/bookSummary.model'
+import { FilterQuery } from 'mongoose'
 
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
 
@@ -156,7 +158,7 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
 
 
 /** Get all book summaries for table */
-const getAllBookSummaries = async (skip: number, limit, search: object, sort) => {
+const getAllBookSummaries = async (skip: number, limit, search: FilterQuery<IBookSummary>, sort) => {
     try {
         let authorsList: any;
         let categories: any;

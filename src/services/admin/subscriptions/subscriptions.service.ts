@@ -1,4 +1,6 @@
+import { FilterQuery } from 'mongoose';
 import { SubscriptionsModel } from '../../../models/index'
+import { ISubscription } from '../../../models/subscription.model';
 
 /** Create Subscription */
 const createSubscription = async (body: any) => {
@@ -43,7 +45,7 @@ const getOneSubscriptionByFilter = async (query: any) => {
 }
 
 /** Get all Subscriptions for table */
-const getAllSubscriptions = async (skip: number, limit, search: object, sort) => {
+const getAllSubscriptions = async (skip: number, limit, search: FilterQuery<ISubscription>, sort) => {
       try {
             const subscriptionsList: any = await SubscriptionsModel.find(search).select('-stripePlanId').skip(skip).limit(limit).sort(sort).lean()
             subscriptionsList.forEach(item => {

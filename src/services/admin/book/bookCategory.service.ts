@@ -2,6 +2,8 @@ import { BookCategoryModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import { responseMessage } from '../../../constants/message.constant'
 import { getImageUrl } from '../../../lib/utils/utils'
+import { IBookCategory } from '../../../models/bookCategory.model'
+import { FilterQuery } from 'mongoose'
 
 const bookCategoryControllerResponse = responseMessage.bookCategoryControllerResponse
 
@@ -43,7 +45,7 @@ const getOneBookCategoryByFilter = async (query: any) => {
 }
 
 /** Get all book category for table */
-const getAllBookCategory = async (skip: number, limit, search: object, sort) => {
+const getAllBookCategory = async (skip: number, limit, search: FilterQuery<IBookCategory>, sort) => {
     try {
         const result = await BookCategoryModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         const count = await BookCategoryModel.find(search).countDocuments()

@@ -5,6 +5,8 @@ import faqService from '../../services/admin/faq/faq.service'
 import { responseMessage } from '../../constants/message.constant'
 import { getSearchRegexp } from '../../lib/utils/utils'
 import { dataTable } from '../../constants/app.constant'
+import { IFaq } from '../../models/faq.model';
+import { FilterQuery } from 'mongoose';
 
 const FaqControllerResponse = responseMessage.FaqControllerResponse
 
@@ -47,7 +49,7 @@ const getAllFaqs = async (request: Request, response: Response, next: NextFuncti
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
-        let searchFilter = {}
+        let searchFilter: FilterQuery<IFaq> = {}
 
         if (params.search) {
             searchFilter = {

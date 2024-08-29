@@ -1,3 +1,5 @@
+import { FilterQuery } from 'mongoose';
+import { ICoupons } from '../../../models/coupons.model';
 import { CouponsModel } from '../../../models/index';
 
 /** Get one Coupon by filter */
@@ -24,7 +26,7 @@ const getOneCouponByFilter = async (query: any) => {
 }
 
 /** Get all coupons */
-const getAllCoupons = async (skip: number, limit, search: object, sort) => {
+const getAllCoupons = async (skip: number, limit, search: FilterQuery<ICoupons>, sort) => {
       try {
             const coupons: any
                   = await CouponsModel

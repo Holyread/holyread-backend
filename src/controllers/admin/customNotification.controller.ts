@@ -5,6 +5,8 @@ import customNotificationService from '../../services/admin/customNotification.s
 import usersService from '../../services/admin/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
 import { dataTable, BATCH_SIZE } from '../../constants/app.constant';
+import { ICustomNotifications } from '../../models/customNotification.model';
+import { FilterQuery } from 'mongoose';
 
 const adminControllerResponse = responseMessage.adminControllerResponse
 const { notificationsControllerResponse } = responseMessage
@@ -72,7 +74,7 @@ const getUserNotifications = async (req: Request, res: Response, next: NextFunct
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
-        let searchFilter = {}
+        let searchFilter: FilterQuery<ICustomNotifications> = {}
         if (params.search) {
             searchFilter = {
                 $or: [
@@ -89,7 +91,7 @@ const getUserNotifications = async (req: Request, res: Response, next: NextFunct
         const notifications: any = await customNotificationService.getUserNotifications(Number(skip), Number(limit), searchFilter, notificationSorting)
 
         if (!notifications) return next(Boom.notFound(notificationsControllerResponse.getNotificationFailure))
-        
+
         res.status(200).send({
             message: notificationsControllerResponse.fetchNotificationSuccess,
             data: notifications,

@@ -20,6 +20,7 @@ export interface IUserLibrary extends mongoose.Document {
         bookId: Types.ObjectId,
         createdAt: Date
     }],
+    categories?: [Types.ObjectId]
 }
 
 export type createUserLibraryType = {
@@ -42,6 +43,7 @@ export type createUserLibraryType = {
         bookId: Types.ObjectId,
         createdAt: Date
     }],
+    categories?: [Types.ObjectId]
 }
 
 export type getUserLibraryType = {
@@ -65,6 +67,7 @@ export type getUserLibraryType = {
         bookId: Types.ObjectId,
         createdAt: Date
     }],
+    categories?: [Types.ObjectId]
 }
 
 export const UserLibrarySchema = new Schema({

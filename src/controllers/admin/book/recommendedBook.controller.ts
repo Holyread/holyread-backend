@@ -6,6 +6,8 @@ import bookSummaryService from '../../../services/admin/book/bookSummary.service
 import { responseMessage } from '../../../constants/message.constant'
 import { getSearchRegexp } from '../../../lib/utils/utils'
 import { dataTable } from '../../../constants/app.constant'
+import { IRecommendedBook } from '../../../models/recommendedBooks.model';
+import { FilterQuery } from 'mongoose';
 
 const recommendedBookControllerResponse = responseMessage.recommendedBookControllerResponse
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -54,7 +56,7 @@ const getAllRecommendedBooks = async (request: Request, response: Response, next
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
-        let searchFilter = {}
+        let searchFilter: FilterQuery<IRecommendedBook> = {}
         if (params.search) {
             searchFilter = { 'book.title': await getSearchRegexp(params.search) }
         }

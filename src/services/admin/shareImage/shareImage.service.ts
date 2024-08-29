@@ -2,6 +2,8 @@ import { ShareImageModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import { responseMessage } from '../../../constants/message.constant'
 import { getImageUrl } from '../../../lib/utils/utils'
+import { IShareImage } from '../../../models/shareImage.model'
+import { FilterQuery } from 'mongoose'
 
 const shareImageControllerResponse = responseMessage.shareImageControllerResponse
 /** Add share image */
@@ -43,7 +45,7 @@ const getOneShareImageByFilter = async (query: any) => {
 }
 
 /** Get all share image for table */
-const getAllShareImage = async (skip: number, limit, search: object, sort) => {
+const getAllShareImage = async (skip: number, limit, search: FilterQuery<IShareImage>, sort) => {
     try {
         const result = await ShareImageModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         const count = await ShareImageModel.find(search).countDocuments()

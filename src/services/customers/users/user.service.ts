@@ -1,8 +1,10 @@
+import { FilterQuery } from 'mongoose'
 import { encrypt } from '../../../lib/utils/utils'
 import { UserModel, NotificationsModel, UserLibraryModel } from '../../../models/index'
+import { IUser } from '../../../models/user.model'
 
 /** Modify User */
-const updateUser = async (query: object, body: any) => {
+const updateUser = async (query: FilterQuery<IUser>, body: any) => {
     try {
         if (body.password) {
             body.password = encrypt(body.password)
@@ -39,7 +41,7 @@ const getUserLibrary = async (query: any, select: string[] = []) => {
 }
 
 /** Modify User */
-const updateUserLibrary = async (query: object, body: any) => {
+const updateUserLibrary = async (query: FilterQuery<IUser>, body: any) => {
     try {
         const data: any
             = await UserLibraryModel.findOneAndUpdate(query, { ...body }, { upsert: true, new: true }).lean().exec();
@@ -61,7 +63,7 @@ const createUserLibrary = async (body: any) => {
 }
 
 /** Get all Users */
-const getAllUsers = async (search: object) => {
+const getAllUsers = async (search: FilterQuery<IUser>) => {
     try {
         const users = await UserModel.find({ ...search, type: 'User' }).lean()
         return users

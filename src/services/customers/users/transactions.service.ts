@@ -1,5 +1,6 @@
 import { TransactionsModel, createTransationsType } from '../../../models/transactions.model'
-import { InAppNotificationModel, createInAppNotificationType } from '../../../models/inAppNotification.model'
+import { IInAppNotification, InAppNotificationModel, createInAppNotificationType } from '../../../models/inAppNotification.model'
+import { FilterQuery } from 'mongoose'
 
 /** Create transaction */
 const createTransaction = async (body: createTransationsType) => {
@@ -18,7 +19,7 @@ const createAppTransaction = async (body: createInAppNotificationType) => {
             throw new Error(e)
       }
 }
-const updateAppTransaction = async (query: object, body: createInAppNotificationType) => {
+const updateAppTransaction = async (query: FilterQuery<IInAppNotification>, body: createInAppNotificationType) => {
       try {
             return await InAppNotificationModel.findOneAndUpdate(query, body)
       } catch (e: any) {
@@ -27,7 +28,7 @@ const updateAppTransaction = async (query: object, body: createInAppNotification
 }
 
 /** Delete user transactions */
-const deleteTransaction = async (query: object) => {
+const deleteTransaction = async (query: any) => {
       try {
             await TransactionsModel.deleteMany(query)
       } catch (e: any) {

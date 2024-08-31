@@ -6,6 +6,8 @@ import { responseMessage } from '../../constants/message.constant';
 import { removeS3File, uploadFileToS3, getSearchRegexp, getImageUrl } from '../../lib/utils/utils';
 import { awsBucket, dataTable } from '../../constants/app.constant';
 import config from '../../../config';
+import { FilterQuery } from 'mongoose';
+import { IDailyDvotional } from '../../models/dailyDvotional.model';
 
 const dailyDevotionalControllerResponse = responseMessage.dailyDevotionalControllerResponse;
 
@@ -81,7 +83,7 @@ const getAllDailyDevotional = async (req: Request, res: Response, next: NextFunc
         const skip = Number(params.skip) || dataTable.skip;
         const limit = Number(params.limit) || dataTable.limit;
 
-        let searchQuery: any = {};
+        let searchQuery: FilterQuery<IDailyDvotional> = {};
         if (params.search) {
             searchQuery = {
                 $or: [

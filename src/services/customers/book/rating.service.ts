@@ -1,5 +1,7 @@
 import { RatingModel, BookSummaryModel } from '../../../models/index'
 import { responseMessage } from '../../../constants/message.constant'
+import { FilterQuery } from 'mongoose';
+import { IRating } from '../../../models/rating.model';
 
 const bookSummaryControllerResponse =
       responseMessage.bookSummaryControllerResponse;
@@ -57,7 +59,7 @@ const getBooksRatings = async (bookIds: [string], userId: string) => {
 };
 
 /** Get book ratings */
-const deleteRatings = async (query: object) => {
+const deleteRatings = async (query: FilterQuery<IRating>) => {
       try {
             await RatingModel.deleteMany(query);
             return true;

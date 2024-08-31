@@ -2,6 +2,8 @@ import { awsBucket } from '../../../constants/app.constant'
 import { ExpertCuratedModel } from '../../../models/index'
 import { responseMessage } from '../../../constants/message.constant'
 import { getImageUrl } from '../../../lib/utils/utils'
+import { FilterQuery } from 'mongoose'
+import { IExpertCurated } from '../../../models/expertCurated.model'
 
 const expertCuratedControllerResponse = responseMessage.expertCuratedControllerResponse
 
@@ -42,7 +44,7 @@ const getOneExpertCuratedByFilter = async (query: any) => {
 }
 
 /** Get all expert Curated for table */
-const getAllExpertCurated = async (skip: number, limit, search: object, sort) => {
+const getAllExpertCurated = async (skip: number, limit, search: FilterQuery<IExpertCurated>, sort) => {
     try {
         const result = await ExpertCuratedModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         const count: number = await ExpertCuratedModel.find(search).countDocuments()

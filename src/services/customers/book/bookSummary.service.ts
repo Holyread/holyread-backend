@@ -3,6 +3,8 @@ import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import usersService from '../users/user.service'
 import ratingService from './rating.service'
+import { IBookSummary } from '../../../models/bookSummary.model'
+import { FilterQuery } from 'mongoose'
 
 const NODE_ENV = config.NODE_ENV
 
@@ -507,7 +509,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
 }
 
 /** Modify book summary */
-const updateBookSummary = async (body: any, query: object) => {
+const updateBookSummary = async (body: any, query: FilterQuery<IBookSummary>) => {
     try {
         await BookSummaryModel.updateOne(query, body)
     } catch (e: any) {

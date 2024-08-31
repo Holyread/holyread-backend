@@ -1,11 +1,13 @@
 import { BookCategoryModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
+import { IBookCategory } from '../../../models/bookCategory.model'
+import { FilterQuery } from 'mongoose'
 
 const NODE_ENV = config.NODE_ENV
 
 /** Get all book categories */
-const getAllBookCategories = async (skip: number, limit, search: object, sort) => {
+const getAllBookCategories = async (skip: number, limit, search: FilterQuery<IBookCategory>, sort) => {
     try {
         const page: any = [{ $skip: skip }]
         const result = await BookCategoryModel.aggregate([

@@ -1,5 +1,7 @@
+import { FilterQuery } from 'mongoose';
 import { formattedDate, getDates, sortArrayObject } from '../../../lib/utils/utils';
 import { TransactionsModel } from '../../../models/index'
+import { ITransactions } from '../../../models/transactions.model';
 
 /** Get transaction by filter */
 const getAllTransactions = async (
@@ -250,7 +252,7 @@ const getUserAnalytics = async (duration = 'year') => {
       }
 }
 
-const getTransaction = async (query: object) => {
+const getTransaction = async (query: FilterQuery<ITransactions>) => {
       try {
             const transaction = await TransactionsModel.findOne(query).sort([['createdAt', 'desc']]).lean().exec();
             return transaction;
@@ -260,7 +262,7 @@ const getTransaction = async (query: object) => {
 }
 
 /** Delete user transactions */
-const deleteTransaction = async (query: object) => {
+const deleteTransaction = async (query: FilterQuery<ITransactions>) => {
       try {
             await TransactionsModel.deleteMany(query)
       } catch (e: any) {

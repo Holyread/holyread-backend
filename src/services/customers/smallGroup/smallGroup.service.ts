@@ -2,11 +2,13 @@ import { SmallGroupModel, BookSummaryModel, BookAuthorModel, HandoutsModel } fro
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import ratingService from '../book/rating.service'
+import { ISmallGroup } from '../../../models/smallGroup.model'
+import { FilterQuery } from 'mongoose'
 
 const NODE_ENV = config.NODE_ENV
 
 /** Get all small group for app */
-const getAllSmallGroups = async (skip: number, limit, search: object, sort) => {
+const getAllSmallGroups = async (skip: number, limit, search: FilterQuery<ISmallGroup>, sort) => {
     try {
         const count = await SmallGroupModel.find(search).countDocuments();
         const aggregatePipeline = [

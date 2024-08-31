@@ -6,6 +6,8 @@ import { responseMessage } from '../../../constants/message.constant'
 import { removeS3File, uploadFileToS3, getSearchRegexp, getImageUrl } from '../../../lib/utils/utils'
 import { awsBucket, dataTable } from '../../../constants/app.constant'
 import config from '../../../../config'
+import { FilterQuery } from 'mongoose';
+import { IExpertCurated } from '../../../models/expertCurated.model';
 
 const expertCuratedControllerResponse = responseMessage.expertCuratedControllerResponse
 
@@ -59,7 +61,7 @@ const getAllExpertCurated = async (request: Request, response: Response, next: N
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
-        let searchFilter: any = {}
+        let searchFilter: FilterQuery<IExpertCurated> = {}
         if (params.search) {
             searchFilter = {
                 $or: [

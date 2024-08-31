@@ -10,6 +10,8 @@ import { awsBucket, dataTable } from '../../../constants/app.constant';
 import config from '../../../../config';
 import userService from '../../../services/admin/users/user.service';
 import ratingService from '../../../services/customers/book/rating.service';
+import { IBookSummary } from '../../../models/bookSummary.model';
+import { FilterQuery } from 'mongoose';
 
 const {
     bookCategoryControllerResponse,
@@ -142,7 +144,7 @@ const getAllSummaries = async (req: Request, res: Response, next: NextFunction) 
     try {
         const { skip = dataTable.skip, limit = dataTable.limit, search, status, bookStatusFilter, column, order } = req.query;
 
-        const searchFilter: any = {};
+        const searchFilter: FilterQuery<IBookSummary> = {};
         if (search) {
             searchFilter.$or = [
                 { title: await getSearchRegexp(search) },

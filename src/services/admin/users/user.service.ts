@@ -4,6 +4,9 @@ import { awsBucket } from '../../../constants/app.constant'
 import { responseMessage } from '../../../constants/message.constant'
 // import { UserModel, SubscriptionsModel } from '../../../models/index'
 import { UserLibraryModel, UserModel } from '../../../models/index'
+import { FilterQuery } from 'mongoose'
+import { IUserLibrary } from '../../../models/userLibrary.model'
+import { IUser } from '../../../models/user.model'
 // import stripeSubscriptionService from '../../stripe/subscription'
 const NODE_ENV = config.NODE_ENV
 const authControllerResponse = responseMessage.authControllerResponse
@@ -23,7 +26,7 @@ const createUser = async (body: any) => {
 }
 
 /** Modify User */
-const updateUser = async (query: object, body: any) => {
+const updateUser = async (query: FilterQuery<IUser>, body: any) => {
     try {
         if (body.password) {
             body.password = encrypt(body.password)
@@ -56,7 +59,7 @@ const getOneUserByFilter = async (query: any, select = []) => {
 const getAllUsers = async (
     skip: number,
     limit: number,
-    search: object,
+    search: any,
     sort: Record<string, any>
 ) => {
     try {
@@ -156,7 +159,7 @@ const getAllUsers = async (
 
 
 /** Remove User */
-const deleteUser = async (query: object) => {
+const deleteUser = async (query: FilterQuery<IUser>) => {
     try {
         await UserModel.findOneAndDelete(query)
         return true
@@ -355,7 +358,7 @@ const getTimeZones = async () => {
 };
 
 /** Remove UserLibrary */
-const deleteUserLibrary = async (query: object) => {
+const deleteUserLibrary = async (query: FilterQuery<IUserLibrary>) => {
     try {
         await UserLibraryModel.findOneAndDelete(query)
         return true

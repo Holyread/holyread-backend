@@ -2,6 +2,8 @@ import { HighLightsModel } from '../../../models/index'
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
+import { IHighLights } from '../../../models/highLights.model'
+import { FilterQuery } from 'mongoose'
 const NODE_ENV = config.NODE_ENV
 
 const highLightsControllerResponse = responseMessage.highLightsControllerResponse
@@ -116,7 +118,7 @@ const updateHighLight = async (body: any, id: string) => {
 }
 
 /** Get high light by filter */
-const getHighLightByFilter = async (skip: number, limit, search: object, sort) => {
+const getHighLightByFilter = async (skip: number, limit, search: FilterQuery<IHighLights>, sort) => {
     try {
         const result: any = await HighLightsModel.find(search).skip(skip).limit(limit).sort(sort).lean().exec()
         const count: any = await HighLightsModel.countDocuments(search).lean().exec()
@@ -311,7 +313,7 @@ const deleteHighLight = async (userId: string, id: string, highLightId: string) 
 }
 
 /** Remove high lights */
-const deleteHighLights = async (query: object) => {
+const deleteHighLights = async (query: FilterQuery<IHighLights>) => {
     try {
         await HighLightsModel.deleteMany(query)
         return true

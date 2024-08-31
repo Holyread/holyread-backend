@@ -1,3 +1,5 @@
+import { FilterQuery } from 'mongoose';
+import { IFaq } from '../../../models/faq.model';
 import { FaqModel } from '../../../models/index'
 
 /** Create Faq */
@@ -42,7 +44,7 @@ const getOneFaqByFilter = async (query: any) => {
 }
 
 /** Get all Faqs for table */
-const getAllFaqs = async (skip: number, limit, search: object, sort) => {
+const getAllFaqs = async (skip: number, limit, search: FilterQuery<IFaq>, sort) => {
       try {
             const faqsList: any = await FaqModel.find(search).skip(skip).limit(limit).sort(sort).lean()
             faqsList.forEach(item => {

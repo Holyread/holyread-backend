@@ -1,4 +1,6 @@
+import { FilterQuery } from 'mongoose'
 import { RecommendedBookModel } from '../../../models/index'
+import { IRecommendedBook } from '../../../models/recommendedBooks.model'
 
 /** Create recommended book */
 const createRecommendedBook = async (body: any) => {
@@ -38,7 +40,7 @@ const getOneRecommendedBookByFilter = async (query: any) => {
 }
 
 /** Get all recommended books for table */
-const getAllRecommendedBooks = async (skip: number, limit, search: object, sort) => {
+const getAllRecommendedBooks = async (skip: number, limit, search: FilterQuery<IRecommendedBook>, sort) => {
       try {
             const recommendedBooks = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).populate({ path: 'book', populate: { path: 'author', select: 'name' } }).lean().exec()
             const count = await RecommendedBookModel.find(search).countDocuments()

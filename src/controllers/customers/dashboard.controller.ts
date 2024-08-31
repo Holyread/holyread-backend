@@ -79,14 +79,15 @@ const getRecentReads = async (request: any, response: Response, next: NextFuncti
                         : 0
                 ).toFixed(0)
             ); summary.updatedAt = r.updatedAt
-
+            summary.createdAt = r.createdAt
             delete summary.chapters
             set.add(summary);
         })
+
         data.summaries = [...set];
 
         if (params.sort) data.summaries = sortArrayObject(data.summaries, 'title', params.sort.toLowerCase())
-        else data.summaries = sortArrayObject(data.summaries, 'updatedAt', 'desc')
+        else data.summaries = sortArrayObject(data.summaries, 'createdAt', 'desc')
 
         data.summaries = data.summaries.slice(skip, skip + limit)
         return response.status(200).send({ message: dashboardControllerResponse.getDashboardSuccess, data: { recentReads: data } })

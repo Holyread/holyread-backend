@@ -2,6 +2,8 @@ import { TestimonialModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import { responseMessage } from '../../../constants/message.constant'
 import { getImageUrl } from '../../../lib/utils/utils'
+import { ITestimonial } from '../../../models/testimonial.model'
+import { FilterQuery } from 'mongoose'
 
 const { testimonialControllerResponse } = responseMessage
 
@@ -44,7 +46,7 @@ const getOneTestimonialByFilter = async (query: any) => {
 }
 
 /** Get all testimonials for table */
-const getAllTestimonials = async (skip: number, limit, search: object, sort) => {
+const getAllTestimonials = async (skip: number, limit, search: FilterQuery<ITestimonial>, sort) => {
     try {
         const result = await TestimonialModel.find(search).skip(skip).limit(limit).sort(sort).lean()
         const count = await TestimonialModel.find(search).countDocuments()

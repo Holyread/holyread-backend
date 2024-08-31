@@ -49,6 +49,7 @@ export const responseMessage = {
         submitQueryError: 'Your message failed to send. Please try again later or contact administrator in another way.',
         paymentStatusPending: 'Payment status is pending, please contact administrator',
         submitQuerySuccess: 'Your message was sent successfully. Thanks!',
+        submitFeedbackSuccess: 'Feedback submitted successfully',
         bookRatingSuccess: 'Thanks for rating this summary! 🙂',
         userAuthorisedAsAdmin: 'User is authorized as admin. Please use another email.',
         kindleEmailNotExistError: 'You need to add your Kindle email first. Please click here.',

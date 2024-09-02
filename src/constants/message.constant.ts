@@ -20,7 +20,7 @@ export const responseMessage = {
         getUserError: 'User does not exist',
         getReferralUserError: 'Referral User does not exist',
         userNotAuthorizationError: 'Incorrect credentials or wrong password',
-        missingSocialAccountError: '💬 Your account is not registered with us, please do signup with social media account.',
+        missingSocialAccountError: '💬 Your account is not registered with us, please sign up for a new account.',
         missingEmailOrPasswordError: 'Email or password is missing',
         missingEmailError: 'Email is required',
         missingAppleEmailError: 'Go to iCloud > Password and Security > App using apple ID > Stop using apple ID.',

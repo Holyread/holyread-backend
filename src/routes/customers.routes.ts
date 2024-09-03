@@ -21,6 +21,8 @@ import expertCurated from './customers/book/expertCurated.route'
 import dailyDevotional from './customers/book/dailyDevotional.route'
 import devotionalCategories from './customers/devotionalCategories.route'
 
+import feedBack from './customers/userFeedBack.route'
+
 const router: Router = express.Router()
 
 router.use('/cms', cms)
@@ -45,5 +47,6 @@ router.use('/notifications', customerPassport, notifications)
 router.use('/reads-of-the-day', customerPassport, dailyDevotional)
 
 router.use('/devotional-categories', customerPassport, devotionalCategories)
+router.use('/feedBack', customerPassport, feedBack )
 
 export default router

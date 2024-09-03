@@ -36,7 +36,7 @@ import { CustomNotificationsModel } from './customNotification.model'
 import { CronLogModel } from './cronLog.model'
 import { InvalidTokenModel } from './invalidTokens.model'
 import { UninstallLogModel } from './uninstallLog.model'
-
+import { UserFeedBackModel } from './userFeedBack.model'
 const NODE_ENV = config.NODE_ENV
 
 mongoose.Promise = global.Promise
@@ -83,5 +83,6 @@ export {
   CustomNotificationsModel,
   CronLogModel,
   InvalidTokenModel,
-  UninstallLogModel
+  UninstallLogModel,
+  UserFeedBackModel
 }

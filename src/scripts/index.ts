@@ -15,3 +15,5 @@ import './set-last-transaction-id';
 import './set-country.script'
 // import './remove-non-signup-users'
 // import './set-created-date-reading'
+// import './add-default-book-views'
+// import './add-default-latest-book-views'

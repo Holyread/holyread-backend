@@ -1641,6 +1641,7 @@ const getUserLibrary = async (
                                           summary?.chapters?.length
                                           : 0
                               ).toFixed(0))
+                        summary.createdAt = r.createdAt
                         summary.updatedAt = r.updatedAt
                         delete summary.chapters
                         summaries.add(summary)

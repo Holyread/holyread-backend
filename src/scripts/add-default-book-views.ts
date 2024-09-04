@@ -4,10 +4,13 @@ import { BookSummaryModel } from '../models/index';
 // Set default views
 (async () => {
       try {
-            console.log('Setting default views');
-            const books = await BookSummaryModel.find({
-                  createdAt: { $lt: new Date('2024-05-01T00:00:00Z') } // Filter by created date less than 5th Jan 2024
-            }).select(['_id', 'views']).lean();
+            console.log('Setting default views randomly for books');
+            const books = await BookSummaryModel.find()
+                  .select(['_id', 'views'])
+                  .sort({ createdAt: -1 }) // Sort by `createdAt` in descending order
+                  .skip(50) // Skip the first 50 books
+                  .lean();
+
 
             if (!books?.length) {
                   console.log('Books is empty');
@@ -18,11 +21,10 @@ import { BookSummaryModel } from '../models/index';
                   books.map(async (element) => {
                         await BookSummaryModel.updateOne(
                               { _id: element._id },
-                              { views: randomNumberInRange(20000, 26000) }
+                              { views: randomNumberInRange(15000, 35000) }
                         );
                         console.log(`Views ${element._id} updated Successfully`);
                   })
-
             );
 
             console.log('Views added successfully');

@@ -209,7 +209,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
         }
         res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummarySuccess, data })
 
-        if (!req.user?.libraries?._id) {
+        if (req.user?.libraries?._id) {
             req.user.libraries = await userService.getUserLibrary({ _id: req.user.libraries }, ['view'])
         }
 

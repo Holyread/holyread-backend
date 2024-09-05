@@ -150,6 +150,7 @@ const start = async () => {
                 notification: {
                     title: '🔔 Summary for free 😊',
                     description: `📙 Just for you, one free access to the ${bookDetails.title} summary.`,
+                    bookId: bookDetails?._id,
                     success: notification.success,
                     errorMessage: notification.errorMessage,
                 },

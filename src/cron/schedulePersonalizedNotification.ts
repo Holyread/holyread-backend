@@ -112,6 +112,7 @@ const start = async () => {
                 notification: {
                     title: '🔔 We have something new for you!',
                     description: `📙 lets read ${bookDetails.title}.`,
+                    bookId: bookDetails?._id,
                     success: notification.success,
                     errorMessage: notification.errorMessage,
                 },

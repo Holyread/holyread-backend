@@ -132,6 +132,7 @@ const start = async () => {
                               userId: users[0]._id, // Assuming all users in the timezone are logged for simplicity
                               type: 'user',
                               notification: {
+                                    dailyDevotionalId : dailyDevotional._id,
                                     title: '🔔 Start your day with inspiration!',
                                     description: `📙 Today's Devotional: ${dailyDevotional.title}. Dive in now for a dose of spiritual nourishment 🔖`,
                                     success: true,

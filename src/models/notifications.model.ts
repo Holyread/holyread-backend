@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose'
+import mongoose, { Schema, Types } from 'mongoose'
 
 mongoose.set('autoIndex', true);
 
@@ -9,6 +9,8 @@ export interface INotifications extends mongoose.Document {
         status: 'read' | 'unread',
         success: boolean,
         errorMessage: string,
+        bookId: Types.ObjectId,
+        dailyDevotionalId : Types.ObjectId,
     },
     type: string,
     userId: string
@@ -21,6 +23,8 @@ export const NotificationsSchema = new Schema({
         status: { type: String, enum: ['read', 'unread'], default: 'unread' },
         success: { type: Boolean },
         errorMessage: { type: String },
+        bookId : { type: Schema.Types.ObjectId, ref: 'bookSummary' },
+        dailyDevotionalId : { type: Schema.Types.ObjectId, ref: 'dailyDevotional' },
     },
     type: { type: String, required: true },
     userId: { type: Schema.Types.ObjectId, ref: 'user', required: true, index: true },

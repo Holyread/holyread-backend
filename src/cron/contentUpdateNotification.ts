@@ -132,6 +132,7 @@ const start = async () => {
                 notification: {
                     title: '🔔 Fresh Inspiration Alert!',
                     description: `📙 Explore the latest in your favorite category with titles like ${content}.`,
+                    bookId: publishContent._id,
                     success: notification.success,
                     errorMessage: notification.errorMessage,
                 },

@@ -131,6 +131,7 @@ const start = async () => {
                 notification: {
                     title: '🔔 You left something unfinished!',
                     description: `📙 lets read ${bookDetails.title}.`,
+                    bookId: bookDetails?._id,
                     success: notification.success,
                     errorMessage: notification.errorMessage,
                 },

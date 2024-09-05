@@ -413,7 +413,7 @@ const getMostPopularBooks = async (skip: number, limit: number) => {
                 },
                 {
                     '$sort': {
-                        'total': -1.0,
+                        'views': -1.0,
                     },
                 },
                 {

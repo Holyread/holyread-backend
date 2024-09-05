@@ -209,13 +209,17 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
         }
         res.status(200).send({ message: bookSummaryControllerResponse.fetchBookSummarySuccess, data })
 
-        if (!req.user?.libraries?._id) {
+        if (req.user?.libraries?._id) {
             req.user.libraries = await userService.getUserLibrary({ _id: req.user.libraries }, ['view'])
         }
 
-        /** Incress book views */
-        if (!req.user?.libraries?.view?.find(i => String(i.bookId) === (req.params.id))) {
-            await bookSummaryService.updateBookSummary({ '$inc': { views: 1 } }, { _id: req.params.id })
+        const bookId = String(req.params.id);
+
+        /** Check if the book has already been viewed */
+        const hasViewed = req.user.libraries?.view?.some(i => String(i.bookId) === bookId);
+
+        if (!hasViewed) {
+            await bookSummaryService.updateBookSummary({ '$inc': { views: 1 } }, { _id: bookId });
         }
     } catch (e: any) {
         next(Boom.badData(e.message))

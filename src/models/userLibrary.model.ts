@@ -1,6 +1,7 @@
 import mongoose, { Schema, Types } from 'mongoose'
 
 export interface IUserLibrary extends mongoose.Document {
+    _id?: Types.ObjectId
     saved?: [Types.ObjectId],
     completed?: [Types.ObjectId],
     view?: [{

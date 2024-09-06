@@ -4,6 +4,7 @@ mongoose.set('autoIndex', true);
 
 export interface INotifications extends mongoose.Document {
     notification: {
+        _id: Types.ObjectId
         title: string,
         description: string,
         status: 'read' | 'unread',

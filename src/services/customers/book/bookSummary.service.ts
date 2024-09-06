@@ -1,4 +1,4 @@
-import { BookSummaryModel, BookAuthorModel, UserModel } from '../../../models/index'
+import { BookSummaryModel, BookAuthorModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import usersService from '../users/user.service'
@@ -258,255 +258,128 @@ const findBook = async (query: any) => {
     }
 }
 
-const getMostPopularBooks = async (skip: number, limit: number) => {
+const getMostPopularBooks = async (skip: number, limit: number, search: any, sort: any, library?: any) => {
     try {
-        const _id = 'libraries.reading._id';
-        const email = 'libraries.reading.email'
-        const bookId = 'libraries.reading.bookId._id'
-        const views = 'libraries.reading.bookId.views'
-        const title = 'libraries.reading.bookId.title'
-        const updatedAt = 'libraries.reading.updatedAt'
-        const author = 'libraries.reading.bookId.author'
-        const bookFor = 'libraries.reading.bookId.bookFor'
-        const publish = 'libraries.reading.bookId.publish'
-        const overview = 'libraries.reading.bookId.overview'
-        const chapters = 'libraries.reading.bookId.chapters._id'
-        const categories = 'libraries.reading.bookId.categories'
-        const coverImage = 'libraries.reading.bookId.coverImage'
-        const description = 'libraries.reading.bookId.description'
-        const coverImageBackground = 'libraries.reading.bookId.coverImageBackground'
-        const totalStar = 'libraries.reading.bookId.totalStar'
+        search.publish = true;
 
-        const project = {
-            [_id]: '$' + [_id],
-            [email]: '$' + [email],
-            [title]: '$' + [title],
-            [views]: '$' + [views],
-            [bookId]: '$' + [bookId],
-            [author]: '$' + [author],
-            [bookFor]: '$' + [bookFor],
-            [publish]: '$' + [publish],
-            [chapters]: '$' + [chapters],
-            [overview]: '$' + [overview],
-            [updatedAt]: '$' + [updatedAt],
-            [categories]: '$' + [categories],
-            [description]: '$' + [description],
-            [coverImageBackground]: '$' + [coverImageBackground],
-            [totalStar]: '$' + [totalStar],
-            [coverImage]: {
-                $concat: [
-                    awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/',
-                    '$' + [coverImage],
-                ],
+        // Convert the Set to an array to use MongoDB aggregation stages properly
+        const aggregate: any[] = [
+            {
+                '$project': {
+                    '_id': 1,  // Use 1 to include these fields
+                    'title': 1,
+                    'author': 1,
+                    'bookFor': 1,
+                    'publish': 1,
+                    'overview': 1,
+                    'description': 1,
+                    'coverImage': {
+                        $concat: [
+                            awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/',
+                            '$coverImage',
+                        ],
+                    },
+                    'views': '$views',
+                    'createdAt': 1,
+                    'categories': 1,
+                    'chapters.name': 1,
+                    'chapters.size': 1,
+                    'totalStar': 1,
+                    'coverImageBackground': 1,
+                },
             },
+            {
+                $lookup: {
+                    from: 'bookauthors',
+                    localField: 'author',
+                    foreignField: '_id',
+                    as: 'author',
+                },
+            },
+            {
+                $unwind: '$author',
+            },
+            {
+                $project: {
+                    'author.__v': 0,
+                    'author.createdAt': 0,
+                },
+            },
+            {
+                $sort: sort, // Sort based on the specified field
+            },
+            {
+                $limit: 100,
+            },
+            {
+                $sample: { size: 100 } // Randomly select books up to the limit
+            },
+        ];
+
+        // Add search criteria if there are any
+        if (Object.keys(search).length) {
+            aggregate.unshift({
+                $match: search, // Apply search filters before the sampling
+            });
         }
 
-        const select = {
-            'title': { $first: '$' + [title] },
-            'views': { $first: '$' + [views] },
-            'bookFor': { $first: '$' + [bookFor] },
-            'author': { $first: '$' + [author] },
-            'chapters': { $first: '$' + [chapters] },
-            'overview': { $first: '$' + [overview] },
-            'updatedAt': { $first: '$' + [updatedAt] },
-            'categories': { $first: '$' + [categories] },
-            'coverImage': { $first: '$' + [coverImage] },
-            'description': { $first: '$' + [description] },
-            'coverImageBackground': { $first: '$' + [coverImageBackground] },
-            'totalStar': { $first: '$' + [totalStar] },
-        }
+        // Add pagination and counting using $facet
+        aggregate.push({
+            $facet: {
+                page: [{ $skip: skip }], // Apply pagination with skip
+                total: [{ $count: 'count' }], // Count total number of documents after filtering
+            },
+        });
 
-        const page: any = [{ $limit: limit }]
+        // Execute the aggregation pipeline
+        let result: any = await BookSummaryModel.aggregate(aggregate);
 
-        const result = await UserModel.aggregate(
-            [
-                {
-                    '$match': {
-                        'libraries': {
-                            '$exists': true,
-                        },
-                    },
-                },
-                {
-                    '$lookup': {
-                        'from': 'userlibraries',
-                        'localField': 'libraries',
-                        'foreignField': '_id',
-                        'as': 'libraries',
-                    },
-                },
-                {
-                    '$unwind': {
-                        'path': '$libraries',
-                    },
-                },
-                {
-                    '$match': {
-                        'libraries.reading.bookId': {
-                            '$exists': true,
-                        },
-                    },
-                },
-                {
-                    '$unwind': {
-                        'path': '$libraries.reading',
-                    },
-                },
-                {
-                    '$lookup': {
-                        'from': 'booksummaries',
-                        'localField': 'libraries.reading.bookId',
-                        'foreignField': '_id',
-                        'as': 'libraries.reading.bookId',
-                    },
-                },
-                {
-                    '$unwind': {
-                        'path': '$libraries.reading.bookId',
-                    },
-                },
-                {
-                    '$project': project,
-                },
-                {
-                    '$match': {
-                        'libraries.reading.bookId.publish': true,
-                        'libraries.reading.bookId._id': { $exists: true },
-                    },
-                },
-                {
-                    '$group': {
-                        '_id': '$libraries.reading.bookId._id',
-                        'emails': {
-                            '$push': {
-                                'email': '$email',
-                            },
-                        },
-                        ...select,
-                    },
-                },
-                {
-                    '$group': {
-                        '_id': '$_id',
-                        'total': {
-                            '$sum': {
-                                '$size': '$emails',
-                            },
-                        },
-                        'title': { $first: '$title' },
-                        'views': { $first: '$views' },
-                        'bookFor': { $first: '$bookFor' },
-                        'author': { $first: '$author' },
-                        'chapters': {
-                            '$sum': {
-                                '$size': '$chapters',
-                            },
-                        },
-                        'overview': { $first: '$overview' },
-                        'updatedAt': { $first: '$updatedAt' },
-                        'categories': { $first: '$categories' },
-                        'coverImage': { $first: '$coverImage' },
-                        'description': { $first: '$description' },
-                        'coverImageBackground': { $first: '$coverImageBackground' },
-                        'totalStar': { $first: '$totalStar' },
-                    },
-                },
-                {
-                    '$sort': {
-                        'views': -1.0,
-                    },
-                },
-                {
-                    '$lookup': {
-                        'from': 'bookauthors',
-                        'localField': 'author',
-                        'foreignField': '_id',
-                        'as': 'author',
-                    },
-                },
-                {
-                    $project: {
-                        'author.createdAt': 0,
-                        'author.__v': 0,
-                    },
-                },
-                {
-                    $facet: {
-                        page
-                            : skip
-                                ? page.concat({ $skip: skip })
-                                : page,
-                        total: [{
-                            $count: 'count',
-                        }],
-                    },
-                },
-            ]
-        )
-        const count = result[0]?.total[0]?.count
+        // Fetch the total count
+        const count: any = result[0]?.total[0]?.count;
 
-        const ratings
-            = await ratingService
-                .getBooksRatings(
-                    result[0].page.map(
-                        i => i?._id
-                    )
-                        .filter(i => i) as [string],
-                    global.currentUser._id
-                )
+        // Fetch ratings for the books
+        const ratings = await ratingService.getBooksRatings(
+            result[0]?.page.map((i) => i && i._id).filter((i) => i) as [string],
+            global.currentUser._id
+        );
 
-        const libraries
-            = await usersService
-                .getUserLibrary({
-                    _id: global.currentUser.libraries,
-                })
-        const summaries = new Set();
+        // Fetch user library information
+        const libraries = await usersService.getUserLibrary({ _id: global?.currentUser?.libraries });
 
-        await Promise.all(result[0].page.map(oneItem => {
-            const isSaved
-                = libraries
-                    ?.saved
-                    ?.find(
-                        b =>
-                            String(b) === String(oneItem?._id)
-                    )
-                    ? true : false
+        // Process the result to include additional fields
+        result = await Promise.all(
+            result[0]?.page.map(async (oneItem) => {
+                const libBookChapters = libraries?.reading?.find(
+                    (item) => String(item.bookId) === String(oneItem._id)
+                )?.chaptersCompleted;
 
-            const libBookChapters
-                = libraries
-                    ?.reading
-                    ?.find(
-                        item =>
-                            String(item.bookId) === String(oneItem._id)
-                    )?.chaptersCompleted
-
-            summaries.add({
-                ...oneItem,
-                author: oneItem.author[0],
-                bookMark: isSaved,
-                isRate: !!ratings[String(oneItem._id)]?.isRate,
-                views: oneItem.views || 0,
-                reads: Number(
-                    (
-                        libBookChapters?.length
-                            ?
-                            (
-                                100 * libBookChapters?.length
-                            ) / oneItem?.chapters
-                            : 0
-                    ).toFixed(0)),
+                return {
+                    ...oneItem,
+                    author: oneItem.author,
+                    isRate: !!ratings[String(oneItem._id)]?.isRate,
+                    chapters: library ? oneItem.chapters : undefined,
+                    reads: Number(
+                        (
+                            libBookChapters && libBookChapters.length
+                                ? (100 * libBookChapters.length) / oneItem.chapters.length
+                                : 0
+                        ).toFixed(0)
+                    ),
+                    bookMark: libraries?.saved?.find((b) => String(b) === String(oneItem._id)) ? true : false,
+                    views: oneItem.views || 0,
+                };
             })
-        }))
+        );
 
+        // Return the final result with the count of books and summaries
         return {
             count,
-            summaries: [...summaries],
-        }
-
+            summaries: result.filter((i) => i),
+        };
     } catch (e: any) {
-        throw new Error(e)
+        throw new Error(e);
     }
-}
+};
 
 /** Modify book summary */
 const updateBookSummary = async (body: any, query: FilterQuery<IBookSummary>) => {

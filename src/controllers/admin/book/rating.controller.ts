@@ -36,6 +36,9 @@ const getAllRatings = async (request: Request | any, response: Response, next: N
             case 'ratings':
                 sorting = { column: 'ratings', order: params.order || 'asc' };
                 break;
+            case 'comment':
+                sorting = { column: 'comment', order: params.order || 'desc' };
+                break;
             case 'user':
                 sorting = searchFilter.bookId ? { column: 'user', order: params.order || 'asc' } : sorting;
                 break;

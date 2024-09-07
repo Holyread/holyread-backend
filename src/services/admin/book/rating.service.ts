@@ -18,70 +18,77 @@ const getAllRatings = async (skip: number, limit, search: any, sort: { column: s
                   .lean()
                   .exec()
 
-            let ratings = []
-            await Promise.all(booksRatings.map(async (oneRating: any) => {
-                  if (!oneRating) {
-                        return
-                  }
-                  oneRating.star = oneRating.star || 0
-                  const index = ratings.findIndex(
-                        oneRes => String(oneRes.bookId) === String(oneRating.bookId)
-                  )
-                  if (index >= 0) {
-                        ratings[index].ratings[`${oneRating.star}`] = {
-                              stars: (
-                                    ratings[index].ratings[
-                                          `${oneRating.star}`
-                                    ]?.stars || 0
-                              ) + oneRating.star,
-                              users: (
-                                    ratings[index].ratings[
-                                          `${oneRating.star}`
-                                    ]?.users || 0
-                              ) + 1,
-                        }
-                  } else {
-                        const bookDetails = books.find(
-                              oneBook => String(oneBook._id) === String(oneRating.bookId)
-                        )
-                        if (!bookDetails) return
-                        ratings.push({
-                              bookId: oneRating.bookId,
-                              userId: oneRating.userId,
-                              ratings: {
-                                    [`${oneRating.star}`]: {
-                                          stars: oneRating.star,
-                                          users: 1,
-                                    },
-                              },
-                              bookTitle: bookDetails.title,
-                              bookCoverImage: awsBucket[config.NODE_ENV].s3BaseURL + '/books/coverImage/' + bookDetails.coverImage,
-                        })
-                  }
-            }))
-            /** Feat avarage ratings */
-            ratings = ratings.map(item => {
-                  let stars = 0
-                  let users = 0
-                  for (let i in item.ratings) {
-                        stars += item.ratings[i].stars
-                        users += item.ratings[i].users
-                  }
-                  item.star = Number((stars / users).toFixed(1))
+    let ratingsMap = new Map<string, any>(); // Use a map to group ratings by bookId
 
-                  if (
-                        search.star &&
-                        Number(search.star) !== Math.trunc(item.star || 0)
-                  ) { return undefined }
+    // Group ratings by bookId and count comments
+    booksRatings.forEach((oneRating: any) => {
+      if (!oneRating) return;
+
+      const { bookId, description, star, userId } = oneRating;
+      const key = String(bookId);
+
+      // Initialize book entry if not present
+      if (!ratingsMap.has(key)) {
+        ratingsMap.set(key, {
+          bookId,
+          userId,
+          ratings: {},
+          bookTitle: '',
+          bookCoverImage: '',
+          comment: 0,
+        });
+      }
+
+      const currentRating = ratingsMap.get(key);
+
+      // Increment the description count if a description is present
+      if (description) {
+        currentRating.comment += 1;
+      }
+
+      // Add or update star rating counts
+      currentRating.ratings[`${star}`] = {
+        stars: (currentRating.ratings[`${star}`]?.stars || 0) + star,
+        users: (currentRating.ratings[`${star}`]?.users || 0) + 1,
+      };
+
+      ratingsMap.set(key, currentRating); // Update the map
+    });
+
+    let ratings = Array.from(ratingsMap.values());
+
+    // Merge book details with ratings
+    ratings = ratings.map((item) => {
+      const bookDetails = books.find(
+        (oneBook) => String(oneBook._id) === String(item.bookId)
+      );
+      if (!bookDetails) return undefined;
+
+      item.bookTitle = bookDetails.title;
+      item.bookCoverImage = awsBucket[config.NODE_ENV].s3BaseURL + '/books/coverImage/' + bookDetails.coverImage;
+
+
+      let stars = 0;
+      let users = 0;
+      for (let i in item.ratings) {
+        stars += item.ratings[i].stars;
+        users += item.ratings[i].users;
+      }
+      item.star = Number((stars / users).toFixed(1));
+
+      // Apply search filters
+      if (search.star && Number(search.star) !== Math.trunc(item.star || 0)) {
+        return undefined;
+      }
 
                   if (
                         search.search &&
                         !item.bookTitle.toLowerCase().includes(search.search)
                   ) { return undefined }
 
-                  item.ratings = users
-                  return item
-            }).filter(i => i)
+      item.ratings = users;
+      return item;
+    }).filter(Boolean); // Remove undefined entries
 
             const count = ratings.length;
 

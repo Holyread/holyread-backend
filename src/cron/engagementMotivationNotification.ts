@@ -104,6 +104,7 @@ const startEngagementMotivationJob = async () => {
                     notification: {
                         title: '🔔 We miss you at Holy Reads!',
                         description: `📙 You've missed out on some uplifting content like ${publishContent.title}.`,
+                        bookId: publishContent._id,
                         success: true,
                         errorMessage: undefined,
                     },

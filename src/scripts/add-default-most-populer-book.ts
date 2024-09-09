@@ -104,7 +104,7 @@ import { UserModel } from "../models";
                 const id = i._id;
                 await BookSummaryModel.updateOne(
                     { _id: id },
-                    { views: randomNumberInRange(60000, 70000) }
+                    { views: randomNumberInRange(60000, 75000) }
                 );
                 console.log(`Views ${id} updated Successfully`);
             })

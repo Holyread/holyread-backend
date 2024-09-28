@@ -121,6 +121,8 @@ const start = async () => {
                     JSON.stringify(notificationPayload.data)
                 );
                 notificationsSent.push({
+                    title: bookDetails.title,
+                    bookId: bookDetails._id,
                     userId: user._id,
                     success: true,
                 });
@@ -149,8 +151,8 @@ const start = async () => {
                 type: 'user',
                 notification: {
                     title: '🔔 Summary for free 😊',
-                    description: `📙 Just for you, one free access to the ${bookDetails.title} summary.`,
-                    bookId: bookDetails?._id,
+                    description: `📙 Just for you, one free access to the ${notification.title} summary.`,
+                    bookId: notification?.bookId,
                     success: notification.success,
                     errorMessage: notification.errorMessage,
                 },

@@ -1148,7 +1148,7 @@ const getShareOptionImageUrl = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+): Promise<void> => {
       try {
             if (req.body.image) {
                   const s3File: any = await uploadFileToS3(
@@ -1163,18 +1163,18 @@ const getShareOptionImageUrl = async (
             }
             const imageUrl: string
                   = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.usersDirectory + '/share-options/' + req.body.image
-            return res.status(200).send({
+            res.status(200).send({
                   message: authControllerResponse.addShareImage,
                   data: { image: imageUrl },
             })
       } catch ({ message }: any) {
-            return next(Boom.badData(message as string))
+            next(Boom.badData(message as string))
       }
 }
 
 /** get encode image */
 const getEncodeImage = async (
-      req: Request | any,
+      req: any,
       res: Response,
       next: NextFunction
 ) => {

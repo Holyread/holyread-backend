@@ -122,7 +122,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         </p>
                   `
                   if (emailTemplateDetails && emailTemplateDetails.content) {
-                        const localeDate = planExpiredAt
+                        const localeDate: any = planExpiredAt
                               ?.toLocaleDateString()
                               ?.split('/')
 

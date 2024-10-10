@@ -32,7 +32,7 @@ const getAdmin = async (req: Request | any, res: Response, next: NextFunction) =
 }
 
 /** Update admin details */
-const updateAdmin = async (req: Request | any, res: Response, next: NextFunction) => {
+const updateAdmin = async (req: any, res: Response, next: NextFunction) => {
     try {
         const data: any = req.user
         if (req.body.image === null) await removeS3File(data.image, s3Bucket)

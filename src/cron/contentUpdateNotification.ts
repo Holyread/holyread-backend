@@ -24,7 +24,7 @@ const start = async () => {
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
 
-        const newPublishBook = await BookSummaryModel.findOne({
+        const newPublishBook: any = await BookSummaryModel.findOne({
             publish: true, publishedAt: {
                 $gte: today,
                 $lt: tomorrow,
@@ -68,7 +68,7 @@ const start = async () => {
         const usersWithCategories = users.filter(user =>
             user.libraries && user.libraries.categories && user.libraries.categories.length > 0
         );
-        const usersMatchingCategories = usersWithCategories.filter(user => {
+        const usersMatchingCategories: any [] = usersWithCategories.filter(user => {
             return user.libraries.categories.some(category => {
                 const categoryId = category.toString(); // Convert ObjectId to string
                 return newPublishBook.categories.some(newCategory => newCategory.toString() === categoryId);
@@ -81,7 +81,7 @@ const start = async () => {
         }
 
         // Send notifications to matching users
-        const notificationsSent = [];
+        const notificationsSent: any = [];
         for (const user of usersMatchingCategories) {
             const tokens = user.pushTokens.map(token => token.token);
             const notificationPayload = {

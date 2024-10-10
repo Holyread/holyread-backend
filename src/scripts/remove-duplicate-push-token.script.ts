@@ -3,7 +3,7 @@ import { UserModel } from '../models/index';
 (async () => {
     try {
         /** Find users */
-        const app_users = await UserModel
+        const app_users : any[] = await UserModel
             .find({ 'pushTokens.1': { $exists: true } }) // Look for users with more than one push token
             .select('_id pushTokens') // Select user id and push tokens
             .lean()

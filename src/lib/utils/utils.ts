@@ -269,7 +269,7 @@ export const pushNotification = async (tokens: string[], title: string, descript
 
         response.responses.forEach((resp, index) => {
             if (!resp.success) {
-                const error = resp.error;
+                const error: any = resp.error;
                 console.error('Failure sending notification to token:', tokens[index], error);
                 // Handle specific error cases if needed
                 if (
@@ -326,13 +326,17 @@ export const getTimeDiff = (from: string, to: string) => {
     return days < 0 ? '0:0:0:0' : `${days}:${hours}:${minutes}:${seconds}`;
 }
 
-export const getDates = (d1: any, d2: any) => {
+export const getDates = (d1: Date, d2: Date): Date[] => {
     const oneDay = 24 * 3600 * 1000;
-    for (var d = [], ms = d1 * 1, last = d2 * 1; ms < last; ms += oneDay) {
-        d.push(new Date(ms));
+    const dates: Date[] = [];
+
+    // Convert dates to milliseconds and iterate
+    for (let ms = d1.getTime(), last = d2.getTime(); ms < last; ms += oneDay) {
+        dates.push(new Date(ms));
     }
-    return d;
-}
+
+    return dates;
+};
 
 export const groupByKey = (list: any, key: string) =>
     list.reduce((hash, obj) =>
@@ -419,7 +423,7 @@ export const setHeaderBackgroundColor = async (wsHeaderCells, ws: Worksheet): Pr
 };
 
 export const setColumnWidth = async (ws: Worksheet): Promise<void> => {
-    await Promise.all(ws.columns.map(async (column) => {
+    await Promise.all(ws.columns.map(async (column: any) => {
         const wsColumn = column;
         let dataMax = 0;
         await Promise.all(column.values.map((columnVal: any) => {

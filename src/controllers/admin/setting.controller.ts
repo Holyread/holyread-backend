@@ -22,7 +22,7 @@ const getSetting = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 /** Update setting */
-const updateSetting = async (req: Request, res: Response, next: NextFunction) => {
+const updateSetting = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         /** Get setting from db */
         const data = await settingService.updateSetting(req.body)

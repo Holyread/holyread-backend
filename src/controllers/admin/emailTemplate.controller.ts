@@ -77,7 +77,7 @@ const getAllEmailTemplates = async (request: Request, response: Response, next: 
 }
 
 /** Update email template */
-const updateEmailTemplate = async (req: Request, res: Response, next: NextFunction) => {
+const updateEmailTemplate = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         /** Get email template from db */
@@ -91,7 +91,7 @@ const updateEmailTemplate = async (req: Request, res: Response, next: NextFuncti
 }
 
 /** Remove email template */
-const deleteEmailTemplate = async (req: Request, res: Response, next: NextFunction) => {
+const deleteEmailTemplate = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         await emailTemplateService.deleteEmailTemplate(id)

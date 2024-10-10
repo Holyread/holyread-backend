@@ -10,7 +10,7 @@ interface CustomError extends Error {
     data?: any;
 }
 
-const handleError = async (err: CustomError, req: Request, res: Response, next: NextFunction) => {
+const handleError = async (err: CustomError, req: Request, res: Response, next: NextFunction): Promise<any> => {
     res.setHeader('Access-Control-Allow-Origin', '*');
 
     // If there's no error, proceed to the next middleware

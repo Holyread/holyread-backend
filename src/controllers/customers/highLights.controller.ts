@@ -64,7 +64,7 @@ const getHighLightsByFilter = async (req: Request | any, res: Response, next: Ne
 }
 
 /** Update high light */
-const updateHighLight = async (req: any, res: Response, next: NextFunction) => {
+const updateHighLight = async (req: any, res: Response, next: NextFunction): Promise<any> => {
     try {
         const { highLightId } = req.params
         await highLightsService.updateHighLight({ ...req.body, userId: req.user._id }, highLightId)

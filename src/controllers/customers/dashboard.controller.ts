@@ -34,7 +34,7 @@ const getCategories = async (request: Request, response: Response, next: NextFun
 }
 
 /** Get recent reads books for Dashboard */
-const getRecentReads = async (request: any, response: Response, next: NextFunction) => {
+const getRecentReads = async (request: any, response: Response, next: NextFunction): Promise<any> => {
     try {
         const params: any = request.query
         const userObj = request.user

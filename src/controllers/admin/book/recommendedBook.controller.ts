@@ -87,7 +87,7 @@ const getAllRecommendedBooks = async (request: Request, response: Response, next
 }
 
 /** Delete recommended book */
-const deleteRecommendedBook = async (req: Request, res: Response, next: NextFunction) => {
+const deleteRecommendedBook = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         await recommendedBookService.deleteRecommendedBook(id)

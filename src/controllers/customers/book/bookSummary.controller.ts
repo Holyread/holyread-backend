@@ -227,7 +227,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
 }
 
 /**  Send Summary to kindle */
-const sendSummaryToKindle = async (req: any, res: Response, next: NextFunction) => {
+const sendSummaryToKindle = async (req: any, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         if (!req.user.kindleEmail) {

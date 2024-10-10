@@ -75,7 +75,7 @@ const getAllFaqs = async (request: Request, response: Response, next: NextFuncti
 }
 
 /** Update Faq */
-const updateFaq = async (req: Request, res: Response, next: NextFunction) => {
+const updateFaq = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         /** Get faq from db */
@@ -91,7 +91,7 @@ const updateFaq = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 /** Remove Faq */
-const deleteFaq = async (req: Request, res: Response, next: NextFunction) => {
+const deleteFaq = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         await faqService.deleteFaq(id)

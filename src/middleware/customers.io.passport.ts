@@ -2,7 +2,7 @@ import { NextFunction } from 'express';
 import { verifyToken } from '../lib/utils/utils';
 import { UserModel, NotificationsModel } from '../models';
 
-export default async (socket: any, next: NextFunction): Promise<any> => {
+export default async (socket: any, next: NextFunction): Promise<void> => {
     try {
         if (!socket.handshake.query || !socket.handshake.query.token) {
             console.log('User not authorized: No token provided');

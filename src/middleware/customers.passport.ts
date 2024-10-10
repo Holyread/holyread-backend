@@ -3,7 +3,7 @@ import { verifyToken } from '../lib/utils/utils'
 import { SettingModel, UserModel } from '../models'
 import Boom from '@hapi/boom'
 
-export default async (req: any, res: Response, next: NextFunction): Promise<any> => {
+export default async (req: any, res: Response, next: NextFunction): Promise<void> => {
     const accessToken: string | null = req.headers['x-access-token'] as string;
     if (!accessToken) {
         next(Boom.badRequest('Missing access token'));

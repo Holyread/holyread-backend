@@ -4,7 +4,7 @@ import Boom from '@hapi/boom'
 import { encrypt, getToken } from '../lib/utils/utils'
 import { SettingModel, UserModel } from '../models'
 
-export default async (req: any, res: Response, next: NextFunction): Promise<any> => {
+export default async (req: any, res: Response, next: NextFunction): Promise<void> => {
     try {
         return next()
         if (!req?.headers?.device)

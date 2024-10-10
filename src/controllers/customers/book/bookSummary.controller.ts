@@ -135,9 +135,9 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             end.setHours(23, 59, 59, 999);
 
             /** Filter current days new view books */
-            const todayViews = []; let isExist = false;
-            const todayFreeNotificationBook = []; let isFreeNotificationBookExist = false
-            const library = await userService.getUserLibrary({ _id: req.user.libraries })
+            const todayViews: any = []; let isExist = false;
+            const todayFreeNotificationBook: any = []; let isFreeNotificationBookExist = false
+            const library: any = await userService.getUserLibrary({ _id: req.user.libraries })
             library?.view.map(i => {
                 const createdAt = new Date(i.createdAt).getTime();
                 if (createdAt >= start.getTime()) todayViews.push(i)

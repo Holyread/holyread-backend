@@ -204,7 +204,7 @@ const getHighLightsByFilter = async (skip: number, limit, filter: any, sort) => 
         if (!result.length && filter.bookId) {
             return { highLightsBooks: [{ count: 0, highlights: [] }] }
         }
-        const newResult = []
+        const newResult : any = []
         await Promise.all(await result.map(async (item: any) => {
             const bookDetails = item?.bookId
             if (!bookDetails) return

@@ -16,7 +16,7 @@ const startCheckUninstalledUsersJob = async () => {
         });
         await cronLog.save();
 
-        const users = await UserModel.find({ "pushTokens.token": { $exists: true, $ne: null } });
+        const users: any[] = await UserModel.find({ "pushTokens.token": { $exists: true, $ne: null } });
 
         if (!users.length) {
             console.log('JOB(🔴) checking for uninstalled users execution stopped due to no users found');
@@ -54,7 +54,7 @@ const startCheckUninstalledUsersJob = async () => {
                 const { token, userId, deviceId } = batch[index];
 
                 if (!resp.success) {
-                    const error = resp.error;
+                    const error : any = resp.error;
                     if (error.code === 'messaging/registration-token-not-registered' ||
                         error.code === 'messaging/invalid-registration-token') {
 

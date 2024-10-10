@@ -50,7 +50,7 @@ import { awsBucket } from '../constants/app.constant';
                               oneBook.videoFile &&
                               !oneBook.videoFileSize
                         ) {
-                              const s3BooksContents = await s3.listObjects({
+                              const s3BooksContents : any = await s3.listObjects({
                                     Bucket: 'holyreads-develop',
                                     Prefix: `books/video/${oneBook.videoFile}`,
                               }).promise();
@@ -71,7 +71,7 @@ import { awsBucket } from '../constants/app.constant';
                                     oneChapter.audioFile &&
                                     !oneChapter.size
                               ) {
-                                    const s3BooksContents = await s3.listObjects({
+                                    const s3BooksContents : any = await s3.listObjects({
                                           Bucket: 'holyreads-develop',
                                           Prefix: `books/audio/${oneChapter.audioFile}`,
                                     }).promise();

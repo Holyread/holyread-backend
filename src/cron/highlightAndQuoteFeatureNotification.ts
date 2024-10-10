@@ -22,7 +22,7 @@ const start = async () => {
         const fourDaysAgo = calculateDateInThePast(4);
 
         // Find users who are not in the usersWithHighlights array
-        const usersWithoutHighlights = await UserModel.find({
+        const usersWithoutHighlights : any[] = await UserModel.find({
             _id: { $nin: usersWithHighlights },
             status: 'Active',
             timeZone: { $exists: true },
@@ -33,7 +33,7 @@ const start = async () => {
         }).select('timeZone pushTokens').lean().exec();
 
         // Send notifications to matching users
-        const notificationsSent = [];
+        const notificationsSent : any = [];
         for (const user of usersWithoutHighlights) {
             const tokens = user.pushTokens.map(token => token.token);
             const notificationPayload = {

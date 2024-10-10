@@ -203,7 +203,7 @@ const getUserAnalytics = async (duration = 'year') => {
             let totalPlans = 0;
             let totalRevenue = 0;
 
-            const revenues = [];
+            const revenues : string[] = [];
 
             dates.map((i) => {
                   const iTransactions =

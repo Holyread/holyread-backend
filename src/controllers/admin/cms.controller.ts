@@ -95,7 +95,7 @@ const updateCms = async (req: Request, res: Response, next: NextFunction) => {
 /** Remove cms */
 const deleteCms = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id: any = req.params.id
+        const id: string = req.params.id
         await cmsService.deleteCms(id)
         return res.status(200).send({ message: cmsControllerResponse.deleteCmsSuccess })
     } catch (e: any) {

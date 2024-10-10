@@ -162,6 +162,10 @@ const getAllBookSummaries = async (skip: number, limit, search: FilterQuery<IBoo
     try {
         let authorsList: any;
         let categories: any;
+
+        if (!search['$or']) {
+            search['$or'] = [];
+        }
         if (search['$or']) {
             authorsList = await BookAuthorModel.find({ 'name': search['$or'][0].title }).select('_id').lean().exec();
             categories = await BookCategoryModel.find({ 'title': search['$or'][0].title }).select('_id').lean().exec();

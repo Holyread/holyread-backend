@@ -164,7 +164,7 @@ const getAllSummaries = async (req: Request, res: Response, next: NextFunction) 
             }
         }
 
-        let summarySorting = [];
+        let summarySorting : any = [];
         const sortingColumn = column as string;
         const sortingOrder = order || 'asc';
         summarySorting = ['title', 'status', 'author', 'createdAt'].includes(sortingColumn)

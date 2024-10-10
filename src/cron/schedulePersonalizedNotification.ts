@@ -40,11 +40,11 @@ const start = async () => {
         }
 
         // Send notifications to matching users
-        const notificationsSent = [];
+        const notificationsSent : any = [];
         for (const user of userReadingList) {
             const randomBook = getRandomBookFromReading(user);
 
-            const unreadBook = await BookSummaryModel.findOne({ _id: randomBook.bookId }).select([
+            const unreadBook : any = await BookSummaryModel.findOne({ _id: randomBook.bookId }).select([
                 '_id',
                 'description',
                 'overview',

@@ -21,7 +21,7 @@ const start = async () => {
         const end = new Date();
         end.setHours(23, 59, 59, 999);
 
-        const publishedDailyDevotional = await DailyDvotionalModel.find({
+        const publishedDailyDevotional : any[] = await DailyDvotionalModel.find({
             publishedAt: { $gte: new Date(start), $lte: new Date(end) },
         }).select('_id title category').lean().exec();
 
@@ -55,7 +55,7 @@ const start = async () => {
             return;
         }
 
-        const usersWithCategories = users.filter(
+        const usersWithCategories : any = users.filter(
             (user) =>
                 user.libraries &&
                 user.libraries.devotionalCategories &&
@@ -93,11 +93,11 @@ const start = async () => {
                 }
 
                 if (time[1] === meridian && Number(hours) === Number(dailyDevotionalTime[0]) && Number(minutes) === Number(dailyDevotionalTime[1])) {
-                    result[timeZone]?.map(async item => {
+                    result[timeZone]?.map(async item  => {
                         try {
                             const tokenSet = new Set<string>();
                             item?.pushTokens?.forEach(token => tokenSet.add(token));
-                            let userMatchedSeries = []; // Reset matchedSeries for each user
+                            let userMatchedSeries: string[] = []; // Reset matchedSeries for each user
                             publishedDailyDevotional.forEach((devotional) => {
                                 if (item.libraries.devotionalCategories.includes(devotional.category)) {
                                     userMatchedSeries.push(devotional.title);

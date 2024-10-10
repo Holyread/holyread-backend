@@ -41,7 +41,7 @@ const deletePlanById = async (planId: string) => {
 const addPrice = async (productId: string, price: number, interval: string, intervalCount: number) => {
       try {
             const productPrices = await getProductPrices(productId)
-            let productPrice = null
+            let productPrice : any = null
             if (productPrices.data && productPrices.data.length) {
                   productPrice = await productPrices.data.find(onePrice => onePrice.unit_amount === price)
             }

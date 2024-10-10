@@ -18,7 +18,7 @@ const start = async () => {
 
         const fiveDaysAgo = calculateDateInThePast(5);
         // Find users who are not set up kindle email
-        const usersWithoutKindleEmail = await UserModel.find({
+        const usersWithoutKindleEmail: any[] = await UserModel.find({
             status: 'Active',
             timeZone: { $exists: true },
             'pushTokens.0': { $exists: true },
@@ -29,7 +29,7 @@ const start = async () => {
         }).select('timeZone pushTokens').lean().exec();
 
         // Send notifications to matching users
-        const notificationsSent = [];
+        const notificationsSent : any = [];
         for (const user of usersWithoutKindleEmail) {
             const tokens = user.pushTokens.map(token => token.token);
             const notificationPayload = {

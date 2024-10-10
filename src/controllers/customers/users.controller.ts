@@ -204,7 +204,7 @@ const getBlessFriend = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+): Promise<any> => {
       try {
             /** Validate Email */
             const isValid = await validateEmail(req.params.email);
@@ -471,7 +471,7 @@ const emailAuth = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+) : Promise<any> => {
       try {
             const { email, password }: { email: string, password: string } = req.body;
             if (!email || !password) {
@@ -1174,10 +1174,10 @@ const getShareOptionImageUrl = async (
 
 /** get encode image */
 const getEncodeImage = async (
-      req: any,
+      req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+) : Promise<any> => {
       try {
             if (req.body.image) {
                   req.body.image = await imageUrlToBase64(req.body.image);
@@ -1196,7 +1196,7 @@ const updateUserLibrary = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+) : Promise<any> => {
       try {
             const { type, section } = req.query as any
 
@@ -2342,7 +2342,7 @@ const subscribePlan = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+): Promise<any> => {
       try {
             const userObj = req.user
 
@@ -2700,7 +2700,7 @@ const updateHandout = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+) : Promise<any> => {
       try {
             const smallGroup = await smallGroupService
                   .getSmallGroupForHandout({

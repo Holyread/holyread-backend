@@ -98,7 +98,7 @@ const getAllCategoriesOptionsList = async (request: Request, response: Response,
 }
 
 /** Update book category */
-const updateCateogry = async (req: Request, res: Response, next: NextFunction) => {
+const updateCateogry = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: string = req.params.id
         /** Get book category from db */
@@ -121,7 +121,7 @@ const updateCateogry = async (req: Request, res: Response, next: NextFunction) =
 }
 
 /** Remove book category */
-const deleteCategory = async (req: Request, res: Response, next: NextFunction) => {
+const deleteCategory = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         const bookCategoryDetails = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })

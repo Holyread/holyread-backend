@@ -78,7 +78,7 @@ const getAllCms = async (request: Request, response: Response, next: NextFunctio
 }
 
 /** Update cms */
-const updateCms = async (req: Request, res: Response, next: NextFunction) => {
+const updateCms = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         /** Get cms from db */
@@ -93,7 +93,7 @@ const updateCms = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 /** Remove cms */
-const deleteCms = async (req: Request, res: Response, next: NextFunction) => {
+const deleteCms = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: string = req.params.id
         await cmsService.deleteCms(id)

@@ -467,7 +467,7 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
 };
 
 /** Update user */
-const updateUser = async (req: Request | any, res: Response, next: NextFunction) => {
+const updateUser = async (req: Request | any, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.userId
         delete req.body.password
@@ -553,7 +553,7 @@ const deleteUser = async (req: Request | any, res: Response, next: NextFunction)
     }
 }
 
-const getCountries = async (req: Request, res: Response, next: NextFunction) => {
+const getCountries = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const response: any = await usersService.getCountries()
         return res.status(200).send({ message: authControllerResponse.getCountriesSuccess, data: response })
@@ -562,7 +562,7 @@ const getCountries = async (req: Request, res: Response, next: NextFunction) => 
     }
 }
 
-const getTimeZones = async (req: Request, res: Response, next: NextFunction) => {
+const getTimeZones = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const response: any = await usersService.getTimeZones()
         return res.status(200).send({ message: authControllerResponse.getTimeZoneSuccess, data: response })

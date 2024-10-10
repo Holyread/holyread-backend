@@ -242,7 +242,7 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
     }
 };
 
-const deleteSummary = async (req: Request, res: Response, next: NextFunction) => {
+const deleteSummary = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const { id } = req.params;
         const summaryDetails = await bookSummaryService.getOneBookSummaryByFilter({ _id: id });

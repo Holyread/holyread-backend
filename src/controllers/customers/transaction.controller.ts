@@ -948,7 +948,7 @@ const createGoogleTransaction = async (
       request: Request,
       response: Response,
       next: NextFunction
-) => {
+): Promise<any> => {
       try {
             const body = request.body;
             const header = request.headers;

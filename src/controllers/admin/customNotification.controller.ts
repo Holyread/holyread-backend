@@ -11,7 +11,7 @@ import { FilterQuery } from 'mongoose';
 const adminControllerResponse = responseMessage.adminControllerResponse
 const { notificationsControllerResponse } = responseMessage
 
-const sendCustomNotificationToAllUsers = async (req: Request | any, res: Response, next: NextFunction) => {
+const sendCustomNotificationToAllUsers = async (req: Request | any, res: Response, next: NextFunction): Promise<any> => {
     try {
         const { description, title, userFilter } = req.body
         const users: string[] = [];

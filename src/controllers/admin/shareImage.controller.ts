@@ -90,7 +90,7 @@ const getAllShareImages = async (request: Request, response: Response, next: Nex
 }
 
 /** Update share image */
-const updateShareImage = async (req: Request, res: Response, next: NextFunction) => {
+const updateShareImage = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         /** Get share image from db */
@@ -114,7 +114,7 @@ const updateShareImage = async (req: Request, res: Response, next: NextFunction)
 }
 
 /** Remove share image */
-const deleteShareImage = async (req: Request, res: Response, next: NextFunction) => {
+const deleteShareImage = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         const shareImageDetails: any = await shareImageService.getOneShareImageByFilter({ _id: id })

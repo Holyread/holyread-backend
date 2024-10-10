@@ -1899,7 +1899,7 @@ const blessFriend = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+): Promise<any> => {
       try {
             const body = req.body
             const isValid = await validateEmail(body.friendEmail);

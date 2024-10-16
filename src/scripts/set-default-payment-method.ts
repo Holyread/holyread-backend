@@ -5,7 +5,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
       try {
             const pi = await stripeSubscriptionServices.getPaymentIntents()
 
-            await Promise.all(pi.map(async i => {
+            await Promise.all(pi.map(async (i : any) => {
                   if (
                         i.status === 'requires_payment_method' &&
                         i.customer

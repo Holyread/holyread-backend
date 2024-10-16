@@ -20,7 +20,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
     try {
         const { selectedDataTypes } = request.body;
         const fileName = `export_data_${Date.now()}.xlsx`;
-        const data = [];
+        const data : any[] = [];
         const workbook = new excel.Workbook();
 
         // Fetch data based on selected data types
@@ -568,7 +568,7 @@ const exportUsersData = async (request: Request, response: Response, next: NextF
 
         searchFilter.type = 'User';
 
-        const userData = await usersService.getAllExportUsers(searchFilter);
+        const userData: any = await usersService.getAllExportUsers(searchFilter);
 
         userData.forEach(item => {
             wsUsers.addRow({

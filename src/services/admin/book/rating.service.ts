@@ -124,7 +124,7 @@ const getBookRatings = async (skip: number, limit, search: any, sort: { column: 
                         return undefined
                   }
                   oneRating.star = oneRating.star || 0
-                  const user = users.find(oneUser => String(oneUser._id) === String(oneRating.userId))
+                  const user : any = users.find(oneUser => String(oneUser._id) === String(oneRating.userId))
                   const item = {
                         bookId: oneRating.bookId,
                         userId: oneRating.userId,
@@ -146,7 +146,7 @@ const getBookRatings = async (skip: number, limit, search: any, sort: { column: 
                   return item
             }))
             ratings = ratings.filter(i => i)
-            ratings = ratings.sort((a, b) => {
+            ratings = ratings.sort((a: any, b: any) => {
                   if (a[sort.column] < b[sort.column]) {
                         return sort.order.toLowerCase() === 'asc' ? -1 : 1;
                   }

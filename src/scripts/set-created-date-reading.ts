@@ -18,7 +18,7 @@ import userService from '../services/customers/users/user.service';
 
         await Promise.all(users.map(async (user) => {
             // Get user's library details for 'reading' and 'view'
-            const libraries = await userService.getUserLibrary({ _id: user.libraries }, ['reading', 'view']);
+            const libraries : any = await userService.getUserLibrary({ _id: user.libraries }, ['reading', 'view']);
 
             if (!libraries) {
                 console.log(`No libraries found for user: ${user._id}`);
@@ -27,9 +27,9 @@ import userService from '../services/customers/users/user.service';
 
             // Create a Set to store unique summaries
             const updatedReadings = new Set();
-            const updatedViews = [];
+            const updatedViews : any = [];
 
-            libraries.view.forEach(viewItem => {
+            libraries.view.forEach((viewItem) => {
                 // Find the corresponding book in 'reading' using 'bookId'
                 const readingItem = libraries.reading.find((reading: any) => String(reading.bookId) === String(viewItem.bookId));
 

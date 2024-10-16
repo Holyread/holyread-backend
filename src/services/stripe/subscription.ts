@@ -212,7 +212,7 @@ const createSubscription = async (params: {
                   trial_period_days: params.status === 'active' ? 0 : trailDays,
             }
             if (params.coupon) {
-                  const couponList = await getCouponList();
+                  const couponList: any = await getCouponList();
                   const couponCodes = couponList.map(coupon => coupon.id);
                   if (
                         !couponCodes.includes(params.coupon)
@@ -239,7 +239,7 @@ const updateSubscription = async (params: {
                   = await stripe.subscriptions.retrieve(
                         params.subscriptionId
                   );
-            if (params.paymentMethod) {
+            if (params.paymentMethod && params.customerId) {
                   await updatePaymentMethod(
                         params.customerId,
                         params.paymentMethod
@@ -331,7 +331,7 @@ const getInvoice = async (id: string) => {
 }
 
 /** Get invoices */
-const getInvoices = async (query: object, invoices = [], starting_after = {}) => {
+const getInvoices = async (query: object, invoices : any = [], starting_after = {}) => {
       try {
             const { data, has_more }
                   = await stripe.invoices.list({ ...query, starting_after });
@@ -347,7 +347,7 @@ const getInvoices = async (query: object, invoices = [], starting_after = {}) =>
 }
 
 /** Get refunds */
-const getRefunds = async (query: object, refunds = [], starting_after = {}) => {
+const getRefunds = async (query: object, refunds: any = [] = [], starting_after = {}) => {
       try {
             const { data, has_more }
                   = await stripe.refunds.list({ ...query, starting_after });
@@ -380,7 +380,7 @@ const retrieveProfit = async (duration = 'year') => {
                         now = (new Date(now).setMonth(new Date(now).getMonth() - 12) / 1000);
                         break;
             }
-            const query = {
+            const query : any = {
                   limit: 100,
                   status: 'paid',
                   created: { gte: now },

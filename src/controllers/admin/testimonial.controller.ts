@@ -88,7 +88,7 @@ const getAllTestimonial = async (request: Request, response: Response, next: Nex
 }
 
 /** Update testimonial */
-const updateTestimonial = async (req: Request, res: Response, next: NextFunction) => {
+const updateTestimonial = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         /** Get testimonial from db */
@@ -111,7 +111,7 @@ const updateTestimonial = async (req: Request, res: Response, next: NextFunction
 }
 
 /** Remove testimonial */
-const deleteTestimonial = async (req: Request, res: Response, next: NextFunction) => {
+const deleteTestimonial = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         const testimonialDetails: any = await testimonialService.getOneTestimonialByFilter({ _id: id })

@@ -132,7 +132,7 @@ const getAllCoupons = async (request: Request, response: Response, next: NextFun
 }
 
 /** Remove Coupon */
-const deleteCoupon = async (req: Request, res: Response, next: NextFunction) => {
+const deleteCoupon = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         /** Get coupon from db */

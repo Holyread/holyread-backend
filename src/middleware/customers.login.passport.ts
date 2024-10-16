@@ -22,7 +22,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             }
         }
 
-        const userDetails = await UserModel.findOne(query).select('maxDevices email').lean().exec();
+        const userDetails : any = await UserModel.findOne(query).select('maxDevices email').lean().exec();
         const settings = await SettingModel.findOne({}).select('maxDeviceLogin').lean().exec();
         if (
             userDetails &&

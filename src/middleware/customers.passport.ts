@@ -2,6 +2,7 @@ import { Response, NextFunction } from 'express'
 import { verifyToken } from '../lib/utils/utils'
 import { SettingModel, UserModel } from '../models'
 import Boom from '@hapi/boom'
+import { ISetting } from '../models/setting.model'
 
 export default async (req: any, res: Response, next: NextFunction): Promise<any> => {
     const accessToken: string | null = req.headers['x-access-token'] as string;
@@ -22,15 +23,14 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
                     _id: details.id,
                     type: 'User',
                 })
-                .lean()
-                .exec();
-
-            const { maxDeviceLogin }
-                = await SettingModel
-                    .findOne({})
-                    .select('maxDeviceLogin')
                     .lean()
                     .exec();
+
+            const { maxDeviceLogin } = await SettingModel
+                .findOne({})
+                .select('maxDeviceLogin')
+                .lean()
+                .exec() as ISetting;
 
             if (!userDetails) {
                 return next(Boom.unauthorized('User not authorized'));

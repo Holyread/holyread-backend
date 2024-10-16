@@ -135,9 +135,9 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             end.setHours(23, 59, 59, 999);
 
             /** Filter current days new view books */
-            const todayViews = []; let isExist = false;
-            const todayFreeNotificationBook = []; let isFreeNotificationBookExist = false
-            const library = await userService.getUserLibrary({ _id: req.user.libraries })
+            const todayViews: any = []; let isExist = false;
+            const todayFreeNotificationBook: any = []; let isFreeNotificationBookExist = false
+            const library: any = await userService.getUserLibrary({ _id: req.user.libraries })
             library?.view.map(i => {
                 const createdAt = new Date(i.createdAt).getTime();
                 if (createdAt >= start.getTime()) todayViews.push(i)
@@ -227,7 +227,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
 }
 
 /**  Send Summary to kindle */
-const sendSummaryToKindle = async (req: any, res: Response, next: NextFunction) => {
+const sendSummaryToKindle = async (req: any, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         if (!req.user.kindleEmail) {

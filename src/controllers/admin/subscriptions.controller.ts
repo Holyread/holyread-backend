@@ -99,7 +99,7 @@ const getAllSubscriptionsOptionsList = async (request: Request, response: Respon
 }
 
 /** Update Subscription */
-const updateSubscription = async (req: Request, res: Response, next: NextFunction) => {
+const updateSubscription = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         /** Get subscription from db */
@@ -129,7 +129,7 @@ const updateSubscription = async (req: Request, res: Response, next: NextFunctio
 }
 
 /** Remove Subscription */
-const deleteSubcription = async (req: Request, res: Response, next: NextFunction) => {
+const deleteSubcription = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         const subscriptionUser = await usersService.getOneUserByFilter({ subscription: id })

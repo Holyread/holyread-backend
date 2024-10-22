@@ -265,7 +265,7 @@ export const pushNotification = async (tokens: string[], title: string, descript
             },
         };
 
-        const response = await firebaseAdmin.messaging().sendMulticast(message);
+        const response = await firebaseAdmin.messaging().sendEachForMulticast(message);
 
         response.responses.forEach((resp, index) => {
             if (!resp.success) {

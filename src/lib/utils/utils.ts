@@ -12,7 +12,7 @@ import config from '../../../config'
 import firebaseAdmin from 'firebase-admin';
 
 import { Worksheet } from 'exceljs';
-import { awsBucket } from '../../constants/app.constant';
+import { awsBucket, originEmails } from '../../constants/app.constant';
 
 const algorithm = 'aes-256-cbc';
 const iv = '3ad77bb40d7a3660';
@@ -21,6 +21,14 @@ const outputEncoding = 'base64';
 const key = '2b7e151628aed2a6abf7158809cf4f3c';
 
 const NODE_ENV = config.NODE_ENV
+
+aws.config.update({
+    secretAccessKey: config.AWS_SECRET,
+    accessKeyId: config.AWS_ACCESSKEY,
+    region: awsBucket.region,
+});
+
+const ses = new aws.SES({ apiVersion: '2010-12-01' });
 
 export const encrypt = (text: string): string => {
     const cipher = crypto.createCipheriv(algorithm, key, iv);
@@ -169,65 +177,45 @@ export const sentEmail = async (params: {
     fileLink?: string,
     sentToKindle?: boolean
 }) => {
-    params.from = params.sentToKindle ? config.KINDLE_SMTP_EMAIL : params.from
+    params.from = params.sentToKindle ? originEmails.kindle : params.from;
+
+
+    // Create Nodemailer SES transporter
+    const transporter = nodemailer.createTransport({
+        SES: ses
+    });
+
     const mailOptions: any = {
         from: params.from,
         to: params.to,
         subject: params.subject,
+        html: params.html,
         headers: {
             'X-Laziness-level': 1000,
             'charset': 'UTF-8',
         },
-        html: params.html,
     };
-    let credentials: any = {
-        auth: {
-            user: params.from,
-            pass: params.sentToKindle ? config.KINDLE_SMTP_SECRET : config.SMTP_SECRET,
-        },
-    };
-
-    if (!params.sentToKindle) {
-        credentials = {
-            ...credentials,
-            host: 'smtp.office365.com',
-            port: 587,
-            secure: false,
-            tls: {
-                rejectUnauthorized: false,
-            },
-        };
-    } else {
-        credentials = {
-            ...credentials,
-            service: 'gmail',
-            host: 'smtp.gmail.com',
-        }
-    }
-
-    const transporter = nodemailer.createTransport(credentials);
 
     if (params.fileLink) {
         mailOptions.attachments = [{
             fileName: params.fileName,
             path: params.fileLink,
             contentType: 'application/pdf',
-        }]
+        }];
     }
 
     return new Promise((resolve, reject) => {
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-                console.log(error.message)
-                reject(false)
+                console.error('Error sending email:', error.message);
+                reject(false);
             } else {
-                console.log(info)
-                resolve(true)
+                console.log('Email sent successfully:', info);
+                resolve(true);
             }
         });
-    })
-
-}
+    });
+};
 
 export const getSearchRegexp = async (value) => {
     const result = { $regex: `.*` + value.toLowerCase().trim().replace(/[-\/\\^$*+?.)(*|][\]{}]/g, '\\$&') + '.*', $options: '-i' }

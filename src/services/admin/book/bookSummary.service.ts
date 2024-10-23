@@ -158,26 +158,34 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
 
 
 /** Get all book summaries for table */
-const getAllBookSummaries = async (skip: number, limit, search: FilterQuery<IBookSummary>, sort) => {
+const getAllBookSummaries = async (skip: number, limit: number, search: FilterQuery<IBookSummary>, sort: any) => {
     try {
-        let authorsList: any;
-        let categories: any;
+        let authorsList: any = [];
+        let categories: any = [];
 
         if (!search['$or']) {
             search['$or'] = [];
         }
-        if (search['$or']) {
+
+        if (search['$or'].length > 0 && search['$or'][0].title) {
             authorsList = await BookAuthorModel.find({ 'name': search['$or'][0].title }).select('_id').lean().exec();
             categories = await BookCategoryModel.find({ 'title': search['$or'][0].title }).select('_id').lean().exec();
         }
-        if (authorsList && authorsList.length) {
+
+        if (authorsList && authorsList.length > 0) {
             const authorIds = authorsList.map(oneAuthor => oneAuthor._id)
             search['$or'].push({ 'author': { '$in': authorIds } })
         }
-        if (categories && categories.length) {
+
+        if (categories && categories.length > 0) {
             const categoriesIds = categories.map(oneCategory => oneCategory._id)
             search['$or'].push({ 'categories': { '$in': categoriesIds } })
         }
+
+        if (search['$or'].length === 0) {
+            delete search['$or'];
+        }
+
         const result: any = await BookSummaryModel.find(search)
             .populate('author', 'name')
             .populate('categories', 'title')
@@ -187,9 +195,9 @@ const getAllBookSummaries = async (skip: number, limit, search: FilterQuery<IBoo
             .lean()
             .exec();
 
-        await result.map(i => {
+        result.forEach((i: any) => {
             if (i.publishedAt) i.publishedAt = formattedDate(i.publishedAt).replace(/ /g, ' ');
-            i.author = i.author.name
+            if (i.author && i.author.name) i.author = i.author.name
             i.coverImage = getImageUrl(i.coverImage, `${awsBucket.bookDirectory}/coverImage`);
         });
         const count: number = await BookSummaryModel.find(search).countDocuments().lean().exec()

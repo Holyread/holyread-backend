@@ -5,6 +5,7 @@ mongoose.set('autoIndex', true);
 export interface ICustomNotifications extends mongoose.Document {
     title: string,
     description: string,
+    link : string,
     type: string,
     userIds: [string],
     totalUsers: number
@@ -14,6 +15,7 @@ export interface ICustomNotifications extends mongoose.Document {
 export const CustomNotificationsSchema = new Schema({
     title: { type: String, required: true },
     description: { type: String, required: true },
+    link: { type: String },
     type: { type: String, required: true },
     userIds: [{ type: Schema.Types.ObjectId, ref: 'user', required: true, index: true }],
     createdAt: {

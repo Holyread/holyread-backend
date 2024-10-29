@@ -13,7 +13,7 @@ const { notificationsControllerResponse } = responseMessage
 
 const sendCustomNotificationToAllUsers = async (req: Request | any, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const { description, title, userFilter } = req.body
+        const { description, title, userFilter, link} = req.body
         const users: string[] = [];
 
         const commonUserObj: any = {
@@ -46,11 +46,15 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
 
         const mobileUsers = await usersService.getUseForCustomNotification(mobileUserObj, 'timeZone pushTokens')
 
+        const data = {
+            link : link
+        }
+
         // push notification
         for (let i = 0; i < mobileUsers.length; i += BATCH_SIZE) {
             const batchUsers = mobileUsers.slice(i, i + BATCH_SIZE);
             const tokens = batchUsers.flatMap(user => user.pushTokens.map(ti => ti.token));
-            await pushNotification(tokens, title, description);
+            await pushNotification(tokens, title, description, JSON.stringify(data));
             users.push(...batchUsers.map(user => user._id));
         }
 

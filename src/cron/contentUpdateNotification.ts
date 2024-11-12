@@ -128,7 +128,7 @@ const start = async () => {
         for (const notification of notificationsSent) {
             const notificationLog = new NotificationsModel({
                 userId: notification.userId,
-                type: 'user',
+                type: 'book',
                 notification: {
                     title: '🔔 Fresh Inspiration Alert!',
                     description: `📙 Explore the latest in your favorite category with titles like ${content}.`,

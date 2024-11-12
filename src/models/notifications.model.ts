@@ -26,6 +26,7 @@ export const NotificationsSchema = new Schema({
         errorMessage: { type: String },
         bookId : { type: Schema.Types.ObjectId, ref: 'bookSummary' },
         dailyDevotionalId : { type: Schema.Types.ObjectId, ref: 'dailyDevotional' },
+        link: { type: String },
     },
     type: { type: String, required: true },
     userId: { type: Schema.Types.ObjectId, ref: 'user', required: true, index: true },

@@ -100,7 +100,7 @@ const startEngagementMotivationJob = async () => {
                 // Log notification sent
                 const notificationLog = new NotificationsModel({
                     userId: user._id,
-                    type: 'user',
+                    type: 'book',
                     notification: {
                         title: '🔔 We miss you at Holy Reads!',
                         description: `📙 You've missed out on some uplifting content like ${publishContent.title}.`,
@@ -115,7 +115,7 @@ const startEngagementMotivationJob = async () => {
                 console.log('JOB(🔴) Users processing error -', error.message);
                 const notificationLog = new NotificationsModel({
                     userId: user._id,
-                    type: 'user',
+                    type: 'book',
                     notification: {
                         title: '🔔 We miss you at Holy Reads!',
                         description: `📙 You've missed out on some uplifting content like ${publishContent.title}.`,

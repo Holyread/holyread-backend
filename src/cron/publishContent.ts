@@ -105,7 +105,7 @@ const startPublishContentJob = async () => {
                               // Log notification sent
                               const notificationLog = new NotificationsModel({
                                     userId: user._id,
-                                    type: 'user',
+                                    type: 'book',
                                     notification: {
                                           title: '🔔 NEW Summary for you!',
                                           description: `📙 Explore the latest summary "${content}"`,

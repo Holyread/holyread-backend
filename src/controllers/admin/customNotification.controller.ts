@@ -1,22 +1,29 @@
 import { NextFunction, Request, Response } from 'express'
 import Boom from '@hapi/boom';
 import { calculateDateInThePast, getSearchRegexp, pushNotification } from '../../lib/utils/utils'
-import customNotificationService from '../../services/admin/customNotification.service';
+import customNotificationService from '../../services/admin/customNotification/customNotification.service';
 import usersService from '../../services/admin/users/user.service'
 import { responseMessage } from '../../constants/message.constant'
 import { dataTable, BATCH_SIZE } from '../../constants/app.constant';
 import { ICustomNotifications } from '../../models/customNotification.model';
 import { FilterQuery } from 'mongoose';
+import { NotificationsModel } from '../../models';
 
 const adminControllerResponse = responseMessage.adminControllerResponse
 const { notificationsControllerResponse } = responseMessage
 
 const sendCustomNotificationToAllUsers = async (req: Request | any, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const { description, title, userFilter, link} = req.body
+        const { description, title, userFilter, link } = req.body
         const users: string[] = [];
 
+        let type;
+        if (req.body.link) {
+            type = "custom-link"
+        }
+
         const commonUserObj: any = {
+            email: 'test707@gmail.com',
             'notification.push': true,
             status: 'Active',
         };
@@ -47,7 +54,7 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
         const mobileUsers = await usersService.getUseForCustomNotification(mobileUserObj, 'timeZone pushTokens')
 
         const data = {
-            link : link
+            link: link
         }
 
         // push notification
@@ -62,9 +69,23 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
             userIds: users,
             title,
             description,
-            type: 'customNotification',
+            type: type,
             totalUsers: users.length,
         })
+
+        for (const user of users) {
+            const notificationLog = new NotificationsModel({
+                userId: user,
+                type: type || 'normal',
+                notification: {
+                    title: title,
+                    description: description,
+                    link: link,
+                },
+                createdAt: new Date(),
+            });
+            await notificationLog.save();
+        }
         return res.status(200).send({ message: adminControllerResponse.notificationSuccess })
     } catch (e: any) {
         return next(Boom.badData(e.message))

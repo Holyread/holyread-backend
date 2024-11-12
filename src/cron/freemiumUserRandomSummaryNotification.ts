@@ -148,7 +148,7 @@ const start = async () => {
         for (const notification of notificationsSent) {
             const notificationLog = new NotificationsModel({
                 userId: notification.userId,
-                type: 'user',
+                type: 'book',
                 notification: {
                     title: '🔔 Summary for free 😊',
                     description: `📙 Just for you, one free access to the ${notification.title} summary.`,

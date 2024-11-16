@@ -427,14 +427,10 @@ const getAllBookSummariesForWebsite = async (search: any, sort: any) => {
             {
                 $project: {
                     title: 1.0,
-                    views: 1.0,
                     author: 1.0,
                     publish: 1.0,
                     categories: 1.0,
                     coverImage: 1.0,
-                    description: 1.0,
-                    totalStar: 1.0,
-                    coverImageBackground: 1.0,
                 },
             },
             {
@@ -448,27 +444,20 @@ const getAllBookSummariesForWebsite = async (search: any, sort: any) => {
             {
                 $match: search.search,
             },
-            { $sample: { size: totalCount } }, // Randomly sample `totalCount` documents
+            { $sample: { size: totalCount } },
         ]);
-
-        // Calculate the count based on the result length
-        const count = result.length;
 
         // Transform result into a summary list
         const summaries = result.map((oneItem: any) => ({
             _id: oneItem._id,
             coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneItem.coverImage,
             title: oneItem.title,
-            description: oneItem.description,
             author: oneItem.author[0] || {},
-            views: oneItem.views || 0,
-            coverImageBackground: oneItem.coverImageBackground,
             categories: oneItem.categories,
-            totalStar: oneItem.totalStar,
             publish: oneItem.publish,
         }));
 
-        return { count, summaries };
+        return { summaries };
     } catch (e: any) {
         throw new Error(e);
     }

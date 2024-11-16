@@ -14,17 +14,20 @@ const submitFeedback = async (
         const userObj = Object.assign({}, req.user)
         const {
             experienceRating,
-            likedFeatures,
+            likedFeature,
             comment,
+            improvementSuggestions
         }: {
             experienceRating: string,
-            likedFeatures: string[],
+            likedFeature: string,
             comment?: string
+            improvementSuggestions?: string,
         } = req.body;
         await feedBackService.addFeedback({
             experienceRating,
-            likedFeatures,
+            likedFeature,
             comment,
+            improvementSuggestions,
             userId: userObj._id,
         })  
         res.status(200).send({

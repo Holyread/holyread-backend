@@ -267,4 +267,8 @@ export const responseMessage = {
         deleteCouponSuccess: 'Coupon removed successfully',
         invalidCoupon: 'Coupon is not valid',
     },
+    subScriberControllerResponse: {
+        createSubscriberSuccess: 'Subscriber added successfully',
+        createSubscriberFailure: 'Subscriber already added',
+    },
 }

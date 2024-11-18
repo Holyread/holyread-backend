@@ -37,6 +37,7 @@ import { CronLogModel } from './cronLog.model'
 import { InvalidTokenModel } from './invalidTokens.model'
 import { UninstallLogModel } from './uninstallLog.model'
 import { UserFeedBackModel } from './userFeedBack.model'
+import { SubscriberModel } from './subscriber.model'
 const NODE_ENV = config.NODE_ENV
 
 mongoose.Promise = global.Promise
@@ -84,5 +85,6 @@ export {
   CronLogModel,
   InvalidTokenModel,
   UninstallLogModel,
-  UserFeedBackModel
+  UserFeedBackModel,
+  SubscriberModel,
 }

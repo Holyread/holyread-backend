@@ -4,7 +4,6 @@ import testimonials from './website/testimonial.route'
 import subscriptions from './website/subscriptions.route'
 import bookCategories from './website/book/bookCategory.route'
 import subscriber from './website/subscriber.route'
-
 import cms from './website/cms.route'
 
 const router: Router = express.Router()

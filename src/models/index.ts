@@ -90,6 +90,6 @@ export {
   UninstallLogModel,
   UserFeedBackModel,
   MeditationModel,
-  MeditationCategoryModel
+  MeditationCategoryModel,
   SubscriberModel,
 }

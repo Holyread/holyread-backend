@@ -15,7 +15,7 @@ const startPublishContentJob = async () => {
             startedAt: new Date(),
         });
         await cronLog.save();
-        let dailyDevotional = [];
+        let dailyDevotional : any = [];
 
         /** Get unpublished general daily devotional */
         const unPublishGeneralDevotional = await DailyDvotionalModel.find({ publish: false }).select('_id').lean().exec();
@@ -26,7 +26,7 @@ const startPublishContentJob = async () => {
 
         /** Get unpublished categories daily devotional */
         for (const category of devotionalCategoriesList) {
-            const unPublishDevotional = await DailyDvotionalModel.findOne({
+            const unPublishDevotional: any = await DailyDvotionalModel.findOne({
                 publish: false,
                 category: category.name,
             })

@@ -25,7 +25,7 @@ const startPublishContentJob = async () => {
                   await BookSummaryModel.findOneAndUpdate({ _id: unpublishBooks[0]?._id }, { publish: true, publishedAt: new Date() });
 
                   // Get details of the newly published book
-                  const newPublishedBook = await BookSummaryModel.findOne({ _id: unpublishBooks[0]._id })
+                  const newPublishedBook : any = await BookSummaryModel.findOne({ _id: unpublishBooks[0]._id })
                         .populate('author')
                         .lean()
                         .exec();
@@ -65,7 +65,7 @@ const startPublishContentJob = async () => {
                   }
 
                   // Find users and send push notifications for the new published book
-                  const users = await UserModel.find({
+                  const users: any = await UserModel.find({
                         status: 'Active',
                         timeZone: { $exists: true },
                         'pushTokens.0': { $exists: true },
@@ -105,7 +105,7 @@ const startPublishContentJob = async () => {
                               // Log notification sent
                               const notificationLog = new NotificationsModel({
                                     userId: user._id,
-                                    type: 'user',
+                                    type: 'book',
                                     notification: {
                                           title: '🔔 NEW Summary for you!',
                                           description: `📙 Explore the latest summary "${content}"`,

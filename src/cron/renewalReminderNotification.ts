@@ -3,7 +3,7 @@ import { fetchNotifications } from '../controllers/customers/notification.contro
 import { pushNotification, compileHtml, sentEmail } from '../lib/utils/utils';
 import { emailTemplatesTitles, originEmails, origins } from '../constants/app.constant';
 import { renewalReminderNotification } from '../constants/cron.constants';
-import { UserModel, getUserType } from '../models/user.model';
+import { UserModel } from '../models/user.model';
 import { io } from '../app';
 
 import notificationsService from '../services/customers/notifications/notifications.service';
@@ -12,7 +12,7 @@ import stripeSubscriptionServices from '../services/stripe/subscription'
 import config from '../../config';
 
 /** Send and push notification */
-const sentNotification = async (title: string, description: string, user: getUserType) => {
+const sentNotification: any = async (title: string, description: string, user: any) => {
       await notificationsService.createNotification({
             notification: { title, description },
             userId: user._id,
@@ -31,7 +31,7 @@ const sentNotification = async (title: string, description: string, user: getUse
 }
 
 /** Sent subscription activation email */
-const sentSubscriptionEmail = async (user, title, description) => {
+const sentSubscriptionEmail: any = async (user, title, description) => {
       try {
             const emailTemplateDetails =
                   await emailTemplateService.getOneEmailTemplateByFilter({
@@ -103,9 +103,9 @@ const start = async () => {
             }
 
             const
-                  emailPromises = [],
-                  notificationPromises = [],
-                  userPromises = [],
+                  emailPromises: any = [],
+                  notificationPromises: any = [],
+                  userPromises: any = [],
                   subscriptions = await Promise.all(
                         users.map(i => {
                               if (i?.stripe?.subscriptionId) {

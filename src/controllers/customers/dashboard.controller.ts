@@ -34,7 +34,7 @@ const getCategories = async (request: Request, response: Response, next: NextFun
 }
 
 /** Get recent reads books for Dashboard */
-const getRecentReads = async (request: any, response: Response, next: NextFunction) => {
+const getRecentReads = async (request: any, response: Response, next: NextFunction): Promise<any> => {
     try {
         const params: any = request.query
         const userObj = request.user
@@ -217,7 +217,7 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
         }
 
         const books = [...readingBook, ...categoriesBooks];
-        const preferredCategories = [];
+        const preferredCategories: any = [];
         books.forEach(book => {
             book.categories.forEach(categoryId => {
                 if (!preferredCategories.some(id => id.toString() === categoryId.toString())) {
@@ -226,7 +226,7 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
             });
         });
 
-        let recommendedBooks = [];
+        let recommendedBooks: any = [];
         let totalSuggestions = 0;
         // Define a weight factor to prioritize categories with more books read
         const weightFactor = 1; // You can adjust this factor as needed
@@ -321,7 +321,7 @@ const getFavoriteCategoriesBooks = async (request: any, response: Response, next
 
         const categoryIds = libraries.categories || [];
         const books = await bookSummaryService.findRandomBooks({ $match: { categories: { $in: categoryIds }, publish: true } }, 5);
-        const preferredCategories = [];
+        const preferredCategories: any = [];
         books.forEach(book => {
             book.categories.forEach(categoryId => {
                 if (!preferredCategories.some(id => id.toString() === categoryId.toString())) {
@@ -330,7 +330,7 @@ const getFavoriteCategoriesBooks = async (request: any, response: Response, next
             });
         });
 
-        let favoriteCategoriesBooks = [];
+        let favoriteCategoriesBooks: any = [];
         let totalSuggestions = 0;
         // Define a weight factor to prioritize categories with more books read
         const weightFactor = 1; // You can adjust this factor as needed

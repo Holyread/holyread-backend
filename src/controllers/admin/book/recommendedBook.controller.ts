@@ -60,7 +60,7 @@ const getAllRecommendedBooks = async (request: Request, response: Response, next
         if (params.search) {
             searchFilter = { 'book.title': await getSearchRegexp(params.search) }
         }
-        const listSorting = [];
+        const listSorting : any[] = [];
         switch (params.column) {
             case 'book':
                 listSorting.push(['book.title', params.order || 'asc']);
@@ -87,7 +87,7 @@ const getAllRecommendedBooks = async (request: Request, response: Response, next
 }
 
 /** Delete recommended book */
-const deleteRecommendedBook = async (req: Request, res: Response, next: NextFunction) => {
+const deleteRecommendedBook = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         await recommendedBookService.deleteRecommendedBook(id)

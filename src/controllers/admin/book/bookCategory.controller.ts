@@ -98,9 +98,9 @@ const getAllCategoriesOptionsList = async (request: Request, response: Response,
 }
 
 /** Update book category */
-const updateCateogry = async (req: Request, res: Response, next: NextFunction) => {
+const updateCateogry = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const id: any = req.params.id
+        const id: string = req.params.id
         /** Get book category from db */
         const categoryDetails: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
 
@@ -121,10 +121,10 @@ const updateCateogry = async (req: Request, res: Response, next: NextFunction) =
 }
 
 /** Remove book category */
-const deleteCategory = async (req: Request, res: Response, next: NextFunction) => {
+const deleteCategory = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
-        const bookCategoryDetails: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
+        const bookCategoryDetails = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
         if (bookCategoryDetails && bookCategoryDetails.image) await removeS3File(bookCategoryDetails.image, s3Bucket)
         await bookCategoryService.deleteBookCategory(id)
         return res.status(200).send({ message: bookCategoryControllerResponse.deleteBookCategorySuccess })

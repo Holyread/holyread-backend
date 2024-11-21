@@ -39,6 +39,8 @@ import { UninstallLogModel } from './uninstallLog.model'
 import { UserFeedBackModel } from './userFeedBack.model'
 import { MeditationCategoryModel } from './meditationCategory.model'
 import { MeditationModel } from './meditation.model'
+import { SubscriberModel } from './subscriber.model'
+
 const NODE_ENV = config.NODE_ENV
 
 mongoose.Promise = global.Promise
@@ -89,4 +91,5 @@ export {
   UserFeedBackModel,
   MeditationModel,
   MeditationCategoryModel
+  SubscriberModel,
 }

@@ -1,7 +1,7 @@
 import { FilterQuery } from 'mongoose';
-import { formattedDate } from '../../lib/utils/utils';
-import { CustomNotificationsModel } from '../../models/index'
-import { ICustomNotifications } from '../../models/customNotification.model';
+import { formattedDate } from '../../../lib/utils/utils';
+import { CustomNotificationsModel } from '../../../models/index'
+import { ICustomNotifications } from '../../../models/customNotification.model';
 
 /** Get notifications */
 const getUserNotifications = async (skip: number, limit, search: FilterQuery<ICustomNotifications>, sort) => {

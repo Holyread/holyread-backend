@@ -94,7 +94,7 @@ const getAllExpertCurated = async (request: Request, response: Response, next: N
 }
 
 /** Update expert Curated */
-const updateExpertCurated = async (req: Request, res: Response, next: NextFunction) => {
+const updateExpertCurated = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         /** Get expert Curated from db */
@@ -122,7 +122,7 @@ const updateExpertCurated = async (req: Request, res: Response, next: NextFuncti
 }
 
 /** Remove expert Curated */
-const deleteExpertCurated = async (req: Request, res: Response, next: NextFunction) => {
+const deleteExpertCurated = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         const expertCuratedDetail: any = await expertCuratedService.getOneExpertCuratedByFilter({ _id: id })

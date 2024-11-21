@@ -12,7 +12,7 @@ import config from '../../../config'
 import firebaseAdmin from 'firebase-admin';
 
 import { Worksheet } from 'exceljs';
-import { awsBucket } from '../../constants/app.constant';
+import { awsBucket, BATCH_SIZE } from '../../constants/app.constant';
 
 const algorithm = 'aes-256-cbc';
 const iv = '3ad77bb40d7a3660';
@@ -254,41 +254,52 @@ export const randomNumberInRange = (min: number, max: number) => Math.floor(Math
 
 export const pushNotification = async (tokens: string[], title: string, description: string, args = '') => {
     try {
-        const message = {
-            tokens: tokens, // Array of device tokens
-            notification: {
-                title: title,
-                body: description,
-            },
-            data: {
-                info: args,
-            },
-        };
+        // Split the tokens array into batches of 500 or less
+        const tokenChunks = [];
+        for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
+            tokenChunks.push(tokens.slice(i, i + BATCH_SIZE));
+        }
 
-        const response = await firebaseAdmin.messaging().sendMulticast(message);
+        // Loop through each chunk and send notifications
+        for (const chunk of tokenChunks) {
+            const message = {
+                tokens: chunk, // Array of device tokens (not more than 500)
+                notification: {
+                    title: title,
+                    body: description,
+                },
+                data: {
+                    info: args,
+                },
+            };
 
-        response.responses.forEach((resp, index) => {
-            if (!resp.success) {
-                const error = resp.error;
-                console.error('Failure sending notification to token:', tokens[index], error);
-                // Handle specific error cases if needed
-                if (
-                    error.code === 'messaging/invalid-recipient' ||
-                    error.code === 'messaging/registration-token-not-registered' ||
-                    error.code === 'messaging/invalid-registration-token' ||
-                    error.code === 'messaging/unknown-error'
-                ) {
-                    // Perform any necessary cleanup or logging for invalid tokens
-                    console.log(`Invalid token: ${tokens[index]}`);
+            const response = await firebaseAdmin.messaging().sendEachForMulticast(message);
+
+            response.responses.forEach((resp, index) => {
+                if (!resp.success) {
+                    const error: any = resp.error;
+                    console.error('Failure sending notification to token:', chunk[index], error);
+
+                    // Handle specific error cases if needed
+                    if (
+                        error.code === 'messaging/invalid-recipient' ||
+                        error.code === 'messaging/registration-token-not-registered' ||
+                        error.code === 'messaging/invalid-registration-token' ||
+                        error.code === 'messaging/unknown-error'
+                    ) {
+                        // Perform any necessary cleanup or logging for invalid tokens
+                        console.log(`Invalid token: ${chunk[index]}`);
+                    }
+                } else {
+                    console.log('Successfully sent notification to token:', chunk[index]);
                 }
-            } else {
-                console.log('Successfully sent notification to token:', tokens[index]);
-            }
-        });
+            });
+        }
     } catch (error) {
         console.error('Error sending notifications:', error);
     }
 };
+
 
 /** Sort an array object */
 export const sortArrayObject = (list: [object], key: string, order: 'asc' | 'desc') => {
@@ -326,13 +337,17 @@ export const getTimeDiff = (from: string, to: string) => {
     return days < 0 ? '0:0:0:0' : `${days}:${hours}:${minutes}:${seconds}`;
 }
 
-export const getDates = (d1: any, d2: any) => {
+export const getDates = (d1: Date, d2: Date): Date[] => {
     const oneDay = 24 * 3600 * 1000;
-    for (var d = [], ms = d1 * 1, last = d2 * 1; ms < last; ms += oneDay) {
-        d.push(new Date(ms));
+    const dates: Date[] = [];
+
+    // Convert dates to milliseconds and iterate
+    for (let ms = d1.getTime(), last = d2.getTime(); ms < last; ms += oneDay) {
+        dates.push(new Date(ms));
     }
-    return d;
-}
+
+    return dates;
+};
 
 export const groupByKey = (list: any, key: string) =>
     list.reduce((hash, obj) =>
@@ -419,7 +434,7 @@ export const setHeaderBackgroundColor = async (wsHeaderCells, ws: Worksheet): Pr
 };
 
 export const setColumnWidth = async (ws: Worksheet): Promise<void> => {
-    await Promise.all(ws.columns.map(async (column) => {
+    await Promise.all(ws.columns.map(async (column: any) => {
         const wsColumn = column;
         let dataMax = 0;
         await Promise.all(column.values.map((columnVal: any) => {

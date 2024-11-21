@@ -26,7 +26,7 @@ const pushNotification = async (userId, tokens, title, description, args = "") =
             },
         });
 
-        const invalidTokens = [];
+        const invalidTokens : string[] = [];
         response.results.forEach((result, index) => {
             const error = result.error;
             if (error) {
@@ -79,7 +79,7 @@ const processUsersInBatches = async () => {
     let skip = 0;
 
     while (true) {
-        const appUsers = await UserModel.find({
+        const appUsers : any[] = await UserModel.find({
             "pushTokens.0": { $exists: true },
             tokenCheck: false,
         })

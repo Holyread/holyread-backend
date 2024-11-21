@@ -164,7 +164,7 @@ const getAllSummaries = async (req: Request, res: Response, next: NextFunction) 
             }
         }
 
-        let summarySorting = [];
+        let summarySorting : any = [];
         const sortingColumn = column as string;
         const sortingOrder = order || 'asc';
         summarySorting = ['title', 'status', 'author', 'createdAt'].includes(sortingColumn)
@@ -242,7 +242,7 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
     }
 };
 
-const deleteSummary = async (req: Request, res: Response, next: NextFunction) => {
+const deleteSummary = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const { id } = req.params;
         const summaryDetails = await bookSummaryService.getOneBookSummaryByFilter({ _id: id });

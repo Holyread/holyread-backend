@@ -4,8 +4,7 @@ import stripeSubscriptionService from '../../stripe/subscription';
 /** Get all Subscriptions for table */
 const getAllSubscriptions = async (search) => {
       try {
-            const subscriptions: any = await SubscriptionsModel.find(search).lean().exec()
-            subscriptions.sort((a, b) => Number(a.price) - Number(b.price))
+            const subscriptions: any = await SubscriptionsModel.find(search).sort({ createdAt: -1 }).lean().exec()
             return subscriptions
       } catch (e: any) {
             throw new Error(e)

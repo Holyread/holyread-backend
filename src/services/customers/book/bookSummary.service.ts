@@ -414,6 +414,56 @@ const findRandomBooks = async (query: any, count: any) => {
     }
 }
 
+const getAllBookSummariesForWebsite = async (search: any, sort: any) => {
+    try {
+        // Ensure that only published books are searched
+        search.search.publish = true;
+
+        // Get total document count for published summaries
+        const totalCount = await BookSummaryModel.find({ publish: true }).countDocuments();
+
+        // Perform aggregation to get all book summaries without pagination
+        const result: any = await BookSummaryModel.aggregate([
+            {
+                $project: {
+                    title: 1.0,
+                    author: 1.0,
+                    publish: 1.0,
+                    categories: 1.0,
+                    coverImage: 1.0,
+                },
+            },
+            {
+                $lookup: {
+                    as: 'author',
+                    foreignField: '_id',
+                    from: 'bookauthors',
+                    localField: 'author',
+                },
+            },
+            {
+                $match: search.search,
+            },
+            { $sample: { size: totalCount } },
+        ]);
+
+        // Transform result into a summary list
+        const summaries = result.map((oneItem: any) => ({
+            _id: oneItem._id,
+            coverImage: awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + oneItem.coverImage,
+            title: oneItem.title,
+            author: oneItem.author[0] || {},
+            categories: oneItem.categories,
+            publish: oneItem.publish,
+        }));
+
+        return { summaries };
+    } catch (e: any) {
+        throw new Error(e);
+    }
+};
+
+
 export default {
     getAllBookSummaries,
     getAllBookSummariesForDiscover,
@@ -423,6 +473,7 @@ export default {
     updateBookSummary,
     findBooks,
     findRandomBooks,
+    getAllBookSummariesForWebsite
 }
 
 /*

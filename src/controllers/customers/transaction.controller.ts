@@ -122,7 +122,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         </p>
                   `
                   if (emailTemplateDetails && emailTemplateDetails.content) {
-                        const localeDate = planExpiredAt
+                        const localeDate: any = planExpiredAt
                               ?.toLocaleDateString()
                               ?.split('/')
 
@@ -948,7 +948,7 @@ const createGoogleTransaction = async (
       request: Request,
       response: Response,
       next: NextFunction
-) => {
+): Promise<any> => {
       try {
             const body = request.body;
             const header = request.headers;

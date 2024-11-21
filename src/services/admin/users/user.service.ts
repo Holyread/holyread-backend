@@ -214,7 +214,7 @@ const getAllExportUsers = async (search) => {
         let hasMoreData = true;
 
         while (hasMoreData) {
-            const userChunk = await UserModel.aggregate([
+            const userChunk : any = await UserModel.aggregate([
                 {
                     $match: search,
                 },

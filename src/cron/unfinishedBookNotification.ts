@@ -54,12 +54,12 @@ const start = async () => {
         }
 
         // Send notifications to matching users
-        const notificationsSent = [];
+        const notificationsSent :any = [];
         for (const user of usersRemindUnfinishedBook) {
             const randomBook = getRandomBookFromReading(user);
 
             if (randomBook) {
-                const unreadBook = await BookSummaryModel.findOne({ _id: randomBook?.bookId }).select([
+                const unreadBook: any = await BookSummaryModel.findOne({ _id: randomBook?.bookId }).select([
                     '_id',
                     'description',
                     'overview',
@@ -127,7 +127,7 @@ const start = async () => {
         for (const notification of notificationsSent) {
             const notificationLog = new NotificationsModel({
                 userId: notification.userId,
-                type: 'user',
+                type: 'book',
                 notification: {
                     title: '🔔 You left something unfinished!',
                     description: `📙 lets read ${bookDetails.title}.`,

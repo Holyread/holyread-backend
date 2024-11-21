@@ -204,7 +204,7 @@ const getBlessFriend = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+): Promise<any> => {
       try {
             /** Validate Email */
             const isValid = await validateEmail(req.params.email);
@@ -471,7 +471,7 @@ const emailAuth = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+) : Promise<any> => {
       try {
             const { email, password }: { email: string, password: string } = req.body;
             if (!email || !password) {
@@ -1148,7 +1148,7 @@ const getShareOptionImageUrl = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+): Promise<void> => {
       try {
             if (req.body.image) {
                   const s3File: any = await uploadFileToS3(
@@ -1163,12 +1163,12 @@ const getShareOptionImageUrl = async (
             }
             const imageUrl: string
                   = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.usersDirectory + '/share-options/' + req.body.image
-            return res.status(200).send({
+            res.status(200).send({
                   message: authControllerResponse.addShareImage,
                   data: { image: imageUrl },
             })
       } catch ({ message }: any) {
-            return next(Boom.badData(message as string))
+            next(Boom.badData(message as string))
       }
 }
 
@@ -1177,7 +1177,7 @@ const getEncodeImage = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+) : Promise<any> => {
       try {
             if (req.body.image) {
                   req.body.image = await imageUrlToBase64(req.body.image);
@@ -1196,7 +1196,7 @@ const updateUserLibrary = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+) : Promise<any> => {
       try {
             const { type, section } = req.query as any
 
@@ -1899,7 +1899,7 @@ const blessFriend = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+): Promise<any> => {
       try {
             const body = req.body
             const isValid = await validateEmail(body.friendEmail);
@@ -2342,7 +2342,7 @@ const subscribePlan = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+): Promise<any> => {
       try {
             const userObj = req.user
 
@@ -2700,7 +2700,7 @@ const updateHandout = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) => {
+) : Promise<any> => {
       try {
             const smallGroup = await smallGroupService
                   .getSmallGroupForHandout({

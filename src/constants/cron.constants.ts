@@ -21,14 +21,14 @@ export const dailyDevotionalNotification = {
 
 export const publishContent = {
       SCHEDULE: {
-            Minutes: '0',
-            Hours: '9',
-            DayOfMonth: '*/4',
-            Months: '*',
-            DayOfWeek: '*',
+          Minutes: '0',
+          Hours: '9',// 9 AM
+          DayOfMonth: '*',
+          Months: '*',
+          DayOfWeek: '0',// Sunday (can also use '7' in some systems)
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
-}
+};
 
 export const renewalReminderNotification = {
       SCHEDULE: {
@@ -67,9 +67,9 @@ export const contentUpdateNotification = {
       SCHEDULE: {
           Minutes: '0',
           Hours: '10', // 10 AM
-          DayOfMonth: '*/4',
+          DayOfMonth: '*',
           Months: '*',
-          DayOfWeek: '*',
+          DayOfWeek: '0',// Sunday (can also use '7' in some systems)
       },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 };

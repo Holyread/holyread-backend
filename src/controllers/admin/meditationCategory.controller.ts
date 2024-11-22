@@ -20,7 +20,7 @@ const s3Bucket = {
     documentDirectory: `${awsBucket.meditationDirectory}/category`,
 }
 
-/** Add Story */
+/** Add Meditation Category */
 const addMeditationCategory = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
@@ -45,11 +45,11 @@ const addMeditationCategory = async (req: Request, res: Response, next: NextFunc
     }
 }
 
-/**  Get one faq by id */
+/**  Get one meditation category by id */
 const getOneMeditationCategory = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
-        /** Get faq from db */
+        /** Get meditation category from db */
         const meditationCategoryObj: any = await meditationCategoryService.getOneMeditationCategoryByFilter({ _id: id })
         if (!meditationCategoryObj) {
             return next(Boom.notFound(meditationCategoryControllerResponse.createMeditationCategoryFailure))
@@ -64,7 +64,7 @@ const getOneMeditationCategory = async (req: Request, res: Response, next: NextF
     }
 }
 
-/** Get all Faqs */
+/** Get all meditation categories */
 const getAllMeditationCategories = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
@@ -105,8 +105,8 @@ const getAllMeditationCategoriesList =  async (request: Request, response: Respo
     }
 }
 
-/** Update Faq */
-const updateMeditationCategory = async (req: Request, res: Response, next: NextFunction) => {
+/** Update meditation category */
+const updateMeditationCategory = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         /** Get faq from db */
@@ -137,8 +137,8 @@ const updateMeditationCategory = async (req: Request, res: Response, next: NextF
     }
 }
 
-/** Remove Faq */
-const deleteMeditationCategory = async (req: Request, res: Response, next: NextFunction) => {
+/** Remove meditation category */
+const deleteMeditationCategory = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         const meditation = await meditationService.getOneMeditationByFilter({ category: id })

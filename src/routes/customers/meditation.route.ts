@@ -1,7 +1,7 @@
 import express, { Router } from 'express'
 import {
   getAllMeditations,
-  getAllMeditationCategoriesList
+  getAllMeditationCategoriesList,
 } from '../../controllers/customers/meditation.controller'
 
 const router: Router = express.Router()

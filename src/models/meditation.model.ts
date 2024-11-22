@@ -19,6 +19,7 @@ export type createMeditationType = {
     category?: Types.ObjectId, 
     image?: string,
     video?: string,
+    description: string,
     status?: 'Active' | 'Deactive',
     publish?: boolean,
     createdAt: Date,
@@ -32,6 +33,7 @@ export type getMeditationType = {
     category: Types.ObjectId,
     video?: string,
     image?: string,
+    description: string,
     status?: 'Active' | 'Deactive',
     publish?: boolean,
     createdAt: Date,
@@ -43,6 +45,7 @@ export const MeditationSchema = new Schema({
     category: { type: Schema.Types.ObjectId, required: true, index: true, ref: 'meditationCategories' },
     image: { type: String },
     video: { type: String },
+    description: { type: String },
     status: { type: String, default: 'Active' },
     publish : { type: Boolean, default: false },
     createdAt: {

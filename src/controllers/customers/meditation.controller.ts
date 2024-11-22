@@ -10,25 +10,39 @@ const meditationCategoryControllerResponse = responseMessage.meditationCategoryC
 /** Get all Faqs */
 const getAllMeditations = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const params = request.query
+        const params = request.query;
         let meditationSearchFilter: any = { status: 'Active' };
 
+        // Apply filters based on query parameters
         if (params.category) {
             meditationSearchFilter.category = params.category;
         }
-        
+
         if (params.search) {
             meditationSearchFilter.title = params.search;
         }
 
-        const getMeditationsList = await meditationService.getAllMeditations( meditationSearchFilter)
-        response.status(200).json({ message: meditationControllerResponse.fetchAllMeditationSuccess, data: getMeditationsList })
-    } catch (e: any) {
-        next(Boom.badData(e.message))
-    }
-}
+        let meditationsList : any = {};
 
-const getAllMeditationCategoriesList =  async (request: Request, response: Response, next: NextFunction) => {
+        // If "recommended" flag is present, fetch recommended meditations
+        if (params.recommended) {
+             meditationsList = await meditationService.getRecommendedMeditation();
+        }
+        else {
+            meditationsList = await meditationService.getAllMeditations(meditationSearchFilter);
+        }
+         
+        response.status(200).json({
+            message: meditationControllerResponse.fetchAllMeditationSuccess,
+            data: meditationsList,
+        });
+    } catch (error: any) {
+        next(Boom.badData(error.message));
+    }
+};
+
+
+const getAllMeditationCategoriesList = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const result: any = await meditationService.getAllMeditationCategoriesList()
         response.status(200).json({ message: meditationCategoryControllerResponse.fetchAllMeditationCategorySuccess, data: result })

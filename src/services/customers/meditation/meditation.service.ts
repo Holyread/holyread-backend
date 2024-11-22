@@ -10,7 +10,7 @@ const getAllMeditations = async (search: FilterQuery<IMeditation>) => {
         await Promise.all(result.map(async (item: any) => {
             if (item.image) item.image = getImageUrl(item.image, `${awsBucket.meditationDirectory}`);
             if (item.video) item.video = getImageUrl(item.video, `${awsBucket.meditationDirectory}/video`);
-            if (item.category) { item.category = item.category.title}
+            if (item.category) { item.category = item.category.title }
         }))
         const count = await MeditationModel.find(search).countDocuments()
         return { count, meditations: result }
@@ -29,7 +29,12 @@ const getAllMeditationCategoriesList = async () => {
     }
 }
 
+const getRecommendedMeditation = async () => {
+    return MeditationModel.aggregate([{ $sample: { size: 1 } }]).exec();
+};
+
 export default {
     getAllMeditations,
     getAllMeditationCategoriesList,
+    getRecommendedMeditation
 }

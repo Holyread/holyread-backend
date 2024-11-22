@@ -18,7 +18,7 @@ const s3Bucket = {
     documentDirectory: `${awsBucket.meditationDirectory}`,
 }
 
-/** Add Story */
+/** Add Meditation */
 const addMeditation = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
@@ -49,11 +49,11 @@ const addMeditation = async (req: Request, res: Response, next: NextFunction) =>
     }
 }
 
-/**  Get one faq by id */
+/**  Get one meditation by id */
 const getOneMeditation = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
-        /** Get faq from db */
+        /** Get meditation from db */
         const meditationObj: any = await meditationService.getOneMeditationByFilter({ _id: id })
         if (!meditationObj) {
             return next(Boom.notFound(meditationControllerResponse.createMeditationFailure))
@@ -69,7 +69,7 @@ const getOneMeditation = async (req: Request, res: Response, next: NextFunction)
     }
 }
 
-/** Get all Faqs */
+/** Get all meditations */
 const getAllMeditations = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
@@ -100,8 +100,8 @@ const getAllMeditations = async (request: Request, response: Response, next: Nex
     }
 }
 
-/** Update Faq */
-const updateMeditation = async (req: Request, res: Response, next: NextFunction) => {
+/** Update Meditation */
+const updateMeditation = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         /** Get faq from db */
@@ -141,8 +141,8 @@ const updateMeditation = async (req: Request, res: Response, next: NextFunction)
     }
 }
 
-/** Remove Faq */
-const deleteMeditation = async (req: Request, res: Response, next: NextFunction) => {
+/** Remove Meditation */
+const deleteMeditation = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
         const meditationObj = await meditationService.getOneMeditationByFilter({ _id: id });

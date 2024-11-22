@@ -3,7 +3,7 @@ import mongoose, { Schema, Types } from 'mongoose'
 mongoose.set('autoIndex', true);
 
 export interface IMeditation extends mongoose.Document {
-    _id?: string;
+    _id: string;
     title: string,
     category?: Types.ObjectId,
     image: string,
@@ -27,7 +27,7 @@ export type createMeditationType = {
 
 
 export type getMeditationType = {
-    _id?: string,
+    _id: string,
     title: string,
     category: Types.ObjectId,
     video?: string,

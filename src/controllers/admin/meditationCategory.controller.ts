@@ -24,6 +24,9 @@ const s3Bucket = {
 const addMeditationCategory = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
+        const category = await meditationCategoryService.getOneMeditationCategoryByFilter({ title: req.body.title })
+        if (category) return next(Boom.badData(meditationCategoryControllerResponse.createMeditationCategoryFailure))
+
         if (body.image) {
             const s3File: any = await uploadFileToS3(body.image, body.title, s3Bucket)
             body.image = s3File.name

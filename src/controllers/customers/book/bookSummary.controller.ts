@@ -140,7 +140,9 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             const library: any = await userService.getUserLibrary({ _id: req.user.libraries })
             library?.view.map(i => {
                 const createdAt = new Date(i.createdAt).getTime();
-                if (createdAt >= start.getTime()) todayViews.push(i)
+                if (createdAt >= start.getTime()) {
+                    todayViews.push(i)
+                }
                 if (String(i.bookId) === String(data._id)) {
                     isExist = true
                 }
@@ -149,10 +151,14 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             /** Filter current days notification book view */
             library?.freeNotificationBooks.map(i => {
                 const createdAt = new Date(i.createdAt).getTime();
-                if (createdAt >= start.getTime()) todayFreeNotificationBook.push(i)
-                if (String(i.bookId) === String(data._id)) {
-                    isFreeNotificationBookExist = true
+                if (createdAt >= start.getTime()) {
+                    todayFreeNotificationBook.push(i)
                 }
+                todayFreeNotificationBook.map( i1 => {
+                    if (String(i1.bookId) === String(data._id)) {
+                        isFreeNotificationBookExist = true
+                    }
+                })
             })
 
             const categoryIds = library.categories.map(id => id.toString()) || [];
@@ -163,7 +169,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             );
 
             // Fetch the user's library based on the library ID and the freeSummary ID from request parameters
-            const freeSummary = await userService.getUserLibrary({ _id: library, freeSummary: req.params.id })
+            const freeSummary = await userService.getUserLibrary({ _id: library?._id, freeSummary: req.params.id })
 
             // Check if the user has already used the free summary, is not signed up, and the free summary doesn't exist
             if (req.user.hasUsedFreeSummary && !req.user.isSignedUp && !freeSummary) {
@@ -176,19 +182,21 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             }
 
             // If the free summary does not exist, today's views are 2 or more, the user has no free notification books, and the free summary doesn't exist
-            if (!isExist && todayViews.length >= 2 && library?.freeNotificationBooks.length === 0 && !freeSummary) {
-                return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError))
+            if (library?.freeNotificationBooks.length === 0) {
+                // If freeNotificationBooks.length is 0, check the other conditions
+                if (todayViews.length >= 2 && !isExist && freeSummary === null) {
+                    return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
+                }
             }
 
             // If the free summary does not exist, today's views are 1 or more, the free notification book does not exist, and the free summary doesn't exist
-            if (!isExist 
-                && todayViews.length >= 1 
-                && !isFreeNotificationBookExist 
-                && library?.freeNotificationBooks.length > 0 
-                && !freeSummary 
-                && library?.reading.some(book => book.chaptersCompleted.length > 4)
-            ) {
-                return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
+            if (library?.freeNotificationBooks.length > 0) {
+                if (!isExist
+                    && todayViews.length >= 1
+                    && !isFreeNotificationBookExist
+                ) {
+                    return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
+                }
             }
         }
         if (data.coverImage) {

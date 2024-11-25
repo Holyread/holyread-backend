@@ -27,8 +27,9 @@ import expertCurated   from './admin/book/expertCurated.route'
 import recommendedBook from './admin/book/recommendedBook.route'
 
 import customNotification from './admin/customNotification.route'
-
 import exportData from './admin/exportData.route'
+import meditation from './admin/meditation.route'
+import meditationCategory from './admin/meditationCategory.route'
 
 const router: Router = express.Router()
 
@@ -67,5 +68,7 @@ router.use('/recommended-book', adminPassport, recommendedBook)
 router.use('/notification', adminPassport, customNotification)
 
 router.use('/export-data', adminPassport, exportData)
+router.use('/meditation', adminPassport, meditation)
 
+router.use('/meditation-category', adminPassport, meditationCategory)
 export default router

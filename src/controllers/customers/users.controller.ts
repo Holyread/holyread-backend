@@ -22,6 +22,7 @@ import {
       capitalizeFirstLetter,
       validateEmail,
       calculateAverageRating,
+      silentPushNotification,
 } from '../../lib/utils/utils'
 
 import {
@@ -471,7 +472,7 @@ const emailAuth = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) : Promise<any> => {
+): Promise<any> => {
       try {
             const { email, password }: { email: string, password: string } = req.body;
             if (!email || !password) {
@@ -1177,7 +1178,7 @@ const getEncodeImage = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) : Promise<any> => {
+): Promise<any> => {
       try {
             if (req.body.image) {
                   req.body.image = await imageUrlToBase64(req.body.image);
@@ -1196,7 +1197,7 @@ const updateUserLibrary = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) : Promise<any> => {
+): Promise<any> => {
       try {
             const { type, section } = req.query as any
 
@@ -2517,6 +2518,28 @@ const subscribePlan = async (
                   })
             }
 
+            const couponNotificationTitle = 'Holy Reads Coupon Activated';
+            const couponNotificationDescription = `Holy Reads ${subscriptionDetails.duration.includes('Half')
+                  ? subscriptionDetails.duration
+                  : '1 ' + subscriptionDetails.duration
+                  } subscription has been activated! 🎉`
+
+
+            if (
+                  req.user.pushTokens.length &&
+                  userObj?.notification?.push &&
+                  userObj?.notification?.subscription &&
+                  req.body.coupon
+            ) {
+                  const tokens = req.user.pushTokens.map(i => i.token)
+                  silentPushNotification(
+                        tokens,
+                        couponNotificationTitle,
+                        couponNotificationDescription
+                  )
+            }
+
+
             const emailTemplateDetails = await emailTemplateService
                   .getOneEmailTemplateByFilter({
                         title: emailTemplatesTitles.customer.chooseSubscription,
@@ -2700,7 +2723,7 @@ const updateHandout = async (
       req: Request | any,
       res: Response,
       next: NextFunction
-) : Promise<any> => {
+): Promise<any> => {
       try {
             const smallGroup = await smallGroupService
                   .getSmallGroupForHandout({

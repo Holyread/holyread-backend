@@ -267,10 +267,6 @@ export const responseMessage = {
         deleteCouponSuccess: 'Coupon removed successfully',
         invalidCoupon: 'Coupon is not valid',
     },
-  subScriberControllerResponse: {
-        createSubscriberSuccess: 'Subscriber added successfully',
-        createSubscriberFailure: 'Subscriber already added',
-    },
     meditationControllerResponse: {
         createMeditationSuccess: 'Meditation added successfully',
         updateMeditationSuccess: 'Meditation updated successfully',
@@ -289,5 +285,9 @@ export const responseMessage = {
         createMeditationCategoryFailure: 'Meditation category already added',
         getMeditationCategoryFailure: 'Failed to fetch meditation category details',
         deleteMeditationCategoryLinkError: 'There are meditations linked to this category, so please unlink them all before deleting'
+    },
+    subScriberControllerResponse: {
+        createSubscriberSuccess: 'Subscriber added successfully',
+        createSubscriberFailure: 'Subscriber already added',
     },
 }

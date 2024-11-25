@@ -5,7 +5,6 @@ import subscriptions from './website/subscriptions.route'
 import bookCategories from './website/book/bookCategory.route'
 import bookSummary from './website/book/bookSummary.route'
 import subscriber from './website/subscriber.route'
-
 import cms from './website/cms.route'
 
 const router: Router = express.Router()

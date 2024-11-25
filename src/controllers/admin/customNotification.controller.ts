@@ -23,7 +23,6 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
         }
 
         const commonUserObj: any = {
-            email: 'test707@gmail.com',
             'notification.push': true,
             status: 'Active',
         };

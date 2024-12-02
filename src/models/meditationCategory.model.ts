@@ -23,7 +23,7 @@ export type getMeditationCategoryType = {
 
 export const MeditationCategorySchema = new Schema({
     title: { type: String, required: true, index: true },
-    image: { type: String, required: true },
+    image: { type: String },
     status: { type: String, required: true, index: true },
     createdAt: {
         type: Date, default: () => {

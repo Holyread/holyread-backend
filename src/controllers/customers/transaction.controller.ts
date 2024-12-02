@@ -421,20 +421,6 @@ const processTransaction = async (user: any, session: any, event: any) => {
             if (session.status === 'active') {
                   const createdTransaction = await transactionsService.createTransaction(transaction)
                   userService.updateUser({ _id: user._id }, { lastTrnId: createdTransaction._id })
-                  /** Sent subscription activation email */
-                  await sentSubscriptionEmail(
-                        transaction?.planExpiredAt,
-                        transaction.total,
-                        transaction.status
-                  )
-                  Promise.all([
-                        sentNotification(
-                              'Holy Reads Subscription',
-                              `Holy Reads ${subscriptionDetails.duration.includes('Half')
-                                    ? subscriptionDetails.duration
-                                    : '1 ' + subscriptionDetails.duration
-                              } Subscription activated successfully 🎉`),
-                  ])
                   return
             }
 

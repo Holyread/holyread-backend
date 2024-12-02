@@ -52,11 +52,12 @@ app.set(
 )
 
 app.use(
-  bodyParser.json({ limit: '1024mb' })
-)
+  bodyParser.json({ limit: '2048mb' }) // 2GB limit for JSON payload
+);
 app.use(
-  bodyParser.urlencoded({ extended: true })
-)
+  bodyParser.urlencoded({ extended: true, limit: '2048mb' }) // 2GB limit for URL-encoded payload
+);
+
 app.use(
   cookieParser()
 )

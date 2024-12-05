@@ -23,6 +23,8 @@ import devotionalCategories from './customers/devotionalCategories.route'
 
 import feedBack from './customers/userFeedBack.route'
 import meditation from './customers/meditation.route'
+import appVersion from './customers/appVersion.route'
+
 
 const router: Router = express.Router()
 
@@ -50,5 +52,7 @@ router.use('/devotional-categories', customerPassport, devotionalCategories)
 
 router.use('/feedBack', customerPassport, feedBack )
 router.use('/meditation',customerPassport, meditation)
+
+router.use('/app-version', customerPassport, appVersion)
 
 export default router

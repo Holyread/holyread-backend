@@ -40,6 +40,7 @@ import { UserFeedBackModel } from './userFeedBack.model'
 import { MeditationCategoryModel } from './meditationCategory.model'
 import { MeditationModel } from './meditation.model'
 import { SubscriberModel } from './subscriber.model'
+import { AppVersionModel } from './appVersion.model'
 
 const NODE_ENV = config.NODE_ENV
 
@@ -92,4 +93,5 @@ export {
   MeditationModel,
   MeditationCategoryModel,
   SubscriberModel,
+  AppVersionModel,
 }

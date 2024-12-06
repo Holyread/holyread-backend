@@ -1,6 +1,7 @@
 import { FilterQuery } from 'mongoose'
 import { IAppVersion } from '../../../models/appVersion.model'
 import { AppVersionModel } from '../../../models/index'
+import { formattedDate } from '../../../lib/utils/utils'
 
 /** Create Cms */
 const createAppVersion = async (body: any) => {
@@ -39,9 +40,12 @@ const getOneAppVersionByFilter = async (query: any) => {
 /** Get all AppVersion for table */
 const getAllAppVersion = async (skip: number, limit, search: FilterQuery<IAppVersion>, sort) => {
     try {
-        const AppVersionList: any = await AppVersionModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+        const result: any = await AppVersionModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+        await Promise.all(result.map(async (item: any) => {
+            item.createdAt = formattedDate(item.createdAt).replace(/ /g, ' ')
+        }))
         const count = await AppVersionModel.find(search).countDocuments()
-        return { count, appVersionList: AppVersionList }
+        return { count, appVersionList: result }
     } catch (e: any) {
         throw new Error(e)
     }

@@ -1,10 +1,10 @@
 import express, { Router } from 'express'
 import {
-  getLatestAppVersion,
+  checkUserAppVersion,
 } from '../../controllers/customers/appVersion.controller'
 
 const router: Router = express.Router()
 
-router.get('/', getLatestAppVersion)
+router.post('/', checkUserAppVersion)
 
 export default router

@@ -132,11 +132,11 @@ export const schedulePersonalizeNotification = {
 export const publishSmallGroup = {
       SCHEDULE: {
             Minutes: '0',
-            Hours: '9-18', // Daytime hours (9 AM to 6 PM)
-            DayOfMonth: '*/7', // Every 7 days
+            Hours: '9',// 9 AM
+            DayOfMonth: '*',
             Months: '*',
-            DayOfWeek: '*',
-          },
+            DayOfWeek: '0',// Sunday (can also use '7' in some systems)
+        },
       JOBRESTRICTENV: ['local'], // 'local','development','production'
 };
 

@@ -31,6 +31,8 @@ import exportData from './admin/exportData.route'
 import meditation from './admin/meditation.route'
 import meditationCategory from './admin/meditationCategory.route'
 
+import appVersion from './admin/appVersion.route'
+
 const router: Router = express.Router()
 
 router.use('/auth', auth)
@@ -71,4 +73,6 @@ router.use('/export-data', adminPassport, exportData)
 router.use('/meditation', adminPassport, meditation)
 
 router.use('/meditation-category', adminPassport, meditationCategory)
+router.use('/app-version', adminPassport, appVersion)
+
 export default router

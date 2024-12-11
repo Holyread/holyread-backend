@@ -290,4 +290,13 @@ export const responseMessage = {
         createSubscriberSuccess: 'Subscriber added successfully',
         createSubscriberFailure: 'Subscriber already added',
     },
+    appVersionControllerResponse: {
+        createAppVersionSuccess: 'AppVersion added successfully',
+        updateAppVersionSuccess: 'AppVersion updated successfully',
+        deleteAppVersionSuccess: 'AppVersion deleted successfully',
+        fetchAppVersionSuccess: 'AppVersion details fetched successfully',
+        fetchAllAppVersionSuccess: 'All appVersion list fetched successfully',
+        createAppVersionFailure: 'AppVersion already added',
+        getAppVersionFailure: 'Failed to fetch appVersion details',
+    },
 }

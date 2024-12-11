@@ -13,7 +13,7 @@ const checkUserAppVersion = async (request: Request, response: Response, next: N
             shouldUpdateAppVersion = false;
         }
 
-        response.status(200).json({ shouldUpdateAppVersion });
+        response.status(200).json({ shouldUpdateAppVersion , version: data.version });
     } catch (e: any) {
         next(Boom.badData(e.message));
     }

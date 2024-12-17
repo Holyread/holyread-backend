@@ -193,5 +193,5 @@ export const scheduleFreemiumUserRandomSummaryNotification = {
           Months: '*',
           DayOfWeek: '*'
       },
-      JOBRESTRICTENV: ['local'],
+      JOBRESTRICTENV: ['local', 'development', 'production'], // 'local','development','production'
 };

@@ -22,13 +22,15 @@ const startPublishContentJob = async () => {
 
             // Publish the first unpublished book
             if (unpublishBooks.length && unpublishBooks[0]?._id) {
-                  await BookSummaryModel.findOneAndUpdate({ _id: unpublishBooks[0]?._id }, { publish: true, publishedAt: new Date() });
+                  await BookSummaryModel.findOneAndUpdate({ _id: unpublishBooks[0]?._id }, { publish: true, publishedAt: new Date(), views: randomNumberInRange(700, 2500) });
 
                   // Get details of the newly published book
                   const newPublishedBook : any = await BookSummaryModel.findOne({ _id: unpublishBooks[0]._id })
                         .populate('author')
                         .lean()
                         .exec();
+
+                  if (!newPublishedBook) return;
 
                   let publishContent;
                   let content;

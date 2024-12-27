@@ -9,6 +9,7 @@ import { setColumnWidth, setHeaderBackgroundColor } from '../../lib/utils/utils'
 import dailyDevotionalService from '../../services/admin/dailyDevotional/dailyDevotional.service';
 import smallGroupService from '../../services/admin/smallGroup/smallGroup.service';
 import expertCuratedService from '../../services/admin/book/expertCurated.service';
+import meditationService from '../../services/admin/meditation/meditation.service';
 import fs from 'fs';
 import path from 'path';
 import { responseMessage } from '../../constants/message.constant';
@@ -20,7 +21,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
     try {
         const { selectedDataTypes } = request.body;
         const fileName = `export_data_${Date.now()}.xlsx`;
-        const data : any[] = [];
+        const data: any[] = [];
         const workbook = new excel.Workbook();
 
         // Fetch data based on selected data types
@@ -64,6 +65,11 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                     const mostPopularList = bookList.summaries
                     data.push({ dataType, data: mostPopularList });
                     break;
+                case 'Meditations':
+                    // Fetch meditations data
+                    const meditationList = await meditationService.getAllMeditationsForExport();
+                    data.push({ dataType, data: meditationList });
+                    break;
                 default:
                     break;
             }
@@ -77,6 +83,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
         const wsBooks = workbook.addWorksheet('Books')
         const wsTransactions = workbook.addWorksheet('Transactions')
         const wsUsers = workbook.addWorksheet('Users')
+        const wsMeditations = workbook.addWorksheet('Meditations')
 
         /* set header */
         const dailyDevotionalExcelHeader = [
@@ -176,6 +183,20 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
             { header : 'TimeZone', key: 'timeZone' },
             { header: 'CreatedAt', key: 'createdAt' },
         ];
+
+        /* set header */
+        const meditationsExcelHeader = [
+            { header: 'Title', key: 'title' },
+            { header: 'Category', key: 'category' },
+            { header: 'Image', key: 'image' },
+            { header: 'Video', key: 'video' },
+            { header: 'Duration', key: 'duration' },
+            { header: 'Description', key: 'description' },
+            { header: 'Status', key: 'status' },
+            { header: 'Publish', key: 'publish' },
+            { header: 'Created At', key: 'createdAt' },
+        ];
+
         wsForDailyDevotional.columns = dailyDevotionalExcelHeader;
         wsCuratedList.columns = curatedExcelHeader;
         wsSmallGroup.columns = smallGroupExcelHeader;
@@ -183,6 +204,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
         wsBooks.columns = booksExcelHeader
         wsTransactions.columns = transactionsExcelHeader
         wsUsers.columns = usersExcelHeader
+        wsMeditations.columns = meditationsExcelHeader
 
         // Add data to worksheet
         data.forEach(({ dataType, data }) => {
@@ -282,6 +304,18 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                         item.timeZone,
                         item.createdAt,
                     ]);
+                } else if (dataType === 'Meditations') {
+                    wsMeditations.addRow([
+                        item.title,
+                        item.category,
+                        item.image,
+                        item.video,
+                        item.duration,
+                        item.description,
+                        item.status,
+                        item.publish,
+                        item.createdAt,
+                    ]);
                 }
             });
         });
@@ -293,6 +327,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
         const booksExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1', 'L1', 'M1'];
         const transactionsExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1'];
         const usersExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1'];
+        const meditationsExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1'];
 
         await setHeaderBackgroundColor(dailyDevotionalExcelHeaderCells, wsForDailyDevotional);
         await setHeaderBackgroundColor(curatedExcelHeaderCells, wsCuratedList);
@@ -301,6 +336,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
         await setHeaderBackgroundColor(booksExcelHeaderCells, wsBooks);
         await setHeaderBackgroundColor(transactionsExcelHeaderCells, wsTransactions);
         await setHeaderBackgroundColor(usersExcelHeaderCells, wsUsers);
+        await setHeaderBackgroundColor(meditationsExcelHeaderCells, wsMeditations);
 
         await setColumnWidth(wsForDailyDevotional);
         await setColumnWidth(wsCuratedList);
@@ -309,6 +345,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
         await setColumnWidth(wsBooks);
         await setColumnWidth(wsTransactions);
         await setColumnWidth(wsUsers);
+        await setColumnWidth(wsMeditations);
 
         await workbook.xlsx.writeFile(fileName);
         const xlsxFileStream = fs.readFileSync(fileName);
@@ -585,7 +622,7 @@ const exportUsersData = async (request: Request, response: Response, next: NextF
                 status: item.status,
                 country: item.country,
                 timeZone: item.timeZone,
-                isAppUninstalled : item.isAppUninstalled,
+                isAppUninstalled: item.isAppUninstalled,
             })
         });
         const usersExcelHeaderCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1', 'J1', 'K1', 'L1', 'M1', 'N1'];

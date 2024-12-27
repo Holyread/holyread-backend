@@ -61,11 +61,29 @@ const getAllMeditations = async (skip: number, limit, search: FilterQuery<IMedit
     }
 }
 
-/** Remove Meditation */ 
+/** Remove Meditation */
 const deleteMeditation = async (id: string) => {
     try {
         await MeditationModel.findOneAndDelete({ _id: id })
         return true
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
+const getAllMeditationsForExport = async () => {
+    try {
+        const result: any = await MeditationModel.find().populate('category').sort([['createdAt', 'desc']]).lean()
+        await Promise.all(result.map(async (item: any) => {
+            item.createdAt = formattedDate(item.createdAt).replace(/ /g, ' ')
+            if (item.image) item.image = getImageUrl(item.image, `${awsBucket.meditationDirectory}`);
+            if (item.video) item.video = getImageUrl(item.video, `${awsBucket.meditationDirectory}/video`);
+            if (item.category) item.category = item.category.title
+            if (item && typeof item.publish === 'boolean') {
+                item.publish = item.publish ? 'Publish' : 'Pending';
+            }
+        }))
+        return result
     } catch (e: any) {
         throw new Error(e)
     }
@@ -76,5 +94,6 @@ export default {
     updateMeditation,
     getOneMeditationByFilter,
     getAllMeditations,
-    deleteMeditation
+    deleteMeditation,
+    getAllMeditationsForExport
 }

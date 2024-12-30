@@ -11,7 +11,7 @@ const meditationCategoryControllerResponse = responseMessage.meditationCategoryC
 const getAllMeditations = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query;
-        let meditationSearchFilter: any = { status: 'Active' };
+        let meditationSearchFilter: any = { status: 'Active', publish: true };
 
         // Apply filters based on query parameters
         if (params.category) {

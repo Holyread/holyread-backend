@@ -53,6 +53,7 @@ export const MeditationSchema = new Schema({
     description: { type: String },
     status: { type: String, default: 'Active' },
     publish : { type: Boolean, default: false },
+    publishedAt: { type: Date },
     createdAt: {
         type: Date, default: () => {
             return new Date()

@@ -195,3 +195,14 @@ export const scheduleFreemiumUserRandomSummaryNotification = {
       },
       JOBRESTRICTENV: ['local', 'development', 'production'], // 'local','development','production'
 };
+
+export const publishMeditation = {
+      SCHEDULE: {
+          Minutes: '0',
+          Hours: '0', // Midnight (12AM)
+          DayOfMonth: '*',
+          Months: '*',
+          DayOfWeek: '2,5',
+      },
+      JOBRESTRICTENV: ['local'], // 'local','development','production'
+};

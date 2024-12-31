@@ -25,12 +25,12 @@ const addMeditation = async (req: Request, res: Response, next: NextFunction) =>
         const meditation = await meditationService.getOneMeditationByFilter({ title: req.body.title })
         if (meditation) return next(Boom.badData(meditationControllerResponse.createMeditationFailure))
         if (body.image) {
-            const s3File: any = await uploadFileToS3(body.image, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory})
+            const s3File: any = await uploadFileToS3(body.image, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory })
             body.image = s3File.name
         }
 
-        if(body.video) {
-            const s3File: any = await uploadFileToS3(body.video, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video'})
+        if (body.video) {
+            const s3File: any = await uploadFileToS3(body.video, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/video' })
             body.video = s3File.name
         }
 
@@ -86,6 +86,15 @@ const getAllMeditations = async (request: Request, response: Response, next: Nex
                     { title: await getSearchRegexp(params.search) },
                     { status: await getSearchRegexp(params.search) },
                 ],
+            }
+        }
+
+        if (params.meditationStatusFilter) {
+            if (params.meditationStatusFilter === 'publish') {
+                searchFilter.publish = true;
+            }
+            else if (params.meditationStatusFilter === 'pending') {
+                searchFilter.publish = false;
             }
         }
 

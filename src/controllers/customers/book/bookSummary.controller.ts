@@ -136,7 +136,7 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
 
             /** Filter current days new view books */
             const todayViews: any = []; let isExist = false;
-            const todayFreeNotificationBook: any = []; let isFreeNotificationBookExist = false
+            // const todayFreeNotificationBook: any = []; let isFreeNotificationBookExist = false
             const library: any = await userService.getUserLibrary({ _id: req.user.libraries })
             library?.view.map(i => {
                 const createdAt = new Date(i.createdAt).getTime();
@@ -149,17 +149,17 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             })
 
             /** Filter current days notification book view */
-            library?.freeNotificationBooks.map(i => {
-                const createdAt = new Date(i.createdAt).getTime();
-                if (createdAt >= start.getTime()) {
-                    todayFreeNotificationBook.push(i)
-                }
-                todayFreeNotificationBook.map( i1 => {
-                    if (String(i1.bookId) === String(data._id)) {
-                        isFreeNotificationBookExist = true
-                    }
-                })
-            })
+            // library?.freeNotificationBooks.map(i => {
+            //     const createdAt = new Date(i.createdAt).getTime();
+            //     if (createdAt >= start.getTime()) {
+            //         todayFreeNotificationBook.push(i)
+            //     }
+            //     todayFreeNotificationBook.map( i1 => {
+            //         if (String(i1.bookId) === String(data._id)) {
+            //             isFreeNotificationBookExist = true
+            //         }
+            //     })
+            // })
 
             const categoryIds = library.categories.map(id => id.toString()) || [];
 
@@ -181,23 +181,27 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                 return next(Boom.forbidden(bookSummaryControllerResponse.noMatchCategories))
             }
 
-            // If the free summary does not exist, today's views are 2 or more, the user has no free notification books, and the free summary doesn't exist
-            if (library?.freeNotificationBooks.length === 0) {
-                // If freeNotificationBooks.length is 0, check the other conditions
-                if (todayViews.length >= 2 && !isExist && freeSummary === null) {
-                    return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
-                }
+            if (!isExist && todayViews.length >= 1 && !freeSummary) {
+                return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
             }
 
+            // If the free summary does not exist, today's views are 2 or more, the user has no free notification books, and the free summary doesn't exist
+            // if (library?.freeNotificationBooks.length === 0) {
+            //     // If freeNotificationBooks.length is 0, check the other conditions
+            //     if (todayViews.length >= 2 && !isExist && freeSummary === null) {
+            //         return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
+            //     }
+            // }
+
             // If the free summary does not exist, today's views are 1 or more, the free notification book does not exist, and the free summary doesn't exist
-            if (library?.freeNotificationBooks.length > 0) {
-                if (!isExist
-                    && todayViews.length >= 1
-                    && !isFreeNotificationBookExist
-                ) {
-                    return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
-                }
-            }
+            // if (library?.freeNotificationBooks.length > 0) {
+            //     if (!isExist
+            //         && todayViews.length >= 1
+            //         && !isFreeNotificationBookExist
+            //     ) {
+            //         return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
+            //     }
+            // }
         }
         if (data.coverImage) {
             data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage

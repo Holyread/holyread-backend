@@ -1,10 +1,10 @@
 import { CronJob } from 'cron';
 import config from '../../config';
-import { setStripeCouponAndStatus } from '../constants/cron.constants'
 import stripeSubscriptionServices from '../services/stripe/subscription'
 
-import { UserModel } from '../models';
+import { CronScheduleModel, UserModel } from '../models';
 import userService from '../services/customers/users/user.service';
+import { cronDirectory } from '../constants/app.constant';
 
 /**
  * Start the coupon add job.
@@ -49,12 +49,19 @@ const start = async () => {
   }
 };
 
-((cronConfig, config) => {
-  if (cronConfig.JOBRESTRICTENV.indexOf(config.NODE_ENV) > -1) {
+
+(async (config) => {
+  const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.SETSTRIPECOUPONANDSTATUS }).lean().exec();
+
+  if (!cronSchedule) {
+    console.log('Job not found');
+    return;
+  }
+  if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
     console.log(`JOB(🟡) coupon add not initiated due to ${config.NODE_ENV} Environment`);
     return;
   }
-  const schedule = Object.values(setStripeCouponAndStatus.SCHEDULE).join(' ');
+  const schedule = Object.values(cronSchedule.schedule).join(' ');
   new CronJob(schedule, () => { start() }, undefined, true);
   console.log('JOB(🟢) coupon add initiated successfully!');
-})(setStripeCouponAndStatus, config);
+})(config);

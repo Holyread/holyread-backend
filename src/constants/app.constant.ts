@@ -119,3 +119,24 @@ export const fireStoreConfig = {
 export const trailDays = 10
 
 export const BATCH_SIZE = 500;
+
+export const cronDirectory = {
+    HIGHLIGHTANDQUOTEFEATURENOTIFICATION: 'highlightAndQuoteFeatureNotification',
+    KINDLESETUPNOTIFICATION: 'kindleSetUpNotification',
+    SYNCPROFITS: 'syncProfits',
+    UNFINISHEDBOOKNOTIFICATION: 'unfinishedBookNotification',
+    SETSTRIPECOUPONANDSTATUS: 'setStripeCouponAndStatus',
+    RENEWALREMINDERNOTIFICATION: 'renewalReminderNotification',
+    DAILYDEVOTIONALNOTIFICATION: 'dailyDevotionalNotification',
+    CONTENTUPDATENOTIFICATION: 'contentUpdateNotification',
+    PUBLISHCONTENT: 'publishContent',
+    ENGAGEMENTMOTIVATIONNOTIFICATION: 'engagementMotivationNotification',
+    SCHEDULEPERSONALIZENOTIFICATION: 'schedulePersonalizeNotification',
+    PUBLISHSMALLGROUP: 'publishSmallGroup',
+    PUBLISHCURATEDLIST: 'publishCuratedList',
+    DAILYDEVOTIONALCATEGORIESNOTIFICATION: 'dailyDevotionalCategoriesNotification',
+    PUBLISHDAILYDEVOTIONAL: 'publishDailyDevotional',
+    CHECKUNINSTALLEDUSER: 'checkUninstalledUser',
+    SCHEDULEFREEMIUMUSERRANDOMSUMMARYNOTIFICATION: 'scheduleFreemiumUserRandomSummaryNotification',
+    PUBLISHMEDITATION: 'publishMeditation',
+}

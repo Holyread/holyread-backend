@@ -67,9 +67,9 @@ const getAllCronSchedule = async (request: Request, response: Response, next: Ne
 
         const sortingColumn = params.column as string;
         const sortingOrder = params.order || 'asc';
-        const cronScheduleSorting = ['jobName', 'createdAt'].includes(sortingColumn)
+        const cronScheduleSorting = ['jobName', 'description', 'createdAt'].includes(sortingColumn)
             ? [[sortingColumn, sortingOrder]]
-            : [['title', 'desc']];
+            : [['createdAt', 'desc']];
 
         const getAllCmsList = await cronScheduleService.getAllCronSchedule(Number(skip), Number(limit), searchFilter, cronScheduleSorting)
         response.status(200).json({ message: cronScheduleControllerResponse.fetchAllCronScheduleSuccess, data: getAllCmsList })

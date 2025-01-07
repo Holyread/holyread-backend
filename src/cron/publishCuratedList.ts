@@ -1,7 +1,7 @@
 import { CronJob } from 'cron';
 import config from '../../config';
-import { publishCuratedList } from '../constants/cron.constants';
-import { ExpertCuratedModel, CronLogModel } from '../models';
+import { ExpertCuratedModel, CronLogModel, CronScheduleModel } from '../models';
+import { cronDirectory } from '../constants/app.constant';
 
 const startPublishContentJob = async () => {
     try {
@@ -39,12 +39,18 @@ const startPublishContentJob = async () => {
     }
 };
 
-((cronConfig, config) => {
-    if (cronConfig.JOBRESTRICTENV.indexOf(config.NODE_ENV) > -1) {
+(async (config) => {
+    const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.PUBLISHCURATEDLIST }).lean().exec();
+
+    if (!cronSchedule) {
+        console.log('Job not found');
+        return;
+    }
+    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
         console.log(`JOB(🟡) publish curated not initiated due to ${config.NODE_ENV} Environment`);
         return;
     }
-    const schedule = Object.values(publishCuratedList.SCHEDULE).join(' ');
+    const schedule = Object.values(cronSchedule.schedule).join(' ');
     new CronJob(schedule, () => { startPublishContentJob() }, undefined, true);
     console.log('JOB(🟢) publish curated initiated successfully!');
-})(publishCuratedList, config);
+})(config);

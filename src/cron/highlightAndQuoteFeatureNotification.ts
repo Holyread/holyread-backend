@@ -1,8 +1,8 @@
 import { CronJob } from 'cron';
 import config from '../../config';
-import { highlightAndQuoteFeatureNotification } from '../constants/cron.constants'
-import { UserModel, CronLogModel, NotificationsModel, HighLightsModel } from '../models';
+import { UserModel, CronLogModel, NotificationsModel, HighLightsModel, CronScheduleModel } from '../models';
 import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
+import { cronDirectory } from '../constants/app.constant';
 
 const start = async () => {
     try {
@@ -88,13 +88,18 @@ const start = async () => {
         await cronLog.save();
     }
 };
+(async (config) => {
+    const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.HIGHLIGHTANDQUOTEFEATURENOTIFICATION }).lean().exec();
 
-((cronConfig, config) => {
-    if (cronConfig.JOBRESTRICTENV.indexOf(config.NODE_ENV) > -1) {
-        console.log(`JOB(🟡) highlight and quote feature not initiated due to ${config.NODE_ENV} Environment`);
+    if (!cronSchedule) {
+        console.log('Job not found');
         return;
     }
-    const schedule = Object.values(highlightAndQuoteFeatureNotification.SCHEDULE).join(' ');
+    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
+        console.log(`JOB(🟡) schedule highlight and quote feature notification not initiated due to ${config.NODE_ENV} Environment`);
+        return;
+    }
+    const schedule = Object.values(cronSchedule.schedule).join(' ');
     new CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) highlight and quote feature initiated successfully!');
-})(highlightAndQuoteFeatureNotification, config);
+})(config);

@@ -121,16 +121,15 @@ export const trailDays = 10
 export const BATCH_SIZE = 500;
 
 export const cronDirectory = {
+    CONTENTUPDATENOTIFICATION: 'contentUpdateNotification',
+    DAILYDEVOTIONALNOTIFICATION: 'dailyDevotionalNotification',
+    RENEWALREMINDERNOTIFICATION: 'renewalReminderNotification',
+    SYNCPROFITS: 'syncProfits',
+    SETSTRIPECOUPONANDSTATUS: 'setStripeCouponAndStatus',
+    ENGAGEMENTMOTIVATIONNOTIFICATION: 'engagementMotivationNotification',
+    UNFINISHEDBOOKNOTIFICATION: 'unfinishedBookNotification',
     HIGHLIGHTANDQUOTEFEATURENOTIFICATION: 'highlightAndQuoteFeatureNotification',
     KINDLESETUPNOTIFICATION: 'kindleSetUpNotification',
-    SYNCPROFITS: 'syncProfits',
-    UNFINISHEDBOOKNOTIFICATION: 'unfinishedBookNotification',
-    SETSTRIPECOUPONANDSTATUS: 'setStripeCouponAndStatus',
-    RENEWALREMINDERNOTIFICATION: 'renewalReminderNotification',
-    DAILYDEVOTIONALNOTIFICATION: 'dailyDevotionalNotification',
-    CONTENTUPDATENOTIFICATION: 'contentUpdateNotification',
-    PUBLISHCONTENT: 'publishContent',
-    ENGAGEMENTMOTIVATIONNOTIFICATION: 'engagementMotivationNotification',
     SCHEDULEPERSONALIZENOTIFICATION: 'schedulePersonalizeNotification',
     PUBLISHSMALLGROUP: 'publishSmallGroup',
     PUBLISHCURATEDLIST: 'publishCuratedList',
@@ -139,4 +138,5 @@ export const cronDirectory = {
     CHECKUNINSTALLEDUSER: 'checkUninstalledUser',
     SCHEDULEFREEMIUMUSERRANDOMSUMMARYNOTIFICATION: 'scheduleFreemiumUserRandomSummaryNotification',
     PUBLISHMEDITATION: 'publishMeditation',
+    PUBLISHCONTENT: 'publishContent',
 }

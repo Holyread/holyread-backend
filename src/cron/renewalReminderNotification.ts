@@ -1,8 +1,7 @@
 import { CronJob } from 'cron';
 import { fetchNotifications } from '../controllers/customers/notification.controller';
 import { pushNotification, compileHtml, sentEmail } from '../lib/utils/utils';
-import { emailTemplatesTitles, originEmails, origins } from '../constants/app.constant';
-import { renewalReminderNotification } from '../constants/cron.constants';
+import { cronDirectory, emailTemplatesTitles, originEmails, origins } from '../constants/app.constant';
 import { UserModel } from '../models/user.model';
 import { io } from '../app';
 
@@ -10,6 +9,7 @@ import notificationsService from '../services/customers/notifications/notificati
 import emailTemplateService from '../services/admin/emailTemplate/emailTemplate.service';
 import stripeSubscriptionServices from '../services/stripe/subscription'
 import config from '../../config';
+import { CronScheduleModel } from '../models';
 
 /** Send and push notification */
 const sentNotification: any = async (title: string, description: string, user: any) => {
@@ -191,12 +191,18 @@ const start = async () => {
       }
 };
 
-((cronConfig, config) => {
-      if (cronConfig.JOBRESTRICTENV.indexOf(config.NODE_ENV) > -1) {
+(async (config) => {
+      const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.RENEWALREMINDERNOTIFICATION }).lean().exec();
+
+      if (!cronSchedule) {
+            console.log('Job not found');
+            return;
+      }
+      if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
             console.log(`JOB(🟡) Renewal Reminder not initiated due to ${config.NODE_ENV} Environment`);
             return;
       }
-      const schedule = Object.values(renewalReminderNotification.SCHEDULE).join(' ');
+      const schedule = Object.values(cronSchedule.schedule).join(' ');
       new CronJob(schedule, () => { start() }, null, true);
       console.log('JOB(🟢) Renewal Reminder initiated successfully!');
-})(renewalReminderNotification, config);
+})(config);

@@ -299,4 +299,13 @@ export const responseMessage = {
         createAppVersionFailure: 'AppVersion already added',
         getAppVersionFailure: 'Failed to fetch appVersion details',
     },
+    cronScheduleControllerResponse: {
+        createCronScheduleSuccess: 'Cron Schedule added successfully',
+        updateCronScheduleSuccess: 'Cron Schedule updated successfully',
+        deleteCronScheduleSuccess: 'Cron Schedule deleted successfully',
+        fetchCronScheduleSuccess: 'Cron Schedule details fetched successfully',
+        fetchAllCronScheduleSuccess: 'All cron schedule list fetched successfully',
+        createCronScheduleFailure: 'Cron Schedule already added',
+        getCronScheduleFailure: 'Failed to fetch cron schedule details',
+    },
 }

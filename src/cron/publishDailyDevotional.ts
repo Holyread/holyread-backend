@@ -1,8 +1,8 @@
 import { CronJob } from 'cron';
 import config from '../../config';
-import { publishDailyDevotional } from '../constants/cron.constants';
-import { DailyDvotionalModel, CronLogModel } from '../models';
+import { DailyDvotionalModel, CronLogModel, CronScheduleModel } from '../models';
 import { devotionalCategoriesList } from '../lib/utils/utils';
+import { cronDirectory } from '../constants/app.constant';
 
 const startPublishContentJob = async () => {
     try {
@@ -67,12 +67,18 @@ const startPublishContentJob = async () => {
     }
 };
 
-((cronConfig, config) => {
-    if (cronConfig.JOBRESTRICTENV.indexOf(config.NODE_ENV) > -1) {
+(async (config) => {
+    const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.PUBLISHDAILYDEVOTIONAL }).lean().exec();
+
+    if (!cronSchedule) {
+        console.log('Job not found');
+        return;
+    }
+    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
         console.log(`JOB(🟡) publish devotional not initiated due to ${config.NODE_ENV} Environment`);
         return;
     }
-    const schedule = Object.values(publishDailyDevotional.SCHEDULE).join(' ');
+    const schedule = Object.values(cronSchedule.schedule).join(' ');
     new CronJob(schedule, () => { startPublishContentJob() }, undefined, true);
     console.log('JOB(🟢) publish devotional initiated successfully!');
-})(publishDailyDevotional, config);
+})(config);

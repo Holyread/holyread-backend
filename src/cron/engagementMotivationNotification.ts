@@ -1,9 +1,8 @@
 import { CronJob } from 'cron';
 import config from '../../config';
-import { engagementMotivationNotification } from '../constants/cron.constants';
-import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
+import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
 import { pushNotification, calculateDateInThePast } from '../lib/utils/utils';
-import { awsBucket } from '../constants/app.constant';
+import { awsBucket, cronDirectory } from '../constants/app.constant';
 
 const startEngagementMotivationJob = async () => {
     try {
@@ -144,12 +143,19 @@ const startEngagementMotivationJob = async () => {
     }
 };
 
-((cronConfig, config) => {
-    if (cronConfig.JOBRESTRICTENV.indexOf(config.NODE_ENV) > -1) {
+(async (config) => {
+    const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.ENGAGEMENTMOTIVATIONNOTIFICATION }).lean().exec();
+
+    if (!cronSchedule) {
+        console.log('Job not found');
+        return;
+    }
+
+    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
         console.log(`JOB(🟡) engagement motivation not initiated due to ${config.NODE_ENV} Environment`);
         return;
     }
-    const schedule = Object.values(engagementMotivationNotification.SCHEDULE).join(' ');
+    const schedule = Object.values(cronSchedule.schedule).join(' ');
     new CronJob(schedule, () => { startEngagementMotivationJob() }, null, true);
     console.log('JOB(🟢) engagement motivation initiated successfully!');
-})(engagementMotivationNotification, config);
+})(config);

@@ -1,8 +1,8 @@
 import { CronJob } from 'cron';
 import config from '../../config';
-import { dailyDevotionalCategoriesNotification } from '../constants/cron.constants';
-import { DailyDvotionalModel, SettingModel, UserModel, CronLogModel, NotificationsModel } from '../models';
+import { DailyDvotionalModel, SettingModel, UserModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
 import { groupByKey, pushNotification } from '../lib/utils/utils';
+import { cronDirectory } from '../constants/app.constant';
 
 const start = async () => {
     try {
@@ -154,12 +154,19 @@ const start = async () => {
     }
 };
 
-((cronConfig, config) => {
-    if (cronConfig.JOBRESTRICTENV.indexOf(config.NODE_ENV) > -1) {
+(async (config) => {
+    const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.DAILYDEVOTIONALCATEGORIESNOTIFICATION }).lean().exec();
+
+    if (!cronSchedule) {
+        console.log('Job not found');
+        return;
+    }
+
+    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
         console.log(`JOB(🟡) Daily devotional categories not initiated due to ${config.NODE_ENV} Environment`);
         return;
     }
-    const schedule = Object.values(dailyDevotionalCategoriesNotification.SCHEDULE).join(' ');
+    const schedule = Object.values(cronSchedule.schedule).join(' ');
     new CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) Daily devotional categories Started successfully!');
-})(dailyDevotionalCategoriesNotification, config);
+})(config);

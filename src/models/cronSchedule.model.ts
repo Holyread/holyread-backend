@@ -14,6 +14,7 @@ export interface ICronSchedule extends mongoose.Document {
     };
     jobRestrictEnv: string[];
     cronExpression: string;
+    status?: 'Active' | 'Deactive';
     createdAt: Date;
     updatedAt: Date;
 }
@@ -31,6 +32,7 @@ export const CronScheduleSchema = new Schema<ICronSchedule>({
     jobRestrictEnv: { type: [String], default: ['local', 'development', 'production'] },
     cronExpression: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
+    status: { type: String, default: 'Active' },
     updatedAt: { type: Date, default: Date.now },
 }, { strict: true });
 

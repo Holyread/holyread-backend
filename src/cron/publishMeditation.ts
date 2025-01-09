@@ -3,36 +3,57 @@ import config from '../../config';
 import { MeditationModel, CronLogModel, CronScheduleModel } from '../models';
 import { cronDirectory } from '../constants/app.constant';
 
-const start = async () => {
+const publishVideo = async (category: string) => {
     try {
-        console.log('JOB(🟢) meditation Started successfully!');
+        // Find unpublished content for the given category
+        const video = await MeditationModel.findOne({ publish: false, category : category })
+            .select('_id')
+            .lean()
+            .exec();
 
-        // Execution Log
-        const cronLog = new CronLogModel({
-            jobName: 'meditation',
-            status: 'running',
-            startedAt: new Date(),
-        });
-        await cronLog.save();
+        if (video?._id) {
+            await MeditationModel.findOneAndUpdate(
+                { _id: video._id },
+                { publish: true, publishedAt: new Date() }
+            );
+            console.log(`Successfully published a video for category: ${category}`);
+        } else {
+            console.log(`No unpublished videos found for category: ${category}`);
+        }
+    } catch (error: any) {
+        console.error(`Error publishing video for category: ${category} -`, error.message);
+        throw error;
+    }
+};
 
-        // Find unpublish small group content
-        const meditationList = await MeditationModel.find({ publish: false }).select('_id').lean().exec();
-        if (meditationList.length && meditationList[0]?._id) {
-            await MeditationModel.findOneAndUpdate({ _id: meditationList[0]?._id }, { publish: true, publishedAt: new Date() });
+const start = async () => {
+    const cronLog = new CronLogModel({
+        jobName: 'meditation',
+        status: 'running',
+        startedAt: new Date(),
+    });
+    try {
+        console.log('JOB(🟢) meditation started successfully!');
+
+        const today = new Date().getDay();
+        if (today === 2) {
+            // Tuesday: Publish "Sleep better with Psalms" category
+            await publishVideo('6749ece627ea13dbed4bce3b');
+        } else if (today === 5) {
+            // Friday: Publish "Prayer and Meditation" category
+            await publishVideo('6749ed0327ea13dbed4bcec9');
+        } else {
+            console.log('No scheduled category for today.');
         }
 
-        console.log('JOB(✅) meditation executed successfully!');
         cronLog.status = 'success';
-        cronLog.endedAt = new Date();
-        await cronLog.save();
+        console.log('JOB(✅) meditation executed successfully!');
     } catch (error: any) {
-        console.log('JOB(🔴) meditation execution Error is - ', error.message);
-        const cronLog = new CronLogModel({
-            jobName: 'meditation',
-            status: 'failed',
-            endedAt: new Date(),
-            message: `meditation execution Error is: ${error.message}`,
-        });
+        cronLog.status = 'failed';
+        cronLog.message = `Execution Error: ${error.message}`;
+        console.error('JOB(🔴) meditation execution error:', error.message);
+    } finally {
+        cronLog.endedAt = new Date();
         await cronLog.save();
     }
 };

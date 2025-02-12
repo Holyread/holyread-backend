@@ -463,6 +463,19 @@ export const calculateDateInThePast = (daysAgo) => {
     return dateInPast;
 };
 
+export const calculateExactDate = (daysAgo: number, type: 'start' | 'end') => {
+    const date = new Date();
+    date.setDate(date.getDate() - daysAgo);
+
+    if (type === 'start') {
+        date.setHours(0, 0, 0, 0); // Start of the day (12:00 AM)
+    } else {
+        date.setHours(23, 59, 59, 999); // End of the day (11:59:59 PM)
+    }
+
+    return date;
+};
+
 export const setHeaderBackgroundColor = async (wsHeaderCells, ws: Worksheet): Promise<void> => {
     const worksheet: Worksheet = ws;
     await Promise.all(wsHeaderCells.map(async (cell) => {

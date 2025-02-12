@@ -93,6 +93,7 @@ export const emailTemplatesTitles = {
         emailAuthEnabled: 'Customer Email Auth Enabled',
         blessFriend: 'Customer Registration Bless Friend',
         emailAuthVerification: 'Customer Email Auth Verification',
+        holyReadsMission: 'Holy Reads Mission'
     },
     admin: {
         customerRegistration: 'Admin Customer Registration',
@@ -139,4 +140,5 @@ export const cronDirectory = {
     SCHEDULEFREEMIUMUSERRANDOMSUMMARYNOTIFICATION: 'scheduleFreemiumUserRandomSummaryNotification',
     PUBLISHMEDITATION: 'publishMeditation',
     PUBLISHCONTENT: 'publishContent',
+    HOLYREADSMISSIONEMAIL: 'holyreadsmissionemail',
 }

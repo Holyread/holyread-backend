@@ -166,7 +166,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
       // Update donation status in DB
       await DonationModel.findOneAndUpdate(
         { paymentIntentId: paymentIntent.id },
-        { status: "successful" }
+        { status: "active" }
       );
     }
 

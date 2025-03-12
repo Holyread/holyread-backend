@@ -27,9 +27,10 @@ export const DonationSchema = new Schema(
   {
     userId: { type: String, required: true },
     amount: { type: Number, required: true },
-    paymentIntentId: { type: String, required: true },
+    paymentIntentId: { type: String },
     status: { type: String, default: "pending" },
     createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date },
   },
   { strict: "throw" }
 );

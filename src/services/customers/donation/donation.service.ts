@@ -10,4 +10,18 @@ const addDonation = async (body: any) => {
     }
 }
 
-export default { addDonation }
+/** Modify Donation */
+const updateDonation = async (id: any, body: any) => {
+      try {
+            const updatedDonation: any = await DonationModel.findOneAndUpdate(
+                  { _id: id },
+                  { ...body, updatedAt: new Date() },
+                  { new: true }
+            ).lean()
+            return updatedDonation
+      } catch (e: any) {
+            throw new Error(e)
+      }
+}
+
+export default { addDonation, updateDonation }

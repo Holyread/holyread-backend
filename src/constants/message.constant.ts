@@ -104,6 +104,7 @@ export const responseMessage = {
         planCreateError: 'Failed to create plan',
         planFetchError: 'Failed to fetch plan details',
         planDeleteError: 'Failed to delete plan',
+        donationSuccess: 'Donation sent successfully',
     },
     bookCategoryControllerResponse: {
         createBookCategorySuccess: 'Book category added successfully',

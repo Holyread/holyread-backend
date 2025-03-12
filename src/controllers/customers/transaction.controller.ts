@@ -35,6 +35,11 @@ const createTransaction = async (
                   return next(Boom.badRequest())
     }
 
+    if(session.metadata?.donationId){
+      const user =await DonationModel.find({ _id : session.metadata?.donationId });
+      processDonation(user, session, event)
+    }
+
     const user = await userService.getOneUserByFilter({
                   'stripe.customerId': session.customer,
             })
@@ -60,6 +65,41 @@ const createTransaction = async (
                   )
             )
   }
+}
+
+const processDonation = async (user: any, session: any, event: any) => {
+      if (event.type === 'payment_intent.succeeded') {
+            const paymentIntent = session;
+            const donationId = paymentIntent.metadata?.donationId; // Ensure metadata includes donationId
+        
+            if (donationId) {
+              await DonationModel.findOneAndUpdate(
+                { _id: donationId },
+                { status: 'active' }
+              );
+            }
+        
+          } else if (event.type === 'payment_intent.payment_failed') {
+            const paymentIntent = session;
+            const donationId = paymentIntent.metadata?.donationId;
+        
+            if (donationId) {
+              await DonationModel.findOneAndUpdate(
+                { _id: donationId },
+                { status: 'failed' }
+              );
+            }
+          } else if (event.type === 'charge.refunded') {
+            const charge = session;
+            const donationId = charge.payment_intent?.metadata?.donationId;
+        
+            if (donationId) {
+              await DonationModel.findOneAndUpdate(
+                { _id: donationId },
+                { status: 'refunded' }
+              );
+            }
+          }
 }
 
 const processTransaction = async (user: any, session: any, event: any) => {
@@ -159,41 +199,6 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         return
       }
     };
-
-    if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = session;
-      const donationId = paymentIntent.metadata?.donationId; // Ensure metadata includes donationId
-  
-      if (donationId) {
-        await DonationModel.findOneAndUpdate(
-          { _id: donationId },
-          { status: 'active' }
-        );
-      }
-  
-    } else if (event.type === 'payment_intent.payment_failed') {
-      const paymentIntent = session;
-      const donationId = paymentIntent.metadata?.donationId;
-  
-      if (donationId) {
-        await DonationModel.findOneAndUpdate(
-          { _id: donationId },
-          { status: 'failed' }
-        );
-      }
-  
-    } else if (event.type === 'charge.refunded') {
-      const charge = session;
-      const donationId = charge.payment_intent?.metadata?.donationId;
-  
-      if (donationId) {
-        await DonationModel.findOneAndUpdate(
-          { _id: donationId },
-          { status: 'refunded' }
-        );
-      }
-    }
-  
 
     // In App stripe payment succeed using holyreads payment sheet api
     // Disabled webhook, not proceed yet

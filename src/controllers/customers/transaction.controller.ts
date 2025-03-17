@@ -36,8 +36,7 @@ const createTransaction = async (
     }
 
     if(session.metadata?.donationId){
-      const user =await DonationModel.find({ _id : session.metadata?.donationId });
-      processDonation(user, session, event)
+      processDonation(session, event)
     }
 
     const user = await userService.getOneUserByFilter({
@@ -67,40 +66,28 @@ const createTransaction = async (
   }
 }
 
-const processDonation = async (user: any, session: any, event: any) => {
-      if (event.type === 'payment_intent.succeeded') {
-            const paymentIntent = session;
-            const donationId = paymentIntent.metadata?.donationId; // Ensure metadata includes donationId
-        
-            if (donationId) {
-              await DonationModel.findOneAndUpdate(
-                { _id: donationId },
-                { status: 'active' }
-              );
-            }
-        
-          } else if (event.type === 'payment_intent.payment_failed') {
-            const paymentIntent = session;
-            const donationId = paymentIntent.metadata?.donationId;
-        
-            if (donationId) {
-              await DonationModel.findOneAndUpdate(
-                { _id: donationId },
-                { status: 'failed' }
-              );
-            }
-          } else if (event.type === 'charge.refunded') {
-            const charge = session;
-            const donationId = charge.payment_intent?.metadata?.donationId;
-        
-            if (donationId) {
-              await DonationModel.findOneAndUpdate(
-                { _id: donationId },
-                { status: 'refunded' }
-              );
-            }
-          }
-}
+const processDonation = async (session: any, event: any) => {
+      const donationId = session.metadata?.donationId;
+      if (!donationId) return;
+  
+      let status = '';
+  
+      switch (event.type) {
+          case 'invoice.payment_succeeded':
+              status = 'active';
+              break;
+          case 'payment_intent.payment_failed':
+              status = 'failed';
+              break;
+          case 'charge.refunded':
+              status = 'refunded';
+              break;
+          default:
+              return;
+      }
+  
+      await DonationModel.findOneAndUpdate({ _id: donationId }, { status });
+};
 
 const processTransaction = async (user: any, session: any, event: any) => {
   try {

@@ -34,7 +34,7 @@ const createDonation = async (
       automatic_payment_methods: {
         enabled: true,
       },
-      metadata: { donationId: donation._id.toString() },
+      metadata: { donationId: String(donation._id) },
     });
 
     await donationService.updateDonation(

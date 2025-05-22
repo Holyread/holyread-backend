@@ -1161,7 +1161,35 @@ const sendVerificationEmail = async (req: Request, res: Response, next: NextFunc
   }
 }
 
+const skipSignup = async(req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {deviceId} = req.body
+
+    if(!deviceId) return next(Boom.unauthorized('Please provide deviceId'))
+
+    let user = await userService.getOneUserByFilter({deviceId, isSignedUp: false})
+    if(!user) {
+      user = await usersService.createUser({
+        deviceId,
+        email: deviceId + '@holyreads-temp.com',
+        type: 'User',
+        status: 'Active',
+        verified: false,
+        isSignedUp: false,
+        device: req.headers['user-agent'] || 'unknown',
+      })
+    }
+    const token: string = getToken({ id: user._id , email: user.email})
+    res.status(200).json({
+      message: authControllerResponse.loginSuccess,
+      data: { _id: user._id, token},
+    })
+  } catch (e:any) {
+    next(Boom.badData(e.message))
+  }
+}
 export default {
+  skipSignup,
   signInUser,
   signUpUser,
   oAuthLogin,

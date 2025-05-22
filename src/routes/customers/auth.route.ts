@@ -15,5 +15,6 @@ router.post('/oauth-signup/app', authController.appOAuthSignUp)
 router.post('/forgot-password', authController.forgotPassoword)
 router.post('/oauth-login', customerLogin, authController.oAuthLogin)
 router.post('/oauth-signin/app', customerLogin, authController.appOAuthSignIn)
+router.post('/skip-signup', authController.skipSignup)
 
 export default router

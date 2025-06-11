@@ -60,8 +60,8 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
         if (!data) {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
-        // let isPlanActive = false
-        // let isPlanExpired = false
+        let isPlanActive = false
+        let isPlanExpired = false
         // if (
         //     req.user.inAppSubscription &&
         //     [
@@ -74,9 +74,9 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
         //     )
         // ) {
         //     isPlanActive = true
-            // todo: count duration with createdAt
-            // if duration already ended
-            // then mark plan as inactive
+        //     todo: count duration with createdAt
+        //     if duration already ended
+        //     then mark plan as inactive
         // } else if (
         //     req.user.inAppSubscription &&
         //     ![
@@ -103,106 +103,106 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
         //         next(Boom.badData(e.message))
         //     }
         // }
-        /*if (
-            !req.user.inAppSubscription &&
-            !req.user?.stripe?.subscriptionId &&
-            new Date(
-                req.user.createdAt
-            )
-            .getTime()
-            <
-            new Date()
-                .setDate(
-                    new Date().getDate() - trailDays
-                )
-        ) {
-            isPlanExpired = true;
-        }*/
+        // if (
+        //     !req.user.inAppSubscription &&
+        //     !req.user?.stripe?.subscriptionId &&
+        //     new Date(
+        //         req.user.createdAt
+        //     )
+        //     .getTime()
+        //     <
+        //     new Date()
+        //         .setDate(
+        //             new Date().getDate() - trailDays
+        //         )
+        // ) {
+        //     isPlanExpired = true;
+        // }
 
-        /*if (isPlanExpired) {
-            return next(
-                Boom.forbidden(
-                    bookSummaryControllerResponse.planExpiredError
-                )
-            )
-        }*/
+        // if (isPlanExpired) {
+        //     return next(
+        //         Boom.forbidden(
+        //             bookSummaryControllerResponse.planExpiredError
+        //         )
+        //     )
+        // }
 
-        // if (!isPlanActive || isPlanExpired) {
-        //     /** Set today start and end */
-        //     const start = new Date();
-        //     start.setHours(0, 0, 0, 0);
-        //     const end = new Date();
-        //     end.setHours(23, 59, 59, 999);
+        if (!isPlanActive || isPlanExpired) {
+            /** Set today start and end */
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            const end = new Date();
+            end.setHours(23, 59, 59, 999);
 
-        //     /** Filter current days new view books */
-        //     const todayViews: any = []; let isExist = false;
-        //     // const todayFreeNotificationBook: any = []; let isFreeNotificationBookExist = false
-        //     const library: any = await userService.getUserLibrary({ _id: req.user.libraries })
-        //     library?.view.map(i => {
-        //         const createdAt = new Date(i.createdAt).getTime();
-        //         if (createdAt >= start.getTime()) {
-        //             todayViews.push(i)
-        //         }
-        //         if (String(i.bookId) === String(data._id)) {
-        //             isExist = true
-        //         }
-        //     })
+            /** Filter current days new view books */
+            const todayViews: any = []; let isExist = false;
+            const todayFreeNotificationBook: any = []; let isFreeNotificationBookExist = false
+            const library: any = await userService.getUserLibrary({ _id: req.user.libraries })
+            library?.view.map(i => {
+                const createdAt = new Date(i.createdAt).getTime();
+                if (createdAt >= start.getTime()) {
+                    todayViews.push(i)
+                }
+                if (String(i.bookId) === String(data._id)) {
+                    isExist = true
+                }
+            })
 
             /** Filter current days notification book view */
-            // library?.freeNotificationBooks.map(i => {
-            //     const createdAt = new Date(i.createdAt).getTime();
-            //     if (createdAt >= start.getTime()) {
-            //         todayFreeNotificationBook.push(i)
-            //     }
-            //     todayFreeNotificationBook.map( i1 => {
-            //         if (String(i1.bookId) === String(data._id)) {
-            //             isFreeNotificationBookExist = true
-            //         }
-            //     })
-            // })
+            library?.freeNotificationBooks.map(i => {
+                const createdAt = new Date(i.createdAt).getTime();
+                if (createdAt >= start.getTime()) {
+                    todayFreeNotificationBook.push(i)
+                }
+                todayFreeNotificationBook.map( i1 => {
+                    if (String(i1.bookId) === String(data._id)) {
+                        isFreeNotificationBookExist = true
+                    }
+                })
+            })
 
-            // const categoryIds = library.categories.map(id => id.toString()) || [];
+            const categoryIds = library.categories.map(id => id.toString()) || [];
 
             // // Filter categories to find any matches between user library categories and data categories
-            // const matchingCategories = categoryIds.filter(categoryId =>
-            //     data.categories.map(id => id.toString()).includes(categoryId)
-            // );
+            const matchingCategories = categoryIds.filter(categoryId =>
+                data.categories.map(id => id.toString()).includes(categoryId)
+            );
 
             // // Fetch the user's library based on the library ID and the freeSummary ID from request parameters
-            // const freeSummary = await userService.getUserLibrary({ _id: library?._id, freeSummary: req.params.id })
-
+            const freeSummary = await userService.getUserLibrary({ _id: library?._id, freeSummary: req.params.id })
+            
             // // Check if the user has already used the free summary, is not signed up, and the free summary doesn't exist
-            // if (req.user.hasUsedFreeSummary && !req.user.isSignedUp && !freeSummary) {
-            //     return next(Boom.forbidden(bookSummaryControllerResponse.preSignedUpUserSummaryLimitError))
-            // }
+            if (req.user.hasUsedFreeSummary && !req.user.isSignedUp && !freeSummary && todayViews >=2) {
+                return next(Boom.forbidden(bookSummaryControllerResponse.preSignedUpUserSummaryLimitError))
+            }
 
             // // If no matching categories are found, the user has used the free summary, and the free summary doesn't exist
-            // if (matchingCategories.length === 0 && req.user.hasUsedFreeSummary && !freeSummary) {
-            //     return next(Boom.forbidden(bookSummaryControllerResponse.noMatchCategories))
-            // }
+            if (matchingCategories.length === 0 && req.user.hasUsedFreeSummary && !freeSummary) {
+                return next(Boom.forbidden(bookSummaryControllerResponse.noMatchCategories))
+            }
 
-            // if (!isExist && todayViews.length >= 1 && !freeSummary) {
-            //     return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
-            // }
+            if (!isExist && todayViews.length >=3 && !freeSummary) {
+                return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
+            }
 
-            // If the free summary does not exist, today's views are 2 or more, the user has no free notification books, and the free summary doesn't exist
-            // if (library?.freeNotificationBooks.length === 0) {
-            //     // If freeNotificationBooks.length is 0, check the other conditions
-            //     if (todayViews.length >= 2 && !isExist && freeSummary === null) {
-            //         return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
-            //     }
-            // }
+            // If the free summary does not exist, today's views are 4 or more, the user has no free notification books, and the free summary doesn't exist
+            if (library?.freeNotificationBooks.length === 0) {
+                // If freeNotificationBooks.length is 0, check the other conditions
+                if (todayViews.length >= 4 && !isExist && freeSummary === null) {
+                    return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
+                }
+            }
 
             // If the free summary does not exist, today's views are 1 or more, the free notification book does not exist, and the free summary doesn't exist
-            // if (library?.freeNotificationBooks.length > 0) {
-            //     if (!isExist
-            //         && todayViews.length >= 1
-            //         && !isFreeNotificationBookExist
-            //     ) {
-            //         return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
-            //     }
-            // }
-        // }
+            if (library?.freeNotificationBooks.length > 0) {
+                if (!isExist
+                    && todayViews.length >= 1
+                    && !isFreeNotificationBookExist
+                ) {
+                    return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
+                }
+            }
+        }
         if (data.coverImage) {
             data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage
         }

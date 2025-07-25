@@ -101,6 +101,7 @@ export const emailTemplatesTitles = {
         forgotPassword: 'Forgot Password',
         customerInquiry: 'Customer Inquiry',
         customerFeedback: 'Customer Feedback',
+        contentPipelineReminder: 'Holy Reads Content Pipeline',
     },
 }
 
@@ -141,4 +142,5 @@ export const cronDirectory = {
     PUBLISHMEDITATION: 'publishMeditation',
     PUBLISHCONTENT: 'publishContent',
     HOLYREADSMISSIONEMAIL: 'holyreadsmissionemail',
+    LOWCONTENTPIPELINEALERT: 'lowContentPipelineAlert',
 }

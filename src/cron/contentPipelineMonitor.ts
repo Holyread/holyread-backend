@@ -12,7 +12,7 @@ import emailTemplateService from "../services/admin/emailTemplate/emailTemplate.
 import { CronJob } from 'cron';
 import config from '../../config';
 
-const checkContentPipelineAndAlertJob = async () => {
+const contentPipelineMonitor = async () => {
   console.log('JOB(🟢) checking for low content pipeline started successfully!');
 
   const cronLog = new CronLogModel({
@@ -149,7 +149,7 @@ const checkContentPipelineAndAlertJob = async () => {
   const schedule = Object.values(cronSchedule.schedule).join(' ');
 
   new CronJob(schedule, () => {
-    checkContentPipelineAndAlertJob();
+    contentPipelineMonitor();
   }, undefined, true);
 
   console.log('JOB(🟢) Low content pipeline cron initiated successfully!');

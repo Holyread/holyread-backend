@@ -33,6 +33,7 @@ import meditationCategory from './admin/meditationCategory.route'
 
 import appVersion from './admin/appVersion.route'
 import cronSchedule from './admin/cronSchedule.route'
+import alertPipeline from './admin/alerts.route'
 
 const router: Router = express.Router()
 
@@ -77,5 +78,6 @@ router.use('/meditation-category', adminPassport, meditationCategory)
 router.use('/app-version', adminPassport, appVersion)
 
 router.use('/cron-schedule', adminPassport, cronSchedule)
+router.use('/alerts', adminPassport, alertPipeline)
 
 export default router

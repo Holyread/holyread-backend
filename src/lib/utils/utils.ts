@@ -246,6 +246,7 @@ export const compileHtml = async (source: string, data: any) => {
         const result = template(data);
         return result
     } catch (e) {
+        console.error('Handlebars compile error:', e);
         return null
     }
 }

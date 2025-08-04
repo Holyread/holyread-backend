@@ -15,7 +15,7 @@ const getUserNotifications = async (query: FilterQuery<INotifications>) => {
 /** Delete notifications */
 const deleteNotifications = async (query: FilterQuery<INotifications>) => {
     try {
-        await NotificationsModel.deleteMany(query, { new: true })
+        await NotificationsModel.deleteMany(query)
         return true
     } catch (e: any) {
         throw new Error(e)

@@ -42,6 +42,8 @@ import { MeditationModel } from './meditation.model'
 import { SubscriberModel } from './subscriber.model'
 import { AppVersionModel } from './appVersion.model'
 import { CronScheduleModel } from './cronSchedule.model'
+import { DonationModel } from './donation.model'
+import { AlertsModel } from './alerts.model'
 
 const NODE_ENV = config.NODE_ENV
 
@@ -96,4 +98,6 @@ export {
   SubscriberModel,
   AppVersionModel,
   CronScheduleModel,
+  DonationModel,
+  AlertsModel
 }

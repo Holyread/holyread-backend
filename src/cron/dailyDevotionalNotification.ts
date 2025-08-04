@@ -40,16 +40,16 @@ const start = async () => {
                   'pushTokens.0': { '$exists': true },
                   'notification.dailyDevotional': true,
                   'notification.push': true,
-                  $or: [
-                        {
-                              'inAppSubscription': { $exists: true },
-                              'inAppSubscriptionStatus': 'Active',
-                        },
-                        {
-                              'stripe': { $exists: true },
-                              'stripe.status': 'active',
-                        },
-                  ],
+                  // $or: [
+                  //       {
+                  //             'inAppSubscription': { $exists: true },
+                  //             'inAppSubscriptionStatus': 'Active',
+                  //       },
+                  //       {
+                  //             'stripe': { $exists: true },
+                  //             'stripe.status': 'active',
+                  //       },
+                  // ],
             }).select('timeZone pushTokens libraries').populate('libraries').lean().exec()
 
             const usersWithOutSubscribeCategories = users.filter(user =>

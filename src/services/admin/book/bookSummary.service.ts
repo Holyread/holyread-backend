@@ -33,7 +33,7 @@ const createBookSummary = async (body: any) => {
 /** Modify book summary */
 const updateBookSummary = async (body: any, id: string) => {
     try {
-        const data: any = await BookSummaryModel.updateOne(
+        const data: any = await BookSummaryModel.findOneAndUpdate(
             { _id: id },
             { ...body, updatedAt: new Date() },
             { new: true }

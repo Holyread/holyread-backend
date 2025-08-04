@@ -21,7 +21,7 @@ const createExpertCurated = async (body: any) => {
 /** Modify Expert Curated */
 const updateExpertCurated = async (body: any, id: string) => {
     try {
-        const data: any = await ExpertCuratedModel.updateOne(
+        const data: any = await ExpertCuratedModel.findByIdAndUpdate(
             { _id: id },
             { ...body, updatedAt: new Date() },
             { new: true }

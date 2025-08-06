@@ -74,6 +74,7 @@ import notificationsService
 import mailchimpService from '../../services/mailchimp'
 import dailyDevotionalService from '../../services/customers/dailyDevotional/dailyDevotional.service';
 import subscriptionsService from '../../services/customers/subscriptions/subscriptions.service';
+import { UserModel } from '../../models';
 
 const NODE_ENV = config.NODE_ENV
 
@@ -2414,7 +2415,12 @@ const subscribePlan = async (
                         subscriptionEndDate = new Date(
                               subscription.current_period_end * 1000
                         )
-                        body['stripe.coupon'] = req.body.coupon
+                        body = {
+                        ...body,
+                        'stripe.coupon': req.body.coupon,
+                        'stripe.cancelAtPeriodEnd': subscription.cancel_at_period_end,
+                        'stripe.expiredAt': new Date(subscription.current_period_end * 1000),
+                  };
                   } else {
                         const retrieveSubscription = await stripeSubscriptionService
                               .retrieveSubscription(
@@ -2460,6 +2466,12 @@ const subscribePlan = async (
                         subscriptionEndDate = new Date(
                               subscription.current_period_end * 1000
                         )
+
+                         body = {
+                        ...body,
+                        'stripe.cancelAtPeriodEnd': subscription.cancel_at_period_end,
+                        'stripe.expiredAt': new Date(subscription.current_period_end * 1000),
+                        };
                   }
                   if (subscription.status === 'trialing') {
                         const now = new Date(subscriptionEndDate)
@@ -2483,11 +2495,12 @@ const subscribePlan = async (
                   }
                   /** add stripe details into body */
                   body = {
-                        'stripe.createdAt': new Date(),
-                        subscription: subscriptionDetails._id,
-                        'stripe.subscriptionId': subscription.id,
-                        'stripe.planId': subscriptionDetails.stripePlanId,
-                  }
+                    ...body,
+                    "stripe.createdAt": new Date(),
+                    subscription: subscriptionDetails._id,
+                    "stripe.subscriptionId": subscription.id,
+                    "stripe.planId": subscriptionDetails.stripePlanId,
+                  };
             }
             await usersService.updateUser({ _id: userObj._id }, body)
 
@@ -2899,6 +2912,36 @@ const getUserSelectedDevotionalCategory = async (req: Request | any, res: Respon
       }
 };
 
+const cancelSubscription = async (
+  request: Request | any,
+  response: Response,
+  next: NextFunction
+) => {
+  const userId = request.user._id;
+
+  const user = await UserModel.findById(userId);
+  if (!user || !user.stripe?.subscriptionId) {
+    response.status(404).json({ message: "Subscription not found" });
+    return
+  }
+  if(user.stripe.cancelAtPeriodEnd) {
+    response.status(404).json({ message: "Subscription already cancelled" });
+    return
+  }
+  const subscription = await stripeSubscriptionService.cancelSubscription(
+    user.stripe.subscriptionId
+  );
+  
+  user.stripe.cancelAtPeriodEnd = subscription.cancel_at_period_end;
+  user.stripe.expiredAt = new Date(subscription.current_period_end * 1000);
+
+  await user.save();
+
+  response.status(200).send({
+    message: subscriptionsControllerResponse.subscriptionCancelled,
+  });
+};
+
 export {
       logout,
       getCoupon,
@@ -2909,6 +2952,7 @@ export {
       updateRating,
       paymentSheet,
       subscribePlan,
+      cancelSubscription,
       updateHandout,
       submitFeedback,
       getUserAccount,

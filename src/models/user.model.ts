@@ -64,6 +64,7 @@ export interface IUser extends mongoose.Document {
         ephemeralKey?: string,
         coupon?: string,
         status?: string,
+        cancelAtPeriodEnd?: boolean
     },
     device: string,
     maxDevices: [string],
@@ -145,6 +146,7 @@ export type createUserType = {
         ephemeralKey?: string,
         coupon?: string,
         status?: string,
+        cancelAtPeriodEnd?: boolean
     },
     device: string,
     maxDevices: [string],
@@ -227,6 +229,7 @@ export type getUserType = {
         ephemeralKey?: string,
         coupon?: string,
         status?: string,
+        cancelAtPeriodEnd?: boolean
     },
     device: string,
     maxDevices: [string],
@@ -305,6 +308,7 @@ export const UserSchema = new Schema({
         expiredAt: { type: Date },
         paymentIntent: { type: String },
         ephemeralKey: { type: String },
+        cancelAtPeriodEnd: { type: Boolean, default: false },
         coupon: { type: String },
         status: { type: String },
     },

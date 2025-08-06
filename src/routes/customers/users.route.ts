@@ -27,7 +27,8 @@ import {
   addCategoryToUserLibrary,
   getUserSelectedCategory,
   subscribeDevotionalCategory,
-  getUserSelectedDevotionalCategory
+  getUserSelectedDevotionalCategory,
+  cancelSubscription
 } from '../../controllers/customers/users.controller'
 
 const router: Router = express.Router()
@@ -47,6 +48,7 @@ router.get('/library', customerPassport, getUserLibrary)
 
 router.post('/feedback', customerPassport, submitFeedback)
 router.post('/subscribe', customerPassport, subscribePlan)
+router.post('/cancel-subscription', customerPassport, cancelSubscription)
 router.post('/payment-sheet', customerPassport, paymentSheet)
 
 router.get('/coupons/:coupon', customerPassport, getCoupon)

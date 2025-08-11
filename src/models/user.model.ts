@@ -308,7 +308,7 @@ export const UserSchema = new Schema({
         expiredAt: { type: Date },
         paymentIntent: { type: String },
         ephemeralKey: { type: String },
-        cancelAtPeriodEnd: { type: Boolean, default: false },
+        cancelAtPeriodEnd: { type: Boolean},
         coupon: { type: String },
         status: { type: String },
     },

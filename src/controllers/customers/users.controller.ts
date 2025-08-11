@@ -2430,6 +2430,19 @@ const subscribePlan = async (
                               await stripeSubscriptionService.cancelSubscription(
                                     retrieveSubscription.id
                               )
+                                         await usersService.updateUser(
+                                           { _id: userObj._id },
+                                           {
+                                             $unset: {
+                                               "stripe.subscriptionId": "",
+                                               "stripe.planId": "",
+                                               "stripe.expiredAt": "",
+                                               "stripe.cancelAtPeriodEnd": "",
+                                               "stripe.coupon": "",
+                                             },
+                                           }
+                                         );
+                                         delete userObj.stripe.subscriptionId;
                         }
 
                         if (

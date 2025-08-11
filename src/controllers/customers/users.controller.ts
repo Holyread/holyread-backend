@@ -116,6 +116,14 @@ const getUserAccount = async (
             }
             userObj.isEmailLinked = !!userObj.password
 
+             if (userObj.inAppSubscription && Object.keys(userObj.inAppSubscription).length > 0) {
+                  userObj.subscriptionType = 'inApp';
+            } else if (userObj?.stripe?.subscriptionId) {
+                  userObj.subscriptionType = 'stripe';
+            } else {
+                  userObj.subscriptionType = 'none';
+            }
+            
             const subscriptionDetails
                   = await subscriptionService
                         .getOneSubscriptionByFilter({

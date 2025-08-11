@@ -2340,11 +2340,23 @@ const paymentSheet = async (
 }
 
 /** subscribe plan */
+const activeRequests = new Map();
+
 const subscribePlan = async (
       req: Request | any,
       res: Response,
       next: NextFunction
 ): Promise<any> => {
+       const userObj = req.user;
+       const requestKey = `${userObj._id}_${req.body.subscription}`;
+  
+      // Check if same request is already processing
+      if (activeRequests.has(requestKey)) {
+      return next(Boom.conflict('Subscription request already in progress. Please wait.'));
+      }
+      
+      // Mark request as processing
+      activeRequests.set(requestKey, Date.now());
       try {
             const userObj = req.user
 
@@ -2360,9 +2372,54 @@ const subscribePlan = async (
                         )
                   )
             }
+
+            const user = await UserModel.findOne({ _id: userObj._id });
+
+            if (user) {
+              // Check in-app subscription
+              if (user.inAppSubscriptionStatus === "Active") {
+                return next(
+                  Boom.badData("User has active in-app subscription")
+                );
+              }
+
+              // Check Stripe subscription
+              if (
+                user.stripe?.subscriptionId &&
+                user.stripe?.expiredAt > new Date()
+              ) {
+                // Additional check: verify with Stripe if subscription is actually active
+                try {
+                  const stripeSubscription =
+                    await stripeSubscriptionService.retrieveSubscription(
+                      user.stripe.subscriptionId
+                    );
+
+                  if (
+                    ["active", "trialing"].includes(stripeSubscription.status)
+                  ) {
+                    return next(
+                      Boom.badData("User has active Stripe subscription")
+                    );
+                  }
+                } catch (stripeError) {
+                  // If Stripe subscription doesn't exist, continue with new subscription
+                  console.log(
+                    "Stripe subscription not found, proceeding with new subscription"
+                  );
+                }
+              }
+            }
+
             let body: any = {};
             let subscription;
             let subscriptionEndDate;
+            const newUser = new Date('2025-08-10T00:00:00Z');
+
+            if (userObj.createdAt >= newUser) {
+            // All new users → Stripe flow
+            delete req.body.inAppSubscription;
+            }
             if (req.body.inAppSubscription) {
                   body = {
                         subscription: req.body.subscription,
@@ -2666,6 +2723,8 @@ const subscribePlan = async (
             }
       } catch ({ message }: any) {
             next(Boom.badData(message as string))
+      } finally {
+            activeRequests.delete(requestKey);
       }
 }
 

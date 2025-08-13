@@ -719,52 +719,67 @@ const verifyEmailAuth = async (
 
 /**  Get user subscription by user id */
 const getUserSubscription = async (
-      req: Request | any,
-      res: Response,
-      next: NextFunction
+  req: Request | any,
+  res: Response,
+  next: NextFunction
 ) => {
-      try {
-            /** Get current user */
+  try {
+    /** Get current user */
             const data: any = Object.assign({}, req.user)
             let subscriptionEndDate = new Date(
                   data.createdAt
             )
                   .getTime() + (24 * 60 * 60 * 1000);
 
-            if (!data.stripe) {
-                  data.subscriptionStatus = 'freemium';
-            }
-            if (data.subscription) {
-                  try {
+    if (!data.stripe) {
+      data.subscriptionStatus = 'freemium';
+    }
+    if (data.subscription) {
+      try {
                         data.subscription = await subscriptionService
                               .getOneSubscriptionByFilter({
-                                    _id: data.subscription,
-                              })
-                        data.subscriptionStatus = ['Active'].includes(data?.inAppSubscriptionStatus) ? data?.inAppSubscriptionStatus : 'freemium';
-                        if (data?.stripe?.subscriptionId) {
-                              await stripeSubscriptionService
-                                    .retrieveSubscription(data.stripe?.subscriptionId)
-                                    .then(res => {
-                                          data.subscriptionStatus = res.status !== 'active' ? 'freemium' : res.status
-                                          if (res.status !== 'active') {
-                                                return;
-                                          }
+          _id: data.subscription,
+        });
+
+        // Default subscription status
+        data.subscriptionStatus = ['Active'].includes(data?.inAppSubscriptionStatus)
+          ? data.inAppSubscriptionStatus
+          : 'freemium';
+
+        let isStripeActive = false;
+
+        // Check Stripe subscription status
+        if (data?.stripe?.subscriptionId) {
+          await stripeSubscriptionService
+            .retrieveSubscription(data.stripe?.subscriptionId)
+            .then((res) => {
+              isStripeActive = res.status === 'active';
+              data.subscriptionStatus = isStripeActive ? 'active' : res.status !== 'active' ? 'freemium' : res.status;
+              if (res.status !== 'active') {
+                return;
+              }
                                           data.inAppSubscriptionStatus = capitalizeFirstLetter(res.status)
                                     })
-                        } else if (false && data?.stripe?.paymentIntent) {
-                              await stripeSubscriptionService
-                                    .getPaymentIntent(data.stripe?.paymentIntent)
+        } else if (false && data?.stripe?.paymentIntent) {
+          await stripeSubscriptionService
+            .getPaymentIntent(data.stripe?.paymentIntent)
                                     .then(res => {
-                                          if (res.status === 'succeeded') {
+              if (res.status === 'succeeded') {
                                                 data.inAppSubscriptionStatus = 'Active'
-                                          } else {
+              } else {
                                                 data.inAppSubscriptionStatus = res.status
-                                          }
-                                    })
-                        }
+              }
+            })
+        }
+
+        // Override subscriptionStatus to 'active' if either inAppSubscriptionStatus or Stripe status is active
+        if (data.inAppSubscriptionStatus === 'Active' || isStripeActive) {
+
+          data.subscriptionStatus = 'active';
+        }
 
                         /** set default subscription end date with 10 days trial */
-                        if (data.subscription?._id) {
+        if (data.subscription?._id) {
                               const months = data.subscription.duration === 'Month'
                                     ? 1 : data.subscription.duration === 'Half Year'
                                           ? 6 : 12;
@@ -777,11 +792,11 @@ const getUserSubscription = async (
                                     .setMonth(
                                           new Date(createdAt).getMonth() + months
                                     )
-                        }
-                  } catch ({ message }: any) {
-                        /** Handle get subscription error here */
-                  }
-            }
+        }
+      } catch ({ message }: any) {
+        /** Handle get subscription error here */
+      }
+    }
             data.subscriptionEndsIn
                   = getTimeDiff(
                         String(new Date()),
@@ -796,12 +811,12 @@ const getUserSubscription = async (
             res
                   .status(200)
                   .send({
-                        message: authControllerResponse.getUserSuccess,
-                        data,
+      message: authControllerResponse.getUserSuccess,
+      data,
                   })
-      } catch ({ message }: any) {
+  } catch ({ message }: any) {
             next(Boom.badData(message as string))
-      }
+  }
 }
 
 const getCoupon = async (

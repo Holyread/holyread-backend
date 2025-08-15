@@ -256,6 +256,7 @@ export const UserSchema = new Schema({
     email: { type: String, required: true, index: true, validate: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ },
     password: { type: String },
     subscription: { type: Schema.Types.ObjectId, ref: 'subscriptions' },
+    subscriptionIdNew: { type: Schema.Types.ObjectId, ref: 'subscriptions' },
     type: { type: String, required: true, enum: ['User', 'Admin'] },
     status: { type: String, enum: ['Active', 'Deactive'] },
     verified: { type: Boolean },

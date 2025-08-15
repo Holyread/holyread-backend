@@ -2499,7 +2499,8 @@ const subscribePlan = async (
                   /** add stripe details into body */
                   body = {
                         'stripe.createdAt': new Date(),
-                        subscription: subscriptionDetails._id,
+                         subscriptionIdNew:subscriptionDetails._id,
+                        // subscription: subscriptionDetails._id, // If the plan is success then subscriptionId will be store
                         'stripe.subscriptionId': subscription.id,
                         'stripe.planId': subscriptionDetails.stripePlanId,
                   }

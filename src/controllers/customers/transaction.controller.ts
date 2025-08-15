@@ -43,15 +43,13 @@ const createTransaction = async (
                   'stripe.customerId': session.customer,
             })
 
-    if (
-                  !user
-                  ||
-                  (
-                        !user?.subscription
-                        &&
-                        !session?.metadata?.hrSubscriptionId
-                  )
-            ) { return next(Boom.notAcceptable()) }
+     if (
+      !user ||
+      (!user?.subscriptionIdNew && !session?.metadata?.hrSubscriptionId)
+    ) {
+      return next(Boom.notAcceptable());
+    }
+
 
             processTransaction(user, session, event)
 
@@ -91,7 +89,7 @@ const processDonation = async (session: any, event: any) => {
 
 const processTransaction = async (user: any, session: any, event: any) => {
   try {
-            userService.updateUser({ _id: user._id }, { 'stripe.status': session?.status })
+            // userService.updateUser({ _id: user._id }, { 'stripe.status': session?.status })
     /** Trial or incomplete subscription does not required transation yet */
             if (
                   [
@@ -105,10 +103,18 @@ const processTransaction = async (user: any, session: any, event: any) => {
                   return
     }
 
-            let subscriptionId = user?.subscription
-            if (event.type === 'payment_intent.succeeded') {
-                  subscriptionId = session.metadata.hrSubscriptionId
+    let subscriptionId = user?.subscriptionIdNew;
+    if (event.type === "payment_intent.succeeded") {
+      subscriptionId = session.metadata.hrSubscriptionId;
     }
+
+      await userService.updateUser(
+      { _id: user._id },
+      {
+        "stripe.status": session?.status,
+        subscription: subscriptionId, // If the subscription id found then it store in DB
+      }
+    );
 
     /** Sent subscription activation email */
             const subscriptionDetails = await subscriptionsService

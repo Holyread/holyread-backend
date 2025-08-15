@@ -19,7 +19,6 @@ import {
       sortArrayObject,
       pushNotification,
       imageUrlToBase64,
-      capitalizeFirstLetter,
       validateEmail,
       calculateAverageRating,
       silentPushNotification,
@@ -115,14 +114,6 @@ const getUserAccount = async (
                         = `${awsBucket[NODE_ENV].s3BaseURL}/users/${userObj.image}`
             }
             userObj.isEmailLinked = !!userObj.password
-
-             if (userObj.inAppSubscription && Object.keys(userObj.inAppSubscription).length > 0) {
-                  userObj.subscriptionType = 'inApp';
-            } else if (userObj?.stripe?.subscriptionId) {
-                  userObj.subscriptionType = 'stripe';
-            } else {
-                  userObj.subscriptionType = 'none';
-            }
             
             const subscriptionDetails
                   = await subscriptionService
@@ -757,8 +748,8 @@ const getUserSubscription = async (
               data.subscriptionStatus = isStripeActive ? 'active' : res.status !== 'active' ? 'freemium' : res.status;
               if (res.status !== 'active') {
                 return;
-              }
-                                          data.inAppSubscriptionStatus = capitalizeFirstLetter(res.status)
+              }                            // If the subscriptionStatus active then inAppSubscriptionStatus it will not show active
+                                          // data.inAppSubscriptionStatus = capitalizeFirstLetter(res.status) 
                                     })
         } else if (false && data?.stripe?.paymentIntent) {
           await stripeSubscriptionService
@@ -2363,23 +2354,11 @@ const paymentSheet = async (
 }
 
 /** subscribe plan */
-const activeRequests = new Map();
-
 const subscribePlan = async (
       req: Request | any,
       res: Response,
       next: NextFunction
 ): Promise<any> => {
-       const userObj = req.user;
-       const requestKey = `${userObj._id}_${req.body.subscription}`;
-  
-      // Check if same request is already processing
-      if (activeRequests.has(requestKey)) {
-      return next(Boom.conflict('Subscription request already in progress. Please wait.'));
-      }
-      
-      // Mark request as processing
-      activeRequests.set(requestKey, Date.now());
       try {
             const userObj = req.user
 
@@ -2395,54 +2374,9 @@ const subscribePlan = async (
                         )
                   )
             }
-
-            const user = await UserModel.findOne({ _id: userObj._id });
-
-            if (user) {
-              // Check in-app subscription
-              if (user.inAppSubscriptionStatus === "Active") {
-                return next(
-                  Boom.badData("User has active in-app subscription")
-                );
-              }
-
-              // Check Stripe subscription
-              if (
-                user.stripe?.subscriptionId &&
-                user.stripe?.expiredAt > new Date()
-              ) {
-                // Additional check: verify with Stripe if subscription is actually active
-                try {
-                  const stripeSubscription =
-                    await stripeSubscriptionService.retrieveSubscription(
-                      user.stripe.subscriptionId
-                    );
-
-                  if (
-                    ["active", "trialing"].includes(stripeSubscription.status)
-                  ) {
-                    return next(
-                      Boom.badData("User has active Stripe subscription")
-                    );
-                  }
-                } catch (stripeError) {
-                  // If Stripe subscription doesn't exist, continue with new subscription
-                  console.log(
-                    "Stripe subscription not found, proceeding with new subscription"
-                  );
-                }
-              }
-            }
-
             let body: any = {};
             let subscription;
             let subscriptionEndDate;
-            const newUser = new Date('2025-08-10T00:00:00Z');
-
-            if (userObj.createdAt >= newUser) {
-            // All new users → Stripe flow
-            delete req.body.inAppSubscription;
-            }
             if (req.body.inAppSubscription) {
                   body = {
                         subscription: req.body.subscription,
@@ -2495,12 +2429,7 @@ const subscribePlan = async (
                         subscriptionEndDate = new Date(
                               subscription.current_period_end * 1000
                         )
-                        body = {
-                        ...body,
-                        'stripe.coupon': req.body.coupon,
-                        'stripe.cancelAtPeriodEnd': subscription.cancel_at_period_end,
-                        'stripe.expiredAt': new Date(subscription.current_period_end * 1000),
-                  };
+                        body['stripe.coupon'] = req.body.coupon
                   } else {
                         const retrieveSubscription = await stripeSubscriptionService
                               .retrieveSubscription(
@@ -2546,12 +2475,6 @@ const subscribePlan = async (
                         subscriptionEndDate = new Date(
                               subscription.current_period_end * 1000
                         )
-
-                         body = {
-                        ...body,
-                        'stripe.cancelAtPeriodEnd': subscription.cancel_at_period_end,
-                        'stripe.expiredAt': new Date(subscription.current_period_end * 1000),
-                        };
                   }
                   if (subscription.status === 'trialing') {
                         const now = new Date(subscriptionEndDate)
@@ -2575,12 +2498,11 @@ const subscribePlan = async (
                   }
                   /** add stripe details into body */
                   body = {
-                    ...body,
-                    "stripe.createdAt": new Date(),
-                    subscription: subscriptionDetails._id,
-                    "stripe.subscriptionId": subscription.id,
-                    "stripe.planId": subscriptionDetails.stripePlanId,
-                  };
+                        'stripe.createdAt': new Date(),
+                        subscription: subscriptionDetails._id,
+                        'stripe.subscriptionId': subscription.id,
+                        'stripe.planId': subscriptionDetails.stripePlanId,
+                  }
             }
             await usersService.updateUser({ _id: userObj._id }, body)
 
@@ -2733,8 +2655,6 @@ const subscribePlan = async (
             }
       } catch ({ message }: any) {
             next(Boom.badData(message as string))
-      } finally {
-            activeRequests.delete(requestKey);
       }
 }
 
@@ -3007,7 +2927,7 @@ const cancelSubscription = async (
     return
   }
   if(user.stripe.cancelAtPeriodEnd) {
-    response.status(404).json({ message: "Subscription already cancelled" });
+    response.status(409).json({ message: "Subscription already cancelled" });
     return
   }
   const subscription = await stripeSubscriptionService.cancelSubscription(

@@ -269,7 +269,7 @@ const updateSubscription = async (params: {
 
 /** Cancel subscription by id */
 const cancelSubscription = async (subscriptionId: string) => {
-      stripe.subscriptions.update(subscriptionId, {
+      return stripe.subscriptions.update(subscriptionId, {
             cancel_at_period_end: true,
       });
 }

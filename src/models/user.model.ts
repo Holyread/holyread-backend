@@ -64,6 +64,7 @@ export interface IUser extends mongoose.Document {
         ephemeralKey?: string,
         coupon?: string,
         status?: string,
+        cancelAtPeriodEnd?: boolean
     },
     device: string,
     maxDevices: [string],
@@ -145,6 +146,7 @@ export type createUserType = {
         ephemeralKey?: string,
         coupon?: string,
         status?: string,
+        cancelAtPeriodEnd?: boolean
     },
     device: string,
     maxDevices: [string],
@@ -227,6 +229,7 @@ export type getUserType = {
         ephemeralKey?: string,
         coupon?: string,
         status?: string,
+        cancelAtPeriodEnd?: boolean
     },
     device: string,
     maxDevices: [string],
@@ -253,6 +256,7 @@ export const UserSchema = new Schema({
     email: { type: String, required: true, index: true, validate: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/ },
     password: { type: String },
     subscription: { type: Schema.Types.ObjectId, ref: 'subscriptions' },
+    subscriptionIdNew: { type: Schema.Types.ObjectId, ref: 'subscriptions' },
     type: { type: String, required: true, enum: ['User', 'Admin'] },
     status: { type: String, enum: ['Active', 'Deactive'] },
     verified: { type: Boolean },
@@ -305,6 +309,7 @@ export const UserSchema = new Schema({
         expiredAt: { type: Date },
         paymentIntent: { type: String },
         ephemeralKey: { type: String },
+        cancelAtPeriodEnd: { type: Boolean},
         coupon: { type: String },
         status: { type: String },
     },

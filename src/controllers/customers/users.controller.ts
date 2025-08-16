@@ -19,7 +19,6 @@ import {
       sortArrayObject,
       pushNotification,
       imageUrlToBase64,
-      capitalizeFirstLetter,
       validateEmail,
       calculateAverageRating,
       silentPushNotification,
@@ -74,6 +73,7 @@ import notificationsService
 import mailchimpService from '../../services/mailchimp'
 import dailyDevotionalService from '../../services/customers/dailyDevotional/dailyDevotional.service';
 import subscriptionsService from '../../services/customers/subscriptions/subscriptions.service';
+import { UserModel } from '../../models';
 
 const NODE_ENV = config.NODE_ENV
 
@@ -114,7 +114,7 @@ const getUserAccount = async (
                         = `${awsBucket[NODE_ENV].s3BaseURL}/users/${userObj.image}`
             }
             userObj.isEmailLinked = !!userObj.password
-
+            
             const subscriptionDetails
                   = await subscriptionService
                         .getOneSubscriptionByFilter({
@@ -748,8 +748,8 @@ const getUserSubscription = async (
               data.subscriptionStatus = isStripeActive ? 'active' : res.status !== 'active' ? 'freemium' : res.status;
               if (res.status !== 'active') {
                 return;
-              }
-                                          data.inAppSubscriptionStatus = capitalizeFirstLetter(res.status)
+              }                            // If the subscriptionStatus active then inAppSubscriptionStatus it will not show active
+                                          // data.inAppSubscriptionStatus = capitalizeFirstLetter(res.status) 
                                     })
         } else if (false && data?.stripe?.paymentIntent) {
           await stripeSubscriptionService
@@ -2499,7 +2499,8 @@ const subscribePlan = async (
                   /** add stripe details into body */
                   body = {
                         'stripe.createdAt': new Date(),
-                        subscription: subscriptionDetails._id,
+                         subscriptionIdNew:subscriptionDetails._id,
+                        // subscription: subscriptionDetails._id, // If the plan is success then subscriptionId will be store
                         'stripe.subscriptionId': subscription.id,
                         'stripe.planId': subscriptionDetails.stripePlanId,
                   }
@@ -2914,6 +2915,36 @@ const getUserSelectedDevotionalCategory = async (req: Request | any, res: Respon
       }
 };
 
+const cancelSubscription = async (
+  request: Request | any,
+  response: Response,
+  next: NextFunction
+) => {
+  const userId = request.user._id;
+
+  const user = await UserModel.findById(userId);
+  if (!user || !user.stripe?.subscriptionId) {
+    response.status(404).json({ message: "Subscription not found" });
+    return
+  }
+  if(user.stripe.cancelAtPeriodEnd) {
+    response.status(409).json({ message: "Subscription already cancelled" });
+    return
+  }
+  const subscription = await stripeSubscriptionService.cancelSubscription(
+    user.stripe.subscriptionId
+  );
+  
+  user.stripe.cancelAtPeriodEnd = subscription.cancel_at_period_end;
+  user.stripe.expiredAt = new Date(subscription.current_period_end * 1000);
+
+  await user.save();
+
+  response.status(200).send({
+    message: subscriptionsControllerResponse.subscriptionCancelled,
+  });
+};
+
 export {
       logout,
       getCoupon,
@@ -2924,6 +2955,7 @@ export {
       updateRating,
       paymentSheet,
       subscribePlan,
+      cancelSubscription,
       updateHandout,
       submitFeedback,
       getUserAccount,

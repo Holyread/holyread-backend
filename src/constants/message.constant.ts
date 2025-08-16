@@ -95,6 +95,7 @@ export const responseMessage = {
         createPaymentSheetSuccess: 'Payment sheet created successfully',
         updateSubscriptionSuccess: 'Subscription updated successfully',
         deleteSubscriptionSuccess: 'Subscription deleted successfully',
+        subscriptionCancelled: 'Subscription cancelled successfully',
         fetchSubscriptionSuccess: 'Subscription details fetched successfully',
         fetchSubscriptionsSuccess: 'Subscriptions list fetched successfully',
         createSubscriptionFailure: 'Subscription already added',
@@ -105,6 +106,7 @@ export const responseMessage = {
         planFetchError: 'Failed to fetch plan details',
         planDeleteError: 'Failed to delete plan',
         donationSuccess: 'Donation sent successfully',
+        donationCancelled: 'Donation cancelled successfully',
     },
     bookCategoryControllerResponse: {
         createBookCategorySuccess: 'Book category added successfully',

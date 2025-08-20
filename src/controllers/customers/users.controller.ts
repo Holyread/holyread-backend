@@ -2450,14 +2450,30 @@ const subscribePlan = async (
                                     retrieveSubscription.status
                               )
                         ) {
-                              await stripeSubscriptionService.createSubscription({
-                                    status: 'active',
-                                    coupon: req.body.coupon,
-                                    customerId: userObj.stripe.customerId,
-                                    paymentMethod: req.body.paymentMethod,
-                                    planId: subscriptionDetails.stripePlanId,
-                              })
-                              body['stripe.coupon'] = req.body.coupon
+                                       const newSubscription =
+                                         await stripeSubscriptionService.createSubscription(
+                                           {
+                                             status: "active",
+                                             coupon: req.body.coupon,
+                                             customerId:
+                                               userObj.stripe.customerId,
+                                             paymentMethod:
+                                               req.body.paymentMethod,
+                                             planId:
+                                               subscriptionDetails.stripePlanId,
+                                           }
+                                         );
+                                       body["stripe.coupon"] = req.body.coupon;
+
+                                       userObj.stripe.subscriptionId =
+                                         newSubscription.id;
+                                       await userService.updateUser(
+                                         { _id: userObj._id },
+                                         {
+                                           "stripe.subscriptionId":
+                                             newSubscription.id,
+                                         }
+                                       );
                         } else {
                               await stripeSubscriptionService.updateSubscription({
                                     coupon: req.body.coupon,

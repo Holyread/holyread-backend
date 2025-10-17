@@ -3,7 +3,7 @@ import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket } from '../../../constants/app.constant'
 import { getImageUrl } from '../../../lib/utils/utils'
 import { ISmallGroup } from '../../../models/smallGroup.model'
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 
 const smallGroupControllerResponse = responseMessage.smallGroupControllerResponse
 
@@ -45,10 +45,14 @@ const getOneSmallGroupByFilter = async (query: any) => {
 }
 
 /** Get all small group for table */
-const getAllSmallGroups = async (skip: number, limit, search: FilterQuery<ISmallGroup>, sort) => {
+const getAllSmallGroups = async (skip: number, limit, search: FilterQuery<ISmallGroup>, sort, language: Types.ObjectId) => {
     try {
-        const result = await SmallGroupModel.find(search).populate('books', 'title').skip(skip).limit(limit).sort(sort).lean()
-        const count = await SmallGroupModel.find(search).countDocuments()
+        const query = { ...search };
+        if (language) {
+            query.language = language;
+        }
+        const result = await SmallGroupModel.find(query).populate('books', 'title').skip(skip).limit(limit).sort(sort).lean()
+        const count = await SmallGroupModel.find(query).countDocuments()
         if (result.length) {
             await Promise.all(result.map(item => {
                 if (item && item.coverImage) {
@@ -73,9 +77,9 @@ const deleteSmallGroup = async (id: string) => {
 }
 
 /** Get all small group for table */
-const getSmallGroupsList = async () => {
+const getSmallGroupsList = async (language: Types.ObjectId) => {
     try {
-        const result: any[] = await SmallGroupModel.find().populate('books', 'title').lean();
+        const result: any[] = await SmallGroupModel.find({ language }).populate('books', 'title').lean();
 
         if (result.length) {
             await Promise.all(result.map((item: any) => {

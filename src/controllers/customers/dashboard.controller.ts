@@ -23,7 +23,8 @@ const smallGroupControllerResponse = responseMessage.smallGroupControllerRespons
 /** Get categories for dashboard */
 const getCategories = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const data: any = await bookCategoryService.getAllBookCategories(0, 0, { status: 'Active' }, { 'title': 1.0 })
+        const language = (request as any).user.language
+        const data: any = await bookCategoryService.getAllBookCategories(0, 0, { status: 'Active' }, { 'title': 1.0 }, language)
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data,
@@ -41,9 +42,10 @@ const getRecentReads = async (request: any, response: Response, next: NextFuncti
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
         let recentReads: any;
+        const language = (request as any).user.language
         userObj.libraries = await userService.getUserLibrary({ _id: userObj.libraries }, ['reading'])
         if (!userObj?.libraries?.reading?.length) {
-            recentReads = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), {}, { 'createdAt': -1.0 })
+            recentReads = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), {}, { 'createdAt': -1.0 }, language)
             return response.status(200).json({
                 message: dashboardControllerResponse.getDashboardSuccess,
                 data: {
@@ -65,7 +67,7 @@ const getRecentReads = async (request: any, response: Response, next: NextFuncti
         const search: any = { _id: { $in: [...bookIds] } }
         if (params.author) { search.author = params.author }
         /** Get user reads books details by users reads books ids */
-        const data = await bookSummaryService.getAllBookSummaries(0, 0, search, { 'createdAt': -1.0 }, true)
+        const data = await bookSummaryService.getAllBookSummaries(0, 0, search, { 'createdAt': -1.0 }, language, true)
 
         /** sort summary by latest reads based on user libraries readings */
         const set = new Set()
@@ -102,7 +104,8 @@ const getPopularBooks = async (request: Request, response: Response, next: NextF
         const params: any = request.query
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        const mostPopular = await bookSummaryService.getMostPopularBooks(Number(skip), Number(limit), {}, { 'views': -1.0 })
+        const language = (request as any).user.language
+        const mostPopular = await bookSummaryService.getMostPopularBooks(Number(skip), Number(limit), {}, { 'views': -1.0 }, language)
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data: { mostPopular },
@@ -118,7 +121,8 @@ const getCuratedsList = async (request: Request, response: Response, next: NextF
         const params: any = request.query
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        const data: any = await expertCuratedService.getAllExpertCurateds(Number(skip), Number(limit), { status: 'Active' }, { createdAt: -1.0 })
+        const language = (request as any).user.language
+        const data: any = await expertCuratedService.getAllExpertCurateds(Number(skip), Number(limit), { status: 'Active' }, { createdAt: -1.0 }, language)
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data,
@@ -137,7 +141,7 @@ const getDailyDevotional = async (request: Request | any, response: Response, ne
         const userObj: any = { ...request.user };
         const query: any = { _id: userObj.libraries };
         let data: any;
-
+        const language = (request as any).user.language
         // Initialize date range
         let start = new Date();
         let end = new Date();
@@ -166,17 +170,17 @@ const getDailyDevotional = async (request: Request | any, response: Response, ne
         if (!userObj?.libraries?.devotionalCategories?.length && params.timeFrame !== 'all') {
             // If no specific categories, get all devotionals without category filter
             filter.category = { $exists: false };
-            data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]);
+            data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']], language);
         } else if (params.timeFrame === 'all') {
-            data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]);
+            data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']], language);
         } else {
             // Get devotionals from general and user-specific categories
             const categories = userObj.libraries.devotionalCategories;
             filter.category = { $exists: false };
-            const generalDevotionalData: any = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]) || [];
+            const generalDevotionalData: any = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']], language) || [];
 
             filter.category = { $in: categories };
-            const categoryDevotionalData: any = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']]) || [];
+            const categoryDevotionalData: any = await dailyDevotionalService.getAllDailyDevotional(skip, limit, filter, [['publishedAt', 'desc']], language) || [];
 
             // Combine and sort data
             const combinedData = [...generalDevotionalData.dailyDevotionalList, ...categoryDevotionalData.dailyDevotionalList];
@@ -205,6 +209,7 @@ const getDailyDevotional = async (request: Request | any, response: Response, ne
 /** Get recommended books for dashboard */
 const getRecommendedBooks = async (request: any, response: Response, next: NextFunction) => {
     try {
+        const language = (request as any).user.language
         const libraries = await userService.getUserLibrary({ _id: request.user.libraries })
 
         const bookIds = libraries.reading.map(item => item.bookId);
@@ -262,7 +267,7 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
 
         /* Select books from recommendedBooks if user not read any books */
         if (!recommendedBooks.length) {
-            const result = await recommendedBookService.getAllRecommendedBooks(Number(0), Number(10), {}, [])
+            const result = await recommendedBookService.getAllRecommendedBooks(Number(0), Number(10), {}, [], language)
             recommendedBooks = result.recommendedBooks.map(item => item.book._id);
         }
 
@@ -418,6 +423,7 @@ const getSmallGroups = async (request: Request, response: Response, next: NextFu
         const params: any = request.query
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
+        const language = (request as any).user.language
         if (params.id) {
             const data = await smallGroupService.getOneSmallGroupByFilter({ _id: params.id, status: 'Active', publish: true })
             response.status(200).json({
@@ -426,7 +432,7 @@ const getSmallGroups = async (request: Request, response: Response, next: NextFu
             })
             return;
         }
-        const data: any = await smallGroupService.getAllSmallGroups(Number(skip), Number(limit), { status: 'Active', publish: true }, { createdAt: -1.0 })
+        const data: any = await smallGroupService.getAllSmallGroups(Number(skip), Number(limit), { status: 'Active', publish: true }, { createdAt: -1.0 }, language)
 
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
@@ -443,7 +449,8 @@ const getLatestBooks = async (request: Request, response: Response, next: NextFu
         const params: any = request.query
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
-        const data: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), {}, { 'createdAt': -1.0 })
+        const language = (request as any).user.language
+        const data: any = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), {}, { 'createdAt': -1.0 }, language)
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data,

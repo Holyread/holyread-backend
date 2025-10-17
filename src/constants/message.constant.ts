@@ -311,4 +311,21 @@ export const responseMessage = {
         createCronScheduleFailure: 'Cron Schedule already added',
         getCronScheduleFailure: 'Failed to fetch cron schedule details',
     },
-}
+    languageControllerResponse: {
+        createLanguageSuccess: 'Language added successfully',
+        createLanguageFailure: 'Failed to create language',
+        getLanguageSuccess: 'Language fetched successfully',
+        getLanguageFailure: 'Failed to fetch language details',
+        updateLanguageSuccess: 'Language updated successfully',
+        deleteLanguageSuccess: 'Language deleted successfully',
+        updateLanguageFailure: 'Failed to update language',
+        deleteLanguageFailure: 'Failed to delete language',
+    },
+    notificationTemplateControllerResponse: {
+        createNotificationTemplateSuccess: 'Notification template created successfully',
+        createNotificationTemplateFailure: 'Failed to create notification template',
+        getNotificationTemplateSuccess: 'Notification template fetched successfully',
+        getNotificationTemplatesSuccess: 'Notification templates fetched successfully',
+        getNotificationTemplateFailure: 'Failed to fetch notification template details',    
+  },
+};

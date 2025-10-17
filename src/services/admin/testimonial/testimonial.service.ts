@@ -3,7 +3,7 @@ import { awsBucket } from '../../../constants/app.constant'
 import { responseMessage } from '../../../constants/message.constant'
 import { getImageUrl } from '../../../lib/utils/utils'
 import { ITestimonial } from '../../../models/testimonial.model'
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 
 const { testimonialControllerResponse } = responseMessage
 
@@ -46,10 +46,14 @@ const getOneTestimonialByFilter = async (query: any) => {
 }
 
 /** Get all testimonials for table */
-const getAllTestimonials = async (skip: number, limit, search: FilterQuery<ITestimonial>, sort) => {
+const getAllTestimonials = async (skip: number, limit, search: FilterQuery<ITestimonial>, sort, language: Types.ObjectId) => {
     try {
-        const result = await TestimonialModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        const count = await TestimonialModel.find(search).countDocuments()
+        const query = { ...search };
+        if (language) {
+            query.language = language;
+        }
+        const result = await TestimonialModel.find(query).skip(skip).limit(limit).sort(sort).lean()
+        const count = await TestimonialModel.find(query).countDocuments()
         await Promise.all(result.map(async (item: any) => {
             if (!item) return
             if (item.image) item.image = getImageUrl(item.image, `${awsBucket.testimonialDirectory}`);

@@ -1,4 +1,4 @@
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 import { RecommendedBookModel } from '../../../models/index'
 import { IRecommendedBook } from '../../../models/recommendedBooks.model'
 
@@ -40,15 +40,34 @@ const getOneRecommendedBookByFilter = async (query: any) => {
 }
 
 /** Get all recommended books for table */
-const getAllRecommendedBooks = async (skip: number, limit, search: FilterQuery<IRecommendedBook>, sort) => {
-      try {
-            const recommendedBooks = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).populate({ path: 'book', populate: { path: 'author', select: 'name' } }).lean().exec()
-            const count = await RecommendedBookModel.find(search).countDocuments()
-            return { count, recommendedBooks }
-      } catch (e: any) {
-            throw new Error(e)
-      }
-}
+const getAllRecommendedBooks = async (
+  skip: number,
+  limit,
+  search: FilterQuery<IRecommendedBook>,
+  sort,
+  language?: Types.ObjectId
+) => {
+  try {
+    const query = { ...search };
+    const recommendedBooks = await RecommendedBookModel.find(query)
+      .skip(skip)
+      .limit(limit)
+      .sort(sort)
+      .populate({
+        path: "book",
+        match: { language },
+        populate: { path: "author", select: "name" },
+      })
+      .lean()
+      .exec();
+
+      const filteredRecommendedBooks = recommendedBooks.filter((item: any) => item.book)
+      const count = filteredRecommendedBooks.length;
+    return { count, recommendedBooks: filteredRecommendedBooks };
+  } catch (e: any) {
+    throw new Error(e);
+  }
+};
 
 /** Remove recommended book */
 const deleteRecommendedBook = async (id: string) => {

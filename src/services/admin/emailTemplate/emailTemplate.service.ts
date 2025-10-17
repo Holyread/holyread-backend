@@ -1,4 +1,4 @@
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 import { IEmailTemplate } from '../../../models/emailTemplate.model'
 import { EmailTemplateModel } from '../../../models/index'
 
@@ -37,10 +37,14 @@ const getOneEmailTemplateByFilter = async (query: any) => {
 }
 
 /** Get all email template for table */
-const getAllEmailTemplates = async (skip: number, limit, search: FilterQuery<IEmailTemplate>, sort) => {
+const getAllEmailTemplates = async (skip: number, limit, search: FilterQuery<IEmailTemplate>, sort, language?: Types.ObjectId) => {
       try {
-            const emailTemplates: any = await EmailTemplateModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-            const count = await EmailTemplateModel.find(search).countDocuments()
+            const query = { ...search };
+            if (language) {
+                  query.language = language;
+            }
+            const emailTemplates: any = await EmailTemplateModel.find(query).skip(skip).limit(limit).sort(sort).lean()
+            const count = await EmailTemplateModel.find(query).countDocuments()
             return { count, emailTemplates }
       } catch (e: any) {
             throw new Error(e)

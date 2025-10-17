@@ -74,6 +74,7 @@ import mailchimpService from '../../services/mailchimp'
 import dailyDevotionalService from '../../services/customers/dailyDevotional/dailyDevotional.service';
 import subscriptionsService from '../../services/customers/subscriptions/subscriptions.service';
 import { UserModel } from '../../models';
+import languageService from '../../services/admin/language/language.service';
 
 const NODE_ENV = config.NODE_ENV
 
@@ -908,6 +909,12 @@ const updateUserAccount = async (
                               : userObj?.downloadOverWifi || false,
             }
 
+            // Persist language change if provided
+            if (req.body.language) {
+                  const language = await languageService.getLanguageCache(req.body.language)
+                  body.language = language
+            }
+
             if (req.body.kindleEmail) {
                   const isValid = await validateEmail(req.body.kindleEmail);
                   if (!isValid) {
@@ -1470,7 +1477,7 @@ const getUserLibrary = async (
                   skip = dataLimit.skip,
                   limit = dataLimit.limit,
             } = req.query as any
-
+            const language = (req as any).user.language
             /** Get current user */
             const userObj: any = Object.assign({}, req.user)
             userObj.libraries = await usersService.getUserLibrary({
@@ -1513,7 +1520,8 @@ const getUserLibrary = async (
                         {
                               'createdAt': String(sort || 'asc')
                                     .toLowerCase() === 'asc' ? 1.0 : -1.0,
-                        }
+                        },
+                        language,
                   )
                   if (data.summaries?.length) {
                         data.summaries = userObj.libraries.saved
@@ -1561,7 +1569,8 @@ const getUserLibrary = async (
                         {
                               'createdAt': String(sort || 'asc')
                                     .toLowerCase() === 'asc' ? 1.0 : -1.0,
-                        }
+                        },
+                        language,
                   )
                   if (data.summaries?.length) {
                         data.summaries = userObj
@@ -1634,6 +1643,7 @@ const getUserLibrary = async (
                         0,
                         search,
                         { 'createdAt': -1.0 },
+                        language,
                         true
                   )
 
@@ -1694,7 +1704,8 @@ const getUserLibrary = async (
                         {
                               'createdAt': String(sort || 'asc')
                                     .toLowerCase() === 'asc' ? 1.0 : -1.0,
-                        }
+                        },
+                        language,
                   )
                   data.count = data.dailyDevotionalList.length
                   data.dailyDevotionalList = data.dailyDevotionalList

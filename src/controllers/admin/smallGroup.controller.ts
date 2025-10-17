@@ -22,7 +22,8 @@ const s3Bucket = {
 const addSmallGroup = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { body } = req;
-        const existingSmallGroup = await smallGroupService.getOneSmallGroupByFilter({ title: body.title });
+        const language = (req as any).languageId;
+        const existingSmallGroup = await smallGroupService.getOneSmallGroupByFilter({ title: body.title, language });
         if (existingSmallGroup) {
             return next(Boom.notFound(smallGroupControllerResponse.createSmallGroupFailure));
         }
@@ -39,6 +40,7 @@ const addSmallGroup = async (req: Request, res: Response, next: NextFunction) =>
             body.coverImage = s3File.name;
         }
 
+        body.language = language;
         const data = await smallGroupService.createSmallGroup(body);
         res.status(200).send({
             message: smallGroupControllerResponse.createSmallGroupSuccess,
@@ -77,6 +79,7 @@ const getAllSmallGroups = async (req: Request, res: Response, next: NextFunction
         const { query } = req;
         const skip = Number(query.skip) || dataTable.skip;
         const limit = Number(query.limit) || dataTable.limit;
+        const language = (req as any).languageId;
 
         let searchFilter: FilterQuery<ISmallGroup> = {};
         if (query.search) {
@@ -101,7 +104,7 @@ const getAllSmallGroups = async (req: Request, res: Response, next: NextFunction
             ? [[sortingColumn, sortingOrder]]
             : [['title', 'desc']];
 
-        const data = await smallGroupService.getAllSmallGroups(skip, limit, searchFilter, sortingOptions);
+        const data = await smallGroupService.getAllSmallGroups(skip, limit, searchFilter, sortingOptions, language);
         res.status(200).json({ message: smallGroupControllerResponse.fetchSmallGroupSuccess, data });
     } catch (e: any) {
         next(Boom.badData(e.message));
@@ -113,6 +116,7 @@ const updateSmallGroup = async (req: Request, res: Response, next: NextFunction)
     try {
         const { id } = req.params;
         const { body } = req;
+        const language = (req as any).languageId;
         const smallGroupDetails = await smallGroupService.getOneSmallGroupByFilter({ _id: id });
 
         if (!smallGroupDetails) return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure));
@@ -125,7 +129,7 @@ const updateSmallGroup = async (req: Request, res: Response, next: NextFunction)
         } else if (body.coverImage?.startsWith('http')) {
             body.coverImage = smallGroupDetails.coverImage;
         }
-
+        body.language = language;
         await smallGroupService.updateSmallGroup(body, id);
         res.status(200).send({ message: smallGroupControllerResponse.updateSmallGroupSuccess });
     } catch (e: any) {

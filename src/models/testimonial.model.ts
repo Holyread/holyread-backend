@@ -7,6 +7,7 @@ export interface ITestimonial extends mongoose.Document {
     image: string,
     description?: string,
     status?: 'Active' | 'Deactive'
+    language: {type: Schema.Types.ObjectId, ref: 'language'}
 }
 
 export type createTestimonialType = {
@@ -14,6 +15,7 @@ export type createTestimonialType = {
     image: string,
     description?: string,
     status?: 'Active' | 'Deactive'
+    language: {type: Schema.Types.ObjectId, ref: 'language'}
 }
 
 export type getTestimonialType = {
@@ -22,6 +24,7 @@ export type getTestimonialType = {
     image: string,
     description?: string,
     status?: 'Active' | 'Deactive'
+    language?: {type: Schema.Types.ObjectId, ref: 'language'}
 }
 
 export const TestimonialSchema = new Schema({
@@ -29,6 +32,7 @@ export const TestimonialSchema = new Schema({
     image: { type: String, required: true },
     description: { type: String },
     status: { type: String},
+    language: {type: Schema.Types.ObjectId, ref: 'language', index: true},
     createdAt: {
         type: Date, default: () => {
             return new Date()

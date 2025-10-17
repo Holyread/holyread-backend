@@ -14,6 +14,7 @@ import config from '../../../config'
 import notificationsService from '../../services/customers/notifications/notifications.service';
 import stripeSubscriptionService from '../../services/stripe/subscription';
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
+import languageService from '../../services/admin/language/language.service';
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
 const subscriptionsControllerResponse = responseMessage.subscriptionsControllerResponse
@@ -38,7 +39,7 @@ const signInUser = async (req: Request, res: Response, next: NextFunction) => {
     const token: string = getToken({ email: user.email, id: user._id })
     res.status(200).json({
       message: authControllerResponse.loginSuccess,
-      data: { _id: user._id, email: user.email, token, type: user.type, verified: user.verified },
+      data: { _id: user._id, email: user.email, token, type: user.type, verified: user.verified, language: user.language },
     })
   } catch (e: any) {
     next(Boom.badData(e.message))
@@ -110,6 +111,11 @@ const appSignUpUser = async (
 ): Promise<any> => {
   try {
     const body = req.body;
+
+  if(body.language) {
+    const language = await languageService.getLanguageCache(body.language)
+    body.language = language
+  }
 
   const existingUser: any = await usersService.getOneUserByFilter({
     email: body.email,
@@ -194,6 +200,7 @@ const appSignUpUser = async (
     deviceId: body.deviceId,
     type: 'User',
     status: 'Active',
+    language: body.language,
   };
 
     let userData;
@@ -240,6 +247,10 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = req.body
     /** Get user from db */
+    if(body.language) {
+      const language = await languageService.getLanguageCache(body.language)
+      body.language = language
+    }
     const user: any = await usersService.getOneUserByFilter({ email: body.email })
     if (user) return next(Boom.conflict(authControllerResponse.userAlreadyExistError));
 
@@ -318,6 +329,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
       campaign: body.campaign,
       libraries : libraries?._id,
       isSignedUp : true,
+      language: body.language,
     }
     /** Store In app subscription */
     const now: Date = new Date()
@@ -532,6 +544,7 @@ const handleExistingAppUser = async (
     medium: body.medium,
     campaign: body.campaign,
     isSignedUp: true,
+    language: body.language,
   };
 
   const subscriptionDetails =

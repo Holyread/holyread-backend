@@ -6,12 +6,14 @@ export interface IMeditationCategory extends mongoose.Document {
     title: string,
     image: string,
     status?: 'Active' | 'Deactive'
+    language: {type: Schema.Types.ObjectId, ref: 'language'}
 }
 
 export type createMeditationCategoryType = {
     title: string,
     image: string,
     status?: 'Active' | 'Deactive'
+    language: {type: Schema.Types.ObjectId, ref: 'language'}
 }
 
 export type getMeditationCategoryType = {
@@ -19,12 +21,14 @@ export type getMeditationCategoryType = {
     title?: string,
     image: string,
     status?: 'Active' | 'Deactive'
+    language?: {type: Schema.Types.ObjectId, ref: 'language'}
 }
 
 export const MeditationCategorySchema = new Schema({
     title: { type: String, required: true, index: true },
     image: { type: String },
     status: { type: String, required: true, index: true },
+    language: {type: Schema.Types.ObjectId, ref: 'language', index: true},
     createdAt: {
         type: Date, default: () => {
             return new Date()

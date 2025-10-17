@@ -5,15 +5,15 @@ import usersService from '../users/user.service'
 import ratingService from './rating.service'
 import { IBookSummary } from '../../../models/bookSummary.model'
 import { FilterQuery } from 'mongoose'
-
+import { Types } from 'mongoose'
 const NODE_ENV = config.NODE_ENV
 
 /** Get all book summaries with filter by author id or author name, book title or all */
-const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, sort) => {
+const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, sort, language: Types.ObjectId) => {
     try {
         search.search.publish = true
 
-        const totalCount = await BookSummaryModel.find({ publish: true }).countDocuments()
+        const totalCount = await BookSummaryModel.find({ publish: true, language }).countDocuments()
 
         const result: any
             = await BookSummaryModel
@@ -42,7 +42,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                         },
                     },
                     {
-                        $match: search.search,
+                        $match: { ...search.search, language },
                     },
                     { $sample: { size: totalCount } },
                     {
@@ -82,6 +82,7 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
                 isRate: !!ratings[String(oneItem._id)]?.isRate,
                 totalStar: oneItem.totalStar,
                 publish: oneItem.publish,
+                language: oneItem.language,
             })
         }))
 
@@ -92,9 +93,9 @@ const getAllBookSummariesForDiscover = async (skip: number, limit, search: any, 
 }
 
 /** Get user libraries book summaries */
-const getAllBookSummaries = async (skip: number, limit: number, search: any, sort, library?: any) => {
+const getAllBookSummaries = async (skip: number, limit: number, search: any, sort, language: Types.ObjectId, library?: any) => {
     try {
-        search.publish = true
+        const query = { ...search, publish: true, language }
         const aggregate: any = new Set([
             {
                 '$project': {
@@ -141,12 +142,9 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                 $sort: sort,
             },
         ])
-
-        if (Object.keys(search).length) {
-            aggregate.add({
-                $match: search,
-            })
-        }
+        aggregate.add({
+            $match: query,
+        })
         const page: any = [{ $skip: skip }]
 
         aggregate.add({
@@ -258,10 +256,10 @@ const findBook = async (query: any) => {
     }
 }
 
-const getMostPopularBooks = async (skip: number, limit: number, search: any, sort: any, library?: any) => {
+const getMostPopularBooks = async (skip: number, limit: number, search: any, sort: any, language: Types.ObjectId, library?: any) => {
     try {
         search.publish = true;
-
+        search.language = language
         // Convert the Set to an array to use MongoDB aggregation stages properly
         const aggregate: any[] = [
             {
@@ -414,13 +412,13 @@ const findRandomBooks = async (query: any, count: any) => {
     }
 }
 
-const getAllBookSummariesForWebsite = async (search: any, sort: any) => {
+const getAllBookSummariesForWebsite = async (search: any, sort: any, language: Types.ObjectId) => {
     try {
         // Ensure that only published books are searched
         search.search.publish = true;
 
         // Get total document count for published summaries
-        const totalCount = await BookSummaryModel.find({ publish: true }).countDocuments();
+        const totalCount = await BookSummaryModel.find({ publish: true, language }).countDocuments();
 
         // Perform aggregation to get all book summaries without pagination
         const result: any = await BookSummaryModel.aggregate([
@@ -442,7 +440,7 @@ const getAllBookSummariesForWebsite = async (search: any, sort: any) => {
                 },
             },
             {
-                $match: search.search,
+                $match: { ...search.search, language },
             },
             { $sample: { size: totalCount } },
         ]);

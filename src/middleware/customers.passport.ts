@@ -3,6 +3,7 @@ import { verifyToken } from '../lib/utils/utils'
 import { SettingModel, UserModel } from '../models'
 import Boom from '@hapi/boom'
 import { ISetting } from '../models/setting.model'
+import languageService from '../services/admin/language/language.service'
 
 export default async (req: any, res: Response, next: NextFunction): Promise<any> => {
     const accessToken: string | null = req.headers['x-access-token'] as string;
@@ -41,6 +42,11 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
             // if (!userDetails.verified) {
             //     return next(Boom.forbidden('User not verfied'));
             // }
+            if(!userDetails.language) {
+                const language = await languageService.getLanguageCache('en')
+                userDetails.language = language
+                await UserModel.findOneAndUpdate({ _id: userDetails._id }, { $set: { language } })
+            }
             if (
                 false &&
                 !req.path.includes('logout') &&

@@ -8,7 +8,8 @@ export interface IMeditation extends mongoose.Document {
     category?: Types.ObjectId,
     image: string,
     video?: string,
-    duration : string
+    duration : string,
+    language: {type: Schema.Types.ObjectId, ref: 'language'},
     description: string
     status?: 'Active' | 'Deactive',
     publish?: boolean,
@@ -21,7 +22,8 @@ export type createMeditationType = {
     category?: Types.ObjectId, 
     image?: string,
     video?: string,
-    duration : string
+    duration : string,
+    language: {type: Schema.Types.ObjectId, ref: 'language'},
     description: string,
     status?: 'Active' | 'Deactive',
     publish?: boolean,
@@ -35,7 +37,8 @@ export type getMeditationType = {
     title: string,
     category: Types.ObjectId,
     video?: string,
-    duration : string
+    duration : string,
+    language: {type: Schema.Types.ObjectId, ref: 'language'},
     image?: string,
     description: string,
     status?: 'Active' | 'Deactive',
@@ -54,6 +57,7 @@ export const MeditationSchema = new Schema({
     status: { type: String, default: 'Active' },
     publish : { type: Boolean, default: false },
     publishedAt: { type: Date },
+    language: {type: Schema.Types.ObjectId, ref: 'language', index: true},
     createdAt: {
         type: Date, default: () => {
             return new Date()

@@ -20,7 +20,8 @@ const addTestimonial = async (req: Request, res: Response, next: NextFunction) =
     try {
         const { body } = req
         /** Get testimonial from db */
-        const testimonial: any = await testimonialService.getOneTestimonialByFilter({ name: req.body.name })
+        const language = (req as any).languageId;
+        const testimonial: any = await testimonialService.getOneTestimonialByFilter({ name: req.body.name, language })
         if (testimonial) return next(Boom.badData(testimonialControllerResponse.createTestimonialFailure))
 
         if (body.image) {
@@ -32,6 +33,7 @@ const addTestimonial = async (req: Request, res: Response, next: NextFunction) =
             image: body.image,
             description: body.description,
             status: 'Active',
+            language,
         })
         res.status(200).send({
             message: testimonialControllerResponse.createTestimonialSuccess,
@@ -63,6 +65,7 @@ const getAllTestimonial = async (request: Request, response: Response, next: Nex
         const params = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
+        const language = (request as any).languageId;
 
         let searchFilter = {}
         if (params.search) {
@@ -80,7 +83,7 @@ const getAllTestimonial = async (request: Request, response: Response, next: Nex
             ? [[sortingColumn, sortingOrder]]
             : [['name', 'desc']];
 
-        const data = await testimonialService.getAllTestimonials(Number(skip), Number(limit), searchFilter, testimonialSorting)
+        const data = await testimonialService.getAllTestimonials(Number(skip), Number(limit), searchFilter, testimonialSorting, language)
         response.status(200).json({ message: testimonialControllerResponse.fetchTestimonialSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -92,6 +95,7 @@ const updateTestimonial = async (req: Request, res: Response, next: NextFunction
     try {
         const id: any = req.params.id
         /** Get testimonial from db */
+        const language = (req as any).languageId;
         const testimonialDetails: any = await testimonialService.getOneTestimonialByFilter({ _id: id })
         if (!testimonialDetails) return next(Boom.notFound(testimonialControllerResponse.getTestimonialFailure))
         if (req.body.image === null) await removeS3File(testimonialDetails.image, s3Bucket)
@@ -103,6 +107,8 @@ const updateTestimonial = async (req: Request, res: Response, next: NextFunction
         }
         if (req.body.image && req.body.image.startsWith('http')) req.body.image = testimonialDetails.image
 
+        req.body.language = language;
+        
         await testimonialService.updateTestimonial(req.body, id)
         return res.status(200).send({ message: testimonialControllerResponse.updateTestimonialSuccess })
     } catch (e: any) {

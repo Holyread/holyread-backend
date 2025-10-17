@@ -1,4 +1,4 @@
-import { FilterQuery } from 'mongoose';
+import { FilterQuery, Types } from 'mongoose';
 import { formattedDate, getDates, sortArrayObject } from '../../../lib/utils/utils';
 import { TransactionsModel } from '../../../models/index'
 import { ITransactions } from '../../../models/transactions.model';
@@ -8,11 +8,13 @@ const getAllTransactions = async (
       skip: number,
       limit: number,
       search: any,
-      sort: any
+      sort: any,
+      language?: Types.ObjectId
 ) => {
       try {
+            const baseQuery: any = {};
             const result: any = await TransactionsModel
-                  .find({})
+                  .find(baseQuery)
                   .select([
                         'total',
                         'userId',
@@ -26,6 +28,7 @@ const getAllTransactions = async (
                         select: [
                               'email',
                               'inAppSubscription',
+                              'language',
                         ]
                   })
                   .lean()
@@ -166,7 +169,7 @@ const getTransactionById = async (_id: string) => {
 }
 
 /** Get user analytics */
-const getUserAnalytics = async (duration = 'year') => {
+const getUserAnalytics = async (duration = 'year', language: Types.ObjectId) => {
       try {
             const now = new Date();
             switch (duration) {
@@ -185,12 +188,18 @@ const getUserAnalytics = async (duration = 'year') => {
 
             const transactions: any = await TransactionsModel
                   .find({ userId: { $exists: true }, createdAt: { $gt: now }, status: { $in: ['active', 'subscribed', 'did_renew'] } })
+                  .populate({
+                        path: 'userId',
+                        select: 'language',
+                  })
                   .select(
                         'userId total status createdAt amount device'
                   )
                   .sort([['createdAt', 'asc']])
                   .lean()
                   .exec();
+
+            const filteredTransactions = language ? transactions.filter(j => j.userId?.language === language) : transactions;
 
             const today = new Date();
             today.setHours(23, 59, 59, 999);

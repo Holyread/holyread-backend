@@ -32,9 +32,10 @@ const handleFileUpload = async (file: string, title: string, type: string, exist
 const addDailyDevotional = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body;
+        const language = (req as any).languageId;
         /** Check if title exists */
         if (body.title) {
-            const existingDevotional = await dailyDevotionalService.getOneDailyDevotionalByFilter({ title: body.title });
+            const existingDevotional = await dailyDevotionalService.getOneDailyDevotionalByFilter({ title: body.title, language });
             if (existingDevotional) return next(Boom.badData(dailyDevotionalControllerResponse.createDailyDevotionalFailure));
         }
 
@@ -50,6 +51,7 @@ const addDailyDevotional = async (req: Request, res: Response, next: NextFunctio
             audioFileSize: audioFile.size,
             videoFileSize: videoFile.size,
             status: body.status || 'Active',
+            language,
         };
 
         const data = await dailyDevotionalService.createDailyDevotional(newDevotional);
@@ -63,7 +65,8 @@ const addDailyDevotional = async (req: Request, res: Response, next: NextFunctio
 const getOneDailyDevotional = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id = req.params.id;
-        const data = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id });
+        const language = (req as any).languageId;
+        const data = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id, language });
         if (!data) return next(Boom.notFound(dailyDevotionalControllerResponse.getDailyDevotionalFailure));
         if (data) {
             if (data.image) data.image = getImageUrl(data.image, awsBucket.readsOfDayDirectory);
@@ -82,7 +85,7 @@ const getAllDailyDevotional = async (req: Request, res: Response, next: NextFunc
         const params = req.query;
         const skip = Number(params.skip) || dataTable.skip;
         const limit = Number(params.limit) || dataTable.limit;
-
+        const language = (req as any).languageId;
         let searchQuery: FilterQuery<IDailyDvotional> = {};
         if (params.search) {
             searchQuery = {
@@ -103,7 +106,7 @@ const getAllDailyDevotional = async (req: Request, res: Response, next: NextFunc
             ? [[sortingColumn, sortingOrder]]
             : [['createdAt', 'desc']];
 
-        const data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, searchQuery, readsOfDaySorting);
+        const data = await dailyDevotionalService.getAllDailyDevotional(skip, limit, searchQuery, readsOfDaySorting, language);
         res.status(200).json({ message: dailyDevotionalControllerResponse.fetchDailyDevotionalsSuccess, data });
     } catch (e: any) {
         next(Boom.badData(e.message));
@@ -114,7 +117,8 @@ const getAllDailyDevotional = async (req: Request, res: Response, next: NextFunc
 const updateDailyDevotional = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id = req.params.id;
-        const existingDevotional = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id });
+        const language = (req as any).languageId;
+        const existingDevotional = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id, language });
 
         if (!existingDevotional) return next(Boom.notFound(dailyDevotionalControllerResponse.getDailyDevotionalFailure));
 
@@ -129,6 +133,7 @@ const updateDailyDevotional = async (req: Request, res: Response, next: NextFunc
             video: videoFile.name,
             audioFileSize: audioFile.size,
             videoFileSize: videoFile.size,
+            language,
         };
 
         await dailyDevotionalService.updateDailyDevotional(updatedDevotional, id);

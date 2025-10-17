@@ -2,15 +2,16 @@ import { DailyDvotionalModel } from '../../../models/index'
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { IDailyDvotional } from '../../../models/dailyDvotional.model'
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 
 const NODE_ENV = config.NODE_ENV
 
 /** Get all daily devotional for app */
-const getAllDailyDevotional = async (skip: number, limit, search: FilterQuery<IDailyDvotional>, sort) => {
+const getAllDailyDevotional = async (skip: number, limit, search: FilterQuery<IDailyDvotional>, sort, language: Types.ObjectId) => {
     try {
-        const dailyDevotionalList: any = await DailyDvotionalModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        const count: any = await DailyDvotionalModel.countDocuments(search).lean().exec()
+        const query = { ...search, language }
+        const dailyDevotionalList: any = await DailyDvotionalModel.find(query).skip(skip).limit(limit).sort(sort).lean()
+        const count: any = await DailyDvotionalModel.countDocuments(query).lean().exec()
         dailyDevotionalList.map(async (item: any) => {
             item.image = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + item.image
             if (item.video) {

@@ -14,9 +14,10 @@ const emailTemplateControllerResponse = responseMessage.emailTemplateControllerR
 const addEmailTemplate = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
-        const emailTemplateObj: any = await emailTemplateService.getOneEmailTemplateByFilter({ title: body.title })
+        const language = (req as any).languageId
+        const emailTemplateObj: any = await emailTemplateService.getOneEmailTemplateByFilter({ title: body.title, language })
         if (emailTemplateObj) return next(Boom.conflict(emailTemplateControllerResponse.createEmailTemplateFailure))
-
+        body.language = language
         const data = await emailTemplateService.createEmailTemplate(body)
         res.status(200).send({
             message: emailTemplateControllerResponse.createEmailTemplateSuccess,
@@ -50,6 +51,7 @@ const getAllEmailTemplates = async (request: Request, response: Response, next: 
         const params = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
+        const language = (request as any).languageId
 
         let searchFilter: FilterQuery<IEmailTemplate> = {}
 
@@ -69,7 +71,7 @@ const getAllEmailTemplates = async (request: Request, response: Response, next: 
             ? [[sortingColumn, sortingOrder]]
             : [['title', 'desc']];
 
-        const getAllEmailTemplatesList = await emailTemplateService.getAllEmailTemplates(Number(skip), Number(limit), searchFilter, emailTemplateSorting)
+        const getAllEmailTemplatesList = await emailTemplateService.getAllEmailTemplates(Number(skip), Number(limit), searchFilter, emailTemplateSorting, language)
         response.status(200).json({ message: emailTemplateControllerResponse.fetchAllEmailTemplatesSuccess, data: getAllEmailTemplatesList })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -80,6 +82,8 @@ const getAllEmailTemplates = async (request: Request, response: Response, next: 
 const updateEmailTemplate = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
+        const language = (req as any).languageId
+        req.body.language = language
         /** Get email template from db */
         const emailTemplateObj: any = await emailTemplateService.getOneEmailTemplateByFilter({ _id: id })
         if (!emailTemplateObj) return next(Boom.notFound(emailTemplateControllerResponse.getEmailTemplateFailure))

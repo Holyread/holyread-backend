@@ -3,7 +3,7 @@ import { awsBucket } from '../../../constants/app.constant'
 import { responseMessage } from '../../../constants/message.constant'
 import { getImageUrl } from '../../../lib/utils/utils'
 import { IBookCategory } from '../../../models/bookCategory.model'
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 
 const bookCategoryControllerResponse = responseMessage.bookCategoryControllerResponse
 
@@ -45,10 +45,14 @@ const getOneBookCategoryByFilter = async (query: any) => {
 }
 
 /** Get all book category for table */
-const getAllBookCategory = async (skip: number, limit, search: FilterQuery<IBookCategory>, sort) => {
+const getAllBookCategory = async (skip: number, limit, search: FilterQuery<IBookCategory>, sort, language: Types.ObjectId) => {
     try {
-        const result = await BookCategoryModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        const count = await BookCategoryModel.find(search).countDocuments()
+        const query = { ...search };
+        if (language) {
+            query.language = language;
+        }
+        const result = await BookCategoryModel.find(query).skip(skip).limit(limit).sort(sort).lean()
+        const count = await BookCategoryModel.find(query).countDocuments()
         await Promise.all(result.map(async (item: any) => {
             if (!item) return
             if (item.image) item.image = getImageUrl(item.image, `${awsBucket.bookDirectory}/category`);
@@ -60,9 +64,9 @@ const getAllBookCategory = async (skip: number, limit, search: FilterQuery<IBook
 }
 
 /** Get all book categories names */
-const getAllBookCategoriesNames = async () => {
+const getAllBookCategoriesNames = async (language: Types.ObjectId) => {
     try {
-        const result = await BookCategoryModel.find({}).select('title').lean()
+        const result = await BookCategoryModel.find({ language }).select('title').lean()
         return result
     } catch (e: any) {
         throw new Error(e)

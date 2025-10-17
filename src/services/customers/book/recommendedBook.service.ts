@@ -1,15 +1,15 @@
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 import { RecommendedBookModel, BookSummaryModel, BookAuthorModel } from '../../../models/index'
 import { IRecommendedBook } from '../../../models/recommendedBooks.model'
 
 /** Get all recommended books for app */
-const getAllRecommendedBooks = async (skip: number, limit, search: FilterQuery<IRecommendedBook>, sort) => {
+const getAllRecommendedBooks = async (skip: number, limit, search: FilterQuery<IRecommendedBook>, sort, language: Types.ObjectId) => {
       try {
-            let recommendedBooks: any = await RecommendedBookModel.find(search).skip(skip).limit(limit).sort(sort).lean().exec()
-            let count: any = await RecommendedBookModel.countDocuments(search).lean().exec()
+            let recommendedBooks: any = await RecommendedBookModel.find({ ...search, language }).skip(skip).limit(limit).sort(sort).lean().exec()
+            let count: any = await RecommendedBookModel.countDocuments({ ...search, language }).lean().exec()
             recommendedBooks = await Promise.all(recommendedBooks.map(async item => {
                   if (item && item.book) {
-                        item.book = await BookSummaryModel.findOne({ _id: item.book, publish: true }).lean()
+                        item.book = await BookSummaryModel.findOne({ _id: item.book, publish: true, language }).lean()
                         if (!item.book?._id) {
                               --count;
                               return item

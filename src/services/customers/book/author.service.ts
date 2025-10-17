@@ -1,9 +1,9 @@
 import { BookAuthorModel } from '../../../models/index'
-
+import { Types } from 'mongoose'
 /** Get all author options list */
-const getAllAuthorsOptionsList = async () => {
+const getAllAuthorsOptionsList = async (language: Types.ObjectId) => {
       try {
-            const authorsOptionsList = await BookAuthorModel.find({}).select('name').sort([['name', 'asc']])
+            const authorsOptionsList = await BookAuthorModel.find({language}).select('name').sort([['name', 'asc']])
             return authorsOptionsList
       } catch (e: any) {
             throw new Error(e)

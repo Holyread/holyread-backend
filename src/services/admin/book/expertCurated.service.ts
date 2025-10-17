@@ -2,7 +2,7 @@ import { awsBucket } from '../../../constants/app.constant'
 import { ExpertCuratedModel } from '../../../models/index'
 import { responseMessage } from '../../../constants/message.constant'
 import { getImageUrl } from '../../../lib/utils/utils'
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 import { IExpertCurated } from '../../../models/expertCurated.model'
 
 const expertCuratedControllerResponse = responseMessage.expertCuratedControllerResponse
@@ -44,10 +44,14 @@ const getOneExpertCuratedByFilter = async (query: any) => {
 }
 
 /** Get all expert Curated for table */
-const getAllExpertCurated = async (skip: number, limit, search: FilterQuery<IExpertCurated>, sort) => {
+const getAllExpertCurated = async (skip: number, limit, search: FilterQuery<IExpertCurated>, sort, language: Types.ObjectId) => {
     try {
-        const result = await ExpertCuratedModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-        const count: number = await ExpertCuratedModel.find(search).countDocuments()
+        const query = { ...search };
+        if (language) {
+            query.language = language;
+        }
+        const result = await ExpertCuratedModel.find(query).skip(skip).limit(limit).sort(sort).lean()
+        const count: number = await ExpertCuratedModel.find(query).countDocuments()
         if (result.length) {
             await Promise.all(result.map(item => {
                 if (item && item.image) item.image = getImageUrl(item.image, `${awsBucket.bookDirectory}/expertCurated`);
@@ -70,9 +74,9 @@ const deleteExpertCurated = async (id: string) => {
 }
 
 /** Get all expert Curated for table */
-const getExpertCuratedList = async () => {
+const getExpertCuratedList = async (language: Types.ObjectId) => {
     try {
-        const result = await ExpertCuratedModel.find().lean()
+        const result = await ExpertCuratedModel.find({ language }).lean()
         if (result.length) {
             await Promise.all(result.map((item: any) => {
                 if (item && typeof item.publish === 'boolean') {

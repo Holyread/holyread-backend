@@ -199,7 +199,7 @@ const getUserAnalytics = async (duration = 'year', language: Types.ObjectId) => 
                   .lean()
                   .exec();
 
-            const filteredTransactions = language ? transactions.filter(j => j.userId?.language === language) : transactions;
+            // const filteredTransactions = language ? transactions.filter(j => j.userId?.language === language) : transactions;
 
             const today = new Date();
             today.setHours(23, 59, 59, 999);

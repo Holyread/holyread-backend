@@ -54,7 +54,7 @@ const getAllExpertCurated = async (request: Request, response: Response, next: N
         const params = request.query as any
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
-
+        const language = (request as any).user.language
         let searchFilter = {}
         if (params.search) {
             searchFilter = {
@@ -82,7 +82,7 @@ const getAllExpertCurated = async (request: Request, response: Response, next: N
                 break;
         }
 
-        const data = await expertCuratedService.getAllExpertCurateds(Number(skip), Number(limit), searchFilter, expertCuratedSorting)
+        const data = await expertCuratedService.getAllExpertCurateds(Number(skip), Number(limit), searchFilter, expertCuratedSorting, language)
         response.status(200).json({ message: expertCuratedControllerResponse.fetchAllExpertCuratedSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))

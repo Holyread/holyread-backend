@@ -7,7 +7,8 @@ export interface ICms extends mongoose.Document {
     metaTitle: string,
     metaKeyword: string,
     metaDescription: string,
-    content: string
+    content: string,
+    language: {type: Schema.Types.ObjectId, ref: 'language'}
 }
 
 export type createCmsType = {
@@ -15,7 +16,8 @@ export type createCmsType = {
     metaTitle: string,
     metaKeyword: string,
     metaDescription: string,
-    content: string
+    content: string,
+    language: {type: Schema.Types.ObjectId, ref: 'language'}
 }
 
 export type getCmsType = {
@@ -24,7 +26,8 @@ export type getCmsType = {
     metaTitle?: string,
     metaKeyword?: string,
     metaDescription?: string,
-    content?: string
+    content?: string,
+    language?: {type: Schema.Types.ObjectId, ref: 'language'}
 }
 
 export const CmsSchema = new Schema({
@@ -33,6 +36,7 @@ export const CmsSchema = new Schema({
     metaKeyword: { type: String, required: true },
     metaDescription: { type: String, required: true },
     content: { type: String, required: true },
+    language: {type: Schema.Types.ObjectId, ref: 'language', index: true},
     createdAt: {
         type: Date, default: () => {
             return new Date()

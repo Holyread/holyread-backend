@@ -157,7 +157,7 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
         const params = request.query;
         const skip = params.skip || dataTable.skip;
         const limit = params.limit;
-
+        const language = (request as any).languageId
         let searchFilter: any = {};
 
         // Handle search query
@@ -413,7 +413,8 @@ const getAllUsers = async (request: Request | any, response: Response, next: Nex
             Number(skip),
             Number(limit),
             searchFilter,
-            usersSorting
+            usersSorting,
+            language
         );
 
         await Promise.all(users.map(async (user: any) => {

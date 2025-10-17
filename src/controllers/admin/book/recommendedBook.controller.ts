@@ -55,6 +55,7 @@ const getAllRecommendedBooks = async (request: Request, response: Response, next
         const params = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
+        const language = (request as any).languageId
 
         let searchFilter: FilterQuery<IRecommendedBook> = {}
         if (params.search) {
@@ -73,7 +74,7 @@ const getAllRecommendedBooks = async (request: Request, response: Response, next
                 break;
         }
 
-        const data = await recommendedBookService.getAllRecommendedBooks(Number(skip), Number(limit), searchFilter, listSorting)
+        const data = await recommendedBookService.getAllRecommendedBooks(Number(skip), Number(limit), searchFilter, listSorting, language)
         data.recommendedBooks.forEach((element: any) => {
             if (element && element.book) {
                 element.book = element.book.title

@@ -1,4 +1,4 @@
-import { FilterQuery } from 'mongoose';
+import { FilterQuery, Types } from 'mongoose';
 import { IMeditation } from '../../../models/meditation.model';
 import { MeditationModel } from '../../../models/index'
 import { formattedDate, getImageUrl } from '../../../lib/utils/utils'
@@ -45,16 +45,20 @@ const getOneMeditationByFilter = async (query: any) => {
 }
 
 /** Get all Meditations for table */
-const getAllMeditations = async (skip: number, limit, search: FilterQuery<IMeditation>, sort) => {
+const getAllMeditations = async (skip: number, limit, search: FilterQuery<IMeditation>, sort, language: Types.ObjectId) => {
     try {
-        const result: any = await MeditationModel.find(search).populate('category').skip(skip).limit(limit).sort(sort).lean()
+        const query = { ...search };
+        if (language) {
+            query.language = language;
+        }
+        const result: any = await MeditationModel.find(query).populate('category').skip(skip).limit(limit).sort(sort).lean()
         await Promise.all(result.map(async (item: any) => {
             item.createdAt = formattedDate(item.createdAt).replace(/ /g, ' ')
             if (item.image) item.image = getImageUrl(item.image, `${awsBucket.meditationDirectory}`);
             if (item.video) item.video = getImageUrl(item.video, `${awsBucket.meditationDirectory}/video`);
             if (item.category) item.category = item.category.title
         }))
-        const count = await MeditationModel.find(search).countDocuments()
+        const count = await MeditationModel.find(query).countDocuments()
         return { count, meditations: result }
     } catch (e: any) {
         throw new Error(e)
@@ -71,9 +75,9 @@ const deleteMeditation = async (id: string) => {
     }
 }
 
-const getAllMeditationsForExport = async () => {
+const getAllMeditationsForExport = async (language: Types.ObjectId) => {
     try {
-        const result: any = await MeditationModel.find().populate('category').sort([['createdAt', 'desc']]).lean()
+        const result: any = await MeditationModel.find({ language }).populate('category').sort([['createdAt', 'desc']]).lean()
         await Promise.all(result.map(async (item: any) => {
             item.createdAt = formattedDate(item.createdAt).replace(/ /g, ' ')
             if (item.image) item.image = getImageUrl(item.image, `${awsBucket.meditationDirectory}`);

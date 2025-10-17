@@ -3,7 +3,7 @@ import { awsBucket } from '../../../constants/app.constant'
 import { responseMessage } from '../../../constants/message.constant'
 import { formattedDate, getImageUrl } from '../../../lib/utils/utils'
 import { IDailyDvotional } from '../../../models/dailyDvotional.model'
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 
 const dailyDevotionalControllerResponse = responseMessage.dailyDevotionalControllerResponse
 
@@ -54,16 +54,20 @@ const getOneDailyDevotionalByFilter = async (query: any) => {
 }
 
 /** Get all Daily Devotional for table */
-const getAllDailyDevotional = async (skip: number, limit: number, search: FilterQuery<IDailyDvotional>, sort: any) => {
+const getAllDailyDevotional = async (skip: number, limit: number, search: FilterQuery<IDailyDvotional>, sort: any, language: Types.ObjectId) => {
     try {
-        const result: any = await DailyDvotionalModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+        const query = { ...search };
+        if (language) {
+            query.language = language;
+        }
+        const result: any = await DailyDvotionalModel.find(query).skip(skip).limit(limit).sort(sort).lean()
         await Promise.all(result.map(async (item: any) => {
             item.createdAt = formattedDate(item.createdAt).replace(/ /g, ' ')
             item.image = getImageUrl(item.image, awsBucket.readsOfDayDirectory);
             if (item.video) item.video = getImageUrl(item.video, `${awsBucket.readsOfDayDirectory}/video`);
             if (item.audio) item.audio = getImageUrl(item.audio, `${awsBucket.readsOfDayDirectory}/audio`);
         }))
-        const count = await DailyDvotionalModel.countDocuments(search)
+        const count = await DailyDvotionalModel.countDocuments(query)
         return { count, reads: result }
     } catch (e: any) {
         throw new Error(e)
@@ -81,9 +85,9 @@ const deleteDailyDevotional = async (id: string) => {
 }
 
 /** Get all  Daily Devotional for table */
-const getDailyDevotionalList = async () => {
+const getDailyDevotionalList = async (language: Types.ObjectId) => {
     try {
-        const result: any = await DailyDvotionalModel.find().lean()
+        const result: any = await DailyDvotionalModel.find({ language }).lean()
         await Promise.all(result.map(async (i: any) => {
             i.createdAt = formattedDate(i.createdAt).replace(/ /g, ' ')
         }))

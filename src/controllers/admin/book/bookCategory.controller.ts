@@ -22,8 +22,9 @@ const s3Bucket = {
 const addCategory = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
+        const language = (req as any).languageId;
         /** Get category from db */
-        const category: any = await bookCategoryService.getOneBookCategoryByFilter({ title: req.body.title })
+        const category: any = await bookCategoryService.getOneBookCategoryByFilter({ title: req.body.title, language })
         if (category) return next(Boom.badData(bookCategoryControllerResponse.createBookCategoryFailure))
 
         if (body.image) {
@@ -34,6 +35,7 @@ const addCategory = async (req: Request, res: Response, next: NextFunction) => {
             title: body.title,
             image: body.image,
             status: body.status,
+            language: language,
         })
         res.status(200).send({
             message: bookCategoryControllerResponse.createBookCategorySuccess,
@@ -64,7 +66,7 @@ const getAllCategory = async (request: Request, response: Response, next: NextFu
         const params = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
-
+        const language = (request as any).languageId;
         let searchFilter: FilterQuery<IBookCategory> = {}
         if (params.search) {
             searchFilter = {
@@ -80,7 +82,7 @@ const getAllCategory = async (request: Request, response: Response, next: NextFu
         const categorySorting = ['title', 'createdAt'].includes(sortingColumn)
             ? [[sortingColumn, sortingOrder]]
             : [['title', 'desc']];
-        const data = await bookCategoryService.getAllBookCategory(Number(skip), Number(limit), searchFilter, categorySorting)
+        const data = await bookCategoryService.getAllBookCategory(Number(skip), Number(limit), searchFilter, categorySorting, language)
         response.status(200).json({ message: bookCategoryControllerResponse.fetchBookCategoriesSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -90,7 +92,8 @@ const getAllCategory = async (request: Request, response: Response, next: NextFu
 /** Get all book categories options list */
 const getAllCategoriesOptionsList = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const data = await bookCategoryService.getAllBookCategoriesNames()
+        const language = (request as any).languageId;
+        const data = await bookCategoryService.getAllBookCategoriesNames(language)
         response.status(200).json({ message: bookCategoryControllerResponse.fetchBookCategoriesSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -103,7 +106,7 @@ const updateCateogry = async (req: Request, res: Response, next: NextFunction): 
         const id: string = req.params.id
         /** Get book category from db */
         const categoryDetails: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
-
+        const language = (req as any).languageId;
         if (!categoryDetails) return next(Boom.notFound(bookCategoryControllerResponse.getBookCategoryFailure))
         if (req.body.image === null) await removeS3File(categoryDetails.image, s3Bucket)
         if (req.body.image && req.body.image.includes('base64')) {
@@ -112,7 +115,7 @@ const updateCateogry = async (req: Request, res: Response, next: NextFunction): 
             req.body.image = s3File.name
         }
         if (req.body.image && req.body.image.startsWith('http')) req.body.image = categoryDetails.image
-
+        req.body.language = language;
         await bookCategoryService.updateBookCategory(req.body, id)
         return res.status(200).send({ message: bookCategoryControllerResponse.updateBookCategorySuccess })
     } catch (e: any) {

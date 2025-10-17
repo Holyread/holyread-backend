@@ -22,7 +22,8 @@ const s3Bucket = {
 const addMeditation = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
-        const meditation = await meditationService.getOneMeditationByFilter({ title: req.body.title })
+        const language = (req as any).languageId;
+        const meditation = await meditationService.getOneMeditationByFilter({ title: req.body.title, language })
         if (meditation) return next(Boom.badData(meditationControllerResponse.createMeditationFailure))
         if (body.image) {
             const s3File: any = await uploadFileToS3(body.image, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory })
@@ -37,7 +38,8 @@ const addMeditation = async (req: Request, res: Response, next: NextFunction) =>
         const bodyData = {
             ...body,
             image: body.image,
-            video: body.video
+            video: body.video,
+            language,
         }
 
         const meditationObj: any = await meditationService.createMeditation(bodyData)
@@ -56,7 +58,8 @@ const getOneMeditation = async (req: Request, res: Response, next: NextFunction)
     try {
         const id: any = req.params.id
         /** Get meditation from db */
-        const meditationObj: any = await meditationService.getOneMeditationByFilter({ _id: id })
+        const language = (req as any).languageId;
+        const meditationObj: any = await meditationService.getOneMeditationByFilter({ _id: id, language })
         if (!meditationObj) {
             return next(Boom.notFound(meditationControllerResponse.createMeditationFailure))
         }
@@ -77,7 +80,7 @@ const getAllMeditations = async (request: Request, response: Response, next: Nex
         const params = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
-
+        const language = (request as any).languageId;
         let searchFilter: FilterQuery<IMeditation> = {}
 
         if (params.search) {
@@ -104,7 +107,7 @@ const getAllMeditations = async (request: Request, response: Response, next: Nex
             ? [[sortingColumn, sortingOrder]]
             : [['createdAt', 'desc']];
 
-        const getMeditationsList = await meditationService.getAllMeditations(Number(skip), Number(limit), searchFilter, meditationSorting)
+        const getMeditationsList = await meditationService.getAllMeditations(Number(skip), Number(limit), searchFilter, meditationSorting, language)
         response.status(200).json({ message: meditationControllerResponse.fetchAllMeditationSuccess, data: getMeditationsList })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -116,7 +119,8 @@ const updateMeditation = async (req: Request, res: Response, next: NextFunction)
     try {
         const id: any = req.params.id
         /** Get faq from db */
-        const meditationObj: any = await meditationService.getOneMeditationByFilter({ _id: id })
+        const language = (req as any).languageId;
+        const meditationObj: any = await meditationService.getOneMeditationByFilter({ _id: id, language })
         if (!meditationObj) {
             return next(Boom.notFound(meditationControllerResponse.getMeditationFailure))
         }

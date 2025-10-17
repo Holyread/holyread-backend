@@ -9,7 +9,8 @@ const authorControllerResponse = responseMessage.authorControllerResponse
 /** Get all author options list */
 const getAllAuthorsOptionsList = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const getAuthorsOptionsList = await authorService.getAllAuthorsOptionsList()
+        const language = (request as any).user.language
+        const getAuthorsOptionsList = await authorService.getAllAuthorsOptionsList(language)
         response.status(200).json({ message: authorControllerResponse.fetchAuthorsSuccess, data: getAuthorsOptionsList })
     } catch (e: any) {
         next(Boom.badData(e.message))

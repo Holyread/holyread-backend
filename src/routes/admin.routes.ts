@@ -34,8 +34,12 @@ import meditationCategory from './admin/meditationCategory.route'
 import appVersion from './admin/appVersion.route'
 import cronSchedule from './admin/cronSchedule.route'
 import alertPipeline from './admin/alerts.route'
+import language from './admin/language.route'
+import { languageMiddleware } from '../middleware/language.middleware'
+import notificationTemplate from './admin/notificationTemplate.route'
 
 const router: Router = express.Router()
+router.use(languageMiddleware);
 
 router.use('/auth', auth)
 
@@ -80,4 +84,6 @@ router.use('/app-version', adminPassport, appVersion)
 router.use('/cron-schedule', adminPassport, cronSchedule)
 router.use('/alerts', adminPassport, alertPipeline)
 
+router.use('/language', adminPassport, language)
+router.use('/notification-template', adminPassport, notificationTemplate)
 export default router

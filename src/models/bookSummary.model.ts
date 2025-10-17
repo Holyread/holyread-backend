@@ -26,6 +26,7 @@ export interface IBookSummary extends mongoose.Document {
     publish?: boolean,
     totalStar?: number,
     publishedAt: Date,
+    language: {type: Schema.Types.ObjectId, ref: 'language'},
     updatedAt : Date,
     createdAt: Date
 }
@@ -49,6 +50,7 @@ export type createBookSummaryType = {
         audioFile: string,
         size: number
     }],
+    language: {type: Schema.Types.ObjectId, ref: 'language'},
     views?: number,
     status?: 'Active' | 'Deactive',
     publish?: boolean,
@@ -83,6 +85,7 @@ export type getBookSummaryType = {
     publish?: boolean,
     totalStar?: number,
     publishedAt: Date,
+    language?: {type: Schema.Types.ObjectId, ref: 'language'},
     updatedAt : Date,
     createdAt: Date
 }
@@ -118,6 +121,7 @@ export const BookSummarySchema = new Schema({
     views: { type: Number, default: 0 },
     publish: { type: Boolean, default: false },
     totalStar: { type: Number },
+    language: {type: Schema.Types.ObjectId, ref: 'language', index: true},
     createdAt: {
         type: Date, default: () => {
             return new Date()

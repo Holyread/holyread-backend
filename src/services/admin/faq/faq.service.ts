@@ -1,4 +1,4 @@
-import { FilterQuery } from 'mongoose';
+import { FilterQuery, Types } from 'mongoose';
 import { IFaq } from '../../../models/faq.model';
 import { FaqModel } from '../../../models/index'
 
@@ -44,13 +44,17 @@ const getOneFaqByFilter = async (query: any) => {
 }
 
 /** Get all Faqs for table */
-const getAllFaqs = async (skip: number, limit, search: FilterQuery<IFaq>, sort) => {
+const getAllFaqs = async (skip: number, limit, search: FilterQuery<IFaq>, sort, language?: Types.ObjectId) => {
       try {
-            const faqsList: any = await FaqModel.find(search).skip(skip).limit(limit).sort(sort).lean()
+            const query = { ...search };
+            if (language) {
+                  query.language = language;
+            }
+            const faqsList: any = await FaqModel.find(query).skip(skip).limit(limit).sort(sort).lean()
             faqsList.forEach(item => {
                   item.status = item.status === 'Active';
             })
-            const count = await FaqModel.find(search).countDocuments()
+            const count = await FaqModel.find(query).countDocuments()
             return { count, faqs: faqsList }
       } catch (e: any) {
             throw new Error(e)

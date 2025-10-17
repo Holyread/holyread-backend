@@ -1,4 +1,4 @@
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 import { IBookAuthor } from '../../../models/bookAuthor.model'
 import { BookAuthorModel, BookSummaryModel } from '../../../models/index'
 
@@ -37,10 +37,14 @@ const getOneAuthorByFilter = async (query: any) => {
 }
 
 /** Get all authors for table */
-const getAllAuthors = async (skip: number, limit, search: FilterQuery<IBookAuthor>, sort) => {
+const getAllAuthors = async (skip: number, limit, search: FilterQuery<IBookAuthor>, sort, language: Types.ObjectId) => {
       try {
-            const authorsList: any = await BookAuthorModel.find(search).select('name about').skip(skip).limit(limit).sort(sort).lean()
-            const count = await BookAuthorModel.find(search).countDocuments();
+            const query = { ...search };
+            if (language) {
+                  query.language = language;
+            }
+            const authorsList: any = await BookAuthorModel.find(query).select('name about').skip(skip).limit(limit).sort(sort).lean()
+            const count = await BookAuthorModel.find(query).countDocuments();
             await Promise.all(authorsList.map(async oneAuthor => {
                   oneAuthor.booksCount = await BookSummaryModel.countDocuments({ author: oneAuthor._id })
             }))
@@ -51,9 +55,9 @@ const getAllAuthors = async (skip: number, limit, search: FilterQuery<IBookAutho
 }
 
 /** Get all author options list */
-const getAllAuthorsOptionsList = async () => {
+const getAllAuthorsOptionsList = async (language: Types.ObjectId) => {
       try {
-            const authorsOptionsList = await BookAuthorModel.find({}).select('name')
+            const authorsOptionsList = await BookAuthorModel.find({ language }).select('name')
             return authorsOptionsList
       } catch (e: any) {
             throw new Error(e)

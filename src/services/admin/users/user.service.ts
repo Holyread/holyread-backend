@@ -4,7 +4,7 @@ import { awsBucket } from '../../../constants/app.constant'
 import { responseMessage } from '../../../constants/message.constant'
 // import { UserModel, SubscriptionsModel } from '../../../models/index'
 import { UserLibraryModel, UserModel } from '../../../models/index'
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 import { IUserLibrary } from '../../../models/userLibrary.model'
 import { IUser } from '../../../models/user.model'
 // import stripeSubscriptionService from '../../stripe/subscription'
@@ -60,7 +60,8 @@ const getAllUsers = async (
     skip: number,
     limit: number,
     search: any,
-    sort: Record<string, any>
+    sort: Record<string, any>,
+    language?: Types.ObjectId
 ) => {
     try {
         const page: any = [
@@ -69,7 +70,15 @@ const getAllUsers = async (
         if (limit) {
             page.push({ $limit: limit });
         }
+        const query = { ...search };
+        if (language) {
+            query.language = language;
+        }
+
         const result: any = await UserModel.aggregate([
+            {
+                $match: query,
+            },
             {
                 $project: {
                     type: 1.0,
@@ -114,9 +123,6 @@ const getAllUsers = async (
                     from: 'transactions',
                     localField: 'lastTrnId',
                 },
-            },
-            {
-                $match: search,
             },
             {
                 $project: {
@@ -169,10 +175,10 @@ const deleteUser = async (query: FilterQuery<IUser>) => {
 }
 
 /** Get all Users for dashboard */
-const getAllUsersForDashboard = async (query: any) => {
+const getAllUsersForDashboard = async (query: any, language: Types.ObjectId) => {
     try {
         const pipeline = [
-            { $match: query },
+            { $match: { ...query, language } },
             {
                 $group: {
                     _id: '$device',
@@ -187,9 +193,9 @@ const getAllUsersForDashboard = async (query: any) => {
     }
 };
 
-const getAllUsersForExport = async () => {
+const getAllUsersForExport = async (language: Types.ObjectId) => {
     try {
-        const users: any = await UserModel.find({}).select('firstName lastName email status image type isSignedUp device country timeZone createdAt').lean().exec()
+        const users: any = await UserModel.find({ language }).select('firstName lastName email status image type isSignedUp device country timeZone createdAt').lean().exec()
         return users
     } catch (e: any) {
         throw new Error(e)

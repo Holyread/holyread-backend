@@ -11,7 +11,8 @@ export interface IDailyDvotional extends mongoose.Document {
     status?: 'Active' | 'Deactive',
     createdAt: Date,
     updatedAt: Date,
-    displayAt: Date
+    displayAt: Date,
+    language: {type: Schema.Types.ObjectId, ref: 'language'},
     video?: string,
     audio?: string,
     category?: string,
@@ -28,6 +29,7 @@ export type createDailyDvotionalType = {
     videoTitle: string,
     image: string,
     status?: 'Active' | 'Deactive',
+    language: {type: Schema.Types.ObjectId, ref: 'language'},
     createdAt: Date,
     updatedAt: Date,
     displayAt: Date,
@@ -49,6 +51,7 @@ export type getDailyDvotionalType = {
     videoTitle: string,
     image?: string,
     status?: 'Active' | 'Deactive',
+    language: {type: Schema.Types.ObjectId, ref: 'language'},
     createdAt: Date,
     updatedAt: Date,
     displayAt: Date,
@@ -70,6 +73,7 @@ export const DailyDvotionalSchema = new Schema({
     video: { type: String },
     audio: { type: String },
     status: { type: String },
+    language: {type: Schema.Types.ObjectId, ref: 'language', index: true},
     createdAt: {
         type: Date, default: () => {
             return new Date()

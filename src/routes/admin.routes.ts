@@ -38,9 +38,11 @@ import language from './admin/language.route'
 import { languageMiddleware } from '../middleware/language.middleware'
 
 const router: Router = express.Router()
-router.use(languageMiddleware);
 
+router.use('/language', adminPassport, language)
 router.use('/auth', auth)
+
+router.use(languageMiddleware);
 
 router.use('/cms', adminPassport, cms)
 router.use('/faq', adminPassport, faq)
@@ -82,7 +84,5 @@ router.use('/app-version', adminPassport, appVersion)
 
 router.use('/cron-schedule', adminPassport, cronSchedule)
 router.use('/alerts', adminPassport, alertPipeline)
-
-router.use('/language', adminPassport, language)
 
 export default router

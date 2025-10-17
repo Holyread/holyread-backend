@@ -2,7 +2,6 @@ import { Response, NextFunction } from 'express'
 import { verifyToken } from '../lib/utils/utils'
 import { SettingModel, UserModel } from '../models'
 import Boom from '@hapi/boom'
-import { ISetting } from '../models/setting.model'
 import languageService from '../services/admin/language/language.service'
 
 export default async (req: any, res: Response, next: NextFunction): Promise<any> => {
@@ -31,7 +30,7 @@ export default async (req: any, res: Response, next: NextFunction): Promise<any>
                 .findOne({})
                 .select('maxDeviceLogin')
                 .lean()
-                .exec() as ISetting;
+                .exec();
 
             if (!userDetails) {
                 return next(Boom.unauthorized('User not authorized'));

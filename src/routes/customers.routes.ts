@@ -24,6 +24,7 @@ import feedBack from './customers/userFeedBack.route'
 import meditation from './customers/meditation.route'
 import appVersion from './customers/appVersion.route'
 import donation from './customers/donation.route'
+import language from './customers/language.route'
 
 const router: Router = express.Router()
 
@@ -54,5 +55,6 @@ router.use('/meditation',customerPassport, meditation)
 
 router.use('/app-version', customerPassport, appVersion)
 router.use('/donation', customerPassport, donation)
+router.use('/language', language)
 
 export default router

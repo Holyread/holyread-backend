@@ -44,6 +44,8 @@ import { AppVersionModel } from './appVersion.model'
 import { CronScheduleModel } from './cronSchedule.model'
 import { DonationModel } from './donation.model'
 import { AlertsModel } from './alerts.model'
+import { DevotionalCategoryModel } from './devotionalCategory.model'
+import { LanguageModel } from './language.model'
 
 const NODE_ENV = config.NODE_ENV
 
@@ -99,5 +101,7 @@ export {
   AppVersionModel,
   CronScheduleModel,
   DonationModel,
-  AlertsModel
+  AlertsModel,
+  DevotionalCategoryModel,
+  LanguageModel
 }

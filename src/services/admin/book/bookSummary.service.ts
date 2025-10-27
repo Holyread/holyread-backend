@@ -219,7 +219,7 @@ const getAllBookSummariesOptionsList = async (query: FilterQuery<IBookSummary>, 
     try {
         const queryParams = { ...query };
         if (language) {
-            query.language = language;
+            queryParams.language = language;
         }
         const result = await BookSummaryModel.find(queryParams).select('title coverImage').lean().exec()
         if (result && result.length) {

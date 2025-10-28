@@ -25,11 +25,12 @@ import meditation from './customers/meditation.route'
 import appVersion from './customers/appVersion.route'
 import donation from './customers/donation.route'
 import language from './customers/language.route'
+import { languageMiddleware } from '../middleware/language.middleware'
 
 const router: Router = express.Router()
 
-router.use('/cms', cms)
-router.use('/faq', faq)
+router.use('/cms', languageMiddleware, cms)
+router.use('/faq', languageMiddleware, faq)
 
 router.use('/auth', auth)
 router.use('/users', users)

@@ -106,6 +106,7 @@ const getAllBookSummaries = async (skip: number, limit: number, search: any, sor
                     'publish': 1.0,
                     'overview': 1.0,
                     'description': 1.0,
+                    'language': 1.0,
                     'coverImage': {
                         $concat: [
                             awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/',
@@ -271,6 +272,7 @@ const getMostPopularBooks = async (skip: number, limit: number, search: any, sor
                     'publish': 1,
                     'overview': 1,
                     'description': 1,
+                    'language': 1,
                     'coverImage': {
                         $concat: [
                             awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/',
@@ -399,11 +401,11 @@ const findBooks = async (query: any) => {
 }
 
 /** Get random books summary */
-const findRandomBooks = async (query: any, count: any) => {
+const findRandomBooks = async (query: any, count: any, language: Types.ObjectId) => {
     try {
         const data: any = await BookSummaryModel.aggregate([
             query,
-            { $project: { categories: 1, _id: 1 } },
+            { $project: { categories: 1, _id: 1, language: 1 } },
             { $sample: { size: count } },
         ])
         return data

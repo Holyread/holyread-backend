@@ -10,7 +10,7 @@ const { authControllerResponse } = responseMessage
 const getAllDevotionalCategories = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const language = (request as any).user.language
-        const devotionalCategories = await DevotionalCategoryModel.find({ language: language }).select('name image description')
+        const devotionalCategories = await DevotionalCategoryModel.find({ language }).select('name image description')
         response.status(200).json({ message: authControllerResponse.getDevotionalCategorySuccess, data: devotionalCategories })
     } catch (e: any) {
         next(Boom.badData(e.message))

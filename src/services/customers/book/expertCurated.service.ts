@@ -20,6 +20,7 @@ const getAllExpertCurateds = async (skip: number, limit, search: any, sort, lang
                     publish: 1.0,
                     description: 1.0,
                     shortDescripion: 1.0,
+                    language: 1.0,
                     image: {
                         $concat: [
                             awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/',

@@ -2,7 +2,6 @@ export const setDefaultLanguage = async () => {
   try {
     console.log("🚀 Setting default language migration...");
 
-    // ✅ Runtime requires — not type-checked
     // @ts-ignore
     const { LanguageModel } = require("../models/language.model");
 
@@ -56,19 +55,49 @@ export const setDefaultLanguage = async () => {
       EmailTemplateModel,
     ];
 
-    for (const model of models) {
-      const result = await model.updateMany(
-        { language: { $exists: false } },
-        { $set: { language: english._id } }
-      );
+    const BATCH_SIZE = 1000;
 
-      if (result.modifiedCount > 0)
-        console.log(`✅ Added language to ${result.modifiedCount} docs in ${model.modelName}`);
-      else
-        console.log(`ℹ️ No missing language fields for ${model.modelName}. Skipped.`);
+    for (const model of models) {
+      console.log(`\n📋 Processing ${model.modelName}...`);
+      
+      let totalUpdated = 0;
+      let batchNumber = 1;
+
+      while (true) {
+        // Find documents that need updating
+        const docs = await model
+          .find({ language: { $exists: false } })
+          .limit(BATCH_SIZE)
+          .select("_id")
+          .lean();
+
+        // No more documents to update
+        if (docs.length === 0) break;
+
+        // Update this batch
+        const ids = docs.map((doc) => doc._id);
+        const result = await model.updateMany(
+          { _id: { $in: ids } },
+          { $set: { language: english._id } }
+        );
+
+        totalUpdated += result.modifiedCount;
+        console.log(`   Batch ${batchNumber}: Updated ${result.modifiedCount} docs (Total: ${totalUpdated})`);
+        
+        batchNumber++;
+
+        // Small delay to reduce DB load
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+
+      if (totalUpdated > 0) {
+        console.log(`✅ ${model.modelName}: ${totalUpdated} docs updated`);
+      } else {
+        console.log(`ℹ️  ${model.modelName}: No updates needed`);
+      }
     }
 
-    console.log("🎉 Default language migration complete\n");
+    console.log("\n🎉 Default language migration complete");
   } catch (err) {
     console.error("❌ Default language migration failed:", err);
   }

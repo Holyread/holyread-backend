@@ -359,6 +359,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
 
 const exportUsersData = async (request: Request, response: Response, next: NextFunction) => {
     try {
+        const language = (request as any).languageId;
         const fileName = `export_data_${Date.now()}.xlsx`;
         const filePath = path.join(__dirname, fileName);
         const workbook = new excel.stream.xlsx.WorkbookWriter({ stream: fs.createWriteStream(filePath) });
@@ -605,7 +606,7 @@ const exportUsersData = async (request: Request, response: Response, next: NextF
 
         searchFilter.type = 'User';
 
-        const userData: any = await usersService.getAllExportUsers(searchFilter);
+        const userData: any = await usersService.getAllExportUsers(searchFilter, language);
 
         userData.forEach(item => {
             wsUsers.addRow({

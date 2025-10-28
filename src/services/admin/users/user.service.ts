@@ -213,7 +213,7 @@ const getUseForCustomNotification = async (query: any, select: string) => {
 
 const PAGE_SIZE = 1000;
 
-const getAllExportUsers = async (search) => {
+const getAllExportUsers = async (search: any, language: Types.ObjectId) => {
     try {
         let results = [];
         let page = 0;
@@ -222,7 +222,7 @@ const getAllExportUsers = async (search) => {
         while (hasMoreData) {
             const userChunk : any = await UserModel.aggregate([
                 {
-                    $match: search,
+                    $match: { ...search, language },
                 },
                 { $skip: page * PAGE_SIZE },
                 { $limit: PAGE_SIZE },

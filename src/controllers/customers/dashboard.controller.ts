@@ -218,7 +218,7 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
         const categoryIds = libraries.categories || [];
         let categoriesBooks = [];
         if (categoryIds.length > 0) {
-            categoriesBooks = await bookSummaryService.findRandomBooks({ $match: { categories: { $in: categoryIds }, publish: true } }, 5);
+            categoriesBooks = await bookSummaryService.findRandomBooks({ $match: { categories: { $in: categoryIds }, publish: true, language } }, 5, language);
         }
 
         const books = [...readingBook, ...categoriesBooks];
@@ -251,8 +251,8 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
             }, 0);
 
             const numBooksToSelect = Math.ceil(MAX_SUGGESTIONS * (categoryWeight / books.length) * weightFactor);
-            const categoryFilterquery = { $match: { categories: category, publish: true, _id: { $nin: bookIds } } }
-            const selectedBooks = await bookSummaryService.findRandomBooks(categoryFilterquery, numBooksToSelect)
+            const categoryFilterquery = { $match: { categories: category, publish: true, _id: { $nin: bookIds }, language } }
+            const selectedBooks = await bookSummaryService.findRandomBooks(categoryFilterquery, numBooksToSelect, language)
 
             selectedBooks.forEach(book => {
                 recommendedBooks.push(book._id);
@@ -322,10 +322,11 @@ const getRecommendedBooks = async (request: any, response: Response, next: NextF
 /** Get favorite categories books for dashboard */
 const getFavoriteCategoriesBooks = async (request: any, response: Response, next: NextFunction) => {
     try {
+        const language = (request as any).user.language
         const libraries = await userService.getUserLibrary({ _id: request.user.libraries })
 
         const categoryIds = libraries.categories || [];
-        const books = await bookSummaryService.findRandomBooks({ $match: { categories: { $in: categoryIds }, publish: true } }, 5);
+        const books = await bookSummaryService.findRandomBooks({ $match: { categories: { $in: categoryIds }, publish: true, language } }, 5, language);
         const preferredCategories: any = [];
         books.forEach(book => {
             book.categories.forEach(categoryId => {
@@ -355,8 +356,8 @@ const getFavoriteCategoriesBooks = async (request: any, response: Response, next
             }, 0);
 
             const numBooksToSelect = Math.ceil(MAX_SUGGESTIONS * (categoryWeight / books.length) * weightFactor);
-            const categoryFilterquery = { $match: { categories: category, publish: true } }
-            const selectedBooks = await bookSummaryService.findRandomBooks(categoryFilterquery, numBooksToSelect)
+            const categoryFilterquery = { $match: { categories: category, publish: true, language } }
+            const selectedBooks = await bookSummaryService.findRandomBooks(categoryFilterquery, numBooksToSelect, language)
 
             selectedBooks.forEach(book => {
                 favoriteCategoriesBooks.push(book._id);

@@ -206,6 +206,9 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
         if (!summaryDetails) return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure));
 
         const updateFile = async (file: string, type: string, oldFile: string) => {
+            if (file === undefined) {
+                return oldFile;
+            }
             if (file === null) {
                 await removeS3File(oldFile, { ...s3Bucket, documentDirectory: `${s3Bucket.documentDirectory}/${type}` });
             } else if (file.includes('base64')) {

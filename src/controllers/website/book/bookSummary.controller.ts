@@ -10,6 +10,7 @@ const bookSummaryControllerResponse = responseMessage.bookSummaryControllerRespo
 
 const getAllBooks = async (request: Request, response: Response, next: NextFunction) => {
     try {
+        const language = (request as any).user.language
         const params = request.query
         const authorSearchFilter: any = {}
         const bookSearchFilter: any = { status: 'Active', search: {} }
@@ -21,7 +22,7 @@ const getAllBooks = async (request: Request, response: Response, next: NextFunct
             bookSearchFilter.search.$or.push({ 'author.name': await getSearchRegexp(params.search) })
             authorSearchFilter.name = await getSearchRegexp(params.search)
         }
-        const bookSummariesList = await bookSummaryService.getAllBookSummariesForWebsite(bookSearchFilter, [['createdAt', 'desc']])
+        const bookSummariesList = await bookSummaryService.getAllBookSummariesForWebsite(bookSearchFilter, [['createdAt', 'desc']], language)
         response.status(200).json({ message: bookSummaryControllerResponse.fetchBookSummarySuccess, data: bookSummariesList })
     } catch (e: any) {
         next(Boom.badData(e.message))

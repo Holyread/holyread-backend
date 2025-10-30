@@ -14,6 +14,8 @@ const FaqControllerResponse = responseMessage.FaqControllerResponse
 const addFaq = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
+        const language = (req as any).languageId
+        req.body.language = language
         const data = await faqService.createFaq(body)
         res.status(200).send({
             message: FaqControllerResponse.createFaqSuccess,
@@ -48,7 +50,7 @@ const getAllFaqs = async (request: Request, response: Response, next: NextFuncti
         const params = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
-
+        const language = (request as any).languageId
         let searchFilter: FilterQuery<IFaq> = {}
 
         if (params.search) {
@@ -67,7 +69,7 @@ const getAllFaqs = async (request: Request, response: Response, next: NextFuncti
             ? [[sortingColumn, sortingOrder]]
             : [['createdAt', 'desc']];
 
-        const getFaqsList = await faqService.getAllFaqs(Number(skip), Number(limit), searchFilter, faqsSorting)
+        const getFaqsList = await faqService.getAllFaqs(Number(skip), Number(limit), searchFilter, faqsSorting, language)
         response.status(200).json({ message: FaqControllerResponse.fetchAllFaqSuccess, data: getFaqsList })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -78,11 +80,13 @@ const getAllFaqs = async (request: Request, response: Response, next: NextFuncti
 const updateFaq = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
+        const language = (req as any).languageId
         /** Get faq from db */
         const faqObj: any = await faqService.getOneFaqByFilter({ _id: id })
         if (!faqObj) {
             return next(Boom.notFound(FaqControllerResponse.getFaqFailure))
         }
+        req.body.language = language
         const data = await faqService.updateFaq(req.body, id)
         return res.status(200).send({ message: FaqControllerResponse.updateFaqSuccess, data })
     } catch (e: any) {

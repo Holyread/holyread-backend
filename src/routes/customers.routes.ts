@@ -20,24 +20,24 @@ import customerPassport from '../middleware/customers.passport'
 import expertCurated from './customers/book/expertCurated.route'
 import dailyDevotional from './customers/book/dailyDevotional.route'
 import devotionalCategories from './customers/devotionalCategories.route'
-
 import feedBack from './customers/userFeedBack.route'
 import meditation from './customers/meditation.route'
 import appVersion from './customers/appVersion.route'
 import donation from './customers/donation.route'
-
+import language from './customers/language.route'
+import { languageMiddleware } from '../middleware/language.middleware'
 
 const router: Router = express.Router()
 
-router.use('/cms', cms)
-router.use('/faq', faq)
+router.use('/cms', languageMiddleware, cms)
+router.use('/faq', languageMiddleware, faq)
 
 router.use('/auth', auth)
 router.use('/users', users)
 router.use('/coupons', coupons)
 
 router.use('/subscriptions', subscriptions)
-router.use('/expert-curated', expertCurated)
+router.use('/expert-curated', customerPassport, expertCurated)
 
 router.use('/authors', customerPassport, authors)
 router.use('/dashboard', customerPassport, dashboard)
@@ -56,5 +56,6 @@ router.use('/meditation',customerPassport, meditation)
 
 router.use('/app-version', customerPassport, appVersion)
 router.use('/donation', customerPassport, donation)
+router.use('/language', language)
 
 export default router

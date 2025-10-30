@@ -11,7 +11,8 @@ const meditationCategoryControllerResponse = responseMessage.meditationCategoryC
 const getAllMeditations = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query;
-        let meditationSearchFilter: any = { status: 'Active', publish: true };
+        const language = (request as any).user.language
+        let meditationSearchFilter: any = { status: 'Active', publish: true, language };
 
         // Apply filters based on query parameters
         if (params.category) {
@@ -26,10 +27,10 @@ const getAllMeditations = async (request: Request, response: Response, next: Nex
 
         // If "recommended" flag is present, fetch recommended meditations
         if (params.recommended) {
-             meditationsList = await meditationService.getRecommendedMeditation();
+             meditationsList = await meditationService.getRecommendedMeditation(language);
         }
         else {
-            meditationsList = await meditationService.getAllMeditations(meditationSearchFilter);
+            meditationsList = await meditationService.getAllMeditations(meditationSearchFilter, language);
         }
          
         response.status(200).json({
@@ -44,7 +45,8 @@ const getAllMeditations = async (request: Request, response: Response, next: Nex
 
 const getAllMeditationCategoriesList = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const result: any = await meditationService.getAllMeditationCategoriesList()
+        const language = (request as any).user.language
+        const result: any = await meditationService.getAllMeditationCategoriesList(language)
         response.status(200).json({ message: meditationCategoryControllerResponse.fetchAllMeditationCategorySuccess, data: result })
     } catch (e: any) {
         throw new Error(e)

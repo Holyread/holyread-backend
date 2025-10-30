@@ -3,14 +3,21 @@ import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { IBookCategory } from '../../../models/bookCategory.model'
 import { FilterQuery } from 'mongoose'
+import { Types } from 'mongoose'
 
 const NODE_ENV = config.NODE_ENV
 
 /** Get all book categories */
-const getAllBookCategories = async (skip: number, limit, search: FilterQuery<IBookCategory>, sort) => {
+const getAllBookCategories = async (skip: number, limit, search: FilterQuery<IBookCategory>, sort, language: Types.ObjectId) => {
     try {
         const page: any = [{ $skip: skip }]
         const result = await BookCategoryModel.aggregate([
+            {
+                $match: {
+                    language: language,
+                    ...search,
+                },
+            },
             {
                 $project: {
                     title: 1.0,
@@ -20,9 +27,6 @@ const getAllBookCategories = async (skip: number, limit, search: FilterQuery<IBo
                     ] },
                     status: 1.0,
                 },
-            },
-            {
-                $match: search,
             },
             {
                 $sort: sort,

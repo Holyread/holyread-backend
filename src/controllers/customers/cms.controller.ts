@@ -9,7 +9,8 @@ const cmsControllerResponse = responseMessage.cmsControllerResponse
 /** Get all cms */
 const getAllCms = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const getAllCmsList = await cmsService.getAllCms()
+        const languageId = (request as any).languageId
+        const getAllCmsList = await cmsService.getAllCms(languageId)
         response.status(200).json({ message: cmsControllerResponse.fetchAllCmsSuccess, data: getAllCmsList })
     } catch (e: any) {
         next(Boom.badData(e.message))

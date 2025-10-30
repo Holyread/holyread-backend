@@ -9,7 +9,8 @@ const testimonialControllerResponse = responseMessage.testimonialControllerRespo
 /** Get all testimonial by filter */
 const getAllTestimonial = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const data = await testimonialService.getAllTestimonials(0, 0, {}, [])
+        const language = (request as any).languageId;
+        const data = await testimonialService.getAllTestimonials(0, 0, {}, [], language)
         response.status(200).json({ message: testimonialControllerResponse.fetchTestimonialSuccess, data: data.testimonials })
     } catch (e: any) {
         next(Boom.badData(e.message))

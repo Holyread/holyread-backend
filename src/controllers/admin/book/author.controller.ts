@@ -13,8 +13,10 @@ const authorControllerResponse = responseMessage.authorControllerResponse
 const addAuthor = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
-        const existingAuthor = await authorService.getOneAuthorByFilter({ name: body.name })
+        const language = (req as any).languageId;
+        const existingAuthor = await authorService.getOneAuthorByFilter({ name: body.name, language })
         if (existingAuthor) return next(Boom.notFound(authorControllerResponse.createAuthorFailure))
+        body.language = language;
         const data = await authorService.createAuthor(body)
         res.status(200).send({
             message: authorControllerResponse.createAuthorSuccess,
@@ -47,7 +49,7 @@ const getAllAuthors = async (request: Request, response: Response, next: NextFun
         const params = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
-
+        const language = (request as any).languageId;
         let searchFilter = {}
         if (params.search) {
             searchFilter = {
@@ -63,7 +65,7 @@ const getAllAuthors = async (request: Request, response: Response, next: NextFun
         const authorListSorting = ['name', 'createdAt'].includes(sortingColumn)
             ? [[sortingColumn, sortingOrder]]
             : [['name', 'desc']];
-        const getAuthorsList = await authorService.getAllAuthors(Number(skip), Number(limit), searchFilter, authorListSorting)
+        const getAuthorsList = await authorService.getAllAuthors(Number(skip), Number(limit), searchFilter, authorListSorting, language)
         response.status(200).json({ message: authorControllerResponse.fetchAuthorsSuccess, data: getAuthorsList })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -73,7 +75,8 @@ const getAllAuthors = async (request: Request, response: Response, next: NextFun
 /** Get all author options list */
 const getAllAuthorsOptionsList = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const getAuthorsOptionsList = await authorService.getAllAuthorsOptionsList()
+        const language = (request as any).languageId;
+        const getAuthorsOptionsList = await authorService.getAllAuthorsOptionsList(language)
         response.status(200).json({ message: authorControllerResponse.fetchAuthorsSuccess, data: getAuthorsOptionsList })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -84,9 +87,11 @@ const getAllAuthorsOptionsList = async (request: Request, response: Response, ne
 const updateAuthor = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
+        const language = (req as any).languageId;
         /** Get subscription from db */
         const authorObj: any = await authorService.getOneAuthorByFilter({ _id: id })
         if (!authorObj) return next(Boom.notFound(authorControllerResponse.getAuthorFailure))
+        req.body.language = language;
         const data = await authorService.updateAuthor(req.body, id)
         res.status(200).send({ message: authorControllerResponse.updateAuthorSuccess, data })
     } catch (e: any) {

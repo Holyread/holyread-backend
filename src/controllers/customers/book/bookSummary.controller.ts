@@ -22,6 +22,7 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
         const skip: any = params.skip ? params.skip : dataLimit.skip
         const limit: any = params.limit ? params.limit : dataLimit.limit
         const bookSearchFilter: any = { status: 'Active', search: {} }
+        const language = (request as any).user.language;
         const authorSearchFilter: any = {}
         if (params.category) {
             bookSearchFilter.search.categories = { $in: [new Types.ObjectId(params.category as any)] }
@@ -34,7 +35,7 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
         if (params.author) {
             bookSearchFilter.search['author._id'] = new Types.ObjectId(params.author as string)
         }
-        const bookSummariesList: any = await bookSummaryService.getAllBookSummariesForDiscover(Number(skip), Number(limit), bookSearchFilter, [['createdAt', 'desc']])
+        const bookSummariesList: any = await bookSummaryService.getAllBookSummariesForDiscover(Number(skip), Number(limit), bookSearchFilter, [['createdAt', 'desc']], language)
         if (params.author) {
             response.status(200).json({
                 message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
@@ -42,7 +43,7 @@ const getAllSummaries = async (request: Request, response: Response, next: NextF
             })
             return
         }
-        const authorsList: any = await bookAuthorService.getAllAuthors(Number(skip), Number(limit), authorSearchFilter, [['createdAt', 'desc']])
+        const authorsList: any = await bookAuthorService.getAllAuthors(Number(skip), Number(limit), authorSearchFilter, [['createdAt', 'desc']], language)
         response.status(200).json({
             message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
             data: { books: bookSummariesList, authors: authorsList },

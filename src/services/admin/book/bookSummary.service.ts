@@ -3,7 +3,7 @@ import { awsBucket } from '../../../constants/app.constant'
 import { responseMessage } from '../../../constants/message.constant'
 import { formattedDate, getImageUrl } from '../../../lib/utils/utils'
 import { IBookSummary } from '../../../models/bookSummary.model'
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
 
@@ -68,14 +68,15 @@ const getOneBookSummaryByFilter = async (query: any) => {
 }
 
 /** Get all book summaries count for dashboard */
-const getBooksCountForDashboard = async () => {
+const getBooksCountForDashboard = async (language: Types.ObjectId) => {
     try {
         const summaries = await BookSummaryModel.aggregate([
+            { $match: { language } },
             { $unwind: "$chapters" },
             { $count: "chaptersCount" }
         ]);
         const chaptersCount = summaries.length ? summaries[0].chaptersCount : 0;
-        const booksCount = await BookSummaryModel.countDocuments().exec();
+        const booksCount = await BookSummaryModel.countDocuments({ language }).exec();
         return { chaptersCount, booksCount };
     } catch (e: any) {
         throw new Error(e.message || 'Failed to get book summaries for dashboard');
@@ -83,7 +84,7 @@ const getBooksCountForDashboard = async () => {
 };
 
 /** Get all book summaries count for dashboard */
-const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
+const getTopReadsBooks = async (duration: 'year' | 'month' | 'week', language: Types.ObjectId) => {
     try {
         const now = new Date();
         now.setHours(0, 0, 0, 0);
@@ -102,6 +103,7 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
         }
 
         const result = await UserModel.aggregate([
+            { $match: { language } },
             { $unwind: '$libraries' },
             {
                 $lookup: {
@@ -158,7 +160,7 @@ const getTopReadsBooks = async (duration: 'year' | 'month' | 'week') => {
 
 
 /** Get all book summaries for table */
-const getAllBookSummaries = async (skip: number, limit: number, search: FilterQuery<IBookSummary>, sort: any) => {
+const getAllBookSummaries = async (skip: number, limit: number, search: FilterQuery<IBookSummary>, sort: any, language: Types.ObjectId) => {
     try {
         let authorsList: any = [];
         let categories: any = [];
@@ -186,7 +188,12 @@ const getAllBookSummaries = async (skip: number, limit: number, search: FilterQu
             delete search['$or'];
         }
 
-        const result: any = await BookSummaryModel.find(search)
+        const query = { ...search };
+        if (language) {
+            query.language = language;
+        }
+
+        const result: any = await BookSummaryModel.find(query)
             .populate('author', 'name')
             .populate('categories', 'title')
             .skip(skip)
@@ -200,7 +207,7 @@ const getAllBookSummaries = async (skip: number, limit: number, search: FilterQu
             if (i.author && i.author.name) i.author = i.author.name
             i.coverImage = getImageUrl(i.coverImage, `${awsBucket.bookDirectory}/coverImage`);
         });
-        const count: number = await BookSummaryModel.find(search).countDocuments().lean().exec()
+        const count: number = await BookSummaryModel.find(query).countDocuments().lean().exec()
         return { count, summaries: result }
     } catch (e: any) {
         throw new Error(e)
@@ -208,9 +215,13 @@ const getAllBookSummaries = async (skip: number, limit: number, search: FilterQu
 }
 
 /** Get all book categories names */
-const getAllBookSummariesOptionsList = async (query) => {
+const getAllBookSummariesOptionsList = async (query: FilterQuery<IBookSummary>, language: Types.ObjectId) => {
     try {
-        const result = await BookSummaryModel.find(query).select('title coverImage').lean().exec()
+        const queryParams = { ...query };
+        if (language) {
+            queryParams.language = language;
+        }
+        const result = await BookSummaryModel.find(queryParams).select('title coverImage').lean().exec()
         if (result && result.length) {
             result.forEach(element => {
                 if (element && element.coverImage) element.coverImage = getImageUrl(element.coverImage, `${awsBucket.bookDirectory}/coverImage`);

@@ -1,15 +1,15 @@
 import { awsBucket } from '../../../constants/app.constant'
 import config from '../../../../config'
 import { ExpertCuratedModel } from '../../../models/index'
-
+import { Types } from 'mongoose'
 const NODE_ENV = config.NODE_ENV
 
 /** Get all expert Curated for app */
-const getAllExpertCurateds = async (skip: number, limit, search: any, sort) => {
+const getAllExpertCurateds = async (skip: number, limit, search: any, sort, language: Types.ObjectId) => {
     try {
-        search.publish = true
+        const query = { ...search, publish: true, language }
         const page: any = [{ $skip: skip }]
-        const count = await ExpertCuratedModel.find(search).countDocuments()
+        const count = await ExpertCuratedModel.find(query).countDocuments()
 
         const aggregate: any = new Set([
             {
@@ -20,6 +20,7 @@ const getAllExpertCurateds = async (skip: number, limit, search: any, sort) => {
                     publish: 1.0,
                     description: 1.0,
                     shortDescripion: 1.0,
+                    language: 1.0,
                     image: {
                         $concat: [
                             awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/expertCurated/',
@@ -29,12 +30,9 @@ const getAllExpertCurateds = async (skip: number, limit, search: any, sort) => {
                 },
             },
         ])
-
-        if (Object.keys(search).length) {
-            aggregate.add({
-                $match: search,
-            })
-        }
+        aggregate.add({
+            $match: query,
+        })
         aggregate.add({
             $sort: sort,
         })

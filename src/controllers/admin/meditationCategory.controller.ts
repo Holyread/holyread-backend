@@ -24,7 +24,8 @@ const s3Bucket = {
 const addMeditationCategory = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
-        const category = await meditationCategoryService.getOneMeditationCategoryByFilter({ title: req.body.title })
+        const language = (req as any).languageId;
+        const category = await meditationCategoryService.getOneMeditationCategoryByFilter({ title: req.body.title, language })
         if (category) return next(Boom.badData(meditationCategoryControllerResponse.createMeditationCategoryFailure))
 
         if (body.image) {
@@ -35,6 +36,7 @@ const addMeditationCategory = async (req: Request, res: Response, next: NextFunc
         const bodyData = {
             ...body,
             image: body.image,
+            language,
         }
 
         const meditationCategoryObj: any = await meditationCategoryService.createMeditationCategory(bodyData)
@@ -53,7 +55,8 @@ const getOneMeditationCategory = async (req: Request, res: Response, next: NextF
     try {
         const id: any = req.params.id
         /** Get meditation category from db */
-        const meditationCategoryObj: any = await meditationCategoryService.getOneMeditationCategoryByFilter({ _id: id })
+        const language = (req as any).languageId;
+        const meditationCategoryObj: any = await meditationCategoryService.getOneMeditationCategoryByFilter({ _id: id, language })
         if (!meditationCategoryObj) {
             return next(Boom.notFound(meditationCategoryControllerResponse.createMeditationCategoryFailure))
         }
@@ -73,7 +76,7 @@ const getAllMeditationCategories = async (request: Request, response: Response, 
         const params = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
-
+        const language = (request as any).languageId;
         let searchFilter: FilterQuery<IMeditationCategory> = {}
 
         if (params.search) {
@@ -92,7 +95,7 @@ const getAllMeditationCategories = async (request: Request, response: Response, 
             ? [[sortingColumn, sortingOrder]]
             : [['createdAt', 'desc']];
 
-        const getMeditationsList = await meditationCategoryService.getAllMeditationCategories(Number(skip), Number(limit), searchFilter, meditationSorting)
+        const getMeditationsList = await meditationCategoryService.getAllMeditationCategories(Number(skip), Number(limit), searchFilter, meditationSorting, language)
         response.status(200).json({ message: meditationCategoryControllerResponse.fetchAllMeditationCategorySuccess, data: getMeditationsList })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -101,7 +104,8 @@ const getAllMeditationCategories = async (request: Request, response: Response, 
 
 const getAllMeditationCategoriesList =  async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const result: any = await meditationCategoryService.getAllMeditationCategoriesList()
+        const language = (request as any).languageId;
+        const result: any = await meditationCategoryService.getAllMeditationCategoriesList(language)
         response.status(200).json({ message: meditationCategoryControllerResponse.fetchAllMeditationCategorySuccess, data: result })
     } catch (e: any) {
         throw new Error(e)
@@ -113,7 +117,8 @@ const updateMeditationCategory = async (req: Request, res: Response, next: NextF
     try {
         const id: any = req.params.id
         /** Get faq from db */
-        const meditationCategoryObj: any = await meditationCategoryService.getOneMeditationCategoryByFilter({ _id: id })
+        const language = (req as any).languageId;
+        const meditationCategoryObj: any = await meditationCategoryService.getOneMeditationCategoryByFilter({ _id: id, language })
         if (!meditationCategoryObj) {
             return next(Boom.notFound(meditationCategoryControllerResponse.getMeditationCategoryFailure))
         }
@@ -132,6 +137,7 @@ const updateMeditationCategory = async (req: Request, res: Response, next: NextF
         const updatedMeditation = {
             ...req.body,
             image: req.body.image,
+            language,
         };
         const data = await meditationCategoryService.updateMeditationCategory(updatedMeditation, id)
         return res.status(200).send({ message: meditationCategoryControllerResponse.updateMeditationCategorySuccess, data })
@@ -159,4 +165,11 @@ const deleteMeditationCategory = async (req: Request, res: Response, next: NextF
     }
 }
 
-export { addMeditationCategory, getOneMeditationCategory, getAllMeditationCategories, getAllMeditationCategoriesList, updateMeditationCategory, deleteMeditationCategory }
+export {
+  addMeditationCategory,
+  getOneMeditationCategory,
+  getAllMeditationCategories,
+  getAllMeditationCategoriesList,
+  updateMeditationCategory,
+  deleteMeditationCategory,
+};

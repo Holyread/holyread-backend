@@ -14,10 +14,11 @@ const cmsControllerResponse = responseMessage.cmsControllerResponse
 const addCms = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
-        const cmsObj: any = await cmsService.getOneCmsByFilter({ title: body.title })
+        const language = (req as any).languageId
+        const cmsObj: any = await cmsService.getOneCmsByFilter({ title: body.title, language })
         if (cmsObj) return next(Boom.conflict(cmsControllerResponse.createCmsFailure))
 
-        const data = await cmsService.createCms(body)
+        const data = await cmsService.createCms({...body, language})
         res.status(200).send({
             message: cmsControllerResponse.createCmsSuccess,
             data,
@@ -31,8 +32,9 @@ const addCms = async (req: Request, res: Response, next: NextFunction) => {
 const getOneCms = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id: any = req.params.id
+        const language = (req as any).languageId
         /** Get cms from db */
-        const cmsObj: any = await cmsService.getOneCmsByFilter({ _id: id })
+        const cmsObj: any = await cmsService.getOneCmsByFilter({ _id: id, language })
         if (!cmsObj) return next(Boom.notFound(cmsControllerResponse.getCmsFailure))
         res.status(200).send({
             message: cmsControllerResponse.fetchCmsSuccess,
@@ -47,6 +49,7 @@ const getOneCms = async (req: Request, res: Response, next: NextFunction) => {
 const getAllCms = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const params = request.query
+        const language = (request as any).languageId
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
 
@@ -70,7 +73,7 @@ const getAllCms = async (request: Request, response: Response, next: NextFunctio
             ? [[sortingColumn, sortingOrder]]
             : [['title', 'desc']];
 
-        const getAllCmsList = await cmsService.getAllCms(Number(skip), Number(limit), searchFilter, cmsSorting)
+        const getAllCmsList = await cmsService.getAllCms(Number(skip), Number(limit), searchFilter, cmsSorting, language)
         response.status(200).json({ message: cmsControllerResponse.fetchAllCmsSuccess, data: getAllCmsList })
     } catch (e: any) {
         next(Boom.badData(e.message))
@@ -81,11 +84,12 @@ const getAllCms = async (request: Request, response: Response, next: NextFunctio
 const updateCms = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
+        const language = (req as any).languageId
         /** Get cms from db */
-        const cmsObj: any = await cmsService.getOneCmsByFilter({ _id: id })
+        const cmsObj: any = await cmsService.getOneCmsByFilter({ _id: id, language})
         if (!cmsObj) return next(Boom.notFound(cmsControllerResponse.getCmsFailure))
 
-        const data = await cmsService.updateCms(req.body, id)
+        const data = await cmsService.updateCms({...req.body, language}, id)
         return res.status(200).send({ message: cmsControllerResponse.updateCmsSuccess, data })
     } catch (e: any) {
         return next(Boom.badData(e.message))

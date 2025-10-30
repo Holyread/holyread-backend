@@ -4,15 +4,17 @@ import config from '../../../../config'
 import ratingService from '../book/rating.service'
 import { ISmallGroup } from '../../../models/smallGroup.model'
 import { FilterQuery } from 'mongoose'
+import { Types } from 'mongoose'
 
 const NODE_ENV = config.NODE_ENV
 
 /** Get all small group for app */
-const getAllSmallGroups = async (skip: number, limit, search: FilterQuery<ISmallGroup>, sort) => {
+const getAllSmallGroups = async (skip: number, limit, search: FilterQuery<ISmallGroup>, sort, language: Types.ObjectId) => {
     try {
-        const count = await SmallGroupModel.find(search).countDocuments();
+        const query = { ...search, language }
+        const count = await SmallGroupModel.find(query).countDocuments();
         const aggregatePipeline = [
-            { $match: search },
+            { $match: query },
             { $sort: sort },
             { $skip: skip },
             { $limit: limit },

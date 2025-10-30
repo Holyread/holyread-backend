@@ -72,8 +72,8 @@ const uploadS3Files = async (body: any) => {
 const addSummary = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body;
-
-        const summaryExists = await bookSummaryService.getOneBookSummaryByFilter({ title: body.title });
+        const language = (req as any).languageId;
+        const summaryExists = await bookSummaryService.getOneBookSummaryByFilter({ title: body.title, language });
         if (summaryExists) return next(Boom.badData(bookSummaryControllerResponse.createBookSummaryFailure));
 
         if (body.categories?.length) {
@@ -82,7 +82,7 @@ const addSummary = async (req: Request, res: Response, next: NextFunction) => {
         }
 
         await uploadS3Files(body);
-
+        body.language = language;
         const data = await bookSummaryService.createBookSummary(body);
         res.status(200).send({
             message: bookSummaryControllerResponse.createBookSummarySuccess,
@@ -125,9 +125,9 @@ const getOneSummary = async (req: Request, res: Response, next: NextFunction) =>
                 }
             });
         }
-
+        const language = (req as any).languageId;
         if (data.categories) {
-            const categoryObj = await bookCategoryService.getAllBookCategory(0, 0, { _id: { $in: data.categories } }, [['createdAt', 'desc']]);
+            const categoryObj = await bookCategoryService.getAllBookCategory(0, 0, { _id: { $in: data.categories } }, [['createdAt', 'desc']], language);
             data.categories = categoryObj.categories;
         }
 
@@ -143,7 +143,7 @@ const getOneSummary = async (req: Request, res: Response, next: NextFunction) =>
 const getAllSummaries = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { skip = dataTable.skip, limit = dataTable.limit, search, status, bookStatusFilter, column, order } = req.query;
-
+        const language = (req as any).languageId;
         const searchFilter: FilterQuery<IBookSummary> = {};
         if (search) {
             searchFilter.$or = [
@@ -174,7 +174,7 @@ const getAllSummaries = async (req: Request, res: Response, next: NextFunction) 
             summarySorting = [['createdAt', 'desc']];
         }
 
-        const data = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), searchFilter, summarySorting);
+        const data = await bookSummaryService.getAllBookSummaries(Number(skip), Number(limit), searchFilter, summarySorting, language);
         res.status(200).json({
             message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
             data,
@@ -188,7 +188,8 @@ const getAllSummariesOptionsList = async (req: Request, res: Response, next: Nex
     try {
         const { category } = req.query;
         const query = category ? { categories: { $in: [category] } } : {};
-        const data = await bookSummaryService.getAllBookSummariesOptionsList(query);
+        const language = (req as any).languageId;
+        const data = await bookSummaryService.getAllBookSummariesOptionsList(query, language);
         res.status(200).json({
             message: bookSummaryControllerResponse.fetchBookSummariesSuccess,
             data,
@@ -205,6 +206,9 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
         if (!summaryDetails) return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure));
 
         const updateFile = async (file: string, type: string, oldFile: string) => {
+            if (file === undefined) {
+                return oldFile;
+            }
             if (file === null) {
                 await removeS3File(oldFile, { ...s3Bucket, documentDirectory: `${s3Bucket.documentDirectory}/${type}` });
             } else if (file.includes('base64')) {

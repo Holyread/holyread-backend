@@ -1,4 +1,4 @@
-import { FilterQuery } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 import { ICms } from '../../../models/cms.model'
 import { CmsModel } from '../../../models/index'
 
@@ -37,10 +37,14 @@ const getOneCmsByFilter = async (query: any) => {
 }
 
 /** Get all Cms for table */
-const getAllCms = async (skip: number, limit, search: FilterQuery<ICms>, sort) => {
+const getAllCms = async (skip: number, limit, search: FilterQuery<ICms>, sort, language?: Types.ObjectId) => {
       try {
-            const CmssList: any = await CmsModel.find(search).skip(skip).limit(limit).sort(sort).lean()
-            const count = await CmsModel.find(search).countDocuments()
+            const query = { ...search };
+            if (language) {
+                  query.language = language;
+            }
+            const CmssList: any = await CmsModel.find(query).skip(skip).limit(limit).sort(sort).lean()
+            const count = await CmsModel.find(query).countDocuments()
             return { count, cmsList: CmssList }
       } catch (e: any) {
             throw new Error(e)

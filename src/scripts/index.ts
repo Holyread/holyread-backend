@@ -19,3 +19,6 @@ import './set-country.script'
 // import './add-default-latest-book-views'
 // import './add-default-most-populer-book'
 // import './remove-freemium-users'
+
+// Uncomment to run language migration sequence
+import './run-language-migration'

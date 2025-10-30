@@ -22,14 +22,15 @@ const s3Bucket = {
 const addExpertCurated = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { body } = req
+        const language = (req as any).languageId;
         /** Get expert Curated from db */
-        const expertCuratedDetails: any = await expertCuratedService.getOneExpertCuratedByFilter({ title: req.body.title })
+        const expertCuratedDetails: any = await expertCuratedService.getOneExpertCuratedByFilter({ title: req.body.title, language })
         if (expertCuratedDetails) return next(Boom.badData(expertCuratedControllerResponse.createExpertCuratedFailure))
         if (body.image) {
             const s3File: any = await uploadFileToS3(body.image, body.title, { ...s3Bucket, documentDirectory: s3Bucket.documentDirectory + '/expertCurated' })
             body.image = s3File.name
         }
-
+        body.language = language;
         const data = await expertCuratedService.createExpertCurated(body)
         res.status(200).send({
             message: expertCuratedControllerResponse.createExpertCuratedSuccess,
@@ -60,7 +61,7 @@ const getAllExpertCurated = async (request: Request, response: Response, next: N
         const params = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : dataTable.limit
-
+        const language = (request as any).languageId;
         let searchFilter: FilterQuery<IExpertCurated> = {}
         if (params.search) {
             searchFilter = {
@@ -86,7 +87,7 @@ const getAllExpertCurated = async (request: Request, response: Response, next: N
         const expertCuratedSorting = ['title', 'status', 'createdAt'].includes(sortingColumn)
             ? [[sortingColumn, sortingOrder]]
             : [['title', 'desc']];
-        const data = await expertCuratedService.getAllExpertCurated(Number(skip), Number(limit), searchFilter, expertCuratedSorting)
+        const data = await expertCuratedService.getAllExpertCurated(Number(skip), Number(limit), searchFilter, expertCuratedSorting, language)
         response.status(200).json({ message: expertCuratedControllerResponse.fetchAllExpertCuratedSuccess, data })
     } catch (e: any) {
         next(Boom.badData(e.message))

@@ -23,29 +23,29 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
         const fileName = `export_data_${Date.now()}.xlsx`;
         const data: any[] = [];
         const workbook = new excel.Workbook();
-
+        const language = (request as any).languageId;
         // Fetch data based on selected data types
         for (const dataType of selectedDataTypes) {
             switch (dataType) {
                 case 'Daily devotional':
                     // Fetch reads of day data
-                    const readsOfDayList = await dailyDevotionalService.getDailyDevotionalList();
+                    const readsOfDayList = await dailyDevotionalService.getDailyDevotionalList(language);
                     data.push({ dataType, data: readsOfDayList });
                     break;
                 case 'Curated list':
                     // Fetch curated list data
-                    const curatedList = await expertCuratedService.getExpertCuratedList();
+                    const curatedList = await expertCuratedService.getExpertCuratedList(language);
                     data.push({ dataType, data: curatedList });
                     break;
                 case 'Books':
                     // Fetch book list data
-                    const bookData = await bookSummaryService.getAllBookSummaries(0, 0, {}, { createdAt: -1 } );
+                    const bookData = await bookSummaryService.getAllBookSummaries(0, 0, {}, { createdAt: -1 }, language);
                     const books = bookData.summaries
                     data.push({ dataType, data: books });
                     break;
                 case 'Users':
                     // Fetch users data (if available)
-                    const userData = await usersService.getAllUsersForExport();
+                    const userData = await usersService.getAllUsersForExport(language);
                     data.push({ dataType, data: userData });
                     // Implement the logic to fetch users data
                     break;
@@ -56,18 +56,18 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
                     break;
                 case 'Small group':
                     // Fetch small group data
-                    const smallGroupList = await smallGroupService.getSmallGroupsList();
+                    const smallGroupList = await smallGroupService.getSmallGroupsList(language);
                     data.push({ dataType, data: smallGroupList });
                     break;
                 case 'Most popular':
                     // Fetch most popular data
-                    const bookList = await bookSummaryService.getAllBookSummaries(0, 0, { popular: true }, { createdAt: -1 });
+                    const bookList = await bookSummaryService.getAllBookSummaries(0, 0, { popular: true }, { createdAt: -1 }, language);
                     const mostPopularList = bookList.summaries
                     data.push({ dataType, data: mostPopularList });
                     break;
                 case 'Meditations':
                     // Fetch meditations data
-                    const meditationList = await meditationService.getAllMeditationsForExport();
+                    const meditationList = await meditationService.getAllMeditationsForExport(language);
                     data.push({ dataType, data: meditationList });
                     break;
                 default:
@@ -359,6 +359,7 @@ const exportData = async (request: Request, response: Response, next: NextFuncti
 
 const exportUsersData = async (request: Request, response: Response, next: NextFunction) => {
     try {
+        const language = (request as any).languageId;
         const fileName = `export_data_${Date.now()}.xlsx`;
         const filePath = path.join(__dirname, fileName);
         const workbook = new excel.stream.xlsx.WorkbookWriter({ stream: fs.createWriteStream(filePath) });
@@ -605,7 +606,7 @@ const exportUsersData = async (request: Request, response: Response, next: NextF
 
         searchFilter.type = 'User';
 
-        const userData: any = await usersService.getAllExportUsers(searchFilter);
+        const userData: any = await usersService.getAllExportUsers(searchFilter, language);
 
         userData.forEach(item => {
             wsUsers.addRow({

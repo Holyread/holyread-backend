@@ -6,12 +6,14 @@ export interface IBookCategory extends mongoose.Document {
     title: string,
     image: string,
     status?: 'Active' | 'Deactive'
+    language: {type: Schema.Types.ObjectId, ref: 'language'}
 }
 
 export type createBookCategoryType = {
     title: string,
     image: string,
     status?: 'Active' | 'Deactive'
+    language: {type: Schema.Types.ObjectId, ref: 'language'}
 }
 
 export type getBookCategoryType = {
@@ -19,12 +21,14 @@ export type getBookCategoryType = {
     title?: string,
     image: string,
     status?: 'Active' | 'Deactive'
+    language?: {type: Schema.Types.ObjectId, ref: 'language'}
 }
 
 export const BookCategorySchema = new Schema({
     title: { type: String, required: true, index: true },
     image: { type: String, required: true },
     status: { type: String, required: true, index: true },
+    language: {type: Schema.Types.ObjectId, ref: 'language', index: true},
     createdAt: {
         type: Date, default: () => {
             return new Date()

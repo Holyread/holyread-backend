@@ -13,6 +13,7 @@ const getAllTransactions = async (request: Request | any, response: Response, ne
         const params: any = request.query
         const skip: any = params.skip ? params.skip : dataTable.skip
         const limit: any = params.limit ? params.limit : 10
+        const language = (request as any).languageId;
 
         const sortingColumn = params.column as string;
         const sortingOrder = params.order || 'asc';
@@ -34,7 +35,8 @@ const getAllTransactions = async (request: Request | any, response: Response, ne
                 from: params.from,
                 to: params.to,
             },
-            trnSorting
+            trnSorting,
+            language
         )
         response.status(200).json({ message: transactionsControllerResponse.getTransactionsSuccess, data })
     } catch (e: any) {

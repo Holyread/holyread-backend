@@ -10,6 +10,7 @@ export interface IExpertCurated extends mongoose.Document {
     views?: number,
     status?: 'Active' | 'Deactive',
     publish?: boolean,
+    language: {type: Schema.Types.ObjectId, ref: 'language'}
 }
 
 export type createExpertCuratedType = {
@@ -20,6 +21,7 @@ export type createExpertCuratedType = {
     views?: number,
     status?: 'Active' | 'Deactive',
     publish?: boolean,
+    language: {type: Schema.Types.ObjectId, ref: 'language'}
 }
 
 export type getExpertCuratedType = {
@@ -30,6 +32,7 @@ export type getExpertCuratedType = {
     image?: string,
     views?: number,
     status?: 'Active' | 'Deactive',
+    language?: {type: Schema.Types.ObjectId, ref: 'language'},
     publish?: boolean,
 }
 
@@ -40,6 +43,7 @@ export const ExpertCuratedSchema = new Schema({
     image: { type: String, default: '' },
     views: { type: Number, default: 0 },
     publish: { type: Boolean, default: false },
+    language: {type: Schema.Types.ObjectId, ref: 'language', index: true},
     createdAt: {
         type: Date, default: () => {
             return new Date()

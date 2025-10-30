@@ -13,9 +13,10 @@ const dashboardControllerResponse = responseMessage.dashboardControllerResponse
 /** Get Dashboard */
 const getDashboard = async (request: Request, response: Response, next: NextFunction) => {
     try {
+        const language = (request as any).languageId;
         const usersAggregation = await usersService.getAllUsersForDashboard({
             device: { $in: ['android', 'ios', 'web'] },
-        });
+        }, language);
 
         const usersByGroup = usersAggregation.reduce((acc, { _id, count }) => {
             acc[_id] = count;
@@ -42,7 +43,8 @@ const getDashboard = async (request: Request, response: Response, next: NextFunc
 
 const getBooksCountForDashboard = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const bookSummary = await bookSummaryService.getBooksCountForDashboard();
+        const language = (request as any).languageId;
+        const bookSummary = await bookSummaryService.getBooksCountForDashboard(language);
         
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
@@ -59,7 +61,8 @@ const getBooksCountForDashboard = async (request: Request, response: Response, n
 
 const getTopReadsBooks = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const bookSummary: any = await bookSummaryService.getTopReadsBooks(request.query.duration as 'year' | 'month' | 'week')
+        const language = (request as any).languageId;
+        const bookSummary: any = await bookSummaryService.getTopReadsBooks(request.query.duration as 'year' | 'month' | 'week', language)
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data: bookSummary,
@@ -71,10 +74,12 @@ const getTopReadsBooks = async (request: Request, response: Response, next: Next
 
 const getUserAnaylatics = async (request: Request, response: Response, next: NextFunction) => {
     try {
+        const language = (request as any).languageId;
         const data
             = await transactionsService
                 .getUserAnalytics(
-                    request.query.duration as string || 'year'
+                    request.query.duration as string || 'year',
+                    language
                 );
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,

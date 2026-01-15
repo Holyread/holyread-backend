@@ -1,8 +1,9 @@
 import { CronJob } from 'cron';
 import config from '../../config';
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
-import { randomNumberInRange, pushNotification } from '../lib/utils/utils';
+import { pushNotification, randomNumberInRange } from '../lib/utils/utils';
 import { awsBucket, cronDirectory } from '../constants/app.constant';
+import languageService from '../services/admin/language/language.service';
 
 const startPublishContentJob = async () => {
       try {
@@ -16,24 +17,39 @@ const startPublishContentJob = async () => {
             });
             await cronLog.save();
 
-            // Find unpublished books
-            const unpublishBooks = await BookSummaryModel.find({ publish: false }).select('_id').lean().exec();
+            const langauges = await languageService.getLanguage({});
 
-            // Publish the first unpublished book
-            if (unpublishBooks.length && unpublishBooks[0]?._id) {
-                  await BookSummaryModel.findOneAndUpdate({ _id: unpublishBooks[0]?._id }, { publish: true, publishedAt: new Date(), views: randomNumberInRange(700, 2500) });
+            let newPublishedBooks: any[] = [];
 
-                  // Get details of the newly published book
-                  const newPublishedBook : any = await BookSummaryModel.findOne({ _id: unpublishBooks[0]._id })
-                        .populate('author')
-                        .lean()
-                        .exec();
+            for (const lang of langauges) {
+              const book = await BookSummaryModel.findOneAndUpdate(
+                { publish: false, language: lang._id },
+                {
+                  publish: true,
+                  publishedAt: new Date(),
+                  views: randomNumberInRange(700, 2500),
+                },
+                {
+                  sort: { createdAt: 1 },
+                  new: true,
+                }
+              )
+                .populate("author")
+                .lean()
+                .exec();
 
-                  if (!newPublishedBook) return;
+              if (!book) {
+                console.log(`🔴 No unpublished book for ${lang?.name}`);
+                continue;
+              }
 
-                  let publishContent;
-                  let content;
+              newPublishedBooks.push(book);
+            }
 
+            let publishContent;
+            let content;
+    
+            for (const book of newPublishedBooks) {
                   // Initialize default ratings for books by machine user
                   try {
                         // Find or create a bot user
@@ -48,14 +64,14 @@ const startPublishContentJob = async () => {
 
                         // Update or create the rating
                         await RatingModel.findOneAndUpdate(
-                              { userId: botUser._id, bookId: newPublishedBook._id },
+                              { userId: botUser._id, bookId: book._id },
                               { star, updatedAt: new Date() },
                               { upsert: true }
                         );
 
                         // Get book rating
-                        const bookRating = await RatingModel.findOne({ userId: botUser._id, bookId: newPublishedBook._id }).select('star').lean().exec();
-                        publishContent = { ...newPublishedBook, bookRating };
+                        const bookRating = await RatingModel.findOne({ userId: botUser._id, bookId: book._id }).select('star').lean().exec();
+                        publishContent = { ...book, bookRating };
 
                         // Prepare content for notification
                         const paragraph = publishContent.overview;
@@ -69,6 +85,7 @@ const startPublishContentJob = async () => {
                   const users: any = await UserModel.find({
                         status: 'Active',
                         timeZone: { $exists: true },
+                        language: book.language,
                         'pushTokens.0': { $exists: true },
                         'notification.push': true,
                         'notification.latestSummariesUploads': true,

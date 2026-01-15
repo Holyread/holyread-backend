@@ -39,9 +39,11 @@ const start = async () => {
         if (today === 2) {
             // Tuesday: Publish "Sleep better with Psalms" category
             await publishVideo('6749ece627ea13dbed4bce3b');
+            await publishVideo('6953de320ce8b7d10d1b7f59')
         } else if (today === 5) {
             // Friday: Publish "Prayer and Meditation" category
             await publishVideo('6749ed0327ea13dbed4bcec9');
+            await publishVideo('6953ddff0ce8b7d10d1b7ac2')
         } else {
             console.log('No scheduled category for today.');
         }

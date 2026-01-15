@@ -1,8 +1,9 @@
 import { CronJob } from 'cron';
 import config from '../../config';
 import { DailyDvotionalModel, CronLogModel, CronScheduleModel } from '../models';
-import { devotionalCategoriesList } from '../lib/utils/utils';
 import { cronDirectory } from '../constants/app.constant';
+import getDevotionalCategory from '../services/admin/dailyDevotionalCategory/devotionalCategory.service';
+import languageService from '../services/admin/language/language.service';
 
 const startPublishContentJob = async () => {
     try {
@@ -15,41 +16,54 @@ const startPublishContentJob = async () => {
             startedAt: new Date(),
         });
         await cronLog.save();
-        let dailyDevotional : any = [];
+    const languages = await languageService.getLanguage({});
 
-        /** Get unpublished general daily devotional */
-        const unPublishGeneralDevotional = await DailyDvotionalModel.find({ publish: false }).select('_id').lean().exec();
-
-        if (unPublishGeneralDevotional.length) {
-            await DailyDvotionalModel.findOneAndUpdate({ _id: unPublishGeneralDevotional[0]?._id }, { publish: true, publishedAt: new Date() });
+    /** Get unpublished general daily devotional */
+    for (const lang of languages) {
+      const generalDevotional = await DailyDvotionalModel.findOneAndUpdate(
+        {
+          publish: false,
+          language: lang._id,
+        },
+        {
+          publish: true,
+          publishedAt: new Date(),
         }
+      );
 
-        /** Get unpublished categories daily devotional */
-        for (const category of devotionalCategoriesList) {
-            const unPublishDevotional: any = await DailyDvotionalModel.findOne({
-                publish: false,
-                category: category.name,
-            })
-                .sort({ createdAt: 1 })
-                .select("_id title category createdAt")
-                .lean()
-                .exec();
+      if (!generalDevotional) {
+        console.log(`🔴 No devotional exist for language ${lang?.name}`);
+        continue;
+      }
 
-            if (unPublishDevotional) {
-                dailyDevotional.push(unPublishDevotional);
-            }
+      console.log(
+        `🟢 Devotional ${generalDevotional?.title} published for lanugage ${lang?.name}`
+      );
+    }
+
+    /** Get unpublished categories daily devotional */
+    const devotionalCategoriesList = await getDevotionalCategory();
+
+    for (const category of devotionalCategoriesList) {
+      const devotional = await DailyDvotionalModel.findOneAndUpdate(
+        {
+          publish: false,
+          category: category.name,
+        },
+        { publish: true, publishedAt: new Date() },
+        {
+          sort: { createdAt: 1 },
+          new: true,
+          lean: true,
         }
-        // Publish the  categories daily devotional
-        if (dailyDevotional.length) {
-            await Promise.all(
-                dailyDevotional.map(async (item) => {
-                    await DailyDvotionalModel.findOneAndUpdate(
-                        { _id: item?._id },
-                        { publish: true, publishedAt: new Date() }
-                    );
-                    return item;
-                })
-            );
+      );
+
+      if (!devotional) {
+        console.log(`No devotional exist for category ${category?.name}`);
+        continue;
+      }
+
+      console.log("✅ Devotional published for category", category?.name);
         }
         console.log('JOB(✅) publish devotional executed successfully!');
         cronLog.status = 'success';

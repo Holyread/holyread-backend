@@ -2,6 +2,7 @@ import { CronJob } from 'cron';
 import config from '../../config';
 import { ExpertCuratedModel, CronLogModel, CronScheduleModel } from '../models';
 import { cronDirectory } from '../constants/app.constant';
+import languageService from '../services/admin/language/language.service';
 
 const startPublishContentJob = async () => {
     try {
@@ -15,16 +16,27 @@ const startPublishContentJob = async () => {
         });
         await cronLog.save();
 
-        // Find unpublished curated content
-        const unpublishCurateds = await ExpertCuratedModel.find({ publish: false }).select('_id').lean().exec();
+    const languages = await languageService.getLanguage({});
 
-        // Publish the first unpublished curated content
-        if (unpublishCurateds.length && unpublishCurateds[0]?._id) {
-            await ExpertCuratedModel.findOneAndUpdate({ _id: unpublishCurateds[0]?._id }, { publish: true, publishedAt: new Date() });
-        }
+    // Find unpublished curated content
+    for (const lang of languages) {
+      const expertCurateds = await ExpertCuratedModel.findOneAndUpdate(
+        { publish: false, language: lang._id },
+        { publish: true, publishedAt: new Date() }
+      );
 
-        console.log('JOB(✅) publish curated executed successfully!');
-        cronLog.status = 'success';
+      if (!expertCurateds) {
+        console.log("No expert curated found for", lang?.name);
+        continue;
+      }
+      console.log(
+        "JOB(✅) publish curated executed successfully for!",
+        expertCurateds?.description,
+        lang?.name
+      );
+    }
+
+        cronLog.status = "success";
         cronLog.endedAt = new Date();
         await cronLog.save();
     } catch (error: any) {

@@ -28,6 +28,10 @@ const startPublishContentJob = async () => {
         {
           publish: true,
           publishedAt: new Date(),
+        },
+        {
+          sort: { createdAt: 1 },
+          new: true,
         }
       );
 

@@ -22,7 +22,8 @@ const startPublishContentJob = async () => {
     for (const lang of languages) {
       const expertCurateds = await ExpertCuratedModel.findOneAndUpdate(
         { publish: false, language: lang._id },
-        { publish: true, publishedAt: new Date() }
+        { publish: true, publishedAt: new Date() },
+        { sort: { createdAt: 1 }, new: true }
       );
 
       if (!expertCurateds) {

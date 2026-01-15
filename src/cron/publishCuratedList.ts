@@ -31,7 +31,6 @@ const startPublishContentJob = async () => {
       }
       console.log(
         "JOB(✅) publish curated executed successfully for!",
-        expertCurateds?.description,
         lang?.name
       );
     }

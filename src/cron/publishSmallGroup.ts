@@ -1,7 +1,8 @@
-import { CronJob } from 'cron';
-import config from '../../config';
-import { SmallGroupModel, CronLogModel, CronScheduleModel } from '../models';
+import { CronJob } from "cron";
+import config from "../../config";
+import { SmallGroupModel, CronLogModel, CronScheduleModel } from "../models";
 import { cronDirectory } from '../constants/app.constant';
+import languageService from "../services/admin/language/language.service";
 
 const startPublishContentJob = async () => {
     try {
@@ -15,11 +16,29 @@ const startPublishContentJob = async () => {
         });
         await cronLog.save();
 
-        // Find unpublish small group content
-        const smallGroupList = await SmallGroupModel.find({ publish: false }).select('_id').lean().exec();
-        if (smallGroupList.length && smallGroupList[0]?._id) {
-            await SmallGroupModel.findOneAndUpdate({ _id: smallGroupList[0]?._id }, { publish: true, publishedAt: new Date() });
-        }
+        const language = await languageService.getLanguage({});
+    // Find unpublish small group content
+    for (const lang of language) {
+      const smallGroup = await SmallGroupModel.findOneAndUpdate(
+        { publish: false, language: lang._id },
+        { publish: true, publishedAt: new Date() },
+        { sort: { createdAt: 1}, new: true }
+      );
+
+      if (!smallGroup) {
+        console.log(
+          "🔴 No unpublished small group found for language",
+          lang?.name
+        );
+        continue;
+      }
+
+      console.log(
+        "🟢 Small Group published for language",
+        lang?.name,
+        smallGroup?.title
+      );
+    }
 
         console.log('JOB(✅) small group executed successfully!');
         cronLog.status = 'success';

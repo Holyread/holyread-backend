@@ -114,7 +114,7 @@ const getAllSmallGroups = async (req: Request, res: Response, next: NextFunction
 /** Update small group */
 const updateSmallGroup = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id } = req.params;
+        const id: string = req.params.id as string;
         const { body } = req;
         const language = (req as any).languageId;
         const smallGroupDetails = await smallGroupService.getOneSmallGroupByFilter({ _id: id });
@@ -140,7 +140,7 @@ const updateSmallGroup = async (req: Request, res: Response, next: NextFunction)
 /** Remove small group */
 const deleteSmallGroup = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id } = req.params;
+        const id: string = req.params.id as string;
         const smallGroupDetails = await smallGroupService.getOneSmallGroupByFilter({ _id: id });
         if (smallGroupDetails?.coverImage) await removeS3File(smallGroupDetails.coverImage, s3Bucket);
         await smallGroupService.deleteSmallGroup(id);

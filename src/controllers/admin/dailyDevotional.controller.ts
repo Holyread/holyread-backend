@@ -116,7 +116,7 @@ const getAllDailyDevotional = async (req: Request, res: Response, next: NextFunc
 /** Update daily devotional */
 const updateDailyDevotional = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id = req.params.id;
+        const id: string = req.params.id as string;
         const language = (req as any).languageId;
         const existingDevotional = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id, language });
 
@@ -146,7 +146,7 @@ const updateDailyDevotional = async (req: Request, res: Response, next: NextFunc
 /** Remove daily devotional */
 const deleteDailyDevotional = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id = req.params.id;
+        const id: string = req.params.id as string;
         const devotional = await dailyDevotionalService.getOneDailyDevotionalByFilter({ _id: id });
 
         if (devotional) {

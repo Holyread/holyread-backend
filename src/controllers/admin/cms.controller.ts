@@ -99,7 +99,7 @@ const updateCms = async (req: Request, res: Response, next: NextFunction): Promi
 /** Remove cms */
 const deleteCms = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const id: string = req.params.id
+        const id: string = req.params.id as string
         await cmsService.deleteCms(id)
         return res.status(200).send({ message: cmsControllerResponse.deleteCmsSuccess })
     } catch (e: any) {

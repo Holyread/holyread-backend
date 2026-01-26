@@ -103,7 +103,7 @@ const getAllCategoriesOptionsList = async (request: Request, response: Response,
 /** Update book category */
 const updateCateogry = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const id: string = req.params.id
+        const id: string = req.params.id as string
         /** Get book category from db */
         const categoryDetails: any = await bookCategoryService.getOneBookCategoryByFilter({ _id: id })
         const language = (req as any).languageId;

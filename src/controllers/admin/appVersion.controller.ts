@@ -90,7 +90,7 @@ const updateAppVersion = async (req: Request, res: Response, next: NextFunction)
 /** Remove appVersion */
 const deleteAppVersion = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const id: string = req.params.id
+        const id: string = req.params.id as string
         await appVersionService.deleteAppVersion(id)
         return res.status(200).send({ message: appVersionControllerResponse.deleteAppVersionSuccess })
     } catch (e: any) {

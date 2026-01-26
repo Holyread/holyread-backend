@@ -92,7 +92,7 @@ const addSummary = async (req: Request, res: Response, next: NextFunction) => {
         const user = await userService.getOneUserByFilter({ email: 'bot@holyreads.com' });
         if (user) {
             await ratingService.updateRating({
-                bookId: data._id as string,
+                bookId: String(data._id),
                 star: Number(`${randomNumberInRange(3, 5)}.${randomNumberInRange(1, 5)}`),
                 description: '',
                 userId: user._id,
@@ -201,7 +201,7 @@ const getAllSummariesOptionsList = async (req: Request, res: Response, next: Nex
 
 const updateSummary = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id } = req.params;
+        const id: string = req.params.id as string;
         const summaryDetails = await bookSummaryService.getOneBookSummaryByFilter({ _id: id });
         if (!summaryDetails) return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure));
 
@@ -248,7 +248,7 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
 
 const deleteSummary = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const { id } = req.params;
+        const id: string = req.params.id as string;
         const summaryDetails = await bookSummaryService.getOneBookSummaryByFilter({ _id: id });
 
         if (!summaryDetails) return res.status(404).send({ message: 'Book summary not found' });

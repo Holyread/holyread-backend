@@ -104,7 +104,7 @@ const updateCronSchedule = async (req: Request, res: Response, next: NextFunctio
 /** Remove cron schedule */
 const deleteCronSchedule = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const id: string = req.params.id
+        const id: string = req.params.id as string
         await cronScheduleService.deleteCronSchedule(id)
         return res.status(200).send({ message: cronScheduleControllerResponse.deleteCronScheduleSuccess })
     } catch (e: any) {

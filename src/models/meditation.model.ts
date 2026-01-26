@@ -3,7 +3,6 @@ import mongoose, { Schema, Types } from 'mongoose'
 mongoose.set('autoIndex', true);
 
 export interface IMeditation extends mongoose.Document {
-    _id: string;
     title: string,
     category?: Types.ObjectId,
     image: string,

@@ -14,6 +14,12 @@ const subscriptionsControllerResponse = responseMessage.subscriptionsControllerR
 const addSubscription = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body
+
+        // delete language field from body
+        if(body?.language){
+           delete body.language;
+        }
+
         const subscriptionObj: any = await subscriptionsService.getOneSubscriptionByFilter({ title: body.title, price: body.price })
         if (subscriptionObj) return next(Boom.conflict(subscriptionsControllerResponse.createSubscriptionFailure))
 
@@ -102,6 +108,12 @@ const getAllSubscriptionsOptionsList = async (request: Request, response: Respon
 const updateSubscription = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const id: any = req.params.id
+
+        // delete language field from body
+        if(req.body?.language){
+           delete req.body.language;
+        }
+
         /** Get subscription from db */
         const subscriptionObj: any = await subscriptionsService.getOneSubscriptionByFilter({ _id: id })
         if (!subscriptionObj) return next(Boom.notFound(subscriptionsControllerResponse.getSubscriptionFailure))

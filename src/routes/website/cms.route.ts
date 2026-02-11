@@ -1,7 +1,7 @@
 import express, { Router } from 'express'
 import {
   getAllCms,
-} from '../../controllers/customers/cms.controller'
+} from '../../controllers/website/cms.controller'
 
 const router: Router = express.Router()
 

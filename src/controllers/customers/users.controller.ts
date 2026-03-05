@@ -75,6 +75,8 @@ import dailyDevotionalService from '../../services/customers/dailyDevotional/dai
 import subscriptionsService from '../../services/customers/subscriptions/subscriptions.service';
 import { UserModel } from '../../models';
 import languageService from '../../services/admin/language/language.service';
+import { getNotificationTemplate } from '../../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../../constants/notificationTemplate.constant';
 
 const NODE_ENV = config.NODE_ENV
 
@@ -383,8 +385,18 @@ const changePassword = async (
                         },
                   }
             )
-            const notificationTitle = 'Change Password'
-            const notificationDescription = 'Password Changed Successfully'
+            
+            // get notification template for "Change Password"
+            const {
+              title: notificationTitle,
+              description: notificationDescription,
+            } = await getNotificationTemplate(
+              NOTIFICATION_TEMPLATE.changePassword,
+              userObj.language,
+              NOTIFICATION_TEMPLATE_FALLBACKS[
+                NOTIFICATION_TEMPLATE.changePassword
+              ],
+            );
 
             await notificationsService.createNotification(
                   {
@@ -677,8 +689,14 @@ const verifyEmailAuth = async (
                   )
             }
 
-            const title = 'Email auth enabled';
-            const description = 'Now you can access holy reads by using your email and password';
+            // send notification to user
+            const { title, description } = await getNotificationTemplate(
+              NOTIFICATION_TEMPLATE.emailAuthEnabled,
+              user.language,
+              NOTIFICATION_TEMPLATE_FALLBACKS[
+                NOTIFICATION_TEMPLATE.emailAuthEnabled
+              ],
+            );
 
             await notificationsService
                   .createNotification({
@@ -2212,12 +2230,23 @@ const blessFriend = async (
                   )
             }
 
+            const { title, description: descriptionTemplate } = await getNotificationTemplate(
+              NOTIFICATION_TEMPLATE.invitation,
+              inviteUser.language,
+              NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.invitation]
+            );
+
+            const description = descriptionTemplate.replace(
+              '{inviterEmailUsername}',
+              refUser.email.split('@')[0]
+            );
+
             await notificationsService.createNotification({
                   userId: invitedUserDetails._id,
                   type: 'setting',
                   notification: {
-                        title: 'Holy Reads Invitation 🎁',
-                        description: refUser.email.split('@')[0] + ' invited to you ✨',
+                        title,
+                        description,
                   },
             })
             fetchNotifications(io.sockets, { _id: invitedUserDetails._id })

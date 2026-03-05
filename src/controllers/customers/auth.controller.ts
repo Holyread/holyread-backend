@@ -15,6 +15,8 @@ import notificationsService from '../../services/customers/notifications/notific
 import stripeSubscriptionService from '../../services/stripe/subscription';
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
 import languageService from '../../services/admin/language/language.service';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../../constants/notificationTemplate.constant';
+import { getNotificationTemplate } from '../../lib/helpers/notificationTemplate.helper';
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
 const subscriptionsControllerResponse = responseMessage.subscriptionsControllerResponse
@@ -144,8 +146,12 @@ const appSignUpUser = async (
 
   const verificationCode = Math.floor(1000 + Math.random() * 9000);
 
-  const title = 'Welcome to Holy Reads 🎉';
-  const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
+  const { title, description } = await getNotificationTemplate(
+    NOTIFICATION_TEMPLATE.welcome,
+    body.language,
+    NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome],
+  );
+
   /** Get welcome email template */
   const emailTemplateDetails =
     await emailTemplateService.getOneEmailTemplateByFilter({
@@ -263,8 +269,11 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
 
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
 
-    const title = 'Welcome to Holy Reads 🎉';
-    const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
+    const { title, description } = await getNotificationTemplate(
+      NOTIFICATION_TEMPLATE.welcome,
+      body.language,
+      NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome],
+    );
     /** Get welcome email template */
     const emailTemplateDetails =
       await emailTemplateService.getOneEmailTemplateByFilter({
@@ -572,9 +581,14 @@ const handleExistingAppUser = async (
     oauthClientId: body.id,
     id: data._id,
   });
-  const title = 'Welcome to Holy Reads 🎉';
-  const description =
-    'Summarizing the best of Christian publishing for your busy schedule 📚';
+
+  // Get notification template
+  const { title, description } = await getNotificationTemplate(
+    NOTIFICATION_TEMPLATE.welcome,
+    body.language,
+    NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome],
+  );
+
   await notificationsService.createNotification({
     userId: data._id,
     type: 'user',
@@ -773,8 +787,15 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     const data: any = await usersService.createUser(newBody)
     mailchimpService.updateUser(data.email, 'subscribed')
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
-    const title = 'Welcome to Holy Reads 🎉';
-    const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
+
+    
+    // Get notification template 
+    const { title, description } = await getNotificationTemplate(
+      NOTIFICATION_TEMPLATE.welcome,
+      body.language,
+      NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome]
+    );
+
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
 
     /** Get welcome email template */
@@ -1016,8 +1037,14 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       'oauthClientId': body.id,
       id: data._id,
     })
-    const title = 'Welcome to Holy Reads 🎉';
-    const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
+    
+    // Get notification template
+    const { title, description } = await getNotificationTemplate(
+      NOTIFICATION_TEMPLATE.welcome,
+      body.language,
+      NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome]
+    );
+
     await notificationsService.createNotification({
       userId: data._id,
       type: 'user',
@@ -1110,11 +1137,19 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
         title,
         description
       )
+
+     { // get free plan notification template
+      const { title, description } = await getNotificationTemplate(
+        NOTIFICATION_TEMPLATE.freePlan,
+        body.language,
+        NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.freePlan]
+      );
+      
       pushNotification(
         tokens,
-        'Holy Reads Free Plan 🔔',
-        `Enjoy unlimited free access with holy reads best summaries📚`
-      )
+        title,
+        description
+      )}
     }
 
   } catch (e: any) {

@@ -26,6 +26,8 @@ import { fetchNotifications } from '../customers/notification.controller';
 import ratingService from '../../services/customers/book/rating.service';
 import highLightsService from '../../services/customers/highLights/highLights.service';
 import transactionsService from '../../services/admin/users/transactions.service';
+import { getNotificationTemplate } from '../../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../../constants/notificationTemplate.constant';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
@@ -114,8 +116,14 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
                 email: data.email,
             },
         })
-        const title = 'Welcome to Holy Reads 🎉';
-        const description = 'Summarizing the best of Christian publishing for your busy schedule';
+        
+        // get welcome notification
+        const { title, description } = await getNotificationTemplate(
+          NOTIFICATION_TEMPLATE.welcome,
+          (req as any).languageId,
+          NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome],
+        );
+        
         await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
         const createSubscriptionTitle = 'Holy Reads Subscription'
         const createSubscriptionDesc = `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} Subscription activated successfully`

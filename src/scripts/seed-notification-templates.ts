@@ -25,7 +25,7 @@ const TEMPLATE_SEED_DATA: Array<{
       es: {
         title: "Bienvenido a Holy Reads 🎉",
         description:
-          "Lo mejor de la literatura cristiana, en versión breve para tu día a día. 🎉",
+          "Lo mejor de la literatura cristiana, en versión breve para tu día a día. 📚",
       },
     },
   },
@@ -37,12 +37,12 @@ const TEMPLATE_SEED_DATA: Array<{
       en: {
         title: "Holy Reads Free access 🎉",
         description:
-          "Enjoy unlimited free access with Holy Reads best summaries 🎉",
+          "Enjoy unlimited free access with Holy Reads best summaries 📚",
       },
       es: {
         title: "Holy Reads Acceso gratuito 🎉",
         description:
-          "Disfruta de acceso gratuito ilimitado con Holy Reads mejores resúmenes 🎉",
+          "Disfruta de acceso gratuito ilimitado con Holy Reads mejores resúmenes 📚",
       },
     },
   },
@@ -50,14 +50,14 @@ const TEMPLATE_SEED_DATA: Array<{
     type: NOTIFICATION_TEMPLATE.freePlan,
     translations: {
       en: {
-        title: "Holy Reads Free Plan 🎉",
+        title: "Holy Reads Free Plan 🔔",
         description:
-          "Enjoy unlimited free access with Holy Reads best summaries 🎉",
+          "Enjoy unlimited free access with Holy Reads best summaries 📚",
       },
       es: {
-        title: "Holy Reads Plan gratuito 🎉",
+        title: "Holy Reads Plan gratuito 🔔",
         description:
-          "Disfruta de acceso gratuito ilimitado con Holy Reads mejores resúmenes 🎉",
+          "Disfruta de acceso gratuito ilimitado con Holy Reads mejores resúmenes 📚",
       },
     },
   },
@@ -203,11 +203,11 @@ const TEMPLATE_SEED_DATA: Array<{
     type: NOTIFICATION_TEMPLATE.invitation,
     translations: {
       en: {
-        title: "Holy Reads Invitation 🎉",
+        title: "Holy Reads Invitation 🎁",
         description: "{inviterEmailUsername} invited you ✨",
       },
       es: {
-        title: "Holy Reads Invitación 🎉",
+        title: "Holy Reads Invitación 🎁",
         description: "{inviterEmailUsername} te invitó ✨",
       },
     },
@@ -246,14 +246,14 @@ const TEMPLATE_SEED_DATA: Array<{
     type: NOTIFICATION_TEMPLATE.dailyDevotion,
     translations: {
       en: {
-        title: "🎉 Your daily devotional!",
+        title: "🔔 Your daily devotional!",
         description:
-          "🎉 Today's Devotional: {dailyDevotional.title}. Dive in now for a dose of spiritual nourishment 🎉",
+          "📙 Today's Devotional: {dailyDevotional.title}. Dive in now for a dose of spiritual nourishment 🎉",
       },
       es: {
-        title: "🎉 ¡Tu devocional diario!",
+        title: "🔔 ¡Tu devocional diario!",
         description:
-          "🎉 Devocional de hoy: {dailyDevotional.title}. Sumérgete ahora para una dosis de alimento espiritual 🎉",
+          "📙 Devocional de hoy: {dailyDevotional.title}. Sumérgete ahora para una dosis de alimento espiritual 🎉",
       },
     },
   },

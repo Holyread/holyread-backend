@@ -18,6 +18,8 @@ import transactionsService from '../../services/customers/users/transactions.ser
 import emailTemplateService from '../../services/admin/emailTemplate/emailTemplate.service';
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
 import notificationsService from '../../services/customers/notifications/notifications.service';
+import { getNotificationTemplate } from '../../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../../constants/notificationTemplate.constant';
 
 const stripe = require('stripe')(config.STRIPE_SECRET);
 
@@ -563,12 +565,23 @@ const processTransaction = async (user: any, session: any, event: any) => {
                   )
       return;
     }
-    Promise.all([
-      sentNotification(
-                        'Holy Reads Subscription Canceled ⛔',
-        `Your Holy Reads ${subscriptionDetails.title} Subscription Canceled`
-      ),
-            ])
+
+    // sent notification to user
+
+    const { title, description: descriptionTemplate } = await getNotificationTemplate(
+      NOTIFICATION_TEMPLATE.subscriptionCancelled,
+      user.language,
+      NOTIFICATION_TEMPLATE_FALLBACKS[
+        NOTIFICATION_TEMPLATE.subscriptionCancelled
+      ],
+    );
+
+    // Replace {planTitle} placeholder with the actual plan title
+    const description = descriptionTemplate.replace(
+      "{planTitle}",
+      subscriptionDetails?.title ?? "",
+    );
+    Promise.all([sentNotification(title, description)]);
   } catch (e: any) {
             console.log(
                   e.message

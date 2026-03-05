@@ -46,6 +46,7 @@ import { DonationModel } from './donation.model'
 import { AlertsModel } from './alerts.model'
 import { DevotionalCategoryModel } from './devotionalCategory.model'
 import { LanguageModel } from './language.model'
+import {NotificationTemplateModel} from './notificationTemplates.model'
 
 const NODE_ENV = config.NODE_ENV
 
@@ -103,5 +104,6 @@ export {
   DonationModel,
   AlertsModel,
   DevotionalCategoryModel,
-  LanguageModel
+  LanguageModel,
+  NotificationTemplateModel 
 }

@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { NOTIFICATION_TEMPLATE } from "../constants/notification.constant";
+import { NOTIFICATION_TEMPLATE } from "../constants/notificationTemplate.constant";
 
 const mongoId = z.string().regex(/^[a-fA-F0-9]{24}$/, {
   message: "Invalid MongoDB ObjectId",

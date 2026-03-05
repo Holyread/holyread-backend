@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { NOTIFICATION_TEMPLATE } from "../constants/notification.constant";
+import { NOTIFICATION_TEMPLATE } from "../constants/notificationTemplate.constant";
 
 export interface INotificationTemplate extends mongoose.Document {
   type: string;

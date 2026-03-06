@@ -156,6 +156,7 @@ const appSignUpUser = async (
   const emailTemplateDetails =
     await emailTemplateService.getOneEmailTemplateByFilter({
       title: emailTemplatesTitles.customer.welcomeToHolyreads,
+      language: body?.language
     });
   const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads';
   let html = `<p>Dear ${body.email.split('@')[0]
@@ -278,6 +279,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
     const emailTemplateDetails =
       await emailTemplateService.getOneEmailTemplateByFilter({
         title: emailTemplatesTitles.customer.welcomeToHolyreads,
+        language: body?.language
       });
     const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads';
     let html = `<p>Dear ${body.email.split('@')[0]
@@ -425,7 +427,11 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
       return next(Boom.unauthorized(authControllerResponse.getUserError))
     }
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
-    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.forgotPassword })
+    const emailTemplateDetails =
+      await emailTemplateService.getOneEmailTemplateByFilter({
+        title: emailTemplatesTitles.customer.forgotPassword,
+        language: user?.language
+      });
     const subject = emailTemplateDetails.subject || 'Verification Code'
     let html = `<h4>Your verification code is: ${verificationCode}<h4>`
 
@@ -599,6 +605,7 @@ const handleExistingAppUser = async (
   const emailTemplateDetails =
     await emailTemplateService.getOneEmailTemplateByFilter({
       title: emailTemplatesTitles.customer.welcomeToHolyreads,
+      language: body?.language
     });
   const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads';
   let html = `<p>Dear ${body.email.split('@')[0]
@@ -799,7 +806,12 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
 
     /** Get welcome email template */
-    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.welcomeToHolyreads })
+    const emailTemplateDetails =
+      await emailTemplateService.getOneEmailTemplateByFilter({
+        title: emailTemplatesTitles.customer.welcomeToHolyreads,
+        language: body?.language,
+      });
+
     const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
     let html = `<p>Dear ${body.email.split('@')[0]},</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]}/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
@@ -1058,6 +1070,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     const emailTemplateDetails = await emailTemplateService
       .getOneEmailTemplateByFilter({
         title: emailTemplatesTitles.customer.welcomeToHolyreads,
+        language: body?.language
       })
 
     const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
@@ -1176,7 +1189,11 @@ const sendVerificationEmail = async (req: Request, res: Response, next: NextFunc
     if (params.coupon) {
       link = link + `&coupon=${params.coupon}`
     }
-    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
+    const emailTemplateDetails =
+      await emailTemplateService.getOneEmailTemplateByFilter({
+        title: emailTemplatesTitles.customer.registration,
+        language: user?.language
+      });
     const subject = emailTemplateDetails?.subject || 'Account Verification'
     let html = `<p>Dear ${params.email.split('@')[0]},</p><p>Thank you for registering with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${params.email}</p><p>Please click <a href="${link}">Here</a> to verify your registration.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 

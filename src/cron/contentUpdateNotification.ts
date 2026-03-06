@@ -3,6 +3,8 @@ import config from '../../config';
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
 import { pushNotification } from '../lib/utils/utils'
 import { awsBucket, cronDirectory } from '../constants/app.constant';
+import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../constants/notificationTemplate.constant';
 
 const start = async () => {
     try {
@@ -60,7 +62,7 @@ const start = async () => {
             'pushTokens.0': { '$exists': true },
             'notification.push': true,
             'notification.favoriteCategoriesAlerts': true,
-        }).select('libraries timeZone pushTokens').populate('libraries').lean().exec();
+        }).select('libraries timeZone pushTokens language').populate('libraries').lean().exec();
 
         // Filter users based on categories
         const usersWithCategories = users.filter(user =>
@@ -82,9 +84,16 @@ const start = async () => {
         const notificationsSent: any = [];
         for (const user of usersMatchingCategories) {
             const tokens = user.pushTokens.map(token => token.token);
+
+            // fetching notification template
+            const { title, description } = await getNotificationTemplate(
+              NOTIFICATION_TEMPLATE.freshInspiration,
+              user.language,
+              NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.freshInspiration]
+            );
             const notificationPayload = {
-                title: '🔔 Fresh Inspiration Alert!',
-                body: `📙 Explore the latest in your favorite category with titles like ${content}.`,
+                title,
+                body: description.replace('{content}', content),
                 data: {
                     publishContents: {
                         _id: publishContent._id,

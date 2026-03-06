@@ -3,6 +3,8 @@ import config from '../../config';
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
 import { pushNotification, calculateDateInThePast } from '../lib/utils/utils';
 import { awsBucket, cronDirectory } from '../constants/app.constant';
+import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../constants/notificationTemplate.constant';
 
 const startEngagementMotivationJob = async () => {
     try {
@@ -73,11 +75,20 @@ const startEngagementMotivationJob = async () => {
         // Send notifications to each user
         for (const user of users) {
             const tokens = user.pushTokens.map(token => token.token);
+
+            const { title, description } = await getNotificationTemplate(
+              NOTIFICATION_TEMPLATE.engagementMotivation,
+              user?.language,
+              NOTIFICATION_TEMPLATE_FALLBACKS[
+                NOTIFICATION_TEMPLATE.engagementMotivation
+              ],
+            );
+
             try {
                 await pushNotification(
                     tokens,
-                    '🔔 We miss you at Holy Reads!',
-                    `📙 You've missed out on some uplifting content like ${publishContent.title}.`,
+                    title,
+                    description.replace("{bookTitle}", publishContent.title),
                     JSON.stringify({
                         publishContents: {
                             _id: publishContent._id,
@@ -101,8 +112,8 @@ const startEngagementMotivationJob = async () => {
                     userId: user._id,
                     type: 'book',
                     notification: {
-                        title: '🔔 We miss you at Holy Reads!',
-                        description: `📙 You've missed out on some uplifting content like ${publishContent.title}.`,
+                        title,
+                        description: description.replace("{bookTitle}", publishContent.title),
                         bookId: publishContent._id,
                         success: true,
                         errorMessage: undefined,
@@ -116,8 +127,8 @@ const startEngagementMotivationJob = async () => {
                     userId: user._id,
                     type: 'book',
                     notification: {
-                        title: '🔔 We miss you at Holy Reads!',
-                        description: `📙 You've missed out on some uplifting content like ${publishContent.title}.`,
+                        title,
+                        description: description.replace("{bookTitle}", publishContent.title),
                         success: false,
                         errorMessage: `Users processing error -', ${error.message}`,
                     },

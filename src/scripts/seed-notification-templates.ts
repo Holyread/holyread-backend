@@ -231,14 +231,14 @@ const TEMPLATE_SEED_DATA: Array<{
     type: NOTIFICATION_TEMPLATE.freshInspiration,
     translations: {
       en: {
-        title: "🎉 Fresh Inspiration Alert!",
+        title: "🔔 Fresh Inspiration Alert!",
         description:
-          "🎉 Explore the latest in your favorite category with titles like {content}.",
+          "📙 Explore the latest in your favorite category with titles like {content}.",
       },
       es: {
-        title: "🎉 ¡Nueva dosis de inspiración!",
+        title: "🔔 ¡Nueva dosis de inspiración!",
         description:
-          "🎉 Explora lo más reciente en tu categoría favorita con títulos como {content}.",
+          "📙 Explora lo más reciente en tu categoría favorita con títulos como {content}.",
       },
     },
   },
@@ -257,7 +257,48 @@ const TEMPLATE_SEED_DATA: Array<{
       },
     },
   },
-
+  {
+    type: NOTIFICATION_TEMPLATE.engagementMotivation,
+    translations: {
+      en: {
+        title: "🔔 We miss you at Holy Reads!",
+        description:
+          "📙 You've missed out on some uplifting content like {bookTitle}",
+      },
+      es: {
+        title: "🔔 ¡Te extrañamos en Holy Reads!",
+        description: "📙 Te has perdido contenido inspirador como {bookTitle}",
+      },
+    },
+  },
+  {
+    type: NOTIFICATION_TEMPLATE.freeDailySummary,
+    translations: {
+      en: {
+        title: "🔔 Free Summary For YOU! 😊",
+        description: "📙 Enjoy your free daily summary {bookTitle}.",
+      },
+      es: {
+        title: "🔔 ¡Resumen Gratuito Para Ti! 😊",
+        description: "📙 Disfruta tu resumen diario gratuito {bookTitle}.",
+      },
+    },
+  },
+  {
+    type: NOTIFICATION_TEMPLATE.notesAndHighlights,
+    translations: {
+      en: {
+        title: "🔔 Notes and highlights!",
+        description:
+          "📙 By long pressing on your favorite line, you can make highlights and share them with your friends as quotes or images.",
+      },
+      es: {
+        title: "🔔 ¡Notas y destacados!",
+        description:
+          "📙 Manteniendo presionada tu línea favorita, puedes hacer destacados y compartirlos con tus amigos como citas o imágenes.",
+      },
+    },
+  },
   // ─── App ───────────────────────────────────────────────────────────────────
   {
     type: NOTIFICATION_TEMPLATE.appUpdateAvailable,

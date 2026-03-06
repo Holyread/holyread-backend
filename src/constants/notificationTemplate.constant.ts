@@ -82,14 +82,33 @@ export const NOTIFICATION_TEMPLATE_FALLBACKS: Record<
     title: "🎉 NEW Summary for you!",
     description: '🎉 Explore the latest summary "{content}"',
   },
+  FREE_DAILY_SUMMARY: {
+    title: "🔔 Free Summary For YOU! 😊",
+    description: "📙 Enjoy your free daily summary {bookTitle}.",
+  },
+
   FRESH_INSPIRATION: {
-    title: "🎉 Fresh Inspiration Alert!",
+    title: "🔔 Fresh Inspiration Alert!",
     description:
-      "🎉 Explore the latest in your favorite category with titles like {content}.",
+      "📙 Explore the latest in your favorite category with titles like {content}.",
   },
   DAILY_DEVOTION: {
     title: "🔔 Your daily devotional!",
     description: "📙 Your daily devotional for {seriesTitles} are available 🔖",
+  },
+
+  // Engagement Motivation
+  ENGAGEMENT_MOTIVATION: {
+    title: "🔔 We miss you at Holy Reads!",
+    description:
+      "📙 You've missed out on some uplifting content like {bookTitle}",
+  },
+
+  // Notes & HighLights
+  NOTES_AND_HIGHLIGHTS: {
+    title: "🔔 Notes and highlights!",
+    description:
+      "📙 By long pressing on your favorite line, you can make highlights and share them with your friends as quotes or images.",
   },
 
   // App
@@ -120,6 +139,10 @@ export const NOTIFICATION_TEMPLATE = {
   // Plans
   freeAccess: "FREE_ACCESS",
   freePlan: "FREE_PLAN",
+  freeDailySummary: "FREE_DAILY_SUMMARY",
+
+  // notes & highLight
+  notesAndHighlights: "NOTES_AND_HIGHLIGHTS",
 
   // Account
   changePassword: "CHANGE_PASSWORD",
@@ -138,6 +161,9 @@ export const NOTIFICATION_TEMPLATE = {
 
   // Invitation
   invitation: "INVITATION",
+
+  // engagement motivation
+  engagementMotivation: "ENGAGEMENT_MOTIVATION",
 
   // Notifications
   newSummary: "NEW_SUMMARY",

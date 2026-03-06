@@ -3,6 +3,8 @@ import config from '../../config';
 import { DailyDvotionalModel, SettingModel, UserModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
 import { groupByKey, pushNotification } from '../lib/utils/utils';
 import { awsBucket, cronDirectory } from '../constants/app.constant';
+import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../constants/notificationTemplate.constant';
 
 const start = async () => {
       try {
@@ -50,7 +52,7 @@ const start = async () => {
                   //             'stripe.status': 'active',
                   //       },
                   // ],
-            }).select('timeZone pushTokens libraries').populate('libraries').lean().exec()
+            }).select('timeZone pushTokens libraries language').populate('libraries').lean().exec()
 
             const usersWithOutSubscribeCategories = users.filter(user =>
                   user.libraries &&                                // Check if libraries exist
@@ -94,9 +96,16 @@ const start = async () => {
                               });
 
                               // Send notifications to users in the timezone
+                              const { title, description } = await getNotificationTemplate(
+                                NOTIFICATION_TEMPLATE.dailyDevotion,
+                                timeZone?.language,
+                                NOTIFICATION_TEMPLATE_FALLBACKS[
+                                  NOTIFICATION_TEMPLATE.dailyDevotion
+                                ],
+                              );
                               const notificationPayload = {
-                                    title: '🔔 Start your day with inspiration!',
-                                    body: `📙 Today's Devotional: ${dailyDevotional.title}. Dive in now for a dose of spiritual nourishment 🔖`,
+                                    title,
+                                    body: description.replace("{seriesTitles}", dailyDevotional.title),
                                     data: {
                                           dailyDevotional: {
                                                 _id: dailyDevotional._id,

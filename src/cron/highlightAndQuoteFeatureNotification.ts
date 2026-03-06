@@ -3,6 +3,8 @@ import config from '../../config';
 import { UserModel, CronLogModel, NotificationsModel, HighLightsModel, CronScheduleModel } from '../models';
 import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
 import { cronDirectory } from '../constants/app.constant';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../constants/notificationTemplate.constant';
+import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
 
 const start = async () => {
     try {
@@ -36,9 +38,18 @@ const start = async () => {
         const notificationsSent : any = [];
         for (const user of usersWithoutHighlights) {
             const tokens = user.pushTokens.map(token => token.token);
+
+            // get notification Templates
+            const { title, description } = await getNotificationTemplate(
+              NOTIFICATION_TEMPLATE.notesAndHighlights,
+              user?.language,
+              NOTIFICATION_TEMPLATE_FALLBACKS[
+                NOTIFICATION_TEMPLATE.notesAndHighlights
+              ],
+            );
             const notificationPayload = {
-                title: '🔔 Notes and highlights!',
-                body: `📙 By long pressing on your favorite line, you can make highlights and share them with your friends as quotes or images.`,
+                title,
+                body: description
             };
             try {
                 await pushNotification(tokens, notificationPayload.title, notificationPayload.body);

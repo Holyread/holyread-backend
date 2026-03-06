@@ -129,10 +129,12 @@ const processTransaction = async (user: any, session: any, event: any) => {
       total?: number,
       status?: string
     ) => {
-                  const emailTemplateDetails = await emailTemplateService
-                        .getOneEmailTemplateByFilter({
-          title: emailTemplatesTitles.customer.subscriptionActivated,
-                        })
+                  const emailTemplateDetails =
+                    await emailTemplateService.getOneEmailTemplateByFilter({
+                      title:
+                        emailTemplatesTitles.customer.subscriptionActivated,
+                        language: user?.language
+                    });
 
                   const subject = emailTemplateDetails.subject
                         || `Holy Reads Subscription Activated`
@@ -505,6 +507,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                               title: emailTemplatesTitles
                                     .customer
                                     .subscriptionCanceled,
+                              language: user?.language
                         })
 
             const subject = emailTemplateDetails.subject

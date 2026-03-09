@@ -25,7 +25,7 @@ export type getEmailTemplateType = {
 }
 
 export const EmailTemplateSchema = new Schema({
-    title: { type: String, required: true, unique : true, index: true },
+    title: { type: String, required: true, index: true },
     subject: { type: String, required: true, index: true },
     content: { type: String, required: true },
     language: {type: Schema.Types.ObjectId, ref: 'language', index: true},
@@ -36,5 +36,7 @@ export const EmailTemplateSchema = new Schema({
     },
     updatedAt: {type: Date},
 }, {strict: 'throw'})
+
+EmailTemplateSchema.index({title: 1, language: 1}, {unique: true})
 
 export const EmailTemplateModel = mongoose.model<IEmailTemplate>('emailTemplate', EmailTemplateSchema)

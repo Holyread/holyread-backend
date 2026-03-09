@@ -10,6 +10,8 @@ import emailTemplateService from '../services/admin/emailTemplate/emailTemplate.
 import stripeSubscriptionServices from '../services/stripe/subscription'
 import config from '../../config';
 import { CronScheduleModel } from '../models';
+import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../constants/notificationTemplate.constant';
 
 /** Send and push notification */
 const sentNotification: any = async (title: string, description: string, user: any) => {
@@ -36,6 +38,7 @@ const sentSubscriptionEmail: any = async (user, title, description) => {
             const emailTemplateDetails =
                   await emailTemplateService.getOneEmailTemplateByFilter({
                         title: emailTemplatesTitles.customer.HolyreadsPlanUpgrade,
+                        language: user?.language
                   }),
                   subject = emailTemplateDetails?.subject || `Holy Reads Renewal Reminder`;
 
@@ -95,6 +98,7 @@ const start = async () => {
                   'subscription',
                   'notification',
                   'email',
+                  'language'
             ]).populate('subscription', 'title duration').lean().exec();
 
             if (!users?.length) {
@@ -116,7 +120,7 @@ const start = async () => {
                               return undefined
                         })
                   );
-            users.map((user: any, index) => {
+            users.map(async(user: any, index) => {
                   try {
                         const subscription = subscriptions[index] || {}
                         const now = new Date()
@@ -146,10 +150,21 @@ const start = async () => {
                                     new Date(user?.inAppSubscription?.expiredAt).getTime() > timeAfter24
                               ) { return }
                         }
+
+                        // get notification template
+                        const { title, description } =
+                          await getNotificationTemplate(
+                            NOTIFICATION_TEMPLATE.renewalReminder,
+                            user?.language,
+                            NOTIFICATION_TEMPLATE_FALLBACKS[
+                              NOTIFICATION_TEMPLATE.renewalReminder
+                            ],
+                          );
+
                         const message = {
                               active: {
-                                    title: 'Holy Reads Renewal Reminder ⏳',
-                                    description: `Holy Reads gently reminds to you that, Your ${user?.subscription?.title} plan will upgrade tomorrow ✨`,
+                                    title,
+                                    description: description.replace('{planTitle}', user?.subscription?.title),
                               },
                         }
 

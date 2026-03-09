@@ -3,6 +3,8 @@ import config from '../../config';
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
 import { pushNotification } from '../lib/utils/utils'
 import { awsBucket, cronDirectory } from '../constants/app.constant';
+import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../constants/notificationTemplate.constant';
 
 const start = async () => {
     try {
@@ -60,7 +62,7 @@ const start = async () => {
             'pushTokens.0': { '$exists': true },
             'notification.push': true,
             'notification.favoriteCategoriesAlerts': true,
-        }).select('libraries timeZone pushTokens').populate('libraries').lean().exec();
+        }).select('libraries timeZone pushTokens language').populate('libraries').lean().exec();
 
         // Filter users based on categories
         const usersWithCategories = users.filter(user =>
@@ -79,65 +81,89 @@ const start = async () => {
         }
 
         // Send notifications to matching users
-        const notificationsSent: any = [];
+
         for (const user of usersMatchingCategories) {
-            const tokens = user.pushTokens.map(token => token.token);
-            const notificationPayload = {
-                title: '🔔 Fresh Inspiration Alert!',
-                body: `📙 Explore the latest in your favorite category with titles like ${content}.`,
-                data: {
-                    publishContents: {
-                        _id: publishContent._id,
-                        description: publishContent.description,
-                        overview: publishContent.overview,
-                        bookFor: publishContent.bookFor,
-                        categories: publishContent.categories,
-                        coverImageBackground: publishContent.coverImageBackground,
-                        title: publishContent.title,
-                        author: publishContent.author,
-                        views: publishContent.views,
-                        coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${publishContent.coverImage}`,
-                        totalStar: publishContent.bookRating.star,
-                        status: publishContent.status,
-                    },
-                },
-            };
-            try {
-                await pushNotification(tokens, notificationPayload.title, notificationPayload.body, JSON.stringify(notificationPayload.data));
-                notificationsSent.push({
-                    userId: user._id,
-                    success: true,
-                });
-            } catch (error: any) {
-                notificationsSent.push({
-                    userId: user._id,
-                    success: false,
-                    errorMessage: error.message,
-                });
-            }
+          const tokens = user.pushTokens.map((token) => token.token);
+
+          // fetching notification template
+          const { title, description } = await getNotificationTemplate(
+            NOTIFICATION_TEMPLATE.freshInspiration,
+            user?.language,
+            NOTIFICATION_TEMPLATE_FALLBACKS[
+              NOTIFICATION_TEMPLATE.freshInspiration
+            ],
+          );
+
+          const notificationDescription = description.replace(
+            "{content}",
+            content,
+          );
+
+          const notificationPayload = {
+            title,
+            body: notificationDescription,
+            data: {
+              publishContents: {
+                _id: publishContent._id,
+                description: publishContent.description,
+                overview: publishContent.overview,
+                bookFor: publishContent.bookFor,
+                categories: publishContent.categories,
+                coverImageBackground: publishContent.coverImageBackground,
+                title: publishContent.title,
+                author: publishContent.author,
+                views: publishContent.views,
+                coverImage: `${awsBucket[config.NODE_ENV].s3BaseURL}/${awsBucket.bookDirectory}/coverImage/${publishContent.coverImage}`,
+                totalStar: publishContent.bookRating.star,
+                status: publishContent.status,
+              },
+            },
+          };
+
+          try {
+            await pushNotification(
+              tokens,
+              notificationPayload.title,
+              notificationPayload.body,
+              JSON.stringify(notificationPayload.data),
+            );
+
+            // notification log
+            const notificationLog = new NotificationsModel({
+              userId: user._id,
+              type: "book",
+              notification: {
+                title,
+                description: notificationDescription,
+                bookId: publishContent._id,
+                success: true,
+                errorMessage: undefined,
+              },
+              createdAt: new Date(),
+            });
+            await notificationLog.save();
+          } catch (error: any) {
+            console.log("Users processing error -", error.message);
+            
+            const notificationLog = new NotificationsModel({
+              userId: user._id,
+              type: "user",
+              notification: {
+                title,
+                description: notificationDescription,
+                success: false,
+                errorMessage: `Users processing error - ${error.message}`, 
+              },
+              createdAt: new Date(),
+            });
+            await notificationLog.save();
+          }
         }
         // Log Success
         console.log('JOB(✅) content update alert executed successfully!');
         cronLog.status = 'success';
         cronLog.endedAt = new Date();
         await cronLog.save();
-
-        // Log Notifications Sent
-        for (const notification of notificationsSent) {
-            const notificationLog = new NotificationsModel({
-                userId: notification.userId,
-                type: 'book',
-                notification: {
-                    title: '🔔 Fresh Inspiration Alert!',
-                    description: `📙 Explore the latest in your favorite category with titles like ${content}.`,
-                    bookId: publishContent._id,
-                    success: notification.success,
-                    errorMessage: notification.errorMessage,
-                },
-                createdAt: new Date(),
-            });
-            await notificationLog.save();
-        }
     } catch (error: any) {
         // Log Error
         console.log('JOB(🔴) content update alert execution Error is - ', error.message);

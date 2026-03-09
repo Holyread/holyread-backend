@@ -35,6 +35,7 @@ import appVersion from './admin/appVersion.route'
 import cronSchedule from './admin/cronSchedule.route'
 import alertPipeline from './admin/alerts.route'
 import language from './admin/language.route'
+import notificationTemplate from './admin/notificationTemplate.route'
 import { languageMiddleware } from '../middleware/language.middleware'
 
 const router: Router = express.Router()
@@ -75,6 +76,8 @@ router.use('/email-template', adminPassport, emailTemplate)
 
 router.use('/recommended-book', adminPassport, recommendedBook)
 router.use('/notification', adminPassport, customNotification)
+
+router.use('/notification-template', adminPassport, notificationTemplate)
 
 router.use('/export-data', adminPassport, exportData)
 router.use('/meditation', adminPassport, meditation)

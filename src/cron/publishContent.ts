@@ -4,6 +4,8 @@ import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsMo
 import { pushNotification, randomNumberInRange } from '../lib/utils/utils';
 import { awsBucket, cronDirectory } from '../constants/app.constant';
 import languageService from '../services/admin/language/language.service';
+import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../constants/notificationTemplate.constant';
 
 const startPublishContentJob = async () => {
       try {
@@ -89,7 +91,7 @@ const startPublishContentJob = async () => {
                         'pushTokens.0': { $exists: true },
                         'notification.push': true,
                         'notification.latestSummariesUploads': true,
-                  }).select('pushTokens').lean().exec();
+                  }).select('pushTokens language').lean().exec();
 
                   if (!users.length) {
                         console.log('JOB(🔴) publish contents execution stop due to no users found');
@@ -97,11 +99,23 @@ const startPublishContentJob = async () => {
 
                   for (const user of users) {
                         const tokens = user.pushTokens.map(token => token.token);
+                        
+                        // get notification template
+                        const { title, description } =
+                          await getNotificationTemplate(
+                            NOTIFICATION_TEMPLATE.newSummary,
+                            user?.language,
+                            NOTIFICATION_TEMPLATE_FALLBACKS[
+                              NOTIFICATION_TEMPLATE.newSummary
+                            ],
+                          );
+                        
+                        const notificationDesciption =  description.replace('{content}', content)
                         try {
                               await pushNotification(
                                     tokens,
-                                    '🔔 NEW Summary for you!',
-                                    `📙 Explore the latest summary "${content}"`,
+                                    title,
+                                    notificationDesciption,
                                     JSON.stringify({
                                           publishContents: {
                                                 _id: publishContent._id,
@@ -125,8 +139,8 @@ const startPublishContentJob = async () => {
                                     userId: user._id,
                                     type: 'book',
                                     notification: {
-                                          title: '🔔 NEW Summary for you!',
-                                          description: `📙 Explore the latest summary "${content}"`,
+                                          title,
+                                          description: notificationDesciption,
                                           success: true,
                                           errorMessage: undefined,
                                     },
@@ -137,10 +151,10 @@ const startPublishContentJob = async () => {
                               console.log('Users processing error -', error.message);
                               const notificationLog = new NotificationsModel({
                                     userId: user._id,
-                                    type: 'user',
+                                    type: 'book',
                                     notification: {
-                                          title: '🔔 NEW Summary for you!',
-                                          description: `📙 Explore the latest summary "${content}"`,
+                                          title,
+                                          description: notificationDesciption,
                                           success: false,
                                           errorMessage: `Users processing error -', ${error.message}`,
                                     },

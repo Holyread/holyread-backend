@@ -9,8 +9,9 @@ const FaqControllerResponse = responseMessage.FaqControllerResponse
 /** Get all Faqs */
 const getAllFaqs = async (request: Request, response: Response, next: NextFunction) => {
     try {
-        const languageId = (request as any).languageId
-        const getFaqsList = await faqService.getAllFaqs(languageId)
+        const language = (request as any)?.user
+        
+        const getFaqsList = await faqService.getAllFaqs(language)
         response.status(200).json({ message: FaqControllerResponse.fetchAllFaqSuccess, data: getFaqsList })
     } catch (e: any) {
         next(Boom.badData(e.message))

@@ -15,6 +15,8 @@ import notificationsService from '../../services/customers/notifications/notific
 import stripeSubscriptionService from '../../services/stripe/subscription';
 import subscriptionsService from '../../services/admin/subscriptions/subscriptions.service';
 import languageService from '../../services/admin/language/language.service';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../../constants/notificationTemplate.constant';
+import { getNotificationTemplate } from '../../lib/helpers/notificationTemplate.helper';
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
 const subscriptionsControllerResponse = responseMessage.subscriptionsControllerResponse
@@ -144,12 +146,17 @@ const appSignUpUser = async (
 
   const verificationCode = Math.floor(1000 + Math.random() * 9000);
 
-  const title = 'Welcome to Holy Reads 🎉';
-  const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
+  const { title, description } = await getNotificationTemplate(
+    NOTIFICATION_TEMPLATE.welcome,
+    body.language,
+    NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome],
+  );
+
   /** Get welcome email template */
   const emailTemplateDetails =
     await emailTemplateService.getOneEmailTemplateByFilter({
       title: emailTemplatesTitles.customer.welcomeToHolyreads,
+      language: body?.language
     });
   const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads';
   let html = `<p>Dear ${body.email.split('@')[0]
@@ -263,12 +270,16 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
 
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
 
-    const title = 'Welcome to Holy Reads 🎉';
-    const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
+    const { title, description } = await getNotificationTemplate(
+      NOTIFICATION_TEMPLATE.welcome,
+      body.language,
+      NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome],
+    );
     /** Get welcome email template */
     const emailTemplateDetails =
       await emailTemplateService.getOneEmailTemplateByFilter({
         title: emailTemplatesTitles.customer.welcomeToHolyreads,
+        language: body?.language
       });
     const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads';
     let html = `<p>Dear ${body.email.split('@')[0]
@@ -416,7 +427,11 @@ const forgotPassoword = async (req: Request, res: Response, next: NextFunction) 
       return next(Boom.unauthorized(authControllerResponse.getUserError))
     }
     const verificationCode = Math.floor(1000 + Math.random() * 9000)
-    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.forgotPassword })
+    const emailTemplateDetails =
+      await emailTemplateService.getOneEmailTemplateByFilter({
+        title: emailTemplatesTitles.customer.forgotPassword,
+        language: user?.language
+      });
     const subject = emailTemplateDetails.subject || 'Verification Code'
     let html = `<h4>Your verification code is: ${verificationCode}<h4>`
 
@@ -572,9 +587,14 @@ const handleExistingAppUser = async (
     oauthClientId: body.id,
     id: data._id,
   });
-  const title = 'Welcome to Holy Reads 🎉';
-  const description =
-    'Summarizing the best of Christian publishing for your busy schedule 📚';
+
+  // Get notification template
+  const { title, description } = await getNotificationTemplate(
+    NOTIFICATION_TEMPLATE.welcome,
+    body.language,
+    NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome],
+  );
+
   await notificationsService.createNotification({
     userId: data._id,
     type: 'user',
@@ -585,6 +605,7 @@ const handleExistingAppUser = async (
   const emailTemplateDetails =
     await emailTemplateService.getOneEmailTemplateByFilter({
       title: emailTemplatesTitles.customer.welcomeToHolyreads,
+      language: body?.language
     });
   const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads';
   let html = `<p>Dear ${body.email.split('@')[0]
@@ -773,12 +794,24 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     const data: any = await usersService.createUser(newBody)
     mailchimpService.updateUser(data.email, 'subscribed')
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
-    const title = 'Welcome to Holy Reads 🎉';
-    const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
+
+    
+    // Get notification template 
+    const { title, description } = await getNotificationTemplate(
+      NOTIFICATION_TEMPLATE.welcome,
+      body.language,
+      NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome]
+    );
+
     await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
 
     /** Get welcome email template */
-    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.welcomeToHolyreads })
+    const emailTemplateDetails =
+      await emailTemplateService.getOneEmailTemplateByFilter({
+        title: emailTemplatesTitles.customer.welcomeToHolyreads,
+        language: body?.language,
+      });
+
     const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
     let html = `<p>Dear ${body.email.split('@')[0]},</p><p>Welcome To Holy Reads</p><br /><p>We’re excited to have you get started. Just press the button below.</p><br /><p><button><a href="${origins[NODE_ENV]}/account/login">Here</a></button></p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
@@ -1016,8 +1049,14 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       'oauthClientId': body.id,
       id: data._id,
     })
-    const title = 'Welcome to Holy Reads 🎉';
-    const description = 'Summarizing the best of Christian publishing for your busy schedule 📚';
+    
+    // Get notification template
+    const { title, description } = await getNotificationTemplate(
+      NOTIFICATION_TEMPLATE.welcome,
+      body.language,
+      NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome]
+    );
+
     await notificationsService.createNotification({
       userId: data._id,
       type: 'user',
@@ -1031,6 +1070,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
     const emailTemplateDetails = await emailTemplateService
       .getOneEmailTemplateByFilter({
         title: emailTemplatesTitles.customer.welcomeToHolyreads,
+        language: body?.language
       })
 
     const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads'
@@ -1110,11 +1150,19 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
         title,
         description
       )
+
+     { // get free plan notification template
+      const { title, description } = await getNotificationTemplate(
+        NOTIFICATION_TEMPLATE.freePlan,
+        body.language,
+        NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.freePlan]
+      );
+      
       pushNotification(
         tokens,
-        'Holy Reads Free Plan 🔔',
-        `Enjoy unlimited free access with holy reads best summaries📚`
-      )
+        title,
+        description
+      )}
     }
 
   } catch (e: any) {
@@ -1141,7 +1189,11 @@ const sendVerificationEmail = async (req: Request, res: Response, next: NextFunc
     if (params.coupon) {
       link = link + `&coupon=${params.coupon}`
     }
-    const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.registration })
+    const emailTemplateDetails =
+      await emailTemplateService.getOneEmailTemplateByFilter({
+        title: emailTemplatesTitles.customer.registration,
+        language: user?.language
+      });
     const subject = emailTemplateDetails?.subject || 'Account Verification'
     let html = `<p>Dear ${params.email.split('@')[0]},</p><p>Thank you for registering with Holy Reads.</p><p>Your customer account details are below:</p><p>Email : ${params.email}</p><p>Please click <a href="${link}">Here</a> to verify your registration.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 

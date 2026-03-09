@@ -39,6 +39,7 @@ const start = async () => {
             const emailTemplateDetails =
                 await emailTemplateService.getOneEmailTemplateByFilter({
                     title: emailTemplatesTitles.customer.holyReadsMission,
+                    language: user?.language,
                 });
             const subject = emailTemplateDetails?.subject || 'Holy Reads Mission';
             let html

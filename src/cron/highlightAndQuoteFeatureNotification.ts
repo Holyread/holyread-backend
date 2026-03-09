@@ -3,6 +3,8 @@ import config from '../../config';
 import { UserModel, CronLogModel, NotificationsModel, HighLightsModel, CronScheduleModel } from '../models';
 import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
 import { cronDirectory } from '../constants/app.constant';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../constants/notificationTemplate.constant';
+import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
 
 const start = async () => {
     try {
@@ -30,28 +32,40 @@ const start = async () => {
             'notification.push': true,
             'notification.userActivityAlerts': true,
             createdAt: { $lte: fourDaysAgo },
-        }).select('timeZone pushTokens').lean().exec();
+        }).select('timeZone pushTokens language').lean().exec();
 
         // Send notifications to matching users
-        const notificationsSent : any = [];
         for (const user of usersWithoutHighlights) {
             const tokens = user.pushTokens.map(token => token.token);
+
+            // get notification Templates
+            const { title, description } = await getNotificationTemplate(
+              NOTIFICATION_TEMPLATE.notesAndHighlights,
+              user?.language,
+              NOTIFICATION_TEMPLATE_FALLBACKS[
+                NOTIFICATION_TEMPLATE.notesAndHighlights
+              ],
+            );
             const notificationPayload = {
-                title: '🔔 Notes and highlights!',
-                body: `📙 By long pressing on your favorite line, you can make highlights and share them with your friends as quotes or images.`,
+                title,
+                body: description
             };
             try {
                 await pushNotification(tokens, notificationPayload.title, notificationPayload.body);
-                notificationsSent.push({
-                    userId: user._id,
-                    success: true,
-                });
+                
+                const notificationLog = new NotificationsModel({
+                userId: user._id,
+                type: 'user',
+                notification: {
+                    title,
+                    description,
+                    errorMessage: undefined,
+                },
+                createdAt: new Date(),
+            });
+            await notificationLog.save();
             } catch (error: any) {
-                notificationsSent.push({
-                    userId: user._id,
-                    success: false,
-                    errorMessage: error.message,
-                });
+               
             }
         }
 
@@ -60,22 +74,6 @@ const start = async () => {
         cronLog.status = 'success';
         cronLog.endedAt = new Date();
         await cronLog.save();
-
-        // Log Notifications Sent
-        for (const notification of notificationsSent) {
-            const notificationLog = new NotificationsModel({
-                userId: notification.userId,
-                type: 'user',
-                notification: {
-                    title: '🔔 Notes and highlights!',
-                    description: `📙 Do you know you can highlight by long pressing on your favorite phrase and share it your friends as a quote or an image?`,
-                    success: notification.success,
-                    errorMessage: notification.errorMessage,
-                },
-                createdAt: new Date(),
-            });
-            await notificationLog.save();
-        }
     } catch (error: any) {
         // Log Error
         console.log('JOB(🔴) highlight and quote feature execution Error is - ', error.message);

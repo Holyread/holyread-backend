@@ -3,6 +3,8 @@ import config from '../../config';
 import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
 import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
 import { awsBucket, cronDirectory } from '../constants/app.constant';
+import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../constants/notificationTemplate.constant';
 
 const start = async () => {
     try {
@@ -25,7 +27,7 @@ const start = async () => {
             'pushTokens.0': { '$exists': true },
             'notification.push': true,
             'notification.userActivityAlerts': true,
-        }).select('libraries timeZone pushTokens').populate('libraries').lean().exec();
+        }).select('libraries timeZone pushTokens language').populate('libraries').lean().exec();
 
         // Filter users based on reading
         const usersRemindUnfinishedBook = users.filter(user =>
@@ -52,8 +54,6 @@ const start = async () => {
             }
         }
 
-        // Send notifications to matching users
-        const notificationsSent :any = [];
         for (const user of usersRemindUnfinishedBook) {
             const randomBook = getRandomBookFromReading(user);
 
@@ -78,9 +78,18 @@ const start = async () => {
                 bookDetails = { ...unreadBook, bookRating };
 
                 const tokens = user.pushTokens.map(token => token.token);
+
+                // get notification Template
+                const {title, description} = await getNotificationTemplate(
+                    NOTIFICATION_TEMPLATE.unfinishedContent,
+                    user?.language,
+                    NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.unfinishedContent],
+                );
+
+                const notificationDescription = description.replace('{bookTitle}', bookDetails.title)
                 const notificationPayload = {
-                    title: '🔔 You left something unfinished!',
-                    body: `📙 Let's read ${bookDetails.title}.`,
+                    title,
+                    body: notificationDescription,
                     data: {
                         publishContents: {
                             _id: bookDetails?._id,
@@ -99,17 +108,44 @@ const start = async () => {
                     },
                 };
                 try {
-                    await pushNotification(tokens, notificationPayload.title, notificationPayload.body, JSON.stringify(notificationPayload.data));
-                    notificationsSent.push({
-                        userId: user._id,
-                        success: true,
-                    });
+                  await pushNotification(
+                    tokens,
+                    notificationPayload.title,
+                    notificationPayload.body,
+                    JSON.stringify(notificationPayload.data),
+                  );
+
+                  // Log Notifications Sent
+                  const notificationLog = new NotificationsModel({
+                    userId: user._id,
+                    type: "book",
+                    notification: {
+                      title,
+                      description: notificationDescription,
+                      bookId: bookDetails?._id,
+                      success: true,
+                      errorMessage: undefined,
+                    },
+                    createdAt: new Date(),
+                  });
+                  await notificationLog.save();
                 } catch (error: any) {
-                    notificationsSent.push({
-                        userId: user._id,
-                        success: false,
-                        errorMessage: error.message,
-                    });
+                  console.log(
+                    "JOB(🔴) Users processing error -",
+                    error.message,
+                  );
+                  const notificationLog = new NotificationsModel({
+                    userId: user._id,
+                    type: "book",
+                    notification: {
+                      title,
+                      description: notificationDescription,
+                      success: false,
+                      errorMessage: `Users processing error -', ${error.message}`,
+                    },
+                    createdAt: new Date(),
+                  });
+                  await notificationLog.save();
                 }
             }
             else {
@@ -122,22 +158,7 @@ const start = async () => {
         cronLog.endedAt = new Date();
         await cronLog.save();
 
-        // Log Notifications Sent
-        for (const notification of notificationsSent) {
-            const notificationLog = new NotificationsModel({
-                userId: notification.userId,
-                type: 'book',
-                notification: {
-                    title: '🔔 You left something unfinished!',
-                    description: `📙 lets read ${bookDetails.title}.`,
-                    bookId: bookDetails?._id,
-                    success: notification.success,
-                    errorMessage: notification.errorMessage,
-                },
-                createdAt: new Date(),
-            });
-            await notificationLog.save();
-        }
+        
     } catch (error: any) {
         // Log Error
         console.log('JOB(🔴) Unfinished book notifier execution Error is - ', error.message);

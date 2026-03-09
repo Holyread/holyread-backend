@@ -167,6 +167,22 @@ const TEMPLATE_SEED_DATA: Array<{
       },
     },
   },
+  {
+    type: NOTIFICATION_TEMPLATE.kindleSync,
+    translations: {
+      en: {
+        title: "🔔 Sync your favorite books with your Kindle account for free!",
+        description:
+          "📙 Click here to finish setting it up begin reading Holy Reads on your Kindle.",
+      },
+      es: {
+        title:
+          "🔔 ¡Sincroniza tus libros favoritos con tu cuenta de Kindle gratis!",
+        description:
+          "📙 Haz clic aquí para terminar de configurarlo y comenzar a leer Holy Reads en tu Kindle.",
+      },
+    },
+  },
 
   // ─── Subscription ──────────────────────────────────────────────────────────
   {
@@ -189,11 +205,11 @@ const TEMPLATE_SEED_DATA: Array<{
     translations: {
       en: {
         title: "Holy Reads Subscription Canceled ⛔",
-        description: "Your Holy Reads {planTitle} Subscription Canceled",
+        description: "Your Holy Reads {duration} Subscription Canceled",
       },
       es: {
         title: "Holy Reads Suscripción cancelada ⛔",
-        description: "Tu suscripción Holy Reads {planTitle} ha sido cancelada",
+        description: "Tu suscripción Holy Reads {duration} ha sido cancelada",
       },
     },
   },
@@ -218,12 +234,12 @@ const TEMPLATE_SEED_DATA: Array<{
     type: NOTIFICATION_TEMPLATE.newSummary,
     translations: {
       en: {
-        title: "🎉 NEW Summary for you!",
-        description: '🎉 Explore the latest summary "{content}"',
+        title: "🔔 NEW Summary for you!",
+        description: '📙 Explore the latest summary "{content}"',
       },
       es: {
-        title: "🎉 ¡NUEVO resumen para ti!",
-        description: '🎉 Explora el último resumen "{content}"',
+        title: "🔔 ¡NUEVO resumen para ti!",
+        description: '📙 Explora el último resumen "{content}"',
       },
     },
   },
@@ -243,17 +259,32 @@ const TEMPLATE_SEED_DATA: Array<{
     },
   },
   {
-    type: NOTIFICATION_TEMPLATE.dailyDevotion,
+    type: NOTIFICATION_TEMPLATE.dailyDevotional,
     translations: {
       en: {
         title: "🔔 Your daily devotional!",
         description:
-          "📙 Today's Devotional: {dailyDevotional.title}. Dive in now for a dose of spiritual nourishment 🎉",
+          "📙 Today's Devotional: {title}. Dive in now for a dose of spiritual nourishment 🎉",
       },
       es: {
         title: "🔔 ¡Tu devocional diario!",
         description:
-          "📙 Devocional de hoy: {dailyDevotional.title}. Sumérgete ahora para una dosis de alimento espiritual 🎉",
+          "📙 Devocional de hoy: {title}. Sumérgete ahora para una dosis de alimento espiritual 🎉",
+      },
+    },
+  },
+  {
+    type: NOTIFICATION_TEMPLATE.dailyDevotionalCategory,
+    translations: {
+      en: {
+        title: "🔔 Your daily devotional!",
+        description:
+          "📙 Your daily devotional for {seriesTitles} are available 🔖",
+      },
+      es: {
+        title: "🔔 ¡Tu devocional diario!",
+        description:
+          "📙 Tu devocional diario para {seriesTitles} está disponible 🔖",
       },
     },
   },
@@ -296,6 +327,47 @@ const TEMPLATE_SEED_DATA: Array<{
         title: "🔔 ¡Notas y destacados!",
         description:
           "📙 Manteniendo presionada tu línea favorita, puedes hacer destacados y compartirlos con tus amigos como citas o imágenes.",
+      },
+    },
+  },
+  {
+    type: NOTIFICATION_TEMPLATE.renewalReminder,
+    translations: {
+      en: {
+        title: "Holy Reads Renewal Reminder ⏳",
+        description:
+          "Holy Reads gently reminds you that your {planTitle} plan will upgrade tomorrow ✨",
+      },
+      es: {
+        title: "Recordatorio de Renovación de Holy Reads ⏳",
+        description:
+          "Holy Reads te recuerda amablemente que tu plan {planTitle} se actualizará mañana ✨",
+      },
+    },
+  },
+  {
+    type: NOTIFICATION_TEMPLATE.newContent,
+    translations: {
+      en: {
+        title: "🔔 We have something new for you",
+        description: "📙 Lets read {bookTitle}.",
+      },
+      es: {
+        title: "🔔 Tenemos algo nuevo para ti",
+        description: "📙 Vamos a leer {bookTitle}.",
+      },
+    },
+  },
+  {
+    type: NOTIFICATION_TEMPLATE.unfinishedContent,
+    translations: {
+      en: {
+        title: "🔔 You left something unfinished!",
+        description: "📙 Let's read {bookTitle}.",
+      },
+      es: {
+        title: "🔔 ¡Dejaste algo sin terminar!",
+        description: "📙 Vamos a leer {bookTitle}.",
       },
     },
   },

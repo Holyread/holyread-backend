@@ -130,22 +130,38 @@ const start = async () => {
                     notificationPayload.body,
                     JSON.stringify(notificationPayload.data)
                 );
-                notificationsSent.push({
-                    title: bookDetails.title,
-                    bookId: bookDetails._id,
+                const notificationLog = new NotificationsModel({
                     userId: user._id,
-                    success: true,
+                    type: 'book',
+                    notification: {
+                        title: notificationPayload.title,
+                        description: notificationPayload.body,
+                        bookId: bookDetails?._id,
+                        success: true,
+                        errorMessage: undefined,
+                    },
+                    createdAt: new Date(),
                 });
+                await notificationLog.save();
                 await userService.updateUserLibrary(
                     { _id: user.libraries._id },
                     { $push: { freeNotificationBooks: { bookId: bookDetails._id, createdAt: new Date() } } }
                 );
             } catch (error: any) {
-                notificationsSent.push({
+                console.log('JOB(🔴) Users processing error -', error.message);
+                const notificationLog = new NotificationsModel({
                     userId: user._id,
-                    success: false,
-                    errorMessage: error.message,
+                    type: 'book',
+                    notification: {
+                        title: notificationPayload.title,
+                        description: notificationPayload.body,
+                        bookId: bookDetails?._id,
+                        success: false,
+                        errorMessage: `Users processing error -', ${error.message}`,
+                    },
+                    createdAt: new Date(),
                 });
+                await notificationLog.save();
             }
         }
         // Log Success
@@ -154,22 +170,6 @@ const start = async () => {
         cronLog.endedAt = new Date();
         await cronLog.save();
 
-        // Log Notifications Sent
-        for (const notification of notificationsSent) {
-            const notificationLog = new NotificationsModel({
-                userId: notification.userId,
-                type: 'book',
-                notification: {
-                    title: '🔔 Summary for free 😊',
-                    description: `📙 Just for you, one free access to the ${notification.title} summary.`,
-                    bookId: notification?.bookId,
-                    success: notification.success,
-                    errorMessage: notification.errorMessage,
-                },
-                createdAt: new Date(),
-            });
-            await notificationLog.save();
-        }
     } catch (error: any) {
         // Log Error
         console.log('JOB(🔴) schedule freemium user random summary notification execution Error is - ', error.message);

@@ -109,10 +109,10 @@ const start = async () => {
                             // Send notifications to users in the timezone
                             const { title, description } =
                               await getNotificationTemplate(
-                                NOTIFICATION_TEMPLATE.dailyDevotion,
+                                NOTIFICATION_TEMPLATE.dailyDevotionalCategory,
                                 item?.language,
                                 NOTIFICATION_TEMPLATE_FALLBACKS[
-                                  NOTIFICATION_TEMPLATE.dailyDevotion
+                                  NOTIFICATION_TEMPLATE.dailyDevotionalCategory
                                 ],
                               );
                             

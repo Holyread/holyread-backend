@@ -60,6 +60,11 @@ export const NOTIFICATION_TEMPLATE_FALLBACKS: Record<
     title: "Kindle email updated",
     description: "Your Kindle email has been updated successfully.",
   },
+  KINDLE_SYNC: {
+    title: "🔔 Sync your favorite books with your Kindle account for free!",
+    description:
+      "📙 Click here to finish setting it up begin reading Holy Reads on your Kindle.",
+  },
 
   // Subscription
   SUBSCRIPTION_ACTIVATED: {
@@ -68,7 +73,12 @@ export const NOTIFICATION_TEMPLATE_FALLBACKS: Record<
   },
   SUBSCRIPTION_CANCELLED: {
     title: "Holy Reads Subscription Canceled ⛔",
-    description: "Your Holy Reads {planTitle} Subscription Canceled",
+    description: "Your Holy Reads {duration} Subscription Canceled",
+  },
+  RENEWAL_REMINDER: {
+    title: "Holy Reads Renewal Reminder ⏳",
+    description:
+      "Holy Reads gently reminds you that your {planTitle} plan will upgrade tomorrow ✨",
   },
 
   // Invitation
@@ -79,8 +89,8 @@ export const NOTIFICATION_TEMPLATE_FALLBACKS: Record<
 
   // Notifications
   NEW_SUMMARY: {
-    title: "🎉 NEW Summary for you!",
-    description: '🎉 Explore the latest summary "{content}"',
+    title: "🔔 NEW Summary for you!",
+    description: '📙 Explore the latest summary "{content}"',
   },
   FREE_DAILY_SUMMARY: {
     title: "🔔 Free Summary For YOU! 😊",
@@ -92,9 +102,18 @@ export const NOTIFICATION_TEMPLATE_FALLBACKS: Record<
     description:
       "📙 Explore the latest in your favorite category with titles like {content}.",
   },
-  DAILY_DEVOTION: {
+  DAILY_DEVOTIONAL_CATEGORY: {
     title: "🔔 Your daily devotional!",
     description: "📙 Your daily devotional for {seriesTitles} are available 🔖",
+  },
+  DAILY_DEVOTIONAL: {
+    title: "🔔 Start your day with inspiration!",
+    description:
+      "📙 Today's Devotional: {title}. Dive in now for a dose of spiritual nourishment 🔖",
+  },
+  NEW_CONTENT: {
+    title: "🔔 We have something new for you",
+    description: "📙 Lets read {bookTitle}.",
   },
 
   // Engagement Motivation
@@ -102,6 +121,10 @@ export const NOTIFICATION_TEMPLATE_FALLBACKS: Record<
     title: "🔔 We miss you at Holy Reads!",
     description:
       "📙 You've missed out on some uplifting content like {bookTitle}",
+  },
+  UNFINISHED_CONTENT: {
+    title: "🔔 You left something unfinished!",
+    description: "📙 Let's read {bookTitle}.",
   },
 
   // Notes & HighLights
@@ -151,6 +174,7 @@ export const NOTIFICATION_TEMPLATE = {
 
   // Kindle
   addKindleEmail: "ADD_KINDLE_EMAIL",
+  kindleSync: "KINDLE_SYNC",
   updateKindleEmail: "UPDATE_KINDLE_EMAIL",
   kindleEmailAdded: "KINDLE_EMAIL_ADDED",
   kindleEmailUpdated: "KINDLE_EMAIL_UPDATED",
@@ -158,17 +182,21 @@ export const NOTIFICATION_TEMPLATE = {
   // Subscription
   subscriptionActivated: "SUBSCRIPTION_ACTIVATED",
   subscriptionCancelled: "SUBSCRIPTION_CANCELLED",
+  renewalReminder: "RENEWAL_REMINDER",
 
   // Invitation
   invitation: "INVITATION",
 
   // engagement motivation
   engagementMotivation: "ENGAGEMENT_MOTIVATION",
+  newContent: "NEW_CONTENT",
+  unfinishedContent: "UNFINISHED_CONTENT",
 
   // Notifications
   newSummary: "NEW_SUMMARY",
   freshInspiration: "FRESH_INSPIRATION",
-  dailyDevotion: "DAILY_DEVOTION",
+  dailyDevotional: "DAILY_DEVOTIONAL",
+  dailyDevotionalCategory: "DAILY_DEVOTIONAL_CATEGORY",
 
   // App
   appUpdateAvailable: "APP_UPDATE_AVAILABLE",

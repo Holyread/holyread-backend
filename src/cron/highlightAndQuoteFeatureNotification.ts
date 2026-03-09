@@ -32,10 +32,9 @@ const start = async () => {
             'notification.push': true,
             'notification.userActivityAlerts': true,
             createdAt: { $lte: fourDaysAgo },
-        }).select('timeZone pushTokens').lean().exec();
+        }).select('timeZone pushTokens language').lean().exec();
 
         // Send notifications to matching users
-        const notificationsSent : any = [];
         for (const user of usersWithoutHighlights) {
             const tokens = user.pushTokens.map(token => token.token);
 
@@ -53,16 +52,20 @@ const start = async () => {
             };
             try {
                 await pushNotification(tokens, notificationPayload.title, notificationPayload.body);
-                notificationsSent.push({
-                    userId: user._id,
-                    success: true,
-                });
+                
+                const notificationLog = new NotificationsModel({
+                userId: user._id,
+                type: 'user',
+                notification: {
+                    title,
+                    description,
+                    errorMessage: undefined,
+                },
+                createdAt: new Date(),
+            });
+            await notificationLog.save();
             } catch (error: any) {
-                notificationsSent.push({
-                    userId: user._id,
-                    success: false,
-                    errorMessage: error.message,
-                });
+               
             }
         }
 
@@ -71,22 +74,6 @@ const start = async () => {
         cronLog.status = 'success';
         cronLog.endedAt = new Date();
         await cronLog.save();
-
-        // Log Notifications Sent
-        for (const notification of notificationsSent) {
-            const notificationLog = new NotificationsModel({
-                userId: notification.userId,
-                type: 'user',
-                notification: {
-                    title: '🔔 Notes and highlights!',
-                    description: `📙 Do you know you can highlight by long pressing on your favorite phrase and share it your friends as a quote or an image?`,
-                    success: notification.success,
-                    errorMessage: notification.errorMessage,
-                },
-                createdAt: new Date(),
-            });
-            await notificationLog.save();
-        }
     } catch (error: any) {
         // Log Error
         console.log('JOB(🔴) highlight and quote feature execution Error is - ', error.message);

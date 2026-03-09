@@ -3,6 +3,8 @@ import config from '../../config';
 import { UserModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
 import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
 import { cronDirectory } from '../constants/app.constant';
+import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../constants/notificationTemplate.constant';
 
 const start = async () => {
     try {
@@ -26,28 +28,50 @@ const start = async () => {
             'notification.userActivityAlerts': true,
             kindleEmail: { $exists: false },
             createdAt: { $lte: fiveDaysAgo },
-        }).select('timeZone pushTokens').lean().exec();
+        }).select('timeZone pushTokens language').lean().exec();
 
         // Send notifications to matching users
-        const notificationsSent : any = [];
         for (const user of usersWithoutKindleEmail) {
             const tokens = user.pushTokens.map(token => token.token);
+
+            // get notification
+            const { title, description } = await getNotificationTemplate(
+              NOTIFICATION_TEMPLATE.kindleSync,
+              user.language,
+              NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.kindleSync],
+            );
             const notificationPayload = {
-                title: '🔔 Sync your favorite books with your Kindle account for free!',
-                body: `📙 Click here to finish setting it up begin reading Holy Reads on your Kindle.`,
+                title,
+                body: description
             };
             try {
                 await pushNotification(tokens, notificationPayload.title, notificationPayload.body);
-                notificationsSent.push({
+                const notificationLog = new NotificationsModel({
                     userId: user._id,
-                    success: true,
+                    type: 'user',
+                    notification: {
+                        title: notificationPayload.title,
+                        description: notificationPayload.body,
+                        success: true,
+                        errorMessage: undefined,
+                    },
+                    createdAt: new Date(),
                 });
+                await notificationLog.save();
             } catch (error: any) {
-                notificationsSent.push({
+                console.log('JOB(🔴) Users processing error -', error.message);
+                const notificationLog = new NotificationsModel({
                     userId: user._id,
-                    success: false,
-                    errorMessage: error.message,
+                    type: 'user',
+                    notification: {
+                        title: notificationPayload.title,
+                        description: notificationPayload.body,
+                        success: false,
+                        errorMessage: `Users processing error -', ${error.message}`,
+                    },
+                    createdAt: new Date(),
                 });
+                await notificationLog.save();
             }
         }
 
@@ -57,21 +81,6 @@ const start = async () => {
         cronLog.endedAt = new Date();
         await cronLog.save();
 
-        // Log Notifications Sent
-        for (const notification of notificationsSent) {
-            const notificationLog = new NotificationsModel({
-                userId: notification.userId,
-                type: 'user',
-                notification: {
-                    title: '🔔 Sync your favorite books with Kindle!',
-                    description: `📙 Click here to finish Kindle setup and start reading Holy Reads collection on Kindle.`,
-                    success: notification.success,
-                    errorMessage: notification.errorMessage,
-                },
-                createdAt: new Date(),
-            });
-            await notificationLog.save();
-        }
     } catch (error: any) {
         // Log Error
         console.log('JOB(🔴) notify kindle email setup execution Error is - ', error.message);

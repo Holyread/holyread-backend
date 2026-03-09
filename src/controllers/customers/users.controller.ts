@@ -1079,8 +1079,8 @@ const updateUserAccount = async (
             const notificationDescription = description.replace(
               '{duration}',
               isActivated
-                ? subscriptionDetails.duration
-                : '1 ' + subscriptionDetails.duration
+                ? subscriptionDetails?.duration
+                : '1 ' + subscriptionDetails?.duration
             )
 
             if (isAppSubscriptionStatus && subscriptionDetails) {

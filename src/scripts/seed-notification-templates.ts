@@ -264,12 +264,12 @@ const TEMPLATE_SEED_DATA: Array<{
       en: {
         title: "🔔 Your daily devotional!",
         description:
-          "📙 Today's Devotional: {title}. Dive in now for a dose of spiritual nourishment 🎉",
+          "📙 Today's Devotional: {title}. Dive in now for a dose of spiritual nourishment 🔖",
       },
       es: {
         title: "🔔 ¡Tu devocional diario!",
         description:
-          "📙 Devocional de hoy: {title}. Sumérgete ahora para una dosis de alimento espiritual 🎉",
+          "📙 Devocional de hoy: {title}. Sumérgete ahora para una dosis de alimento espiritual 🔖",
       },
     },
   },

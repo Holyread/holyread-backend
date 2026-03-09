@@ -5,13 +5,13 @@ import {
 import { getNotificationTemplate } from "./notificationTemplate.helper";
 
 const formatDuration = (duration: string): string =>
-  duration.includes("Half") ? duration : `1 ${duration}`;
+  duration?.includes("Half") ? duration : `1 ${duration}` || "";
 
 export const buildSubscriptionNotification = async (
   duration: string,
   languageId: string | undefined,
 ): Promise<{ title: string; description: string }> => {
-  const formattedDuration = formatDuration(duration);
+  const formattedDuration = formatDuration(duration || "");
 
   const template = await getNotificationTemplate(
     NOTIFICATION_TEMPLATE.subscriptionActivated,

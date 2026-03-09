@@ -19,13 +19,13 @@ export const updateNotificationTemplateInDB = async (
   );
 };
 
-export const getNotificationTemplateFromDB = async (
+export const fetchNotiTemplateById = async (
   query: FilterQuery<INotificationTemplate>,
 ) => {
   return await NotificationTemplateModel.findOne(query);
 };
 
-export const getAllNotificationTemplatesFromDB = async (
+export const fetchAllNoificationTemplates = async (
   query: FilterQuery<INotificationTemplate>,
 ) => {
   return await NotificationTemplateModel.find(query);

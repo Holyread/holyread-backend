@@ -55,7 +55,6 @@ const start = async () => {
         }
 
         // Send notifications to matching users
-        const notificationsSent : any = [];
         for (const user of userFavoriteCategories) {
             const randomBookCategory = getRandomBookFromFavoriteCategories(user);
 

@@ -4,8 +4,8 @@ import {
   createNotificationTemplateInDB,
   updateNotificationTemplateInDB,
   deleteNotificationTemplateFromDB,
-  getAllNotificationTemplatesFromDB,
-  getNotificationTemplateFromDB,
+  fetchAllNoificationTemplates,
+  fetchNotiTemplateById,
 } from "../../services/admin/notificationTemplate/notificationTemplate.service";
 import { responseMessage } from "../../constants/message.constant";
 
@@ -17,7 +17,8 @@ export const getAllNotificationTemplate = async (
   next: NextFunction,
 ) => {
   try {
-    const notificationTemplates = await getAllNotificationTemplatesFromDB({});
+    const notificationTemplates = await fetchAllNoificationTemplates({});
+
     res.status(200).json({
       message:
         notificationTemplateControllerResponse.getNotificationTemplatesSuccess,
@@ -28,7 +29,7 @@ export const getAllNotificationTemplate = async (
   }
 };
 
-export const getNotificationTemplate = async (
+export const getNotificationTemplateDetailById = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -40,7 +41,7 @@ export const getNotificationTemplate = async (
     if (id) filter._id = id;
     if (type) filter.type = type;
 
-    const notficationTemplate = await getNotificationTemplateFromDB(filter);
+    const notficationTemplate = await fetchNotiTemplateById(filter);
 
     res.status(200).json({
       message:
@@ -53,23 +54,27 @@ export const getNotificationTemplate = async (
 };
 
 export const createNotificationTemplate = async (
-  req: Request,
+  req: Request & { languageId?: string },
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const { type, title, description, language } = req.body;
+    const { type, title, description } = req.body;
+    const language = req.languageId;
 
     if (!type || !title || !description || !language) {
       return next(Boom.badData("All fields are required"));
     }
 
-    const notificationTemplate = await createNotificationTemplateInDB({
-      type,
-      title,
-      description,
-      language,
-    });
+    const notificationTemplate = await createNotificationTemplateInDB(
+      {
+        type,
+        title,
+        description,
+        language,
+      },
+    );
+    
     res.status(201).json({
       message:
         notificationTemplateControllerResponse.createNotificationTemplateSuccess,

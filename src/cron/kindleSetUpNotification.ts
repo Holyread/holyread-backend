@@ -37,7 +37,7 @@ const start = async () => {
             // get notification
             const { title, description } = await getNotificationTemplate(
               NOTIFICATION_TEMPLATE.kindleSync,
-              user.language,
+              user?.language,
               NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.kindleSync],
             );
             const notificationPayload = {

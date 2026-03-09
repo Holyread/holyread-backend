@@ -394,7 +394,7 @@ const changePassword = async (
               description: notificationDescription,
             } = await getNotificationTemplate(
               NOTIFICATION_TEMPLATE.changePassword,
-              userObj.language,
+              userObj?.language,
               NOTIFICATION_TEMPLATE_FALLBACKS[
                 NOTIFICATION_TEMPLATE.changePassword
               ],
@@ -420,7 +420,7 @@ const changePassword = async (
                               language: userObj?.language
                         })
 
-            const subject = emailTemplateDetails.subject || 'Holy Reads Password Changed'
+            const subject = emailTemplateDetails?.subject || 'Holy Reads Password Changed'
             let html = `
                   <p>
                         Dear ${userObj.email.split('@')[0]},
@@ -701,7 +701,7 @@ const verifyEmailAuth = async (
             // send notification to user
             const { title, description } = await getNotificationTemplate(
               NOTIFICATION_TEMPLATE.emailAuthEnabled,
-              user.language,
+              user?.language,
               NOTIFICATION_TEMPLATE_FALLBACKS[
                 NOTIFICATION_TEMPLATE.emailAuthEnabled
               ],
@@ -1066,7 +1066,7 @@ const updateUserAccount = async (
               isActivated
                 ? NOTIFICATION_TEMPLATE.subscriptionActivated
                 : NOTIFICATION_TEMPLATE.subscriptionCancelled,
-              userObj.language,
+              userObj?.language,
               isActivated
                 ? NOTIFICATION_TEMPLATE_FALLBACKS[
                     NOTIFICATION_TEMPLATE.subscriptionActivated
@@ -2267,7 +2267,7 @@ const blessFriend = async (
 
             const { title, description: descriptionTemplate } = await getNotificationTemplate(
               NOTIFICATION_TEMPLATE.invitation,
-              inviteUser.language,
+              inviteUser?.language,
               NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.invitation]
             );
 

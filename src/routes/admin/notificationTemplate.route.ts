@@ -10,7 +10,7 @@ import {
   createNotificationTemplate,
   deleteNotificationTemplate,
   getAllNotificationTemplate,
-  getNotificationTemplate,
+  getNotificationTemplateDetailById,
   updateNotificationTemplate,
 } from "../../controllers/admin/notificationTemplate.controller";
 
@@ -23,7 +23,7 @@ router.get(
 router.get(
   "/:id",
   validate(getNotificationTemplateSchema),
-  getNotificationTemplate,
+  getNotificationTemplateDetailById,
 );
 router.post(
   "/",

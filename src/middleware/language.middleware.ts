@@ -12,13 +12,11 @@ export const languageMiddleware = async (
       req.query.language ||
       req.params.language || "en") as string;
 
-    if (!code) return next(Boom.badData("Language code is required"));
-
     const languageId = await languageService.getLanguageCache(code);
 
-    (req as any).languageId = languageId;
-    req.body.language = languageId;
+    req.languageId = languageId;
     next();
+    
   } catch (error: any) {
     next(Boom.badData(error.message));
   }

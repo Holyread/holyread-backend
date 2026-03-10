@@ -105,7 +105,8 @@ const start = async () => {
                                     userMatchedSeries.push(devotional.title);
                                 }
                             });
-
+                            
+                            console.log(item?.language, "item?.language")
                             // Send notifications to users in the timezone
                             const { title, description } =
                               await getNotificationTemplate(
@@ -173,11 +174,11 @@ const start = async () => {
         return;
     }
 
-    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
-        console.log(`JOB(🟡) Daily devotional categories not initiated due to ${config.NODE_ENV} Environment`);
-        return;
-    }
-    const schedule = Object.values(cronSchedule.schedule).join(' ');
+    // if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
+    //     console.log(`JOB(🟡) Daily devotional categories not initiated due to ${config.NODE_ENV} Environment`);
+    //     return;
+    // }
+    const schedule = '* * * * *';
     new CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) Daily devotional categories Started successfully!');
 })(config);

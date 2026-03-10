@@ -14,7 +14,7 @@ export const NOTIFICATION_TEMPLATE_FALLBACKS: Record<
 
   // Plans
   FREE_ACCESS: {
-    title: "Holy Reads Free access 🎉",
+    title: "Holy Reads Free access 🔔",
     description:
       "Enjoy unlimited free access with Holy Reads best summaries 📚",
   },

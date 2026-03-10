@@ -35,12 +35,12 @@ const TEMPLATE_SEED_DATA: Array<{
     type: NOTIFICATION_TEMPLATE.freeAccess,
     translations: {
       en: {
-        title: "Holy Reads Free access 🎉",
+        title: "Holy Reads Free access 🔔",
         description:
           "Enjoy unlimited free access with Holy Reads best summaries 📚",
       },
       es: {
-        title: "Holy Reads Acceso gratuito 🎉",
+        title: "Holy Reads Acceso gratuito 🔔",
         description:
           "Disfruta de acceso gratuito ilimitado con Holy Reads mejores resúmenes 📚",
       },

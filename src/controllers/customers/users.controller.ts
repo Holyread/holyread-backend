@@ -2626,12 +2626,13 @@ const subscribePlan = async (
                   })
             }
 
-            const couponNotificationTitle = 'Holy Reads Coupon Activated';
-            const couponNotificationDescription = `Holy Reads ${subscriptionDetails.duration.includes('Half')
-                  ? subscriptionDetails.duration
-                  : '1 ' + subscriptionDetails.duration
-                  } subscription has been activated! 🎉`
-
+            const {
+              title: couponNotificationTitle,
+              description: couponNotificationDescription,
+            } = await buildSubscriptionNotification(
+              subscriptionDetails?.duration,
+              userObj?.language,
+            );
 
             if (
                   req.user.pushTokens.length &&

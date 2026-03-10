@@ -573,15 +573,14 @@ const processTransaction = async (user: any, session: any, event: any) => {
 
     const { title, description: descriptionTemplate } = await getNotificationTemplate(
       NOTIFICATION_TEMPLATE.subscriptionCancelled,
-      user.language,
+      user?.language,
       NOTIFICATION_TEMPLATE_FALLBACKS[
         NOTIFICATION_TEMPLATE.subscriptionCancelled
       ],
     );
 
-    // Replace {planTitle} placeholder with the actual plan title
     const description = descriptionTemplate.replace(
-      "{planTitle}",
+      "{duration}",
       subscriptionDetails?.title ?? "",
     );
     Promise.all([sentNotification(title, description)]);

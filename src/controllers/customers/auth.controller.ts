@@ -353,6 +353,14 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
 
     await notificationsService.createNotification({ userId: userData._id, type: 'user', notification: { title, description } })
 
+    // get free access notification
+    const { title: freeAccessTitle, description: freeAccessDescription } =
+      await getNotificationTemplate(
+        NOTIFICATION_TEMPLATE.freeAccess,
+        body.language,
+        NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.freeAccess],
+      );
+
     /** Push notification */
     if (userData && userData.pushTokens && userData.pushTokens.length && userData?.notification?.push) {
       const tokens = userData.pushTokens.map(i => i.token)
@@ -362,7 +370,7 @@ const signUpUser = async (req: Request, res: Response, next: NextFunction) => {
         userData.device === 'web' &&
         !userData.inAppSubscription &&
         !userData.referralUserId
-      ) pushNotification(tokens, tokens, 'Holy Reads Free access 🔔', `Enjoy unlimited free access with holy reads best summaries📚`);
+      ) pushNotification(tokens, tokens, freeAccessTitle, freeAccessDescription);
     }
 
     res.status(200).send({ message: authControllerResponse.signUpSuccess })
@@ -529,6 +537,23 @@ const handleExistingAppUser = async (
     deviceId: body.deviceId,
   });
 
+  // if existing User have language
+  let languageId = existingUser?.language;
+
+  // if body have language
+  if (body?.language) {
+    const language = await languageService.getLanguageCache(body.language);
+    languageId = language;
+  }
+
+  // if languageId not found fallback to english
+  if (!languageId) {
+    const language = await languageService.getLanguageCache("en");
+    languageId = language;
+  }
+
+  body.language = languageId;
+
   let base64: any;
 
   if (body.photoUrl) {
@@ -559,7 +584,7 @@ const handleExistingAppUser = async (
     medium: body.medium,
     campaign: body.campaign,
     isSignedUp: true,
-    language: body.language,
+    language: body?.language,
   };
 
   const subscriptionDetails =
@@ -591,7 +616,7 @@ const handleExistingAppUser = async (
   // Get notification template
   const { title, description } = await getNotificationTemplate(
     NOTIFICATION_TEMPLATE.welcome,
-    body.language,
+    body?.language,
     NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome],
   );
 
@@ -605,7 +630,7 @@ const handleExistingAppUser = async (
   const emailTemplateDetails =
     await emailTemplateService.getOneEmailTemplateByFilter({
       title: emailTemplatesTitles.customer.welcomeToHolyreads,
-      language: body?.language
+      language: body?.language,
     });
   const subject = emailTemplateDetails?.subject || 'Welcome To Holy Reads';
   let html = `<p>Dear ${body.email.split('@')[0]
@@ -662,6 +687,12 @@ const handleExistingAppUser = async (
 const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
   try {
     const body: any = req.body
+
+    const languageCode = body?.language || 'en';
+
+    // Get language and attach the id to body.language
+    const language = await languageService.getLanguageCache(languageCode);
+    body.language = language;
 
     if (!body.id || !body.provider) {
       return next(Boom.notFound(authControllerResponse.missingoAuthKeyError))
@@ -779,6 +810,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
       libraries: libraries?._id,
       isSignedUp: true,
       deviceId: body.deviceId || '',
+      language: body.language
     }
 
     const subscriptionDetails = await subscriptionsService.getOneSubscriptionByFilter({ _id: body.subscription })
@@ -795,11 +827,10 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     mailchimpService.updateUser(data.email, 'subscribed')
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
 
-    
     // Get notification template 
     const { title, description } = await getNotificationTemplate(
       NOTIFICATION_TEMPLATE.welcome,
-      body.language,
+      body?.language,
       NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome]
     );
 
@@ -854,6 +885,13 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
 const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
   try {
     const body: any = req.body
+
+    const languageCode = body?.language || 'en';
+
+    // Get language and attach the id to body.language
+    const language = await languageService.getLanguageCache(languageCode);
+    body.language = language;
+
     if (
       !body.id ||
       !body.provider
@@ -1008,6 +1046,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       source: body.source,
       medium: body.medium,
       campaign: body.campaign,
+      language: body.language,
     }
 
     const subscriptionDetails = await subscriptionsService

@@ -130,12 +130,12 @@ const start = async () => {
 
             // notification log
             const notificationLog = new NotificationsModel({
-              userId: user._id,
+              userId: user?._id,
               type: "book",
               notification: {
                 title,
                 description: notificationDescription,
-                bookId: publishContent._id,
+                bookId: publishContent?._id,
                 success: true,
                 errorMessage: undefined,
               },

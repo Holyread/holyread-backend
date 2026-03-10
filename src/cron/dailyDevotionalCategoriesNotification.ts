@@ -105,7 +105,7 @@ const start = async () => {
                                     userMatchedSeries.push(devotional.title);
                                 }
                             });
-
+                            
                             // Send notifications to users in the timezone
                             const { title, description } =
                               await getNotificationTemplate(

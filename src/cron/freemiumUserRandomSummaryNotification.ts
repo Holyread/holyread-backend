@@ -5,6 +5,8 @@ import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
 import { awsBucket, cronDirectory } from '../constants/app.constant';
 import subscriptionsService from '../services/customers/subscriptions/subscriptions.service';
 import userService from '../services/customers/users/user.service';
+import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../constants/notificationTemplate.constant';
 
 const start = async () => {
     try {
@@ -30,7 +32,7 @@ const start = async () => {
             'notification.push': true,
             'createdAt': { $lte: yesterday },
             isSignedUp: true
-        }).select('libraries timeZone pushTokens').populate('libraries').lean().exec();
+        }).select('libraries timeZone pushTokens language').populate('libraries').lean().exec();
 
         const freemiumUsers: any[] = [];
 
@@ -53,7 +55,6 @@ const start = async () => {
         }
 
         // Send notifications to matching users
-        const notificationsSent : any = [];
         for (const user of userFavoriteCategories) {
             const randomBookCategory = getRandomBookFromFavoriteCategories(user);
 
@@ -92,9 +93,18 @@ const start = async () => {
             bookDetails = { ...unreadBook, bookRating };
 
             const tokens = user.pushTokens.map(token => token.token);
+
+            const { title, description } = await getNotificationTemplate(
+              NOTIFICATION_TEMPLATE.freeDailySummary,
+              user?.language,
+              NOTIFICATION_TEMPLATE_FALLBACKS[
+                NOTIFICATION_TEMPLATE.freeDailySummary
+              ],
+            );
+
             const notificationPayload = {
-                title: '🔔 Free Summary For YOU! 😊',
-                body: `📙 Enjoy your free daily summary ${bookDetails.title}.`,
+                title,
+                body: description.replace("{bookTitle}", bookDetails.title),
                 data: {
                     publishContents: {
                         _id: bookDetails?._id,
@@ -119,22 +129,38 @@ const start = async () => {
                     notificationPayload.body,
                     JSON.stringify(notificationPayload.data)
                 );
-                notificationsSent.push({
-                    title: bookDetails.title,
-                    bookId: bookDetails._id,
+                const notificationLog = new NotificationsModel({
                     userId: user._id,
-                    success: true,
+                    type: 'book',
+                    notification: {
+                        title: notificationPayload.title,
+                        description: notificationPayload.body,
+                        bookId: bookDetails?._id,
+                        success: true,
+                        errorMessage: undefined,
+                    },
+                    createdAt: new Date(),
                 });
+                await notificationLog.save();
                 await userService.updateUserLibrary(
                     { _id: user.libraries._id },
                     { $push: { freeNotificationBooks: { bookId: bookDetails._id, createdAt: new Date() } } }
                 );
             } catch (error: any) {
-                notificationsSent.push({
+                console.log('JOB(🔴) Users processing error -', error.message);
+                const notificationLog = new NotificationsModel({
                     userId: user._id,
-                    success: false,
-                    errorMessage: error.message,
+                    type: 'book',
+                    notification: {
+                        title: notificationPayload.title,
+                        description: notificationPayload.body,
+                        bookId: bookDetails?._id,
+                        success: false,
+                        errorMessage: `Users processing error -', ${error.message}`,
+                    },
+                    createdAt: new Date(),
                 });
+                await notificationLog.save();
             }
         }
         // Log Success
@@ -143,22 +169,6 @@ const start = async () => {
         cronLog.endedAt = new Date();
         await cronLog.save();
 
-        // Log Notifications Sent
-        for (const notification of notificationsSent) {
-            const notificationLog = new NotificationsModel({
-                userId: notification.userId,
-                type: 'book',
-                notification: {
-                    title: '🔔 Summary for free 😊',
-                    description: `📙 Just for you, one free access to the ${notification.title} summary.`,
-                    bookId: notification?.bookId,
-                    success: notification.success,
-                    errorMessage: notification.errorMessage,
-                },
-                createdAt: new Date(),
-            });
-            await notificationLog.save();
-        }
     } catch (error: any) {
         // Log Error
         console.log('JOB(🔴) schedule freemium user random summary notification execution Error is - ', error.message);

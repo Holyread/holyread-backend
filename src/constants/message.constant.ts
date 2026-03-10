@@ -324,8 +324,10 @@ export const responseMessage = {
     notificationTemplateControllerResponse: {
         createNotificationTemplateSuccess: 'Notification template created successfully',
         createNotificationTemplateFailure: 'Failed to create notification template',
+        updateNotificationTemplate: "Notification template updated successfully",
         getNotificationTemplateSuccess: 'Notification template fetched successfully',
         getNotificationTemplatesSuccess: 'Notification templates fetched successfully',
+        deleteNotificationTemplate: "Notification template deleted successfully",
         getNotificationTemplateFailure: 'Failed to fetch notification template details',    
   },
 };

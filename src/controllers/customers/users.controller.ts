@@ -75,6 +75,9 @@ import dailyDevotionalService from '../../services/customers/dailyDevotional/dai
 import subscriptionsService from '../../services/customers/subscriptions/subscriptions.service';
 import { UserModel } from '../../models';
 import languageService from '../../services/admin/language/language.service';
+import { getNotificationTemplate } from '../../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../../constants/notificationTemplate.constant';
+import { buildSubscriptionNotification } from '../../lib/helpers/buildSubscription.helper';
 
 const NODE_ENV = config.NODE_ENV
 
@@ -239,6 +242,7 @@ const getChangePasswordCode = async (
                   = await emailTemplateService
                         .getOneEmailTemplateByFilter({
                               title: emailTemplatesTitles.customer.forgotPassword,
+                              language: userObj?.language
                         })
             const verificationCode = Math.floor(1000 + Math.random() * 9000)
             const subject = 'Change Password Verification'
@@ -383,8 +387,18 @@ const changePassword = async (
                         },
                   }
             )
-            const notificationTitle = 'Change Password'
-            const notificationDescription = 'Password Changed Successfully'
+            
+            // get notification template for "Change Password"
+            const {
+              title: notificationTitle,
+              description: notificationDescription,
+            } = await getNotificationTemplate(
+              NOTIFICATION_TEMPLATE.changePassword,
+              userObj?.language,
+              NOTIFICATION_TEMPLATE_FALLBACKS[
+                NOTIFICATION_TEMPLATE.changePassword
+              ],
+            );
 
             await notificationsService.createNotification(
                   {
@@ -403,9 +417,10 @@ const changePassword = async (
                   = await emailTemplateService
                         .getOneEmailTemplateByFilter({
                               title: emailTemplatesTitles.customer.changePassword,
+                              language: userObj?.language
                         })
 
-            const subject = emailTemplateDetails.subject || 'Holy Reads Password Changed'
+            const subject = emailTemplateDetails?.subject || 'Holy Reads Password Changed'
             let html = `
                   <p>
                         Dear ${userObj.email.split('@')[0]},
@@ -493,7 +508,12 @@ const emailAuth = async (
             const token: string = getToken({ code: String(verificationCode), email, password: encrypt(password), _id: userObj._id })
             const link = `${origins[NODE_ENV]}/account/verify-user?email-auth=true&token=${token}`
 
-            const emailTemplateDetails = await emailTemplateService.getOneEmailTemplateByFilter({ title: emailTemplatesTitles.customer.emailAuthVerification })
+            const emailTemplateDetails =
+              await emailTemplateService.getOneEmailTemplateByFilter({
+                title: emailTemplatesTitles.customer.emailAuthVerification,
+                language: userObj?.language,
+              });
+
             const subject = emailTemplateDetails.subject || 'Customer Email Auth Verification'
             let html = `<p>Dear ${email.split('@')[0]},</p><p>you requested for email auth.</p><p>Please enter this code ${verificationCode} <!-- <a href="${link}">Here</a> --> to verify your new email auth.</p><p>Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 
@@ -624,6 +644,7 @@ const verifyEmailAuth = async (
             const emailTemplateDetails = await emailTemplateService
                   .getOneEmailTemplateByFilter({
                         title: emailTemplatesTitles.customer.emailAuthEnabled,
+                        language: user?.language
                   })
 
             const subject = emailTemplateDetails.subject
@@ -677,8 +698,14 @@ const verifyEmailAuth = async (
                   )
             }
 
-            const title = 'Email auth enabled';
-            const description = 'Now you can access holy reads by using your email and password';
+            // send notification to user
+            const { title, description } = await getNotificationTemplate(
+              NOTIFICATION_TEMPLATE.emailAuthEnabled,
+              user?.language,
+              NOTIFICATION_TEMPLATE_FALLBACKS[
+                NOTIFICATION_TEMPLATE.emailAuthEnabled
+              ],
+            );
 
             await notificationsService
                   .createNotification({
@@ -1024,14 +1051,37 @@ const updateUserAccount = async (
                   body.inAppSubscriptionStatus = req.body.inAppSubscription?.status
             }
             await usersService.updateUser({ _id: userObj._id }, body)
+
             /** sent email for subscription status updated */
-            const notificationTitle = 'Holy Reads Subscription'
-            const notificationDescription = isAppSubscriptionStatus &&
-                  emailTemplatesTitles.customer.subscriptionActivated
-                  ? `Holy Reads ${subscriptionDetails.duration.includes('Half')
-                        ? subscriptionDetails.duration
-                        : '1 ' + subscriptionDetails.duration} Subscription activated`
-                  : 'Subscription canceled';
+
+            const isActivated =
+              isAppSubscriptionStatus &&
+              emailTemplatesTitles.customer.subscriptionActivated;
+
+            // get notification template
+            const {
+              title: notificationTitle,
+              description,
+            } = await getNotificationTemplate(
+              isActivated
+                ? NOTIFICATION_TEMPLATE.subscriptionActivated
+                : NOTIFICATION_TEMPLATE.subscriptionCancelled,
+              userObj?.language,
+              isActivated
+                ? NOTIFICATION_TEMPLATE_FALLBACKS[
+                    NOTIFICATION_TEMPLATE.subscriptionActivated
+                  ]
+                : NOTIFICATION_TEMPLATE_FALLBACKS[
+                    NOTIFICATION_TEMPLATE.subscriptionCancelled
+                  ],
+            );
+
+            const notificationDescription = description.replace(
+              '{duration}',
+              isActivated
+                ? subscriptionDetails?.duration
+                : '1 ' + subscriptionDetails?.duration
+            )
 
             if (isAppSubscriptionStatus && subscriptionDetails) {
                   const emailTemplateDetails = await emailTemplateService
@@ -1039,6 +1089,7 @@ const updateUserAccount = async (
                               title: req.body.inAppSubscription.status === 'Active'
                                     ? emailTemplatesTitles.customer.subscriptionActivated
                                     : emailTemplatesTitles.customer.subscriptionCanceled,
+                              language: userObj?.language
                         })
                   const subject = emailTemplateDetails.subject
                         || `Holy Reads Subscription ${req.body.inAppSubscription.status}`
@@ -1748,6 +1799,7 @@ const submitQuery = async (
             const emailTemplateDetails = await emailTemplateService
                   .getOneEmailTemplateByFilter({
                         title: emailTemplatesTitles.admin.customerInquiry,
+                        language: userObj?.language
                   })
             const sub = emailTemplateDetails.subject || 'Customer Inquiry'
             let html = `
@@ -1832,6 +1884,7 @@ const submitFeedback = async (
             const emailTemplateDetails = await emailTemplateService
                   .getOneEmailTemplateByFilter({
                         title: emailTemplatesTitles.admin.customerFeedback,
+                        language: userObj?.language
                   })
             const subject = emailTemplateDetails.subject || 'Customer Feedback'
             let html = `
@@ -2212,12 +2265,23 @@ const blessFriend = async (
                   )
             }
 
+            const { title, description: descriptionTemplate } = await getNotificationTemplate(
+              NOTIFICATION_TEMPLATE.invitation,
+              inviteUser?.language,
+              NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.invitation]
+            );
+
+            const description = descriptionTemplate.replace(
+              '{inviterEmailUsername}',
+              refUser.email.split('@')[0]
+            );
+
             await notificationsService.createNotification({
                   userId: invitedUserDetails._id,
                   type: 'setting',
                   notification: {
-                        title: 'Holy Reads Invitation 🎁',
-                        description: refUser.email.split('@')[0] + ' invited to you ✨',
+                        title,
+                        description,
                   },
             })
             fetchNotifications(io.sockets, { _id: invitedUserDetails._id })
@@ -2231,6 +2295,7 @@ const blessFriend = async (
             const emailTemplateDetails = await emailTemplateService
                   .getOneEmailTemplateByFilter({
                         title: emailTemplatesTitles.customer.chooseSubscription,
+                        language: inviteUser?.language
                   })
             const subject = emailTemplateDetails.subject || 'Subscription'
             let html = `
@@ -2561,12 +2626,13 @@ const subscribePlan = async (
                   })
             }
 
-            const couponNotificationTitle = 'Holy Reads Coupon Activated';
-            const couponNotificationDescription = `Holy Reads ${subscriptionDetails.duration.includes('Half')
-                  ? subscriptionDetails.duration
-                  : '1 ' + subscriptionDetails.duration
-                  } subscription has been activated! 🎉`
-
+            const {
+              title: couponNotificationTitle,
+              description: couponNotificationDescription,
+            } = await buildSubscriptionNotification(
+              subscriptionDetails?.duration,
+              userObj?.language,
+            );
 
             if (
                   req.user.pushTokens.length &&
@@ -2586,6 +2652,7 @@ const subscribePlan = async (
             const emailTemplateDetails = await emailTemplateService
                   .getOneEmailTemplateByFilter({
                         title: emailTemplatesTitles.customer.chooseSubscription,
+                        language: userObj?.language
                   })
             const subject = emailTemplateDetails.subject || 'Holy Reads Subscription'
             let html = `
@@ -2628,11 +2695,16 @@ const subscribePlan = async (
                         html = htmlData
                   }
             }
-            const notificationTitle = 'Holy Reads Subscription'
-            const notificationDescription = `Holy Reads ${subscriptionDetails.duration.includes('Half')
-                  ? subscriptionDetails.duration
-                  : '1 ' + subscriptionDetails.duration
-                  } subscription has been activated! 🎉`
+
+            // get notification template
+            const {
+              title: notificationTitle,
+              description: notificationDescription,
+            } = await buildSubscriptionNotification(
+              subscriptionDetails.duration,
+              userObj.language,
+            );
+
             await notificationsService.createNotification({
                   userId: userObj._id,
                   type: 'setting',

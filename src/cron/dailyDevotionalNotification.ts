@@ -3,6 +3,8 @@ import config from '../../config';
 import { DailyDvotionalModel, SettingModel, UserModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
 import { groupByKey, pushNotification } from '../lib/utils/utils';
 import { awsBucket, cronDirectory } from '../constants/app.constant';
+import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../constants/notificationTemplate.constant';
 
 const start = async () => {
       try {
@@ -50,7 +52,7 @@ const start = async () => {
                   //             'stripe.status': 'active',
                   //       },
                   // ],
-            }).select('timeZone pushTokens libraries').populate('libraries').lean().exec()
+            }).select('timeZone pushTokens libraries language').populate('libraries').lean().exec()
 
             const usersWithOutSubscribeCategories = users.filter(user =>
                   user.libraries &&                                // Check if libraries exist
@@ -87,75 +89,111 @@ const start = async () => {
                               if (Number(dailyDevotionalTime[0]) === 0) dailyDevotionalTime[0] = 12;
                         }
 
-                        if (time[1] === meridian && Number(hours) === Number(dailyDevotionalTime[0]) && Number(minutes) === Number(dailyDevotionalTime[1])) {
-                              const tokenSet = new Set();
-                              result[timeZone]?.map(item => {
-                                    item?.pushTokens?.forEach((ti: { token: string }) => tokenSet.add(ti.token));
-                              });
+        if (
+          time[1] === meridian &&
+          Number(hours) === Number(dailyDevotionalTime[0]) &&
+          Number(minutes) === Number(dailyDevotionalTime[1])
+        ) {
+          await Promise.all(
+            result[timeZone].map(async (user: any) => {
+              const tokenSet = new Set<string>();
+              user?.pushTokens?.forEach((ti: { token: string }) =>
+                tokenSet.add(ti.token),
+              );
+              const tokens: string[] = Array.from(tokenSet);
 
-                              // Send notifications to users in the timezone
-                              const notificationPayload = {
-                                    title: '🔔 Start your day with inspiration!',
-                                    body: `📙 Today's Devotional: ${dailyDevotional.title}. Dive in now for a dose of spiritual nourishment 🔖`,
-                                    data: {
-                                          dailyDevotional: {
-                                                _id: dailyDevotional._id,
-                                                description: dailyDevotional.description,
-                                                image: awsBucket[config.NODE_ENV].s3BaseURL + '/' + awsBucket.readsOfDayDirectory + '/' + dailyDevotional.image,
-                                          },
-                                    },
-                              };
+              if (!tokens.length) return; // skip if no tokens
 
-                              const tokens: any = Array.from(tokenSet);
-                              await pushNotification(tokens, notificationPayload.title, notificationPayload.body, JSON.stringify(notificationPayload.data));
+              // Send notifications to users in the timezone
+              const { title, description } = await getNotificationTemplate(
+                NOTIFICATION_TEMPLATE.dailyDevotional,
+                user?.language,
+                NOTIFICATION_TEMPLATE_FALLBACKS[
+                  NOTIFICATION_TEMPLATE.dailyDevotional
+                ],
+              );
 
-                              // Log notifications sent
-                              tokens.forEach(async token => {
-                                    const notificationLog = new NotificationsModel({
-                                          userId: users[0]._id, // Assuming all users in the timezone are logged for simplicity
-                                          type: 'user',
-                                          notification: {
-                                                title: notificationPayload.title,
-                                                description: notificationPayload.body,
-                                                success: true,
-                                                errorMessage: undefined,
-                                          },
-                                          createdAt: new Date(),
-                                    });
-                                    await notificationLog.save();
-                              });
-                        }
-                  } catch (error: any) {
-                        console.log('Users processing error - ', error.message);
-                        const notificationLog = new NotificationsModel({
-                              userId: users[0]._id, // Assuming all users in the timezone are logged for simplicity
-                              type: 'user',
-                              notification: {
-                                    dailyDevotionalId : dailyDevotional._id,
-                                    title: '🔔 Start your day with inspiration!',
-                                    description: `📙 Today's Devotional: ${dailyDevotional.title}. Dive in now for a dose of spiritual nourishment 🔖`,
-                                    success: true,
-                                    errorMessage: `Users processing error -', ${error.message}`,
-                              },
-                              createdAt: new Date(),
-                        });
-                        await notificationLog.save();
-                  }
-            });
-            console.log('JOB(✅) Daily devotional executed successfully!');
-            cronLog.status = 'success';
-            cronLog.endedAt = new Date();
-            await cronLog.save();
+              const notificationDescription = description.replace(
+                  "{title}",
+                  dailyDevotional.title,
+                )
+
+              const notificationPayload = {
+                title,
+                body: notificationDescription,
+                data: {
+                  dailyDevotional: {
+                    _id: dailyDevotional._id,
+                    description: dailyDevotional.description,
+                    image:
+                      awsBucket[config.NODE_ENV].s3BaseURL +
+                      "/" +
+                      awsBucket.readsOfDayDirectory +
+                      "/" +
+                      dailyDevotional.image,
+                  },
+                },
+              };
+
+              await pushNotification(
+                tokens,
+                notificationPayload.title,
+                notificationPayload.body,
+                JSON.stringify(notificationPayload.data),
+              );
+
+              // Log notifications sent
+              tokens.forEach(async (token) => {
+                const notificationLog = new NotificationsModel({
+                  userId: user._id, // Assuming all users in the timezone are logged for simplicity
+                  type: "user",
+                  notification: {
+                    title: notificationPayload.title,
+                    description: notificationPayload.body,
+                    success: true,
+                    errorMessage: undefined,
+                  },
+                  createdAt: new Date(),
+                });
+                await notificationLog.save();
+              });
+            }),
+          );
+        }
       } catch (error: any) {
-            console.log('JOB(🔴) Daily devotional execution Error is - ', error.message);
-            const cronLog = new CronLogModel({
-                  jobName: 'daily_devotional_notifier',
-                  status: 'failed',
-                  endedAt: new Date(),
-                  message: `daily devotional job failed: ${error.message}`,
-            });
-            await cronLog.save();
+        console.log("Users processing error - ", error.message);
+        const notificationLog = new NotificationsModel({
+          userId: users[0]._id, // Assuming all users in the timezone are logged for simplicity
+          type: "user",
+          notification: {
+            dailyDevotionalId: dailyDevotional._id,
+            title: "🔔 Start your day with inspiration!",
+            description: `📙 Today's Devotional: ${dailyDevotional.title}. Dive in now for a dose of spiritual nourishment 🔖`,
+            success: false,
+            errorMessage: `Users processing error -', ${error.message}`,
+          },
+          createdAt: new Date(),
+        });
+        await notificationLog.save();
       }
+    });
+    console.log("JOB(✅) Daily devotional executed successfully!");
+    cronLog.status = "success";
+    cronLog.endedAt = new Date();
+    await cronLog.save();
+  } catch (error: any) {
+    console.log(
+      "JOB(🔴) Daily devotional execution Error is - ",
+      error.message,
+    );
+    const cronLog = new CronLogModel({
+      jobName: "daily_devotional_notifier",
+      status: "failed",
+      endedAt: new Date(),
+      message: `daily devotional job failed: ${error.message}`,
+    });
+    await cronLog.save();
+  }
 };
 
 (async(config) => {

@@ -26,6 +26,9 @@ import { fetchNotifications } from '../customers/notification.controller';
 import ratingService from '../../services/customers/book/rating.service';
 import highLightsService from '../../services/customers/highLights/highLights.service';
 import transactionsService from '../../services/admin/users/transactions.service';
+import { getNotificationTemplate } from '../../lib/helpers/notificationTemplate.helper';
+import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../../constants/notificationTemplate.constant';
+import { buildSubscriptionNotification } from '../../lib/helpers/buildSubscription.helper';
 
 const authControllerResponse = responseMessage.authControllerResponse
 const adminControllerResponse = responseMessage.adminControllerResponse
@@ -106,28 +109,46 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
             newBody.subscription = subscriptionDetails._id
         }
 
-        const data = await usersService.createUser(newBody)
+        const data: any = await usersService.createUser(newBody)
+        
         res.status(200).send({
             message: adminControllerResponse.addUserSuccess,
             data: {
-                _id: data._id,
-                email: data.email,
+              _id: data._id,
+              email: data.email,
             },
-        })
-        const title = 'Welcome to Holy Reads 🎉';
-        const description = 'Summarizing the best of Christian publishing for your busy schedule';
-        await notificationsService.createNotification({ userId: data._id, type: 'user', notification: { title, description } })
-        const createSubscriptionTitle = 'Holy Reads Subscription'
-        const createSubscriptionDesc = `Holy Reads ${subscriptionDetails.duration.includes('Half') ? subscriptionDetails.duration : '1 ' + subscriptionDetails.duration} Subscription activated successfully`
+          });
+        // get welcome notification
+        const { title, description } = await getNotificationTemplate(
+          NOTIFICATION_TEMPLATE.welcome,
+          req.languageId,
+          NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome],
+        );
+        
         await notificationsService.createNotification({
-            userId: data._id,
-            type: 'setting',
-            notification: {
-                title: createSubscriptionTitle,
-                description: createSubscriptionDesc,
-            },
+          userId: data._id,
+          type: "user",
+          notification: { title, description },
         });
-        fetchNotifications(io.sockets, { _id: data._id })
+
+        const {
+          title: createSubscriptionTitle,
+          description: createSubscriptionDesc,
+        } = await buildSubscriptionNotification(
+          subscriptionDetails?.duration,
+          data?.language,
+        );
+
+        await notificationsService.createNotification({
+          userId: data._id,
+          type: "setting",
+          notification: {
+            title: createSubscriptionTitle,
+            description: createSubscriptionDesc,
+          },
+        });
+
+        fetchNotifications(io.sockets, { _id: data._id });
     } catch (e: any) {
         next(Boom.badData(e.message))
     }

@@ -1,7 +1,7 @@
-// import './add-default-users.script'
-// import './set-default-views.script';
-// import './set-expiry-date';
-// import './set-last-transaction-id';
+import './add-default-users.script'
+import './set-default-views.script';
+import './set-expiry-date';
+import './set-last-transaction-id';
 // import './publish-small-group.script'
 // import './set-verified-and-activate-users.script'
 // import './set-default-content-type-script'
@@ -12,7 +12,7 @@
 // import './update-daily-devotional'
 // import './unset-displayat-from-daily-devotional'
 // import './remove-invalid-fcm-token'
-// import './set-country.script'
+import './set-country.script'
 // import './remove-non-signup-users'
 // import './set-created-date-reading'
 // import './add-default-book-views'

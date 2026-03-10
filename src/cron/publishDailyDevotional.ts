@@ -92,11 +92,11 @@ const startPublishContentJob = async () => {
         console.log('Job not found');
         return;
     }
-    // if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
-    //     console.log(`JOB(🟡) publish devotional not initiated due to ${config.NODE_ENV} Environment`);
-    //     return;
-    // }
-    // const schedule = Object.values(cronSchedule.schedule).join(' ');
-    new CronJob('* * * * *', () => { startPublishContentJob() }, undefined, true);
+    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
+        console.log(`JOB(🟡) publish devotional not initiated due to ${config.NODE_ENV} Environment`);
+        return;
+    }
+    const schedule = Object.values(cronSchedule.schedule).join(' ');
+    new CronJob(schedule, () => { startPublishContentJob() }, undefined, true);
     console.log('JOB(🟢) publish devotional initiated successfully!');
 })(config);

@@ -201,6 +201,8 @@ const getAllSummariesOptionsList = async (req: Request, res: Response, next: Nex
 
 const updateSummary = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const language = (req as any).languageId;
+
         const id: string = req.params.id as string;
         const summaryDetails = await bookSummaryService.getOneBookSummaryByFilter({ _id: id });
         if (!summaryDetails) return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure));
@@ -237,7 +239,13 @@ const updateSummary = async (req: Request, res: Response, next: NextFunction) =>
             );
         }
 
-        await bookSummaryService.updateBookSummary(req.body, id);
+        const reqBody = {
+            ...req.body,
+            language,
+        }
+
+        await bookSummaryService.updateBookSummary(reqBody, id);
+
         res.status(200).send({
             message: bookCategoryControllerResponse.updateBookCategorySuccess,
         });

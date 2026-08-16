@@ -7,17 +7,17 @@ export default async (req: Request | any, res: Response, next: NextFunction): Pr
     const accessToken: string | null = req.headers['x-access-token'] as string;
 
     if (!accessToken) {
-        next(Boom.badRequest('Missing access token'));
+        return next(Boom.badRequest('Missing access token'));
     } else {
         try {
             const details: any = await verifyToken(accessToken)
              const userDetails : any = await UserModel.findOne({ email: details?.email, _id: details.id, type: {$in: ['Admin', 'SubAdmin']} }).lean().exec()
 
             if (!userDetails) {
-                next(Boom.unauthorized('Admin not authorized'));
+                return next(Boom.unauthorized('Admin not authorized'));
             }
             if (!userDetails.verified) {
-                next(Boom.forbidden('Admin not verified'));
+                return next(Boom.forbidden('Admin not verified'));
             }
             req.user = userDetails
             next();

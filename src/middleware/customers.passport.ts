@@ -7,7 +7,7 @@ import languageService from '../services/admin/language/language.service'
 export default async (req: any, res: Response, next: NextFunction): Promise<any> => {
     const accessToken: string | null = req.headers['x-access-token'] as string;
     if (!accessToken) {
-        next(Boom.badRequest('Missing access token'));
+        return next(Boom.badRequest('Missing access token'));
     } else {
         try {
             if (false && !req?.headers?.device)

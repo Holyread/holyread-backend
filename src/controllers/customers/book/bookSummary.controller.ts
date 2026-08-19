@@ -62,10 +62,11 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
         // Straight rule, no trial mode: a free (non-subscribed) user gets
-        // exactly 1 book/summary per calendar day. Revisiting the same book
-        // again the same day is always allowed; a different book once
-        // today's one has already been used is not. Subscribed users skip
-        // this entirely.
+        // exactly 1 *new* book/summary per calendar day. Any book they've
+        // ever opened before (any day, not just today) stays permanently
+        // accessible — it's what shows up in "recent reads" — and doesn't
+        // count against today's allowance. Subscribed users skip this
+        // entirely.
         const subscriptionStatus = await subscriptionsService.getUserSubscriptionStatus(req.user)
 
         if (subscriptionStatus === 'freemium') {
@@ -74,14 +75,19 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
 
             const library: any = await userService.getUserLibrary({ _id: req.user.libraries })
 
-            const todayViews = (library?.view || []).filter(
-                i => new Date(i.createdAt).getTime() >= start.getTime()
-            )
-            const alreadyViewedThisBookToday = todayViews.some(
+            const allViews = library?.view || []
+            const alreadyViewedThisBookEver = allViews.some(
                 i => String(i.bookId) === String(data._id)
             )
 
-            if (!alreadyViewedThisBookToday && todayViews.length >= 1) {
+            // Not filtering out data._id here — if it were in allViews,
+            // alreadyViewedThisBookEver above would already be true and
+            // we wouldn't reach this line.
+            const newBooksOpenedToday = allViews.filter(
+                i => new Date(i.createdAt).getTime() >= start.getTime()
+            )
+
+            if (!alreadyViewedThisBookEver && newBooksOpenedToday.length >= 1) {
                 return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
             }
         }

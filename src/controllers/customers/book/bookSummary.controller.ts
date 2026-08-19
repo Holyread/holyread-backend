@@ -120,13 +120,14 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             isPlanExpired = true;
         }
 
-        if (isPlanExpired) {
-            return next(
-                Boom.forbidden(
-                    bookSummaryControllerResponse.planExpiredError
-                )
-            )
-        }
+        // A trial/subscription expiring used to immediately 403 here,
+        // permanently cutting off free users after `trailDays` with no way
+        // to ever read again. That skipped the daily-free-book allowance
+        // below entirely, contradicting the product's "1 free book per day,
+        // indefinitely, until they subscribe" model. Falling through to the
+        // same `!isPlanActive || isPlanExpired` branch below now gives
+        // expired-trial users the same daily allowance as within-trial free
+        // users, instead of a hard permanent lock.
 
         if (!isPlanActive || isPlanExpired) {
             /** Set today start and end */

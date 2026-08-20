@@ -51,6 +51,30 @@ const updateUserLibrary = async (query: FilterQuery<IUser>, body: any) => {
     }
 }
 
+/**
+ * Records that a user has viewed/opened a book today, if not already recorded.
+ * Idempotent: safe to call even if the book was already recorded (e.g. by the
+ * client's separate "book opened" call) — it will not create a duplicate entry.
+ */
+const recordBookView = async (libraryId: any, bookId: string) => {
+    try {
+        const existing: any = await UserLibraryModel.findOne(
+            { _id: libraryId, 'view.bookId': bookId },
+        ).select('_id').lean().exec();
+        if (existing) {
+            return existing;
+        }
+        const data: any = await UserLibraryModel.findOneAndUpdate(
+            { _id: libraryId },
+            { '$push': { view: { bookId, createdAt: new Date() } } },
+            { new: true, upsert: true },
+        ).lean().exec();
+        return data
+    } catch (e: any) {
+        throw new Error(e)
+    }
+}
+
 /** Modify User */
 const createUserLibrary = async (body: any) => {
     try {
@@ -90,4 +114,5 @@ export default {
     updateUserLibrary,
     getOneUserByFilter,
     createUserLibrary,
+    recordBookView,
 }

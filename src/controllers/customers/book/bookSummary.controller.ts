@@ -90,6 +90,21 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
             if (!alreadyViewedThisBookEver && newBooksOpenedToday.length >= 1) {
                 return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
             }
+
+            /**
+             * Access is being granted below this point. Record the view here
+             * rather than relying solely on the client's separate
+             * "book opened" call (PATCH /users?section=view) — that call can
+             * be missed, delayed, or skipped for books without chapters,
+             * which previously left today's view count empty and let a
+             * freemium user open unlimited books. This keeps the "1 free
+             * book/day, forever-accessible after that" rule above completely
+             * unchanged; it only guarantees the state it reads is actually
+             * populated.
+             */
+            if (!alreadyViewedThisBookEver && library?._id) {
+                await userService.recordBookView(library._id, String(data._id));
+            }
         }
         if (data.coverImage) {
             data.coverImage = awsBucket[NODE_ENV].s3BaseURL + '/' + awsBucket.bookDirectory + '/coverImage/' + data.coverImage

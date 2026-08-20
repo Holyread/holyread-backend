@@ -6,7 +6,7 @@ import bookSummaryService from '../../../services/customers/book/bookSummary.ser
 import bookAuthorService from '../../../services/admin/book/author.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket, dataLimit, originEmails } from '../../../constants/app.constant'
-import { getSearchRegexp, getStartOfDayInTimeZone, sentEmail } from '../../../lib/utils/utils'
+import { getSearchRegexp, sentEmail } from '../../../lib/utils/utils'
 import config from '../../../../config'
 import userService from '../../../services/customers/users/user.service';
 import subscriptionsService from '../../../services/customers/subscriptions/subscriptions.service';
@@ -70,11 +70,8 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
         const subscriptionStatus = await subscriptionsService.getUserSubscriptionStatus(req.user)
 
         if (subscriptionStatus === 'freemium') {
-            // Use the user's own timezone so "today" resets at their
-            // midnight, not the server's — otherwise a book read in the
-            // evening can already fall into the server's next UTC day and
-            // block the free-book allowance before the user's day resets.
-            const start = getStartOfDayInTimeZone(req.user.timeZone);
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
 
             const library: any = await userService.getUserLibrary({ _id: req.user.libraries })
 

@@ -5,11 +5,11 @@ import { Types } from 'mongoose'
 import bookSummaryService from '../../../services/customers/book/bookSummary.service'
 import bookAuthorService from '../../../services/admin/book/author.service'
 import { responseMessage } from '../../../constants/message.constant'
-import { awsBucket, dataLimit, originEmails, trailDays } from '../../../constants/app.constant'
+import { awsBucket, dataLimit, originEmails } from '../../../constants/app.constant'
 import { getSearchRegexp, getStartOfDayInTimeZone, sentEmail } from '../../../lib/utils/utils'
 import config from '../../../../config'
 import userService from '../../../services/customers/users/user.service';
-import stripeSubscriptionService from '../../../services/stripe/subscription';
+import subscriptionsService from '../../../services/customers/subscriptions/subscriptions.service';
 
 const NODE_ENV = config.NODE_ENV
 const bookSummaryControllerResponse = responseMessage.bookSummaryControllerResponse
@@ -61,147 +61,37 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
         if (!data) {
             return next(Boom.notFound(bookSummaryControllerResponse.getBookSummaryFailure))
         }
-        let isPlanActive = false
-        let isPlanExpired = false
-        if (
-            req.user.inAppSubscription &&
-            [
-                'active',
-                'subscribed',
-                'did_renew',
-                'offer_redeemed',
-            ].includes(
-                req.user?.inAppSubscriptionStatus?.toLowerCase()
-            )
-        ) {
-            isPlanActive = true
-            // todo: count duration with createdAt
-            // if duration already ended
-            // then mark plan as inactive
-        } else if (
-            req.user.inAppSubscription &&
-            ![
-                'active',
-                'subscribed',
-                'did_renew',
-                'offer_redeemed',
-            ].includes(
-                req.user?.inAppSubscriptionStatus?.toLowerCase()
-            )
-        ) {
-            isPlanExpired = true
-        }
+        // Straight rule, no trial mode: a free (non-subscribed) user gets
+        // exactly 1 *new* book/summary per calendar day. Any book they've
+        // ever opened before (any day, not just today) stays permanently
+        // accessible — it's what shows up in "recent reads" — and doesn't
+        // count against today's allowance. Subscribed users skip this
+        // entirely.
+        const subscriptionStatus = await subscriptionsService.getUserSubscriptionStatus(req.user)
 
-        if (!isPlanActive && req.user?.stripe?.subscriptionId) {
-            try {
-                const s = await stripeSubscriptionService
-                    .retrieveSubscription(
-                        req.user.stripe.subscriptionId
-                    )
-                isPlanActive = s?.status === 'active'
-                isPlanExpired = !['active', 'trialing'].includes(s?.status?.toLowerCase())
-            } catch (e: any) {
-                next(Boom.badData(e.message))
-            }
-        }
-        if (
-            !req.user.inAppSubscription &&
-            !req.user?.stripe?.subscriptionId &&
-            new Date(
-                req.user.createdAt
-            )
-            .getTime()
-            <
-            new Date()
-                .setDate(
-                    new Date().getDate() - trailDays
-                )
-        ) {
-            isPlanExpired = true;
-        }
-
-        if (isPlanExpired) {
-            return next(
-                Boom.forbidden(
-                    bookSummaryControllerResponse.planExpiredError
-                )
-            )
-        }
-
-        if (!isPlanActive || isPlanExpired) {
-            /** Set today start (in the user's own timezone, so "today" resets at their midnight, not the server's) */
+        if (subscriptionStatus === 'freemium') {
+            // Use the user's own timezone so "today" resets at their
+            // midnight, not the server's — otherwise a book read in the
+            // evening can already fall into the server's next UTC day and
+            // block the free-book allowance before the user's day resets.
             const start = getStartOfDayInTimeZone(req.user.timeZone);
-
-            /** Filter current days new view books */
-            const todayViews: any = []; let isExist = false;
-
-            const todayFreeNotificationBook: any = []; let isFreeNotificationBookExist = false
 
             const library: any = await userService.getUserLibrary({ _id: req.user.libraries })
 
-            library?.view.map(i => {
-                const createdAt = new Date(i.createdAt).getTime();
-                if (createdAt >= start.getTime()) {
-                    todayViews.push(i)
-                }
-                if (String(i.bookId) === String(data._id)) {
-                    isExist = true
-                }
-            })
+            const allViews = library?.view || []
+            const alreadyViewedThisBookEver = allViews.some(
+                i => String(i.bookId) === String(data._id)
+            )
 
-            /** Filter current days notification book view */
-            library?.freeNotificationBooks.map(i => {
-                const createdAt = new Date(i.createdAt).getTime();
-                if (createdAt >= start.getTime()) {
-                    todayFreeNotificationBook.push(i)
-                }
-                todayFreeNotificationBook.map( i1 => {
-                    if (String(i1.bookId) === String(data._id)) {
-                        isFreeNotificationBookExist = true
-                    }
-                })
-            })
+            // Not filtering out data._id here — if it were in allViews,
+            // alreadyViewedThisBookEver above would already be true and
+            // we wouldn't reach this line.
+            const newBooksOpenedToday = allViews.filter(
+                i => new Date(i.createdAt).getTime() >= start.getTime()
+            )
 
-            const categoryIds = library.categories.map(id => id.toString()) || [];
-
-            // Filter categories to find any matches between user library categories and data categories
-            const matchingCategories = categoryIds.filter(categoryId =>
-                data.categories.map(id => id.toString()).includes(categoryId)
-            );
-
-            // Fetch the user's library based on the library ID and the freeSummary ID from request parameters
-            const freeSummary = await userService.getUserLibrary({ _id: library?._id, freeSummary: req.params.id })
-
-            // Check if the user has already used the free summary, is not signed up, and the free summary doesn't exist
-            if (req.user.hasUsedFreeSummary && !req.user.isSignedUp && !freeSummary) {
-                return next(Boom.forbidden(bookSummaryControllerResponse.preSignedUpUserSummaryLimitError))
-            }
-
-            // If no matching categories are found, the user has used the free summary, and the free summary doesn't exist
-            if (matchingCategories.length === 0 && req.user.hasUsedFreeSummary && !freeSummary) {
-                return next(Boom.forbidden(bookSummaryControllerResponse.noMatchCategories))
-            }
-
-            if (!isExist && todayViews.length >= 1 && !freeSummary) {
+            if (!alreadyViewedThisBookEver && newBooksOpenedToday.length >= 1) {
                 return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
-            }
-
-            // If the free summary does not exist, today's views are 2 or more, the user has no free notification books, and the free summary doesn't exist
-            if (library?.freeNotificationBooks.length === 0) {
-                // If freeNotificationBooks.length is 0, check the other conditions
-                if (todayViews.length >= 2 && !isExist && freeSummary === null) {
-                    return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
-                }
-            }
-
-            // If the free summary does not exist, today's views are 1 or more, the free notification book does not exist, and the free summary doesn't exist
-            if (library?.freeNotificationBooks.length > 0) {
-                if (!isExist
-                    && todayViews.length >= 1
-                    && !isFreeNotificationBookExist
-                ) {
-                    return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
-                }
             }
 
             /**
@@ -210,11 +100,12 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
              * "book opened" call (PATCH /users?section=view) — that call can
              * be missed, delayed, or skipped for books without chapters,
              * which previously left today's view count empty and let a
-             * freemium user open unlimited books. This keeps the existing
-             * "1 free book/day" thresholds above completely unchanged; it
-             * only guarantees the counters they read are actually populated.
+             * freemium user open unlimited books. This keeps the "1 free
+             * book/day, forever-accessible after that" rule above completely
+             * unchanged; it only guarantees the state it reads is actually
+             * populated.
              */
-            if (!isExist && library?._id) {
+            if (!alreadyViewedThisBookEver && library?._id) {
                 await userService.recordBookView(library._id, String(data._id));
             }
         }

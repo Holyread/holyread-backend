@@ -477,6 +477,62 @@ export const calculateExactDate = (daysAgo: number, type: 'start' | 'end') => {
     return date;
 };
 
+/**
+ * Returns the UTC instant corresponding to local midnight (start of "today")
+ * for the given IANA timezone. Falls back to the server's local timezone
+ * when no/invalid timezone is provided, so calendar-day checks (e.g. daily
+ * free-read limits) reset at the user's midnight instead of the server's.
+ */
+export const getStartOfDayInTimeZone = (timeZone?: string, referenceDate: Date = new Date()): Date => {
+    if (!timeZone) {
+        const start = new Date(referenceDate);
+        start.setHours(0, 0, 0, 0);
+        return start;
+    }
+
+    try {
+        const parts = new Intl.DateTimeFormat('en-US', {
+            timeZone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+        }).formatToParts(referenceDate);
+
+        const map: Record<string, string> = {};
+        parts.forEach((p) => {
+            if (p.type !== 'literal') map[p.type] = p.value;
+        });
+
+        // Wall-clock time in `timeZone`, reinterpreted as if it were UTC.
+        const asIfUTC = Date.UTC(
+            Number(map.year),
+            Number(map.month) - 1,
+            Number(map.day),
+            Number(map.hour) === 24 ? 0 : Number(map.hour),
+            Number(map.minute),
+            Number(map.second),
+        );
+        const offsetMs = asIfUTC - referenceDate.getTime();
+
+        const localMidnightAsIfUTC = Date.UTC(
+            Number(map.year),
+            Number(map.month) - 1,
+            Number(map.day),
+            0, 0, 0,
+        );
+
+        return new Date(localMidnightAsIfUTC - offsetMs);
+    } catch (e) {
+        const start = new Date(referenceDate);
+        start.setHours(0, 0, 0, 0);
+        return start;
+    }
+};
+
 export const setHeaderBackgroundColor = async (wsHeaderCells, ws: Worksheet): Promise<void> => {
     const worksheet: Worksheet = ws;
     await Promise.all(wsHeaderCells.map(async (cell) => {

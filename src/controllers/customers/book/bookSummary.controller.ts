@@ -6,7 +6,7 @@ import bookSummaryService from '../../../services/customers/book/bookSummary.ser
 import bookAuthorService from '../../../services/admin/book/author.service'
 import { responseMessage } from '../../../constants/message.constant'
 import { awsBucket, dataLimit, originEmails, trailDays } from '../../../constants/app.constant'
-import { getSearchRegexp, sentEmail } from '../../../lib/utils/utils'
+import { getSearchRegexp, getStartOfDayInTimeZone, sentEmail } from '../../../lib/utils/utils'
 import config from '../../../../config'
 import userService from '../../../services/customers/users/user.service';
 import stripeSubscriptionService from '../../../services/stripe/subscription';
@@ -129,11 +129,8 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
         }
 
         if (!isPlanActive || isPlanExpired) {
-            /** Set today start and end */
-            const start = new Date();
-            start.setHours(0, 0, 0, 0);
-            const end = new Date();
-            end.setHours(23, 59, 59, 999);
+            /** Set today start (in the user's own timezone, so "today" resets at their midnight, not the server's) */
+            const start = getStartOfDayInTimeZone(req.user.timeZone);
 
             /** Filter current days new view books */
             const todayViews: any = []; let isExist = false;
@@ -205,6 +202,20 @@ const getOneSummary = async (req: any, res: Response, next: NextFunction) => {
                 ) {
                     return next(Boom.forbidden(bookSummaryControllerResponse.trialPlanLimitError));
                 }
+            }
+
+            /**
+             * Access is being granted below this point. Record the view here
+             * rather than relying solely on the client's separate
+             * "book opened" call (PATCH /users?section=view) — that call can
+             * be missed, delayed, or skipped for books without chapters,
+             * which previously left today's view count empty and let a
+             * freemium user open unlimited books. This keeps the existing
+             * "1 free book/day" thresholds above completely unchanged; it
+             * only guarantees the counters they read are actually populated.
+             */
+            if (!isExist && library?._id) {
+                await userService.recordBookView(library._id, String(data._id));
             }
         }
         if (data.coverImage) {

@@ -1,6 +1,7 @@
 import { CronJob } from 'cron';
 import config from '../../config';
-import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
+import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
+import resolveCronSchedule from './cronGuard';
 import { pushNotification } from '../lib/utils/utils'
 import { awsBucket, cronDirectory } from '../constants/app.constant';
 import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
@@ -144,18 +145,15 @@ const start = async () => {
     }
 };
 
-(async (config) => {
-    const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.SCHEDULEPERSONALIZENOTIFICATION }).lean().exec();
+(async () => {
+    const schedule = await resolveCronSchedule(
+        cronDirectory.SCHEDULEPERSONALIZENOTIFICATION,
+        'schedule personalize notification'
+    );
 
-    if (!cronSchedule) {
-        console.log('Job not found');
+    if (!schedule) {
         return;
     }
-    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
-        console.log(`JOB(🟡) schedule personalize notification not initiated due to ${config.NODE_ENV} Environment`);
-        return;
-    }
-    const schedule = Object.values(cronSchedule.schedule).join(' ');
     new CronJob(schedule, () => { start() }, undefined, true);
     console.log('JOB(🟢) schedule personalize notification initiated successfully!');
-})(config);
+})();

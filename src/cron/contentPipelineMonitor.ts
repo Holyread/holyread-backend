@@ -4,13 +4,12 @@ import {
   AlertsModel,
   BookSummaryModel,
   CronLogModel,
-  CronScheduleModel,
   DailyDvotionalModel,
   ExpertCuratedModel,
 } from "../models";
 import emailTemplateService from "../services/admin/emailTemplate/emailTemplate.service";
 import { CronJob } from 'cron';
-import config from '../../config';
+import resolveCronSchedule from './cronGuard';
 
 const contentPipelineMonitor = async () => {
   console.log('JOB(🟢) checking for low content pipeline started successfully!');
@@ -133,24 +132,19 @@ const contentPipelineMonitor = async () => {
 };
 
 // Cron bootstrap
-(async (config) => {
-  const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.LOWCONTENTPIPELINEALERT }).lean().exec();
+(async () => {
+  const schedule = await resolveCronSchedule(
+    cronDirectory.LOWCONTENTPIPELINEALERT,
+    'Low content pipeline job'
+  );
 
-  if (!cronSchedule) {
-    console.log('JOB(🔴) Low content pipeline job not found in schedule config.');
+  if (!schedule) {
     return;
   }
-
-  if (cronSchedule.jobRestrictEnv.includes(config.NODE_ENV)) {
-    console.log(`JOB(🟡) Low content pipeline job not initiated due to restricted environment: ${config.NODE_ENV}`);
-    return;
-  }
-
-  const schedule = Object.values(cronSchedule.schedule).join(' ');
 
   new CronJob(schedule, () => {
     contentPipelineMonitor();
   }, undefined, true);
 
   console.log('JOB(🟢) Low content pipeline cron initiated successfully!');
-})(config);
+})();

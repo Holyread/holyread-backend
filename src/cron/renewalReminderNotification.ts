@@ -9,7 +9,7 @@ import notificationsService from '../services/customers/notifications/notificati
 import emailTemplateService from '../services/admin/emailTemplate/emailTemplate.service';
 import stripeSubscriptionServices from '../services/stripe/subscription'
 import config from '../../config';
-import { CronScheduleModel } from '../models';
+import resolveCronSchedule from './cronGuard';
 import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
 import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../constants/notificationTemplate.constant';
 
@@ -206,18 +206,15 @@ const start = async () => {
       }
 };
 
-(async (config) => {
-      const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.RENEWALREMINDERNOTIFICATION }).lean().exec();
+(async () => {
+      const schedule = await resolveCronSchedule(
+            cronDirectory.RENEWALREMINDERNOTIFICATION,
+            'Renewal Reminder'
+      );
 
-      if (!cronSchedule) {
-            console.log('Job not found');
+      if (!schedule) {
             return;
       }
-      if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
-            console.log(`JOB(🟡) Renewal Reminder not initiated due to ${config.NODE_ENV} Environment`);
-            return;
-      }
-      const schedule = Object.values(cronSchedule.schedule).join(' ');
       new CronJob(schedule, () => { start() }, null, true);
       console.log('JOB(🟢) Renewal Reminder initiated successfully!');
-})(config);
+})();

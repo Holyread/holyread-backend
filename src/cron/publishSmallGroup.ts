@@ -1,6 +1,6 @@
 import { CronJob } from "cron";
-import config from "../../config";
-import { SmallGroupModel, CronLogModel, CronScheduleModel } from "../models";
+import resolveCronSchedule from './cronGuard';
+import { SmallGroupModel, CronLogModel } from "../models";
 import { cronDirectory } from '../constants/app.constant';
 import languageService from "../services/admin/language/language.service";
 
@@ -57,18 +57,15 @@ const startPublishContentJob = async () => {
 };
 
 
-(async (config) => {
-    const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.PUBLISHSMALLGROUP }).lean().exec();
+(async () => {
+    const schedule = await resolveCronSchedule(
+        cronDirectory.PUBLISHSMALLGROUP,
+        'small group'
+    );
 
-    if (!cronSchedule) {
-        console.log('Job not found');
+    if (!schedule) {
         return;
     }
-    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
-        console.log(`JOB(🟡) small group not initiated due to ${config.NODE_ENV} Environment`);
-        return;
-    }
-    const schedule = Object.values(cronSchedule.schedule).join(' ');
     new CronJob(schedule, () => { startPublishContentJob() }, undefined, true);
     console.log('JOB(🟢) small group initiated successfully!');
-})(config);
+})();

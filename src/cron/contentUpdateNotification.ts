@@ -1,6 +1,7 @@
 import { CronJob } from 'cron';
 import config from '../../config';
-import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
+import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
+import resolveCronSchedule from './cronGuard';
 import { pushNotification } from '../lib/utils/utils'
 import { awsBucket, cronDirectory } from '../constants/app.constant';
 import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
@@ -177,19 +178,15 @@ const start = async () => {
     }
 };
 
-(async (config) => {
-    const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.CONTENTUPDATENOTIFICATION }).lean().exec();
+(async () => {
+    const schedule = await resolveCronSchedule(
+        cronDirectory.CONTENTUPDATENOTIFICATION,
+        'content update alert'
+    );
 
-    if (!cronSchedule) {
-        console.log('Job not found');
+    if (!schedule) {
         return;
     }
-    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
-        console.log(`JOB(🟡) content update alert not initiated due to ${config.NODE_ENV} Environment`);
-        return;
-    }
-    const schedule = Object.values(cronSchedule
-        .schedule).join(' ');
     new CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) content update alert initiated successfully!');
-})(config);
+})();

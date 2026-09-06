@@ -1,6 +1,7 @@
 import { CronJob } from 'cron';
 import config from '../../config';
-import { UserModel, CronLogModel, CronScheduleModel } from '../models';
+import { UserModel, CronLogModel } from '../models';
+import resolveCronSchedule from './cronGuard';
 import { calculateExactDate, compileHtml, sentEmail } from '../lib/utils/utils'
 import { cronDirectory, emailTemplatesTitles, originEmails, origins } from '../constants/app.constant';
 import emailTemplateService from '../services/admin/emailTemplate/emailTemplate.service';
@@ -82,19 +83,15 @@ const start = async () => {
     }
 };
 
-(async (config) => {
-    const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.HOLYREADSMISSIONEMAIL }).lean().exec();
+(async () => {
+    const schedule = await resolveCronSchedule(
+        cronDirectory.HOLYREADSMISSIONEMAIL,
+        'send missionary email to signup users setup'
+    );
 
-    if (!cronSchedule) {
-        console.log('Job not found');
+    if (!schedule) {
         return;
     }
-
-    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
-        console.log(`JOB(🟡) send missionary email to signup users setup not initiated due to ${config.NODE_ENV} Environment`);
-        return;
-    }
-    const schedule = Object.values(cronSchedule.schedule).join(' ');
     new CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) send missionary email to signup users setup initiated successfully!');
-})(config);
+})();

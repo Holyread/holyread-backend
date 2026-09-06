@@ -1,6 +1,6 @@
 import { CronJob } from 'cron';
-import config from '../../config';
-import { MeditationModel, CronLogModel, CronScheduleModel } from '../models';
+import resolveCronSchedule from './cronGuard';
+import { MeditationModel, CronLogModel } from '../models';
 import { cronDirectory } from '../constants/app.constant';
 
 const publishVideo = async (category: string) => {
@@ -60,18 +60,15 @@ const start = async () => {
     }
 };
 
-(async (config) => {
-    const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.PUBLISHMEDITATION }).lean().exec();
+(async () => {
+    const schedule = await resolveCronSchedule(
+        cronDirectory.PUBLISHMEDITATION,
+        'meditation'
+    );
 
-    if (!cronSchedule) {
-        console.log('Job not found');
+    if (!schedule) {
         return;
     }
-    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
-        console.log(`JOB(🟡) meditation not initiated due to ${config.NODE_ENV} Environment`);
-        return;
-    }
-    const schedule = Object.values(cronSchedule.schedule).join(' ');
     new CronJob(schedule, () => { start() }, undefined, true);
     console.log('JOB(🟢) meditation initiated successfully!');
-})(config);
+})();

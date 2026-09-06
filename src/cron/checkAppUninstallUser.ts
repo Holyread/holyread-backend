@@ -1,7 +1,7 @@
-import { CronLogModel, CronScheduleModel, UninstallLogModel, UserModel } from "../models";
+import { CronLogModel, UninstallLogModel, UserModel } from "../models";
 import firebaseAdmin from 'firebase-admin';
 import { CronJob } from 'cron';
-import config from '../../config';
+import resolveCronSchedule from './cronGuard';
 import { cronDirectory } from "../constants/app.constant";
 
 const startCheckUninstalledUsersJob = async () => {
@@ -105,18 +105,15 @@ const startCheckUninstalledUsersJob = async () => {
     }
 };
 
-(async (config) => {
-    const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.CHECKUNINSTALLEDUSER }).lean().exec();
+(async () => {
+    const schedule = await resolveCronSchedule(
+        cronDirectory.CHECKUNINSTALLEDUSER,
+        'checking for uninstalled users'
+    );
 
-    if (!cronSchedule) {
-        console.log('Job not found');
+    if (!schedule) {
         return;
     }
-    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
-        console.log(`JOB(🟡) checking for uninstalled users not initiated due to ${config.NODE_ENV} Environment`);
-        return;
-    }
-    const schedule = Object.values(cronSchedule.schedule).join(' ');
     new CronJob(schedule, () => { startCheckUninstalledUsersJob() }, undefined, true);
     console.log('JOB(🟢) checking for uninstalled users initiated successfully!');
-})(config);
+})();

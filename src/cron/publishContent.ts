@@ -1,6 +1,7 @@
 import { CronJob } from 'cron';
 import config from '../../config';
-import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
+import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
+import resolveCronSchedule from './cronGuard';
 import { pushNotification, randomNumberInRange } from '../lib/utils/utils';
 import { awsBucket, cronDirectory } from '../constants/app.constant';
 import languageService from '../services/admin/language/language.service';
@@ -181,18 +182,15 @@ const startPublishContentJob = async () => {
       }
 };
 
-(async (config) => {
-      const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.PUBLISHCONTENT }).lean().exec();
+(async () => {
+      const schedule = await resolveCronSchedule(
+            cronDirectory.PUBLISHCONTENT,
+            'publish contents'
+      );
 
-      if (!cronSchedule) {
-            console.log('Job not found');
+      if (!schedule) {
             return;
       }
-      if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
-            console.log(`JOB(🟡) publish contents not initiated due to ${config.NODE_ENV} Environment`);
-            return;
-      }
-      const schedule = Object.values(cronSchedule.schedule).join(' ');
       new CronJob(schedule, () => { startPublishContentJob() }, undefined, true);
       console.log('JOB(🟢) publish contents initiated successfully!');
-})(config);
+})();

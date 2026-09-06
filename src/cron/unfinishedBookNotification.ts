@@ -1,6 +1,7 @@
 import { CronJob } from 'cron';
 import config from '../../config';
-import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
+import { BookSummaryModel, UserModel, RatingModel, CronLogModel, NotificationsModel } from '../models';
+import resolveCronSchedule from './cronGuard';
 import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
 import { awsBucket, cronDirectory } from '../constants/app.constant';
 import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
@@ -172,18 +173,15 @@ const start = async () => {
     }
 };
 
-(async (config) => {
-    const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.UNFINISHEDBOOKNOTIFICATION }).lean().exec();
+(async () => {
+    const schedule = await resolveCronSchedule(
+        cronDirectory.UNFINISHEDBOOKNOTIFICATION,
+        'Unfinished book notifier'
+    );
 
-    if (!cronSchedule) {
-        console.log('Job not found');
-        return;
-    } 
-    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
-        console.log(`JOB(🟡) Unfinished book notifier not initiated due to ${config.NODE_ENV} Environment`);
+    if (!schedule) {
         return;
     }
-    const schedule = Object.values(cronSchedule.schedule).join(' ');
     new CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) Unfinished book notifier initiated successfully!');
-})(config);
+})();

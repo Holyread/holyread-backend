@@ -1,10 +1,10 @@
 import { CronJob } from 'cron';
 
-import config from '../../config';
 import stripeSubscriptionServices from '../services/stripe/subscription'
 import transactionServices from '../services/admin/users/transactions.service'
 
-import { CronScheduleModel, RevenueModel } from '../models';
+import { RevenueModel } from '../models';
+import resolveCronSchedule from './cronGuard';
 import { cronDirectory } from '../constants/app.constant';
 
 const start = async () => {
@@ -71,18 +71,15 @@ const start = async () => {
       }
 };
 
-(async (config) => {
-      const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.SYNCPROFITS }).lean().exec();
+(async () => {
+      const schedule = await resolveCronSchedule(
+            cronDirectory.SYNCPROFITS,
+            'sync profit'
+      );
 
-      if (!cronSchedule) {
-            console.log('Job not found');
+      if (!schedule) {
             return;
       }
-      if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
-            console.log(`JOB(🟡) sync profit not initiated due to ${config.NODE_ENV} Environment`);
-            return;
-      }
-      const schedule = Object.values(cronSchedule.schedule).join(' ');
       new CronJob(schedule, () => { start() }, undefined, true);
       console.log('JOB(🟢) sync profit initiated successfully!');
-})(config);
+})();

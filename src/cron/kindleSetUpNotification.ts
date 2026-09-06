@@ -1,6 +1,6 @@
 import { CronJob } from 'cron';
-import config from '../../config';
-import { UserModel, CronLogModel, NotificationsModel, CronScheduleModel } from '../models';
+import resolveCronSchedule from './cronGuard';
+import { UserModel, CronLogModel, NotificationsModel } from '../models';
 import { calculateDateInThePast, pushNotification } from '../lib/utils/utils'
 import { cronDirectory } from '../constants/app.constant';
 import { getNotificationTemplate } from '../lib/helpers/notificationTemplate.helper';
@@ -94,18 +94,15 @@ const start = async () => {
     }
 };
 
-(async (config) => {
-    const cronSchedule = await CronScheduleModel.findOne({ jobName: cronDirectory.KINDLESETUPNOTIFICATION }).lean().exec();
+(async () => {
+    const schedule = await resolveCronSchedule(
+        cronDirectory.KINDLESETUPNOTIFICATION,
+        'notify kindle email setup'
+    );
 
-    if (!cronSchedule) {
-        console.log('Job not found');
+    if (!schedule) {
         return;
     }
-    if (cronSchedule.jobRestrictEnv.indexOf(config.NODE_ENV) > -1) {
-        console.log(`JOB(🟡) notify kindle email setup not initiated due to ${config.NODE_ENV} Environment`);
-        return;
-    }
-    const schedule = Object.values(cronSchedule.schedule).join(' ');
     new CronJob(schedule, () => { start() }, null, true);
     console.log('JOB(🟢) notify kindle email setup initiated successfully!');
-})(config);
+})();

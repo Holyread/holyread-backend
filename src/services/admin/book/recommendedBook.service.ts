@@ -54,9 +54,9 @@ const getAllRecommendedBooks = async (
       .limit(limit)
       .sort(sort)
       .populate({
-        path: "book",
+        path: 'book',
         match: { language },
-        populate: { path: "author", select: "name" },
+        populate: { path: 'author', select: 'name' },
       })
       .lean()
       .exec();

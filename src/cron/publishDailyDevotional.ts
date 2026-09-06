@@ -67,7 +67,7 @@ const startPublishContentJob = async () => {
         continue;
       }
 
-      console.log("✅ Devotional published for category", category?.name);
+      console.log('✅ Devotional published for category', category?.name);
         }
         console.log('JOB(✅) publish devotional executed successfully!');
         cronLog.status = 'success';

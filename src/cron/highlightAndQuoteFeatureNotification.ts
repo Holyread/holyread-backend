@@ -52,7 +52,7 @@ const start = async () => {
             };
             try {
                 await pushNotification(tokens, notificationPayload.title, notificationPayload.body);
-                
+
                 const notificationLog = new NotificationsModel({
                 userId: user._id,
                 type: 'user',
@@ -65,7 +65,7 @@ const start = async () => {
             });
             await notificationLog.save();
             } catch (error: any) {
-               
+
             }
         }
 

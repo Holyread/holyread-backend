@@ -1,4 +1,4 @@
-import { SubscriberModel } from "../../../models"
+import { SubscriberModel } from '../../../models'
 
 
 /** Create subscriber */

@@ -150,7 +150,7 @@ const verifyPassword = async (req: Request, res: Response, next: NextFunction) =
 
     const userObj: any = await usersService.getOneUserByFilter({ verificationCode: code, type: { $in: ['Admin', 'SubAdmin'] } })
     if (!userObj) return next(Boom.notFound(adminControllerResponse.updateCodeFailure))
-    
+
     await usersService.updateUser({ _id: userObj._id }, { password: newPassword, $unset: { verificationCode: 1 } })
     res.status(200).send({ message: adminControllerResponse.forgotPassowrdSuccess })
   } catch (e: any) {

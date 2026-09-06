@@ -69,9 +69,9 @@ const createTransaction = async (
 const processDonation = async (session: any, event: any) => {
       const donationId = session.metadata?.donationId;
       if (!donationId) return;
-  
+
       let status = '';
-  
+
       switch (event.type) {
           case 'invoice.payment_succeeded':
               status = 'active';
@@ -85,7 +85,7 @@ const processDonation = async (session: any, event: any) => {
           default:
               return;
       }
-  
+
       await DonationModel.findOneAndUpdate({ _id: donationId }, { status });
 };
 
@@ -106,14 +106,14 @@ const processTransaction = async (user: any, session: any, event: any) => {
     }
 
     let subscriptionId = user?.subscriptionIdNew;
-    if (event.type === "payment_intent.succeeded") {
+    if (event.type === 'payment_intent.succeeded') {
       subscriptionId = session.metadata.hrSubscriptionId;
     }
 
       await userService.updateUser(
       { _id: user._id },
       {
-        "stripe.status": session?.status,
+        'stripe.status': session?.status,
         subscription: subscriptionId, // If the subscription id found then it store in DB
       }
     );
@@ -137,7 +137,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                     });
 
                   const subject = emailTemplateDetails.subject
-                        || `Holy Reads Subscription Activated`
+                        || 'Holy Reads Subscription Activated'
       let html = `
                         <p>
                               Dear ${user.email.split('@')[0]},
@@ -511,7 +511,7 @@ const processTransaction = async (user: any, session: any, event: any) => {
                         })
 
             const subject = emailTemplateDetails.subject
-                  || `Holy Reads Subscription Canceled`
+                  || 'Holy Reads Subscription Canceled'
 
     let html = `
                   <p>
@@ -580,8 +580,8 @@ const processTransaction = async (user: any, session: any, event: any) => {
     );
 
     const description = descriptionTemplate.replace(
-      "{duration}",
-      subscriptionDetails?.title ?? "",
+      '{duration}',
+      subscriptionDetails?.title ?? '',
     );
     Promise.all([sentNotification(title, description)]);
   } catch (e: any) {

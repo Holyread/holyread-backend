@@ -1,4 +1,4 @@
-import { DevotionalCategoryModel } from "../../../models";
+import { DevotionalCategoryModel } from '../../../models';
 
 const getDevotionalCategory = async () => {
   try {

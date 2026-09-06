@@ -10,11 +10,11 @@ const checkUserAppVersion = async (
 ) => {
   try {
     const { platform, version } = request.body;
-    
-    const allowedPlatforms = ["android", "ios"];
+
+    const allowedPlatforms = ['android', 'ios'];
     if (!platform || !allowedPlatforms.includes(platform.toLowerCase())) {
       return next(
-        Boom.badRequest("Invalid platform. Only android and ios are supported.")
+        Boom.badRequest('Invalid platform. Only android and ios are supported.')
       );
     }
     const data = await appVersionService.getOneAppVersionByFilter({

@@ -19,7 +19,7 @@ const sendCustomNotificationToAllUsers = async (req: Request | any, res: Respons
 
         let type;
         if (req.body.link) {
-            type = "custom-link"
+            type = 'custom-link'
         }
 
         const commonUserObj: any = {

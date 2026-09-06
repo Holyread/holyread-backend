@@ -66,7 +66,7 @@ const getOneSmallGroup = async (req: Request, res: Response, next: NextFunction)
         }
         if (data.coverImage) data.coverImage = getImageUrl(data.coverImage, awsBucket.smallGroupDirectory);
 
-        
+
         res.status(200).send({ message: smallGroupControllerResponse.fetchSmallGroupSuccess, data });
     } catch (e: any) {
         next(Boom.badData(e.message));
@@ -121,7 +121,7 @@ const updateSmallGroup = async (req: Request, res: Response, next: NextFunction)
 
         if (!smallGroupDetails) return next(Boom.notFound(smallGroupControllerResponse.getSmallGroupFailure));
         if (body.coverImage === null) await removeS3File(smallGroupDetails.coverImage, s3Bucket);
-        
+
         if (body.coverImage?.includes('base64')) {
             await removeS3File(smallGroupDetails.coverImage, s3Bucket);
             const s3File: any = await uploadFileToS3(body.coverImage, smallGroupDetails.title, s3Bucket);

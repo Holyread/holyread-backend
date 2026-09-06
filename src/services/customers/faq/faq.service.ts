@@ -5,7 +5,7 @@ import { Types } from 'mongoose';
 const getAllFaqs = async (languageId: Types.ObjectId) => {
       try {
             const faqsList: any = await FaqModel.find({
-              status: "Active",
+              status: 'Active',
               language: languageId,
             })
               .lean()

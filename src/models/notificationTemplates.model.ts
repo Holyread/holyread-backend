@@ -1,11 +1,11 @@
-import mongoose, { Schema } from "mongoose";
-import { NOTIFICATION_TEMPLATE } from "../constants/notificationTemplate.constant";
+import mongoose, { Schema } from 'mongoose';
+import { NOTIFICATION_TEMPLATE } from '../constants/notificationTemplate.constant';
 
 export interface INotificationTemplate extends mongoose.Document {
   type: string;
   title: string;
   description: string;
-  language: { type: Schema.Types.ObjectId; ref: "language" };
+  language: { type: Schema.Types.ObjectId; ref: 'language' };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,7 +27,7 @@ const NotificationTemplateSchema = new Schema<INotificationTemplate>(
     },
     language: {
       type: Schema.Types.ObjectId,
-      ref: "language",
+      ref: 'language',
       required: true,
     },
   },
@@ -37,6 +37,6 @@ const NotificationTemplateSchema = new Schema<INotificationTemplate>(
 NotificationTemplateSchema.index({ type: 1, language: 1 }, { unique: true });
 
 export const NotificationTemplateModel = mongoose.model<INotificationTemplate>(
-  "NotificationTemplate",
+  'NotificationTemplate',
   NotificationTemplateSchema,
 );

@@ -1,6 +1,6 @@
-import { FilterQuery } from "mongoose";
-import { NotificationTemplateModel } from "../../../models";
-import { INotificationTemplate } from "../../../models/notificationTemplates.model";
+import { FilterQuery } from 'mongoose';
+import { NotificationTemplateModel } from '../../../models';
+import { INotificationTemplate } from '../../../models/notificationTemplates.model';
 
 export const createNotificationTemplateInDB = async (
   data: Partial<INotificationTemplate>,

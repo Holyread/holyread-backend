@@ -40,7 +40,7 @@ const sentSubscriptionEmail: any = async (user, title, description) => {
                         title: emailTemplatesTitles.customer.HolyreadsPlanUpgrade,
                         language: user?.language
                   }),
-                  subject = emailTemplateDetails?.subject || `Holy Reads Renewal Reminder`;
+                  subject = emailTemplateDetails?.subject || 'Holy Reads Renewal Reminder';
 
             let html = `<p>Dear ${user.email.split('@')[0]},</p><p></p>${description}<p> Should you have any questions or if any of your details change, please contact us.</p><p>Best regards,<br>Holy Reads</p><p><strong>( ***&nbsp; Please do not reply to this email ***&nbsp; )</strong></p>`
 

@@ -37,7 +37,7 @@ const startPublishContentJob = async () => {
                   new: true,
                 }
               )
-                .populate("author")
+                .populate('author')
                 .lean()
                 .exec();
 
@@ -51,7 +51,7 @@ const startPublishContentJob = async () => {
 
             let publishContent;
             let content;
-    
+
             for (const book of newPublishedBooks) {
                   // Initialize default ratings for books by machine user
                   try {
@@ -100,7 +100,7 @@ const startPublishContentJob = async () => {
 
                   for (const user of users) {
                         const tokens = user.pushTokens.map(token => token.token);
-                        
+
                         // get notification template
                         const { title, description } =
                           await getNotificationTemplate(
@@ -110,7 +110,7 @@ const startPublishContentJob = async () => {
                               NOTIFICATION_TEMPLATE.newSummary
                             ],
                           );
-                        
+
                         const notificationDesciption =  description.replace('{content}', content)
                         try {
                               await pushNotification(

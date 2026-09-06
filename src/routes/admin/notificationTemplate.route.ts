@@ -1,42 +1,42 @@
-import { Router } from "express";
-import { validate } from "../../middleware/validation";
+import { Router } from 'express';
+import { validate } from '../../middleware/validation';
 import {
   createNotificationTemplateSchema,
   updateNotificationTemplateSchema,
   deleteNotificationTemplateSchema,
   getNotificationTemplateSchema,
-} from "../../validation/index";
+} from '../../validation/index';
 import {
   createNotificationTemplate,
   deleteNotificationTemplate,
   getAllNotificationTemplate,
   getNotificationTemplateDetailById,
   updateNotificationTemplate,
-} from "../../controllers/admin/notificationTemplate.controller";
+} from '../../controllers/admin/notificationTemplate.controller';
 
 const router: Router = Router();
 router.get(
-  "/",
+  '/',
   validate(getNotificationTemplateSchema),
   getAllNotificationTemplate,
 );
 router.get(
-  "/:id",
+  '/:id',
   validate(getNotificationTemplateSchema),
   getNotificationTemplateDetailById,
 );
 router.post(
-  "/",
+  '/',
   validate(createNotificationTemplateSchema),
   createNotificationTemplate,
 );
 router.patch(
-  "/:id",
+  '/:id',
   validate(updateNotificationTemplateSchema),
   updateNotificationTemplate,
 );
 router.delete(
-  "/:id",
+  '/:id',
   validate(deleteNotificationTemplateSchema),
   deleteNotificationTemplate,
 );

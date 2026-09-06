@@ -1,10 +1,10 @@
-import { LanguageModel } from "../../../models/language.model";
-import { Types } from "mongoose";
+import { LanguageModel } from '../../../models/language.model';
+import { Types } from 'mongoose';
 
 const languageCache : Record<string, Types.ObjectId> = {}
 
 const getLanguageCache = async (code: string) => {
-  if (!code) throw new Error("Language code is required");
+  if (!code) throw new Error('Language code is required');
   if (languageCache[code]) return languageCache[code];
 
   const language = await LanguageModel.findOne({ code });
@@ -21,7 +21,7 @@ const createLanguage = async (body: any) => {
 };
 
 const getLanguage = async (body: any) => {
-  const result = await LanguageModel.find(body).select("name code");
+  const result = await LanguageModel.find(body).select('name code');
   return result;
 };
 

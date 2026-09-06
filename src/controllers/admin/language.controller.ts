@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from "express";
-import languageService from "../../services/admin/language/language.service";
-import Boom from "@hapi/boom";
-import { responseMessage } from "../../constants/message.constant";
+import { Request, Response, NextFunction } from 'express';
+import languageService from '../../services/admin/language/language.service';
+import Boom from '@hapi/boom';
+import { responseMessage } from '../../constants/message.constant';
 
 const languageControllerResponse = responseMessage.languageControllerResponse;
 

@@ -52,7 +52,7 @@ const start = async () => {
 
         if (!users.length) {
             console.log(
-                "JOB(🔴) Daily devotional categories execution stop due to no users found"
+                'JOB(🔴) Daily devotional categories execution stop due to no users found'
             );
             return;
         }
@@ -67,7 +67,7 @@ const start = async () => {
         // Check if there are eligible users
         if (!usersWithCategories.length) {
             console.log(
-                "JOB(🔴) Daily devotional categories execution stop due to no users found"
+                'JOB(🔴) Daily devotional categories execution stop due to no users found'
             );
             return;
         }
@@ -105,7 +105,7 @@ const start = async () => {
                                     userMatchedSeries.push(devotional.title);
                                 }
                             });
-                            
+
                             // Send notifications to users in the timezone
                             const { title, description } =
                               await getNotificationTemplate(
@@ -115,10 +115,10 @@ const start = async () => {
                                   NOTIFICATION_TEMPLATE.dailyDevotionalCategory
                                 ],
                               );
-                            
+
                             const notificationPayload = {
                                 title,
-                                body: description.replace("{seriesTitles}", userMatchedSeries.join(" and "))
+                                body: description.replace('{seriesTitles}', userMatchedSeries.join(' and '))
                             };
 
                             const tokens: string[] = Array.from(tokenSet);

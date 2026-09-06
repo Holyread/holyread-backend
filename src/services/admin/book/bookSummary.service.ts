@@ -72,8 +72,8 @@ const getBooksCountForDashboard = async (language: Types.ObjectId) => {
     try {
         const summaries = await BookSummaryModel.aggregate([
             { $match: { language } },
-            { $unwind: "$chapters" },
-            { $count: "chaptersCount" }
+            { $unwind: '$chapters' },
+            { $count: 'chaptersCount' }
         ]);
         const chaptersCount = summaries.length ? summaries[0].chaptersCount : 0;
         const booksCount = await BookSummaryModel.countDocuments({ language }).exec();

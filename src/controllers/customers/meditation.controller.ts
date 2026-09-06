@@ -32,7 +32,7 @@ const getAllMeditations = async (request: Request, response: Response, next: Nex
         else {
             meditationsList = await meditationService.getAllMeditations(meditationSearchFilter, language);
         }
-         
+
         response.status(200).json({
             message: meditationControllerResponse.fetchAllMeditationSuccess,
             data: meditationsList,

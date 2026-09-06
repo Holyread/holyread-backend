@@ -10,7 +10,7 @@ const cmsControllerResponse = responseMessage.cmsControllerResponse
 const getAllCms = async (request: Request, response: Response, next: NextFunction) => {
     try {
         const {language} = (request as any)?.user
-        
+
         const getAllCmsList = await cmsService.getAllCms(language)
         response.status(200).json({ message: cmsControllerResponse.fetchAllCmsSuccess, data: getAllCmsList })
     } catch (e: any) {

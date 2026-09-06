@@ -548,7 +548,7 @@ const handleExistingAppUser = async (
 
   // if languageId not found fallback to english
   if (!languageId) {
-    const language = await languageService.getLanguageCache("en");
+    const language = await languageService.getLanguageCache('en');
     languageId = language;
   }
 
@@ -561,7 +561,7 @@ const handleExistingAppUser = async (
   }
 
   if (base64) {
-    const s3File: any = await uploadFileToS3(base64, `profile`, s3Bucket);
+    const s3File: any = await uploadFileToS3(base64, 'profile', s3Bucket);
     body.photoUrl = s3File.name;
   }
 
@@ -773,7 +773,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     }
 
     if (base64) {
-      const s3File: any = await uploadFileToS3(base64, `profile`, s3Bucket)
+      const s3File: any = await uploadFileToS3(base64, 'profile', s3Bucket)
       body.photoUrl = s3File.name
     }
 
@@ -827,7 +827,7 @@ const appOAuthSignUp = async (req: Request, res: any, next: NextFunction) => {
     mailchimpService.updateUser(data.email, 'subscribed')
     const token: string = getToken({ email: data.email, 'oauthClientId': body.id, id: data._id })
 
-    // Get notification template 
+    // Get notification template
     const { title, description } = await getNotificationTemplate(
       NOTIFICATION_TEMPLATE.welcome,
       body?.language,
@@ -1026,7 +1026,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
 
     if (base64) {
       const s3File: any
-        = await uploadFileToS3(base64, `profile`, s3Bucket)
+        = await uploadFileToS3(base64, 'profile', s3Bucket)
       body.photoUrl = s3File.name
     }
 
@@ -1088,7 +1088,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
       'oauthClientId': body.id,
       id: data._id,
     })
-    
+
     // Get notification template
     const { title, description } = await getNotificationTemplate(
       NOTIFICATION_TEMPLATE.welcome,
@@ -1196,7 +1196,7 @@ const oAuthLogin = async (req: Request, res: any, next: NextFunction) => {
         body.language,
         NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.freePlan]
       );
-      
+
       pushNotification(
         tokens,
         title,

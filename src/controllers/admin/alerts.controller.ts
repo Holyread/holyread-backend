@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import Boom from '@hapi/boom';
-import { fetchAlerts } from "../../services/admin/alerts/alerts.service";
+import { fetchAlerts } from '../../services/admin/alerts/alerts.service';
 
 export const fetchPipelineAlerts = async (req: Request, res: Response, next: NextFunction) => {
   try {

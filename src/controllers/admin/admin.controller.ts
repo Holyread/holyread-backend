@@ -20,7 +20,7 @@ const s3Bucket = {
 const getAdmin = async (req: Request | any, res: Response, next: NextFunction) => {
     try {
         const data: any = Object.assign({}, req.user)
-        if (data.image) data.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + data.image        
+        if (data.image) data.image = awsBucket[NODE_ENV].s3BaseURL + '/users/' + data.image
         delete data.verificationCode
         delete data.password
         delete data.library

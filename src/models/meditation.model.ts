@@ -18,7 +18,7 @@ export interface IMeditation extends mongoose.Document {
 
 export type createMeditationType = {
     title: string,
-    category?: Types.ObjectId, 
+    category?: Types.ObjectId,
     image?: string,
     video?: string,
     duration : string,

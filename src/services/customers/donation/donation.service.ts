@@ -1,4 +1,4 @@
-import { DonationModel } from "../../../models";
+import { DonationModel } from '../../../models';
 
 const addDonation = async (body: any) => {
     try {

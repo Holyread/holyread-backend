@@ -1,6 +1,6 @@
-import { randomNumberInRange } from "../lib/utils/utils";
-import { BookSummaryModel } from "../models";
-import { UserModel } from "../models";
+import { randomNumberInRange } from '../lib/utils/utils';
+import { BookSummaryModel } from '../models';
+import { UserModel } from '../models';
 (async () => {
     try {
         console.log('Updating most popular views for books');

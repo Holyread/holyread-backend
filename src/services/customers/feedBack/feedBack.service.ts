@@ -1,4 +1,4 @@
-import { UserFeedBackModel } from "../../../models";
+import { UserFeedBackModel } from '../../../models';
 
 const addFeedback = async (body: any) => {
     try {

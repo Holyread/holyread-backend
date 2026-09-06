@@ -45,7 +45,7 @@ const getBooksCountForDashboard = async (request: Request, response: Response, n
     try {
         const language = (request as any).languageId;
         const bookSummary = await bookSummaryService.getBooksCountForDashboard(language);
-        
+
         response.status(200).json({
             message: dashboardControllerResponse.getDashboardSuccess,
             data: {

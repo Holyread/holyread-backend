@@ -3,8 +3,8 @@ import { LanguageModel } from '../models/language.model'
 export const addLanguages = async () => {
   try {
     const languages = [
-      { name: "English", code: "en" },
-      { name: "Spanish", code: "es" },
+      { name: 'English', code: 'en' },
+      { name: 'Spanish', code: 'es' },
     ];
 
     for (const language of languages) {
@@ -18,9 +18,9 @@ export const addLanguages = async () => {
       }
     }
 
-    console.log("✅ Language seeding completed.\n");
+    console.log('✅ Language seeding completed.\n');
   } catch (error) {
-    console.error("❌ Language seeding failed:", error);
+    console.error('❌ Language seeding failed:', error);
   }
 };
 

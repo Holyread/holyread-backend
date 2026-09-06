@@ -52,7 +52,7 @@ const getAllShareImage = async (skip: number, limit, search: FilterQuery<IShareI
         await Promise.all(result.map(async (item: any) => {
             if (!item) return
             if (item.image) item.image = getImageUrl(item.image, awsBucket.shareImageDirectory);
-            
+
         }))
         return { count, shareImages: result }
     } catch (e: any) {

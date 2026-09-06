@@ -110,7 +110,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
         }
 
         const data: any = await usersService.createUser(newBody)
-        
+
         res.status(200).send({
             message: adminControllerResponse.addUserSuccess,
             data: {
@@ -124,10 +124,10 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
           req.languageId,
           NOTIFICATION_TEMPLATE_FALLBACKS[NOTIFICATION_TEMPLATE.welcome],
         );
-        
+
         await notificationsService.createNotification({
           userId: data._id,
-          type: "user",
+          type: 'user',
           notification: { title, description },
         });
 
@@ -141,7 +141,7 @@ const addUser = async (req: Request, res: Response, next: NextFunction) => {
 
         await notificationsService.createNotification({
           userId: data._id,
-          type: "setting",
+          type: 'setting',
           notification: {
             title: createSubscriptionTitle,
             description: createSubscriptionDesc,

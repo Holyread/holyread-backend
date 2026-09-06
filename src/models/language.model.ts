@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema } from 'mongoose';
 
 export interface ILanguage extends mongoose.Document {
   name: string;
@@ -16,10 +16,10 @@ export const LanguageSchema = new Schema<ILanguage>(
       unique: true,
     },
   },
-  { strict: "throw" }
+  { strict: 'throw' }
 );
 
 export const LanguageModel = mongoose.model<ILanguage>(
-  "Language",
+  'Language',
   LanguageSchema
 );

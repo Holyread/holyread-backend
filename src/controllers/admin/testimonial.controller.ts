@@ -108,7 +108,7 @@ const updateTestimonial = async (req: Request, res: Response, next: NextFunction
         if (req.body.image && req.body.image.startsWith('http')) req.body.image = testimonialDetails.image
 
         req.body.language = language;
-        
+
         await testimonialService.updateTestimonial(req.body, id)
         return res.status(200).send({ message: testimonialControllerResponse.updateTestimonialSuccess })
     } catch (e: any) {

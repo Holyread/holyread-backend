@@ -1,5 +1,5 @@
-import { NotificationTemplateModel } from "../../models";
-import { LanguageModel } from "../../models/language.model";
+import { NotificationTemplateModel } from '../../models';
+import { LanguageModel } from '../../models/language.model';
 
 /**
  * Fetches a notification template (title + description) from the DB by type and language.
@@ -19,7 +19,7 @@ export const getNotificationTemplate = async (
     let resolvedLanguageId = languageId;
 
     if (!resolvedLanguageId) {
-      const enLang = await LanguageModel.findOne({ code: "en" }).lean();
+      const enLang = await LanguageModel.findOne({ code: 'en' }).lean();
       resolvedLanguageId = enLang?._id?.toString();
     }
 

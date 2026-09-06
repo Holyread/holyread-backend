@@ -105,5 +105,5 @@ export {
   AlertsModel,
   DevotionalCategoryModel,
   LanguageModel,
-  NotificationTemplateModel 
+  NotificationTemplateModel
 }

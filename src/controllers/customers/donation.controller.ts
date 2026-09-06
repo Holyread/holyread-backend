@@ -1,9 +1,9 @@
-import { NextFunction, Request, Response } from "express";
-import Boom from "@hapi/boom";
-import { responseMessage } from "../../constants/message.constant";
+import { NextFunction, Request, Response } from 'express';
+import Boom from '@hapi/boom';
+import { responseMessage } from '../../constants/message.constant';
 
-import stripeSubscriptionService from "../../services/stripe/subscription";
-import donationService from "../../services/customers/donation/donation.service";
+import stripeSubscriptionService from '../../services/stripe/subscription';
+import donationService from '../../services/customers/donation/donation.service';
 
 const subscriptionsControllerResponse =
   responseMessage.subscriptionsControllerResponse;
@@ -19,18 +19,18 @@ const createDonation = async (
     const { amount } = request.body;
 
     if (!amount || amount <= 0) {
-      response.status(400).json({ error: "Invalid donation details" });
+      response.status(400).json({ error: 'Invalid donation details' });
     }
 
     const donation = await donationService.addDonation({
       userId: userObj._id,
       amount: Number(amount),
-      status: "pending",
+      status: 'pending',
     });
 
     const paymentIntent = await stripeSubscriptionService.createPaymentIntent({
       amount: Number(amount) * 100,
-      currency: "usd",
+      currency: 'usd',
       automatic_payment_methods: {
         enabled: true,
       },

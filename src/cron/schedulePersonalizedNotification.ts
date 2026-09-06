@@ -75,7 +75,7 @@ const start = async () => {
                   NOTIFICATION_TEMPLATE.newContent
                 ],
               );
-              
+
             const notificationPayload = {
                 title,
                 body: description.replace('{bookTitle}', bookDetails.title),

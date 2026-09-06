@@ -1,8 +1,8 @@
-import { CronJob } from "cron";
+import { CronJob } from 'cron';
 import resolveCronSchedule from './cronGuard';
-import { SmallGroupModel, CronLogModel } from "../models";
+import { SmallGroupModel, CronLogModel } from '../models';
 import { cronDirectory } from '../constants/app.constant';
-import languageService from "../services/admin/language/language.service";
+import languageService from '../services/admin/language/language.service';
 
 const startPublishContentJob = async () => {
     try {
@@ -27,14 +27,14 @@ const startPublishContentJob = async () => {
 
       if (!smallGroup) {
         console.log(
-          "🔴 No unpublished small group found for language",
+          '🔴 No unpublished small group found for language',
           lang?.name
         );
         continue;
       }
 
       console.log(
-        "🟢 Small Group published for language",
+        '🟢 Small Group published for language',
         lang?.name,
         smallGroup?.title
       );

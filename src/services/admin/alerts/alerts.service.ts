@@ -34,7 +34,7 @@ export const fetchAlerts = async (options: AlertQueryOptions = {}) => {
     ...alert,
     triggeredDate: formattedDate(alert.triggeredAt).replace(/ /g, ' '),
   }));
-  
+
   return {
     data: formattedData,
     total,

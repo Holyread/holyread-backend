@@ -1,6 +1,6 @@
-import * as z from "zod";
-import type { Request, Response, NextFunction } from "express";
-import Boom from "@hapi/boom";
+import * as z from 'zod';
+import type { Request, Response, NextFunction } from 'express';
+import Boom from '@hapi/boom';
 
 type ValidatedData = {
   body?: Record<string, any>;
@@ -28,8 +28,8 @@ export const validate = (schema: z.ZodSchema) => {
       const data = result.data as ValidatedData;
 
       if (data.body) req.body = data.body;
-      if (data.params) req.params = data.params as Request["params"];
-      if (data.query) req.query = data.query as Request["query"];
+      if (data.params) req.params = data.params as Request['params'];
+      if (data.query) req.query = data.query as Request['query'];
 
       next();
     } catch (error: any) {

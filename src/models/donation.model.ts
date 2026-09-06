@@ -1,6 +1,6 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema } from 'mongoose';
 
-mongoose.set("autoIndex", true);
+mongoose.set('autoIndex', true);
 
 export interface IDonation extends mongoose.Document {
   userId: string;
@@ -28,14 +28,14 @@ export const DonationSchema = new Schema(
     userId: { type: String, required: true },
     amount: { type: Number, required: true },
     paymentIntentId: { type: String },
-    status: { type: String, default: "pending" },
+    status: { type: String, default: 'pending' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date },
   },
-  { strict: "throw" }
+  { strict: 'throw' }
 );
 
 export const DonationModel = mongoose.model<IDonation>(
-  "donation",
+  'donation',
   DonationSchema
 );

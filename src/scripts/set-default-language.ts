@@ -1,43 +1,43 @@
 export const setDefaultLanguage = async () => {
   try {
-    console.log("🚀 Setting default language migration...");
+    console.log('🚀 Setting default language migration...');
 
     // @ts-ignore
-    const { LanguageModel } = require("../models/language.model");
+    const { LanguageModel } = require('../models/language.model');
 
-    const english = await LanguageModel.findOne({ code: "en" });
+    const english = await LanguageModel.findOne({ code: 'en' });
 
     if (!english) {
-      console.error("❌ English language not found! Migration skipped.");
+      console.error('❌ English language not found! Migration skipped.');
       return;
     }
 
     // @ts-ignore
-    const { BookSummaryModel } = require("../models/bookSummary.model");
+    const { BookSummaryModel } = require('../models/bookSummary.model');
     // @ts-ignore
-    const { BookCategoryModel } = require("../models/bookCategory.model");
+    const { BookCategoryModel } = require('../models/bookCategory.model');
     // @ts-ignore
-    const { BookAuthorModel } = require("../models/bookAuthor.model");
+    const { BookAuthorModel } = require('../models/bookAuthor.model');
     // @ts-ignore
-    const { ExpertCuratedModel } = require("../models/expertCurated.model");
+    const { ExpertCuratedModel } = require('../models/expertCurated.model');
     // @ts-ignore
-    const { SmallGroupModel } = require("../models/smallGroup.model");
+    const { SmallGroupModel } = require('../models/smallGroup.model');
     // @ts-ignore
-    const { MeditationModel } = require("../models/meditation.model");
+    const { MeditationModel } = require('../models/meditation.model');
     // @ts-ignore
-    const { MeditationCategoryModel } = require("../models/meditationCategory.model");
+    const { MeditationCategoryModel } = require('../models/meditationCategory.model');
     // @ts-ignore
-    const { CmsModel } = require("../models/cms.model");
+    const { CmsModel } = require('../models/cms.model');
     // @ts-ignore
-    const { FaqModel } = require("../models/faq.model");
+    const { FaqModel } = require('../models/faq.model');
     // @ts-ignore
-    const { TestimonialModel } = require("../models/testimonial.model");
+    const { TestimonialModel } = require('../models/testimonial.model');
     // @ts-ignore
-    const { DailyDvotionalModel } = require("../models/dailyDvotional.model");
+    const { DailyDvotionalModel } = require('../models/dailyDvotional.model');
     // @ts-ignore
-    const { UserModel } = require("../models/user.model");
+    const { UserModel } = require('../models/user.model');
     // @ts-ignore
-    const { EmailTemplateModel } = require("../models/emailTemplate.model");
+    const { EmailTemplateModel } = require('../models/emailTemplate.model');
 
     const models = [
       BookSummaryModel,
@@ -59,7 +59,7 @@ export const setDefaultLanguage = async () => {
 
     for (const model of models) {
       console.log(`\n📋 Processing ${model.modelName}...`);
-      
+
       let totalUpdated = 0;
       let batchNumber = 1;
 
@@ -68,7 +68,7 @@ export const setDefaultLanguage = async () => {
         const docs = await model
           .find({ language: { $exists: false } })
           .limit(BATCH_SIZE)
-          .select("_id")
+          .select('_id')
           .lean();
 
         // No more documents to update
@@ -83,7 +83,7 @@ export const setDefaultLanguage = async () => {
 
         totalUpdated += result.modifiedCount;
         console.log(`   Batch ${batchNumber}: Updated ${result.modifiedCount} docs (Total: ${totalUpdated})`);
-        
+
         batchNumber++;
 
         // Small delay to reduce DB load
@@ -97,8 +97,8 @@ export const setDefaultLanguage = async () => {
       }
     }
 
-    console.log("\n🎉 Default language migration complete");
+    console.log('\n🎉 Default language migration complete');
   } catch (err) {
-    console.error("❌ Default language migration failed:", err);
+    console.error('❌ Default language migration failed:', err);
   }
 };

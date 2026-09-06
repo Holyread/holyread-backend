@@ -115,7 +115,7 @@ const start = async () => {
               );
 
               const notificationDescription = description.replace(
-                  "{title}",
+                  '{title}',
                   dailyDevotional.title,
                 )
 
@@ -128,9 +128,9 @@ const start = async () => {
                     description: dailyDevotional.description,
                     image:
                       awsBucket[config.NODE_ENV].s3BaseURL +
-                      "/" +
+                      '/' +
                       awsBucket.readsOfDayDirectory +
-                      "/" +
+                      '/' +
                       dailyDevotional.image,
                   },
                 },
@@ -147,7 +147,7 @@ const start = async () => {
               tokens.forEach(async (token) => {
                 const notificationLog = new NotificationsModel({
                   userId: user._id, // Assuming all users in the timezone are logged for simplicity
-                  type: "user",
+                  type: 'user',
                   notification: {
                     title: notificationPayload.title,
                     description: notificationPayload.body,
@@ -162,13 +162,13 @@ const start = async () => {
           );
         }
       } catch (error: any) {
-        console.log("Users processing error - ", error.message);
+        console.log('Users processing error - ', error.message);
         const notificationLog = new NotificationsModel({
           userId: users[0]._id, // Assuming all users in the timezone are logged for simplicity
-          type: "user",
+          type: 'user',
           notification: {
             dailyDevotionalId: dailyDevotional._id,
-            title: "🔔 Start your day with inspiration!",
+            title: '🔔 Start your day with inspiration!',
             description: `📙 Today's Devotional: ${dailyDevotional.title}. Dive in now for a dose of spiritual nourishment 🔖`,
             success: false,
             errorMessage: `Users processing error -', ${error.message}`,
@@ -178,18 +178,18 @@ const start = async () => {
         await notificationLog.save();
       }
     });
-    console.log("JOB(✅) Daily devotional executed successfully!");
-    cronLog.status = "success";
+    console.log('JOB(✅) Daily devotional executed successfully!');
+    cronLog.status = 'success';
     cronLog.endedAt = new Date();
     await cronLog.save();
   } catch (error: any) {
     console.log(
-      "JOB(🔴) Daily devotional execution Error is - ",
+      'JOB(🔴) Daily devotional execution Error is - ',
       error.message,
     );
     const cronLog = new CronLogModel({
-      jobName: "daily_devotional_notifier",
-      status: "failed",
+      jobName: 'daily_devotional_notifier',
+      status: 'failed',
       endedAt: new Date(),
       message: `daily devotional job failed: ${error.message}`,
     });

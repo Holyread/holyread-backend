@@ -28,8 +28,8 @@ import language from './customers/language.route'
 
 const router: Router = express.Router()
 
-router.use("/cms", customerPassport, cms);
-router.use("/faq", customerPassport, faq);
+router.use('/cms', customerPassport, cms);
+router.use('/faq', customerPassport, faq);
 
 router.use('/auth', auth)
 router.use('/users', users)

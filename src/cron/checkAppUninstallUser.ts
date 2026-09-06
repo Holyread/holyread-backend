@@ -1,8 +1,8 @@
-import { CronLogModel, UninstallLogModel, UserModel } from "../models";
+import { CronLogModel, UninstallLogModel, UserModel } from '../models';
 import firebaseAdmin from 'firebase-admin';
 import { CronJob } from 'cron';
 import resolveCronSchedule from './cronGuard';
-import { cronDirectory } from "../constants/app.constant";
+import { cronDirectory } from '../constants/app.constant';
 
 const startCheckUninstalledUsersJob = async () => {
     try {
@@ -16,7 +16,7 @@ const startCheckUninstalledUsersJob = async () => {
         });
         await cronLog.save();
 
-        const users: any[] = await UserModel.find({ "pushTokens.token": { $exists: true, $ne: null } });
+        const users: any[] = await UserModel.find({ 'pushTokens.token': { $exists: true, $ne: null } });
 
         if (!users.length) {
             console.log('JOB(🔴) checking for uninstalled users execution stopped due to no users found');
@@ -28,8 +28,8 @@ const startCheckUninstalledUsersJob = async () => {
         }
 
         const tokensWithUserIds = users.flatMap(user =>
-            user.pushTokens.map(pt => ({ 
-                token: pt.token, 
+            user.pushTokens.map(pt => ({
+                token: pt.token,
                 userId: user._id.toString(), // Ensure userId is a string
                 deviceId: pt.deviceId
             }))
@@ -42,7 +42,7 @@ const startCheckUninstalledUsersJob = async () => {
             const message = {
                 tokens,
                 data: {
-                    silent: "true"
+                    silent: 'true'
                 }
             };
 
@@ -60,7 +60,7 @@ const startCheckUninstalledUsersJob = async () => {
 
                         // Update the user to set isAppUninstalled to true and remove the push token
                         await UserModel.updateMany(
-                            { "pushTokens.token": token },
+                            { 'pushTokens.token': token },
                             {
                                 $pull: { pushTokens: { token } },
                                 $set: { isAppUninstalled: true }

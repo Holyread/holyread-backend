@@ -119,7 +119,7 @@ const start = async () => {
                   // Log Notifications Sent
                   const notificationLog = new NotificationsModel({
                     userId: user._id,
-                    type: "book",
+                    type: 'book',
                     notification: {
                       title,
                       description: notificationDescription,
@@ -132,12 +132,12 @@ const start = async () => {
                   await notificationLog.save();
                 } catch (error: any) {
                   console.log(
-                    "JOB(🔴) Users processing error -",
+                    'JOB(🔴) Users processing error -',
                     error.message,
                   );
                   const notificationLog = new NotificationsModel({
                     userId: user._id,
-                    type: "book",
+                    type: 'book',
                     notification: {
                       title,
                       description: notificationDescription,
@@ -159,7 +159,7 @@ const start = async () => {
         cronLog.endedAt = new Date();
         await cronLog.save();
 
-        
+
     } catch (error: any) {
         // Log Error
         console.log('JOB(🔴) Unfinished book notifier execution Error is - ', error.message);

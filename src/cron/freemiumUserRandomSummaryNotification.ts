@@ -85,7 +85,7 @@ const start = async () => {
                 await userService.updateUserLibrary(
                     { _id: user.libraries._id },
                     { freeNotificationBooks : [] }
-                ); 
+                );
                 continue;
             }
 
@@ -105,7 +105,7 @@ const start = async () => {
 
             const notificationPayload = {
                 title,
-                body: description.replace("{bookTitle}", bookDetails.title),
+                body: description.replace('{bookTitle}', bookDetails.title),
                 data: {
                     publishContents: {
                         _id: bookDetails?._id,

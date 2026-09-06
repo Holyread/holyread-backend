@@ -85,7 +85,7 @@ const startEngagementMotivationJob = async () => {
               ],
             );
 
-            const notificationDescription = description.replace("{bookTitle}", publishContent.title)
+            const notificationDescription = description.replace('{bookTitle}', publishContent.title)
             try {
                 await pushNotification(
                     tokens,

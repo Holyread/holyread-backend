@@ -1,13 +1,13 @@
-import { cronDirectory, emailTemplatesTitles } from "../constants/app.constant";
-import { compileHtml, formattedDate, sentEmail } from "../lib/utils/utils";
+import { cronDirectory, emailTemplatesTitles } from '../constants/app.constant';
+import { compileHtml, formattedDate, sentEmail } from '../lib/utils/utils';
 import {
   AlertsModel,
   BookSummaryModel,
   CronLogModel,
   DailyDvotionalModel,
   ExpertCuratedModel,
-} from "../models";
-import emailTemplateService from "../services/admin/emailTemplate/emailTemplate.service";
+} from '../models';
+import emailTemplateService from '../services/admin/emailTemplate/emailTemplate.service';
 import { CronJob } from 'cron';
 import resolveCronSchedule from './cronGuard';
 
@@ -56,65 +56,65 @@ const contentPipelineMonitor = async () => {
 
     // Check each type and collect alerts
     if (devotionalCount < 6) {
-      if (await createAlert("devotional", { devotionalCount }, `Low devotional content: Only ${devotionalCount} unpublished devotionals left.`)) {
+      if (await createAlert('devotional', { devotionalCount }, `Low devotional content: Only ${devotionalCount} unpublished devotionals left.`)) {
         alertsToNotify.push(`🕊️ Daily Devotionals Remaining: <strong>${devotionalCount}</strong>`);
       }
     }
 
     if (summaryCount < 10) {
-      if (await createAlert("summary", { summaryCount }, `Low summary content: Only ${summaryCount} unpublished summaries left.`)) {
+      if (await createAlert('summary', { summaryCount }, `Low summary content: Only ${summaryCount} unpublished summaries left.`)) {
         alertsToNotify.push(`📖 Book Summaries Remaining: <strong>${summaryCount}</strong>`);
       }
     }
 
     if (curatedListsCount < 10) {
-      if (await createAlert("curatedPosts", { curatedListsCount }, `Low curated list content: Only ${curatedListsCount} unpublished lists left.`)) {
+      if (await createAlert('curatedPosts', { curatedListsCount }, `Low curated list content: Only ${curatedListsCount} unpublished lists left.`)) {
         alertsToNotify.push(`📚 Curated List Posts Remaining: <strong>${curatedListsCount}</strong>`);
       }
     }
 
     // Only send email if new alerts were created
     if (alertsToNotify.length > 0) {
-      const pipelineSummary = alertsToNotify.map((item) => `<li>${item}</li>`).join("\n");
+      const pipelineSummary = alertsToNotify.map((item) => `<li>${item}</li>`).join('\n');
 
       const pipelineEmailTemplate = await emailTemplateService.getOneEmailTemplateByFilter({
         title: emailTemplatesTitles.admin.contentPipelineReminder,
       });
 
       const compiledHtml = await compileHtml(pipelineEmailTemplate.content, {
-        Team: "Admin",
+        Team: 'Admin',
         today: formattedDate(triggeredAt, {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
         }),
-        X: devotionalCount ?? "-",
-        Y: summaryCount ?? "-",
-        Z: curatedListsCount ?? "-",
-        UploadLink: "https://admin.holyreads.com",
+        X: devotionalCount ?? '-',
+        Y: summaryCount ?? '-',
+        Z: curatedListsCount ?? '-',
+        UploadLink: 'https://admin.holyreads.com',
         CurrentYear: new Date().getFullYear(),
         PipelineSummary: pipelineSummary,
       });
 
       await sentEmail({
-        from: "noreply@holyreads.com",
-        to: "kevin@christianlingua.com, mikhail.iurchuk@gmail.com",
+        from: 'noreply@holyreads.com',
+        to: 'kevin@christianlingua.com, mikhail.iurchuk@gmail.com',
         subject: `📉 [Reminder] Low Content in Pipeline – Devotionals: ${devotionalCount}, Summaries: ${summaryCount}, Lists: ${curatedListsCount}`,
         html: compiledHtml,
       });
 
       await AlertsModel.updateMany(
         {
-          type: { $in: ["devotional", "summary", "curatedPosts"] },
+          type: { $in: ['devotional', 'summary', 'curatedPosts'] },
           triggeredAt: { $gte: startOfDay, $lte: endOfDay },
           emailSent: false,
         },
         { $set: { emailSent: true } }
       );
 
-      console.log("JOB(✉️) Low content alert email sent to admins.");
+      console.log('JOB(✉️) Low content alert email sent to admins.');
     } else {
-      console.log("JOB(ℹ️) No new low content alerts to notify.");
+      console.log('JOB(ℹ️) No new low content alerts to notify.');
     }
 
     cronLog.status = 'success';

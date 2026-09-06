@@ -1,13 +1,13 @@
-import { Request, Response, NextFunction } from "express";
-import Boom from "@hapi/boom";
+import { Request, Response, NextFunction } from 'express';
+import Boom from '@hapi/boom';
 import {
   createNotificationTemplateInDB,
   updateNotificationTemplateInDB,
   deleteNotificationTemplateFromDB,
   fetchAllNoificationTemplates,
   fetchNotiTemplateById,
-} from "../../services/admin/notificationTemplate/notificationTemplate.service";
-import { responseMessage } from "../../constants/message.constant";
+} from '../../services/admin/notificationTemplate/notificationTemplate.service';
+import { responseMessage } from '../../constants/message.constant';
 
 const { notificationTemplateControllerResponse } = responseMessage;
 
@@ -63,7 +63,7 @@ export const createNotificationTemplate = async (
     const language = req.languageId;
 
     if (!type || !title || !description || !language) {
-      return next(Boom.badData("All fields are required"));
+      return next(Boom.badData('All fields are required'));
     }
 
     const notificationTemplate = await createNotificationTemplateInDB(
@@ -74,7 +74,7 @@ export const createNotificationTemplate = async (
         language,
       },
     );
-    
+
     res.status(201).json({
       message:
         notificationTemplateControllerResponse.createNotificationTemplateSuccess,

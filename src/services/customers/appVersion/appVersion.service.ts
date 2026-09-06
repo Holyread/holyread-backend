@@ -1,4 +1,4 @@
-import { AppVersionModel } from "../../../models"
+import { AppVersionModel } from '../../../models'
 
 const getOneAppVersionByFilter = async (query: any) => {
     try {

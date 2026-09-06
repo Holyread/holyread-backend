@@ -27,16 +27,16 @@ const startPublishContentJob = async () => {
       );
 
       if (!expertCurateds) {
-        console.log("No expert curated found for", lang?.name);
+        console.log('No expert curated found for', lang?.name);
         continue;
       }
       console.log(
-        "JOB(✅) publish curated executed successfully for!",
+        'JOB(✅) publish curated executed successfully for!',
         lang?.name
       );
     }
 
-        cronLog.status = "success";
+        cronLog.status = 'success';
         cronLog.endedAt = new Date();
         await cronLog.save();
     } catch (error: any) {

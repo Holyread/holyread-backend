@@ -16,18 +16,18 @@ const start = async () => {
     // Find users with a subscription and no coupon or status
     const users = await UserModel.find({
       $and: [
-        { "stripe.subscriptionId": { $exists: true } },
+        { 'stripe.subscriptionId': { $exists: true } },
         {
           $or: [
-            { "stripe.status": { $exists: false } },
-            { "stripe.status": { $ne: "active" } },
-            { "stripe.coupon": { $exists: false } },
-            { "stripe.coupon": { $eq: undefined } },
+            { 'stripe.status': { $exists: false } },
+            { 'stripe.status': { $ne: 'active' } },
+            { 'stripe.coupon': { $exists: false } },
+            { 'stripe.coupon': { $eq: undefined } },
           ],
         },
       ],
     })
-      .select(["stripe"])
+      .select(['stripe'])
       .lean()
       .exec();
 

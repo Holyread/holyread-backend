@@ -96,7 +96,7 @@ const start = async () => {
           );
 
           const notificationDescription = description.replace(
-            "{content}",
+            '{content}',
             content,
           );
 
@@ -132,7 +132,7 @@ const start = async () => {
             // notification log
             const notificationLog = new NotificationsModel({
               userId: user?._id,
-              type: "book",
+              type: 'book',
               notification: {
                 title,
                 description: notificationDescription,
@@ -144,16 +144,16 @@ const start = async () => {
             });
             await notificationLog.save();
           } catch (error: any) {
-            console.log("Users processing error -", error.message);
-            
+            console.log('Users processing error -', error.message);
+
             const notificationLog = new NotificationsModel({
               userId: user._id,
-              type: "user",
+              type: 'user',
               notification: {
                 title,
                 description: notificationDescription,
                 success: false,
-                errorMessage: `Users processing error - ${error.message}`, 
+                errorMessage: `Users processing error - ${error.message}`,
               },
               createdAt: new Date(),
             });

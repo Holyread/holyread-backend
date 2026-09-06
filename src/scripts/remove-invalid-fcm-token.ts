@@ -1,10 +1,10 @@
-import { UserModel } from "../models/index";
-import firebaseAdmin from "firebase-admin";
-import { InvalidTokenModel } from "../models/index";
+import { UserModel } from '../models/index';
+import firebaseAdmin from 'firebase-admin';
+import { InvalidTokenModel } from '../models/index';
 
 const BATCH_SIZE = 100; // Adjust batch size as needed
 
-const pushNotification = async (userId, tokens, title, description, args = "") => {
+const pushNotification = async (userId, tokens, title, description, args = '') => {
     try {
         const validTokens = tokens.filter(token => token && typeof token === 'string' && token.trim().length > 0);
         if (validTokens.length === 0) {
@@ -30,20 +30,20 @@ const pushNotification = async (userId, tokens, title, description, args = "") =
         response.results.forEach((result, index) => {
             const error = result.error;
             if (error) {
-                console.error("Failure sending notification to", validTokens[index], error);
+                console.error('Failure sending notification to', validTokens[index], error);
                 if (
-                    error.code === "messaging/invalid-recipient" ||
-                    error.code === "messaging/unknown-error"
+                    error.code === 'messaging/invalid-recipient' ||
+                    error.code === 'messaging/unknown-error'
                 ) {
                     invalidTokens.push(validTokens[index]);
                 }
             } else {
-                console.log("Successfully sent notification to", validTokens[index]);
+                console.log('Successfully sent notification to', validTokens[index]);
             }
         });
 
         if (invalidTokens.length) {
-            console.log("Invalid tokens found for user", invalidTokens.length);
+            console.log('Invalid tokens found for user', invalidTokens.length);
             await UserModel.updateOne(
                 { _id: userId },
                 { $pull: { pushTokens: { $in: invalidTokens } } } // Corrected $pull operation
@@ -55,7 +55,7 @@ const pushNotification = async (userId, tokens, title, description, args = "") =
                     invalidTokens
                 });
             } catch (insertError) {
-                console.error("Error inserting invalid tokens:", insertError);
+                console.error('Error inserting invalid tokens:', insertError);
             }
 
             console.log(`Invalid tokens removed for user ${userId}:`, invalidTokens);
@@ -68,7 +68,7 @@ const pushNotification = async (userId, tokens, title, description, args = "") =
         );
 
     } catch (error) {
-        console.error("Error in pushNotification function:", error);
+        console.error('Error in pushNotification function:', error);
         // Log the error or handle it in a way that doesn't crash the server
     }
 };
@@ -80,23 +80,23 @@ const processUsersInBatches = async () => {
 
     while (true) {
         const appUsers : any[] = await UserModel.find({
-            "pushTokens.0": { $exists: true },
+            'pushTokens.0': { $exists: true },
             tokenCheck: false,
         })
-            .select("_id pushTokens")
+            .select('_id pushTokens')
             .lean()
             .skip(skip)
             .limit(BATCH_SIZE)
             .exec();
 
         if (!appUsers.length) {
-            console.log("No more users with push tokens found.");
+            console.log('No more users with push tokens found.');
             break;
         }
 
         const notificationPayload = {
-            title: "A newer version of the app is available!",
-            body: "Please go to the store and update the app.",
+            title: 'A newer version of the app is available!',
+            body: 'Please go to the store and update the app.',
         };
 
         for (const user of appUsers) {
@@ -113,14 +113,14 @@ const processUsersInBatches = async () => {
         skip += BATCH_SIZE;
     }
 
-    console.log("Users updated successfully.");
+    console.log('Users updated successfully.');
 };
 
 (async () => {
     try {
         await processUsersInBatches();
     } catch (error) {
-        console.error("Error in processUsersInBatches function:", error);
+        console.error('Error in processUsersInBatches function:', error);
     }
 })();
 

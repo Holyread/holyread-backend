@@ -19,7 +19,7 @@ export type createUserFeedBackType = {
     comment?: string,
     improvementSuggestions?: string
     createdAt?: Date
-} 
+}
 
 export type getUserFeedBackType = {
     _id?: string,

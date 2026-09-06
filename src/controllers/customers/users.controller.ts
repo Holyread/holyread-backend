@@ -117,7 +117,7 @@ const getUserAccount = async (
                         = `${awsBucket[NODE_ENV].s3BaseURL}/users/${userObj.image}`
             }
             userObj.isEmailLinked = !!userObj.password
-            
+
             const subscriptionDetails
                   = await subscriptionService
                         .getOneSubscriptionByFilter({
@@ -386,7 +386,7 @@ const changePassword = async (
                         },
                   }
             )
-            
+
             // get notification template for "Change Password"
             const {
               title: notificationTitle,
@@ -776,7 +776,7 @@ const getUserSubscription = async (
               if (res.status !== 'active') {
                 return;
               }                            // If the subscriptionStatus active then inAppSubscriptionStatus it will not show active
-                                          // data.inAppSubscriptionStatus = capitalizeFirstLetter(res.status) 
+                                          // data.inAppSubscriptionStatus = capitalizeFirstLetter(res.status)
                                     })
         } else if (false && data?.stripe?.paymentIntent) {
           await stripeSubscriptionService
@@ -2495,7 +2495,7 @@ const subscribePlan = async (
                                        const newSubscription =
                                          await stripeSubscriptionService.createSubscription(
                                            {
-                                             status: "active",
+                                             status: 'active',
                                              coupon: req.body.coupon,
                                              customerId:
                                                userObj.stripe.customerId,
@@ -2505,14 +2505,14 @@ const subscribePlan = async (
                                                subscriptionDetails.stripePlanId,
                                            }
                                          );
-                                       body["stripe.coupon"] = req.body.coupon;
+                                       body['stripe.coupon'] = req.body.coupon;
 
                                        userObj.stripe.subscriptionId =
                                          newSubscription.id;
                                        await userService.updateUser(
                                          { _id: userObj._id },
                                          {
-                                           "stripe.subscriptionId":
+                                           'stripe.subscriptionId':
                                              newSubscription.id,
                                          }
                                        );
@@ -2989,17 +2989,17 @@ const cancelSubscription = async (
 
   const user = await UserModel.findById(userId);
   if (!user || !user.stripe?.subscriptionId) {
-    response.status(404).json({ message: "Subscription not found" });
+    response.status(404).json({ message: 'Subscription not found' });
     return
   }
   if(user.stripe.cancelAtPeriodEnd) {
-    response.status(409).json({ message: "Subscription already cancelled" });
+    response.status(409).json({ message: 'Subscription already cancelled' });
     return
   }
   const subscription = await stripeSubscriptionService.cancelSubscription(
     user.stripe.subscriptionId
   );
-  
+
   user.stripe.cancelAtPeriodEnd = subscription.cancel_at_period_end;
   user.stripe.expiredAt = new Date(subscription.current_period_end * 1000);
 

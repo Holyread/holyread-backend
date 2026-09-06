@@ -29,3 +29,13 @@ typings/
 
 # Packge lock
 package-lock.json
+
+# Local-only operational scripts. These are generated with real credentials
+# pasted in (see B1: rotating the Firebase service-account key), so they must
+# never reach the repo — which is public.
+*.local.sh
+
+# Service-account key files, in any of the shapes Google hands them out as.
+*serviceaccount*.json
+*service-account*.json
+*-adminsdk-*.json

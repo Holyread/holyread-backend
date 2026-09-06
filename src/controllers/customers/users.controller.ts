@@ -965,6 +965,13 @@ const updateUserAccount = async (
             if (req.body.image && req.body.image.startsWith('http')) {
                   body.image = userObj.image
             }
+            if (req.body.firebaseAppInstanceId) {
+                  // B5: pairs this user with the Firebase Analytics install that
+                  // reported them, so a confirmed purchase (transaction.controller.ts,
+                  // createAppTransaction) can be reported back to the same funnel
+                  // the app already logs signup/activation/paywall events to.
+                  body.firebaseAppInstanceId = req.body.firebaseAppInstanceId
+            }
             if (
                   req.body.pushTokens &&
                   req.body.pushTokens.token &&

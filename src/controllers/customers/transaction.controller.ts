@@ -20,6 +20,7 @@ import subscriptionsService from '../../services/admin/subscriptions/subscriptio
 import notificationsService from '../../services/customers/notifications/notifications.service';
 import { getNotificationTemplate } from '../../lib/helpers/notificationTemplate.helper';
 import { NOTIFICATION_TEMPLATE, NOTIFICATION_TEMPLATE_FALLBACKS } from '../../constants/notificationTemplate.constant';
+import { reportServerAnalyticsEvent } from '../../lib/helpers/analyticsEvent.helper';
 
 const stripe = require('stripe')(config.STRIPE_SECRET);
 
@@ -833,6 +834,20 @@ const createAppTransaction = async (
                         */
                         inAppSubscriptionStatus = 'Active'
                         await createTransaction()
+                        // B5: this is the confirmed-purchase moment the client SDK
+                        // never sees — App Store notifies us server-to-server. Report
+                        // it back to the same funnel A6 logs paywall_viewed to, so
+                        // subscribe rate can be attributed to a source.
+                        reportServerAnalyticsEvent(
+                              user.firebaseAppInstanceId,
+                              'subscribe',
+                              {
+                                    product_id: v2TransactionInfo?.productId || '',
+                                    value: Number(subscriptionInfo.price) || 0,
+                                    currency: 'USD',
+                                    subtype: v2Notification.subtype || '',
+                              }
+                        )
         break;
                   case 'OFFER_REDEEMED':
         /*

@@ -42,6 +42,10 @@ export interface IUser extends mongoose.Document {
         deviceId: string,
         token: string
     }],
+    /** Firebase Analytics app-instance id for this user's current install, so a
+     * confirmed purchase (Stripe/App Store webhook) can be reported back to the
+     * same analytics funnel the app logs signup/activation/paywall events to. */
+    firebaseAppInstanceId?: string,
     libraries: Types.ObjectId,
     oAuth?: [{
         clientId: string,
@@ -294,6 +298,7 @@ export const UserSchema = new Schema({
         deviceId: String,
         token: String,
     }],
+    firebaseAppInstanceId: { type: String },
     libraries: { type: Schema.Types.ObjectId, ref: 'userLibrary', index: true },
     oAuth: [{
         clientId: String,

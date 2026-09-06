@@ -19,6 +19,8 @@ interface IConfig {
     FIREBASE_PRIVATE_KEY_ID: string,
     RUN_CRON: boolean,
     RUN_STARTUP_SCRIPTS: boolean,
+    GA_FIREBASE_APP_ID_IOS: string,
+    GA_MEASUREMENT_API_SECRET: string,
 }
 
 /**
@@ -69,6 +71,12 @@ const config: IConfig = {
         process.env.RUN_STARTUP_SCRIPTS,
         isDeployedEnvironment
     ),
+    // B5: reports confirmed App Store subscriptions back to GA4/Firebase
+    // Analytics via the Measurement Protocol, so subscribe rate can be
+    // attributed to a traffic source instead of only seeing paywall views.
+    // Only an iOS app is registered in Firebase today, hence one app id.
+    GA_FIREBASE_APP_ID_IOS: process.env.GA_FIREBASE_APP_ID_IOS,
+    GA_MEASUREMENT_API_SECRET: process.env.GA_MEASUREMENT_API_SECRET,
 }
 
 export default config

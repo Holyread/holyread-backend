@@ -887,50 +887,50 @@ const updateUserAccount = async (
                   firstName: req.body.firstName || userObj.firstName,
                   lastName: req.body.lastName || userObj.lastName,
                   notification: {
-                        push: typeof eval(req.body?.notification?.push) === 'boolean'
+                        push: typeof req.body?.notification?.push === 'boolean'
                               ? req.body?.notification?.push
                               : userObj?.notification?.push || false,
 
-                        email: typeof eval(req.body?.notification?.email) === 'boolean'
+                        email: typeof req.body?.notification?.email === 'boolean'
                               ? req.body?.notification?.email
                               : userObj?.notification?.email || false,
 
-                        inApp: typeof eval(req.body?.notification?.inApp) === 'boolean'
+                        inApp: typeof req.body?.notification?.inApp === 'boolean'
                               ? req.body?.notification?.inApp
                               : userObj?.notification?.inApp || false,
 
                         subscription:
-                              typeof eval(req.body?.notification?.subscription) === 'boolean'
+                              typeof req.body?.notification?.subscription === 'boolean'
                                     ? req.body?.notification?.subscription
                                     : userObj?.notification?.subscription || false,
 
                         dailyDevotional:
-                              typeof eval(req.body?.notification?.dailyDevotional) === 'boolean'
+                              typeof req.body?.notification?.dailyDevotional === 'boolean'
                                     ? req.body?.notification?.dailyDevotional
                                     : userObj?.notification?.dailyDevotional || false,
 
                         offerAndDeal:
-                              typeof eval(req.body?.notification?.offerAndDeal) === 'boolean'
+                              typeof req.body?.notification?.offerAndDeal === 'boolean'
                                     ? req.body?.notification?.offerAndDeal
                                     : userObj?.notification?.offerAndDeal || false,
 
                         latestSummariesUploads:
-                              typeof eval(req.body?.notification?.latestSummariesUploads) === 'boolean'
+                              typeof req.body?.notification?.latestSummariesUploads === 'boolean'
                                     ? req.body?.notification?.latestSummariesUploads
                                     : userObj?.notification?.latestSummariesUploads || false,
 
                         userActivityAlerts:
-                              typeof eval(req.body?.notification?.userActivityAlerts) === 'boolean'
+                              typeof req.body?.notification?.userActivityAlerts === 'boolean'
                                     ? req.body?.notification?.userActivityAlerts
                                     : userObj?.notification?.userActivityAlerts || false,
 
                         favoriteCategoriesAlerts:
-                              typeof eval(req.body?.notification?.favoriteCategoriesAlerts) === 'boolean'
+                              typeof req.body?.notification?.favoriteCategoriesAlerts === 'boolean'
                                     ? req.body?.notification?.favoriteCategoriesAlerts
                                     : userObj?.notification?.favoriteCategoriesAlerts || false,
                   },
                   downloadOverWifi:
-                        typeof eval(req.body?.downloadOverWifi) === 'boolean'
+                        typeof req.body?.downloadOverWifi === 'boolean'
                               ? req.body?.downloadOverWifi
                               : userObj?.downloadOverWifi || false,
             }

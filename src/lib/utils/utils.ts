@@ -1,4 +1,4 @@
-import aws from 'aws-sdk';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import axios from 'axios';
 
 import crypto from 'crypto';
@@ -85,9 +85,11 @@ export const uploadFileToS3 = async (
 ) => {
     try {
         return new Promise(async (resolve, reject) => {
-            const s3 = new aws.S3({
-                secretAccessKey: config.AWS_SECRET,
-                accessKeyId: config.AWS_ACCESSKEY,
+            const s3 = new S3Client({
+                credentials: {
+                    secretAccessKey: config.AWS_SECRET,
+                    accessKeyId: config.AWS_ACCESSKEY,
+                },
                 region: aWSBucket.region,
             })
 
@@ -127,11 +129,12 @@ export const uploadFileToS3 = async (
                 ContentType: docContentType,
                 Bucket: `${aWSBucket.bucketName}/${aWSBucket.documentDirectory}`,
             }
-            s3.putObject(option, (s3err, result: any) => {
-                if (s3err) reject('Error while uploading file')
-                const size = Buffer.byteLength(buffer)
-                resolve({ name, size })
-            })
+            s3.send(new PutObjectCommand(option))
+                .then(() => {
+                    const size = Buffer.byteLength(buffer)
+                    resolve({ name, size })
+                })
+                .catch(() => reject('Error while uploading file'))
         })
     } catch (e: any) {
         throw new Error(e.message)
@@ -143,17 +146,16 @@ export const removeS3File = async (
     aWSBucket: { region: string, bucketName: string, documentDirectory: string }
 ) => {
     try {
-        const s3 = new aws.S3({
-            secretAccessKey: config.AWS_SECRET,
-            accessKeyId: config.AWS_ACCESSKEY,
+        const s3 = new S3Client({
+            credentials: {
+                secretAccessKey: config.AWS_SECRET,
+                accessKeyId: config.AWS_ACCESSKEY,
+            },
             region: aWSBucket.region,
         })
 
         const option = { Bucket: `${aWSBucket.bucketName}/${aWSBucket.documentDirectory}`, Key: documentName }
-        s3.deleteObject(option, (s3err, fileData) => {
-            if (s3err) { return 'Error while processing file' }
-            return true
-        })
+        s3.send(new DeleteObjectCommand(option)).catch(() => 'Error while processing file')
         return 'File successfully remove from AWS'
     } catch (e: any) {
         throw new Error(e.message)
@@ -230,7 +232,7 @@ export const sentEmail = async (params: {
 }
 
 export const getSearchRegexp = async (value) => {
-    const result = { $regex: `.*` + value.toLowerCase().trim().replace(/[-\/\\^$*+?.)(*|][\]{}]/g, '\\$&') + '.*', $options: 'i' }
+    const result = { $regex: '.*' + value.toLowerCase().trim().replace(/[-\/\\^$*+?.)(*|][\]{}]/g, '\\$&') + '.*', $options: 'i' }
     return result
 }
 
@@ -318,7 +320,7 @@ export const silentPushNotification = async (tokens: string[], title: string, de
                     body: description,
                 },
                 data: {
-                    silent: "true"
+                    silent: 'true'
                 }
             };
 

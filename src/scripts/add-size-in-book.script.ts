@@ -8,7 +8,7 @@
  * now issue has been solved so script not rquired yet
  */
 
-import aws from 'aws-sdk'
+import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3'
 
 import { BookSummaryModel } from '../models/index'
 
@@ -18,9 +18,11 @@ import { awsBucket } from '../constants/app.constant';
 /** Update book and add size of audio and video file */
 (async () => {
       try {
-            const s3 = new aws.S3({
-                  secretAccessKey: config.AWS_SECRET,
-                  accessKeyId: config.AWS_ACCESSKEY,
+            const s3 = new S3Client({
+                  credentials: {
+                        secretAccessKey: config.AWS_SECRET,
+                        accessKeyId: config.AWS_ACCESSKEY,
+                  },
                   region: awsBucket.region,
             })
             /** Get S3 bucket files contents  */
@@ -50,10 +52,10 @@ import { awsBucket } from '../constants/app.constant';
                               oneBook.videoFile &&
                               !oneBook.videoFileSize
                         ) {
-                              const s3BooksContents : any = await s3.listObjects({
+                              const s3BooksContents : any = await s3.send(new ListObjectsV2Command({
                                     Bucket: 'holyreads-develop',
                                     Prefix: `books/video/${oneBook.videoFile}`,
-                              }).promise();
+                              }));
 
                               oneBook.videoFileSize = s3BooksContents
                                     .Contents
@@ -71,10 +73,10 @@ import { awsBucket } from '../constants/app.constant';
                                     oneChapter.audioFile &&
                                     !oneChapter.size
                               ) {
-                                    const s3BooksContents : any = await s3.listObjects({
+                                    const s3BooksContents : any = await s3.send(new ListObjectsV2Command({
                                           Bucket: 'holyreads-develop',
                                           Prefix: `books/audio/${oneChapter.audioFile}`,
-                                    }).promise();
+                                    }));
 
                                     oneChapter.size = s3BooksContents
                                           .Contents

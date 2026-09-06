@@ -62,8 +62,21 @@ app.use(
   cookieParser()
 )
 
-require('./scripts');
-require('./cron');
+if (config.RUN_STARTUP_SCRIPTS) {
+  require('./scripts');
+} else {
+  console.log(
+    'Startup migrations skipped (RUN_STARTUP_SCRIPTS off)'
+  )
+}
+
+if (config.RUN_CRON) {
+  require('./cron');
+} else {
+  console.log(
+    'Cron scheduler skipped (RUN_CRON off)'
+  )
+}
 
 io.use(customerIoAuth);
 require('./socket')(io)
@@ -140,11 +153,31 @@ if (config.NODE_ENV !== 'test') {
       'Subscription webhook initiated succeed'
     ))
 
-  firebaseAdmin.initializeApp({
-    credential: firebaseAdmin.credential.cert(
-      fireStoreConfig as any
-    ),
-  });
+  /**
+   * Firebase service-account credentials come from the environment
+   * (FIREBASE_* vars). Missing credentials are fatal in a deployed
+   * environment so a misconfigured release fails its health check and rolls
+   * back, rather than starting up with push notifications silently broken.
+   * Locally we only warn, so the server still runs without a Firebase key.
+   */
+  if (fireStoreConfig.private_key && fireStoreConfig.client_email) {
+    firebaseAdmin.initializeApp({
+      credential: firebaseAdmin.credential.cert(
+        fireStoreConfig as any
+      ),
+    });
+  } else if (config.NODE_ENV === 'local') {
+    console.warn(
+      'FIREBASE_PRIVATE_KEY / FIREBASE_CLIENT_EMAIL not set — '
+      + 'skipping Firebase init. Push notifications are disabled.'
+    )
+  } else {
+    throw new Error(
+      'Firebase service-account credentials are missing. Set '
+      + 'FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY_ID, FIREBASE_PRIVATE_KEY, '
+      + 'FIREBASE_CLIENT_EMAIL and FIREBASE_CLIENT_ID in the environment.'
+    )
+  }
 }
 
 export {
